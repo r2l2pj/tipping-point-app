@@ -46,8 +46,9 @@ body {
   align-items: center;
   gap: 6px;
 }
+/* Viz rule 9: every over-map text is >= 12 px with >= 4.5:1 contrast. */
 .tp-zone-name {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: #e8eaed;
   white-space: nowrap;
@@ -56,14 +57,14 @@ body {
   border-radius: 3px;
   background: #bd0026;
   padding: 1px 4px;
-  font-size: 8px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.05em;
   color: #fff;
 }
 .tp-zone-sub {
   margin-top: 1px;
-  font-size: 9.5px;
+  font-size: 12px;
   color: #a1a1aa;
 }
 
@@ -78,7 +79,7 @@ body {
   border-top-color: rgba(13, 17, 23, 0.95);
 }
 .tp-popup-body {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   color: #d4d4d8;
 }
@@ -88,6 +89,9 @@ body {
 .tp-popup-body span {
   color: #a1a1aa;
 }
+.tp-popup-body a {
+  color: #7eb6e8;
+}
 
 /* "Forecast" label pinned over forecast frames (v4: predicted data is
    always hatched and labelled, never confused with observed). */
@@ -96,7 +100,7 @@ body {
   border-radius: 4px;
   background: rgba(13, 17, 23, 0.85);
   padding: 2px 8px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.14em;
   color: #e8eaed;

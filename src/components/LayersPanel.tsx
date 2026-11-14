@@ -2,7 +2,7 @@
 
 import type { LayerState } from "./MapLayers";
 import type { CaseBundle } from "@/lib/types";
-import { fmtDate } from "@/lib/tpi";
+import { fmtDataDate } from "@/lib/layers";
 
 interface Row {
   key: keyof LayerState;
@@ -18,6 +18,13 @@ const ROWS: Row[] = [
   { key: "nisar", label: "NISAR Change (SAR)", dateKey: "nisar_post" },
 ];
 
+// Slide and flood TPI share the two-layer budget: enabling one clears the
+// other (radio behavior over checkboxes).
+const EXCLUSIVE: Partial<Record<keyof LayerState, keyof LayerState>> = {
+  tpiFlood: "tpiSlide",
+  tpiSlide: "tpiFlood",
+};
+
 export default function LayersPanel({
   layers,
   onToggle,
@@ -28,6 +35,11 @@ export default function LayersPanel({
   bundle: CaseBundle;
 }) {
   const dd = bundle.data_dates ?? {};
+  const handle = (key: keyof LayerState) => {
+    const other = EXCLUSIVE[key];
+    onToggle(key);
+    if (!layers[key] && other && layers[other]) onToggle(other);
+  };
   return (
     <div className="absolute left-3 top-3 z-10 w-56 rounded-md border border-zinc-700/60 bg-[#10141c]/90 shadow-lg backdrop-blur">
       <div className="flex items-center gap-2 border-b border-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-300">
@@ -36,20 +48,20 @@ export default function LayersPanel({
       <ul className="p-2">
         {ROWS.map((r) => {
           const raw = dd[r.dateKey ?? ""];
-          const date = typeof raw === "string" ? fmtDate(raw) : null;
+          const date = typeof raw === "string" ? fmtDataDate(raw) : null;
           return (
             <li key={r.key}>
               <label className="flex cursor-pointer items-start gap-2 rounded px-1.5 py-1.5 hover:bg-zinc-800/60">
                 <input
                   type="checkbox"
                   checked={layers[r.key]}
-                  onChange={() => onToggle(r.key)}
+                  onChange={() => handle(r.key)}
                   className="mt-0.5 h-3.5 w-3.5 accent-cyan-500"
                 />
                 <span className="flex-1">
                   <span className="block text-xs text-zinc-200">{r.label}</span>
                   {date && (
-                    <span className="block text-[10px] text-zinc-500">
+                    <span className="block text-xs text-zinc-500">
                       data {date}
                     </span>
                   )}
@@ -59,8 +71,9 @@ export default function LayersPanel({
           );
         })}
       </ul>
-      <p className="border-t border-zinc-800 px-3 py-1.5 text-[10px] leading-snug text-zinc-500">
-        Max two data layers at once (v3 viz rule).
+      <p className="border-t border-zinc-800 px-3 py-1.5 text-xs leading-snug text-zinc-500">
+        Slide and flood TPI are mutually exclusive — max two data layers at
+        once (v3 viz rule).
       </p>
     </div>
   );
