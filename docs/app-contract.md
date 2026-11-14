@@ -89,9 +89,11 @@ absent it falls back to fixed filenames under the case dir.
 `data_dates` on legacy syncs), `products`, per-layer resolved `forecast`,
 `forecast_source`. Written last by the pipeline — the app never reads a
 half-updated set, and treats `updated_at: null` as "mid-run" (no fresh
-update). `now/` ships without a series file: timeline days derive from
-manifest layer dates + forecast flag. `events.json` remains the case index;
-its entries use the hyphen `event_id` forms.
+update). `now/` ships without a series file: `bundle.series` stays
+`undefined` and `'series'` lands in `bundle.pending` — the app never
+synthesizes timeline days from layer dates (L14: no fabricated values).
+`events.json` remains the case index; its entries use the hyphen
+`event_id` forms.
 
 ## Pending outputs (L14)
 
@@ -101,9 +103,8 @@ marker list components read:
 
 - `'metrics'` — `metrics.json` absent, or present without the case key
   (`bundle.metrics`/`metricsView` are `undefined`).
-- `'series'` — no series file resolved (`bundle.series` is `undefined`;
-  `now` still derives its timeline from layer dates, so `'series'` only
-  appears there when even that yields nothing).
+- `'series'` — no series file resolved (`bundle.series` is `undefined`),
+  `now` included — the loader does not fabricate timeline days.
 - `<product-id>` — a product **declared** (non-null path) in the products
   map but missing from storage; `null`-declared keys are absent by
   contract, not pending.
@@ -157,7 +158,31 @@ pass through untouched. Legacy mapping: `flood.area_km2→flooded_km2`,
 Optional analysis keys (all absent-safe, passthrough unless noted):
 `swath_coverage_pct` (percent → 0-1), `flooded_km2_scope` (e.g. "within
 NISAR swath"), `flood_top_clusters` (`{area_km2, lat, lon, where?}[]`),
+`water_km2`, `threshold_db`, `flood_bright_km2`,
 `hand_validation_radii` (`radius_m -> iou` map), `hand_best_radius_m`.
+
+### `landslide_hit` (nested) → `landslide_hit_pct` (flat)
+
+The real pipeline ships hit stats nested:
+
+```json
+"landslide_hit": {
+  "definition": "share of inventory points with TPI_slide >= 0.6 (Critical)",
+  "scale_m": 90, "terrain_scale": "…", "n_points": 16027,
+  "per_day": [{ "date": "YYYY-MM-DD", "hit_pct": 85.855,
+               "p50": 0.898, "p90": 1.0, "max": 1.0, "ge04_pct": 91.67 }],
+  "note": "…"
+}
+```
+
+`hit_pct`/`ge04_pct` are authored 0-100; `p50`/`p90`/`max` are 0-1. The
+nested object passes through `toMetricsView()` untouched (typed
+`LandslideHit`) — `toMetricsView` never synthesizes a flat value.
+`getCaseBundle` then calls `flattenLandslideHit(view, reference_date)`:
+the flat `metricsView.landslide_hit_pct` is the **event-day** `hit_pct` —
+the `per_day` entry matching the case `reference_date`, else the last
+entry — normalized by the same `*_pct` rule (rs_2024: 85.855 → 0.85855).
+An already-flat `landslide_hit_pct` wins; no hit data → key stays absent.
 
 `flood_source` is an optional pipeline-written enum: `'nisar'|'opera'|'observed'|null`.
 It identifies the sensor source of `flooded_km2` and `people_flooded`:

@@ -401,8 +401,14 @@ describe("createMetricsService", () => {
   });
 
   test("no-credential entry still serves manifest data", async () => {
+    // Dead remote: the fs fixture copy must always serve — a reachable
+    // raw fallback branch would win and the real file may lack the case.
     const result = await withEnv(
-      { GCP_SA_KEY: undefined, GEE_SERVICE_ACCOUNT_KEY: undefined },
+      {
+        GCP_SA_KEY: undefined,
+        GEE_SERVICE_ACCOUNT_KEY: undefined,
+        DATA_BASE_URL: "https://example.invalid/",
+      },
       () => getMetrics(QUERY)
     );
     expect(result.sources).toEqual(["manifest"]);
@@ -412,7 +418,10 @@ describe("createMetricsService", () => {
 
   test("dead gee init still serves manifest data", async () => {
     setMetricsEeFactoryForTest(() => Promise.reject(new Error("auth boom")));
-    const result = await withEnv({ GCP_SA_KEY: "test-key" }, () => getMetrics(QUERY));
+    const result = await withEnv(
+      { GCP_SA_KEY: "test-key", DATA_BASE_URL: "https://example.invalid/" },
+      () => getMetrics(QUERY)
+    );
     expect(result.sources).toEqual(["manifest"]);
     expect(result.data_date).toBeNull();
     expect(result.metrics.event).toBe("rs-2024-05");
@@ -420,8 +429,9 @@ describe("createMetricsService", () => {
 
   test("dead gee init surfaces as service error when the manifest is absent", async () => {
     setMetricsEeFactoryForTest(() => Promise.reject(new Error("auth boom")));
-    const error = await withEnv({ GCP_SA_KEY: "test-key" }, () =>
-      getMetrics({ caseId: "nope-9999" }).catch((e: unknown) => e)
+    const error = await withEnv(
+      { GCP_SA_KEY: "test-key", DATA_BASE_URL: "https://example.invalid/" },
+      () => getMetrics({ caseId: "nope-9999" }).catch((e: unknown) => e)
     );
     expect(error).toBeInstanceOf(MetricsServiceError);
     expect((error as Error).message).toContain("gee init failed");
@@ -431,8 +441,9 @@ describe("createMetricsService", () => {
     setMetricsEeFactoryForTest(() =>
       Promise.reject(new TileServiceError("timeout after 5ms waiting for gee init"))
     );
-    const error = await withEnv({ GCP_SA_KEY: "test-key" }, () =>
-      getMetrics({ caseId: "nope-9999" }).catch((e: unknown) => e)
+    const error = await withEnv(
+      { GCP_SA_KEY: "test-key", DATA_BASE_URL: "https://example.invalid/" },
+      () => getMetrics({ caseId: "nope-9999" }).catch((e: unknown) => e)
     );
     expect(error).toBeInstanceOf(MetricsTimeoutError);
   });

@@ -8,6 +8,7 @@ import { cacheLife } from "next/cache";
 import {
   canonicalCaseId,
   caseAlias,
+  flattenLandslideHit,
   FORECAST_DAY_RE,
   resolveAsset,
   TPI_CUTS,
@@ -16,13 +17,11 @@ import {
   type MetricsView,
   type NowAlertsFile,
   type NowSummary,
-  type NowView,
 } from "./contract";
 import type { LayerMeta } from "./ee-layers";
 import type {
   AlertsFile,
   CaseBundle,
-  DayPoint,
   EventManifest,
   EventMetrics,
   EventsIndex,
@@ -249,34 +248,6 @@ export const getSeries = (id: string) =>
 export const getAlerts = () =>
   readData<AlertsFile>(newCtx(), "", "alerts.json");
 
-// now@2 has no series file — the timeline comes from the manifest's layer
-// dates; the forecast flag marks D+1..D+3. Used only when no series file
-// resolves for the live bundle.
-function nowSeriesFromLayers(
-  view: NowView,
-  reference_date: string | undefined
-): SeriesDaily | undefined {
-  const dated = view.layers.filter((l) => l.date);
-  if (!dated.length) return undefined;
-  const dates = [...new Set(dated.map((l) => l.date as string))].sort();
-  const observed = dates.filter((d) =>
-    dated.some((l) => l.date === d && !l.forecast)
-  );
-  const ref =
-    observed[observed.length - 1] ?? reference_date ?? dates[dates.length - 1];
-  const refMs = Date.parse(`${ref}T00:00:00Z`);
-  const days: DayPoint[] = dates.map((date) => ({
-    date,
-    offset: Math.round((Date.parse(`${date}T00:00:00Z`) - refMs) / 86_400_000),
-    kind: observed.includes(date) ? "observed" : "forecast",
-    imerg_mm: 0,
-    smap: 0,
-    tpi: 0,
-    river_m: null,
-  }));
-  return { event: "now", reference_date: ref, days };
-}
-
 // One case = one entry in the root manifest's `cases` map (canonical
 // underscore keys; caseAlias maps the hyphen event ids used by events.json),
 // backed by a directory under public/data/<case-key>. Legacy per-case
@@ -472,9 +443,9 @@ export async function getCaseBundle(
   // L14: absent contract outputs surface as pending markers. `metrics` and
   // `series` are named entries; products declared in the map (non-null path)
   // but missing from storage list their product id. Keys declared `null`
-  // mean "absent by contract" — not pending.
-  const effectiveSeries =
-    series ?? (now ? nowSeriesFromLayers(now, referenceDate) : undefined);
+  // mean "absent by contract" — not pending. L14: no fabricated timeline —
+  // an absent series file stays undefined for every case, `now` included.
+  const effectiveSeries = series;
   const pending = new Set<string>();
   if (metrics === undefined) pending.add("metrics");
   if (effectiveSeries === undefined) pending.add("series");
@@ -523,7 +494,9 @@ export async function getCaseBundle(
     data_dates: manifest?.data_dates,
     manifest,
     metrics,
-    metricsView: toMetricsView(metrics),
+    // Nested landslide_hit -> flat event-day landslide_hit_pct (the day
+    // matching referenceDate, else the last per_day entry).
+    metricsView: flattenLandslideHit(toMetricsView(metrics), referenceDate),
     summary,
     nowAlerts,
     criticalAreas,
