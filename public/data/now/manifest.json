@@ -1,0 +1,23 @@
+{
+  "event": "now",
+  "mode": "live",
+  "bounds": [-58.0, -34.0, -48.0, -22.5],
+  "updated_at": "2026-11-14T12:00:00Z",
+  "data_dates": {
+    "imerg": "2026-11-14T08:00:00Z",
+    "smap": "2026-11-11",
+    "geos_fp_issued": "2026-11-14T00:00:00Z",
+    "nisar_passes": [
+      { "date": "2026-11-09", "track": "172D", "note": "post-event coverage pending" },
+      { "date": "2026-11-02", "track": "172D" }
+    ]
+  },
+  "layers": [
+    { "id": "hillshade",       "type": "cog",     "path": "cog/hillshade_nasadem.tif",       "legend": "tpi", "source": "NASADEM", "date": "static" },
+    { "id": "tpi_slide_series","type": "cog",     "path": "cog/tpi_slide_series.tif",        "legend": "tpi", "source": "GEE: IMERG Early+SMAP L4+NASADEM", "bands": "one per day", "date": "2026-11-14" },
+    { "id": "tpi_forecast",    "type": "cog",     "path": "cog/tpi_forecast_series.tif",     "legend": "tpi", "source": "GEOS-FP forecast D+1..D+3", "bands": "one per day", "date": "2026-11-14" },
+    { "id": "permanent_water", "type": "geojson", "path": "geojson/permanent_water.geojson", "legend": "water", "source": "JRC Global Surface Water", "date": "2024" },
+    { "id": "imerg_smap_daily","type": "series",  "path": "series/imerg_smap_daily.json",    "source": "GPM IMERG Early · SMAP L4 · GEOS-FP", "date": "2026-11-14" },
+    { "id": "priority_zones",  "type": "geojson", "path": "geojson/priority_zones.geojson",  "legend": "tpi", "source": "TPI model output", "date": "2026-11-14" }
+  ]
+}

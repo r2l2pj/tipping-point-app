@@ -1,0 +1,28 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Skagit flood extent", "source": "NISAR GCOV", "date": "2025-12-16", "area_km2": 41.6 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-122.42, 48.30], [-122.30, 48.34], [-122.16, 48.38], [-122.05, 48.44],
+          [-122.10, 48.52], [-122.24, 48.55], [-122.38, 48.50], [-122.45, 48.40],
+          [-122.42, 48.30]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Snoqualmie flood extent", "source": "NISAR GCOV", "date": "2025-12-16", "area_km2": 9.8 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-121.88, 47.48], [-121.72, 47.50], [-121.62, 47.56], [-121.70, 47.62],
+          [-121.86, 47.60], [-121.92, 47.54], [-121.88, 47.48]
+        ]]
+      }
+    }
+  ]
+}

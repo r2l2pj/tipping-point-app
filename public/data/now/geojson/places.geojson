@@ -1,0 +1,10 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    { "type": "Feature", "properties": { "name": "Porto Alegre", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-51.23, -30.03] } },
+    { "type": "Feature", "properties": { "name": "Encantado", "kind": "town" }, "geometry": { "type": "Point", "coordinates": [-51.87, -29.24] } },
+    { "type": "Feature", "properties": { "name": "Florianópolis", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-48.55, -27.6] } },
+    { "type": "Feature", "properties": { "name": "Curitiba", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-49.27, -25.43] } },
+    { "type": "Feature", "properties": { "name": "São Paulo", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-46.63, -23.55] } }
+  ]
+}

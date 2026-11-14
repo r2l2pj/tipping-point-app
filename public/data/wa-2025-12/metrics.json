@@ -1,0 +1,8 @@
+{
+  "event": "wa-2025-12",
+  "flood":    { "iou": 0.71, "f1": 0.83, "area_km2": 41.6 },
+  "model":    { "auc": 0.91, "threshold": 0.6, "precision": 0.78, "recall": 0.86 },
+  "alert":    { "lead_hours_median": 52, "warned_before_pct": 0.87 },
+  "cloud":    { "cloud_pct_during_event": 0.94 },
+  "impact":   { "people_exposed": 8400, "lights_out_pct": 0.18 }
+}

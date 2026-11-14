@@ -1,60 +1,38 @@
 import { Suspense } from "react";
-import Map from "@/components/Map";
-import { getEventsIndex } from "@/lib/data";
+import Dashboard from "@/components/Dashboard";
+import { getCaseBundle, getEventsIndex } from "@/lib/data";
+import type { CaseBundle } from "@/lib/types";
 
-async function EventsPanel() {
+// Loads every case's bundle server-side (small mock JSONs from public/data),
+// then hands the whole set to the client dashboard. `now/` is the live mode.
+async function DashboardLoader() {
   const index = await getEventsIndex().catch(() => null);
+  const cases: CaseBundle[] = [];
 
-  if (!index) {
-    return (
-      <p className="text-sm text-zinc-500">
-        No data yet — run <code>bun run sync:data</code>
-      </p>
-    );
+  if (index) {
+    for (const e of index.events) {
+      cases.push(await getCaseBundle(e.id, e.title, e.bbox, e.reference_date));
+    }
   }
-  return (
-    <ul className="space-y-2">
-      {index.events.map((e) => (
-        <li
-          key={e.id}
-          className="rounded border border-zinc-800 p-3 hover:border-zinc-600"
-        >
-          <p className="text-sm font-medium">{e.title}</p>
-          <p className="text-xs text-zinc-500">
-            {e.id} · ref {e.reference_date}
-          </p>
-        </li>
-      ))}
-    </ul>
-  );
+  // Live mode ("Agora") — southern Brazil, refreshed by the 3-hourly pipeline.
+  const now = await getCaseBundle("now", "Now — Southern Brazil", [-58, -34, -48, -22.5], "2026-11-14");
+  if (now.manifest) cases.push(now);
+
+  return <Dashboard cases={cases} />;
 }
 
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col bg-black text-zinc-100">
-      <header className="flex items-center justify-between border-b border-zinc-800 px-6 py-3">
-        <div>
-          <h1 className="text-lg font-bold tracking-wide">TIPPING POINT</h1>
-          <p className="text-xs text-zinc-400">Rain warns. Radar confirms.</p>
-        </div>
-        <span className="text-xs text-zinc-500">
-          NASA Space Apps 2026 · Dancing with the SARs
-        </span>
-      </header>
-
-      <main className="flex flex-1">
-        <div className="relative flex-1">
-          <Map />
-        </div>
-        <aside className="w-80 border-l border-zinc-800 p-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-400">
-            Events
-          </h2>
-          <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
-            <EventsPanel />
-          </Suspense>
-        </aside>
-      </main>
+    <div className="flex h-screen flex-col bg-[#0b0e14] text-zinc-100">
+      <Suspense
+        fallback={
+          <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
+            Loading dashboard…
+          </div>
+        }
+      >
+        <DashboardLoader />
+      </Suspense>
     </div>
   );
 }

@@ -1,0 +1,10 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    { "type": "Feature", "properties": { "name": "Bellingham", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-122.48, 48.75] } },
+    { "type": "Feature", "properties": { "name": "Mount Vernon", "kind": "town" }, "geometry": { "type": "Point", "coordinates": [-122.33, 48.42] } },
+    { "type": "Feature", "properties": { "name": "Everett", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-122.21, 47.98] } },
+    { "type": "Feature", "properties": { "name": "Seattle", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-122.33, 47.61] } },
+    { "type": "Feature", "properties": { "name": "Skagit River", "kind": "river" }, "geometry": { "type": "Point", "coordinates": [-122.02, 48.505] } }
+  ]
+}

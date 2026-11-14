@@ -21,10 +21,14 @@ bun run dev          # predev syncs ../tipping-point-data/data -> public/data
 | Path | Role |
 | --- | --- |
 | `src/lib/data.ts` + `src/lib/types.ts` | reader for the data contract (`public/data`, see SCHEMA.md) |
+| `src/lib/tpi.ts` | TPI classes/palette + `mockTpiGrid` synthetic raster stand-in |
+| `src/components/Dashboard.tsx` | `/` ops dashboard (replay cases + `now/` live mode) |
+| `src/components/Map.tsx` + `MapLayers.tsx` | MapLibre dark basemap + v3 layer stack (hillshade → TPI → water → flood → scars → labels) |
+| `src/app/alerts` | public alert feed — same message format as the Telegram bot |
 | `src/app/api/events` | events index + per-event manifest |
 | `src/app/api/ee/status` | live-GEE health check (service account) |
 | `src/lib/ee.ts` | server-only Earth Engine client (`GEE_PROJECT` + `GEE_SERVICE_ACCOUNT_KEY` in `.env`) |
-| `src/components/Map.tsx` | MapLibre dark basemap — layers get added here |
+| `public/data/<event>/`, `public/data/now/`, `public/data/alerts.json` | mock artifacts per SCHEMA.md — overwritten by `sync:data` when real data lands |
 | `docs/`, `submission/` | method notes; ≤30s demo script + submission materials |
 
 ## Deploy

@@ -1,0 +1,24 @@
+{
+  "event": "wa-2025-12",
+  "mode": "replay",
+  "updated_at": "2025-12-16T18:00:00Z",
+  "data_dates": {
+    "imerg": "2025-12-12",
+    "smap": "2025-12-10",
+    "nasadem": "static",
+    "nisar_pre": "2025-12-04",
+    "nisar_post": "2025-12-16"
+  },
+  "layers": [
+    { "id": "hillshade",       "type": "cog",     "path": "cog/hillshade_nasadem.tif",      "legend": "tpi",   "source": "NASADEM", "date": "static" },
+    { "id": "tpi_slide_series","type": "cog",     "path": "cog/tpi_slide_series.tif",       "legend": "tpi",   "source": "GEE: IMERG+SMAP+NASADEM", "bands": "one per day", "date": "2025-12-12" },
+    { "id": "tpi_flood_series","type": "cog",     "path": "cog/tpi_flood_series.tif",       "legend": "tpi",   "source": "GEE: IMERG+SMAP+MERIT", "bands": "one per day", "date": "2025-12-12" },
+    { "id": "permanent_water", "type": "geojson", "path": "geojson/permanent_water.geojson","legend": "water", "source": "JRC Global Surface Water", "date": "2024" },
+    { "id": "flood_nisar",     "type": "cog",     "path": "cog/flood_nisar.tif",            "legend": "water", "source": "NISAR GCOV", "date": "2025-12-16" },
+    { "id": "flood_confirmed", "type": "geojson", "path": "geojson/flood_confirmed.geojson","legend": "water", "source": "NISAR GCOV", "date": "2025-12-16" },
+    { "id": "landslide_candidates", "type": "geojson", "path": "geojson/landslide_candidates.geojson", "legend": "slides", "source": "NISAR GUNW coherence", "date": "2025-12-16" },
+    { "id": "imerg_smap_daily","type": "series",  "path": "series/imerg_smap_daily.json",   "source": "GPM IMERG · SMAP L4", "date": "2025-12-12" },
+    { "id": "priority_zones",  "type": "geojson", "path": "geojson/priority_zones.geojson", "legend": "tpi",   "source": "TPI model output", "date": "2025-12-12" },
+    { "id": "swot_river",      "type": "series",  "path": "series/swot_river.json",         "source": "SWOT", "date": "2025-12-11" }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "event": "rs-2024-05",
+  "mode": "replay",
+  "updated_at": "2024-05-10T12:00:00Z",
+  "data_dates": {
+    "imerg": "2024-05-02",
+    "smap": "2024-04-30",
+    "nasadem": "static",
+    "nisar_pre": null,
+    "nisar_post": null
+  },
+  "layers": [
+    { "id": "hillshade",       "type": "cog",     "path": "cog/hillshade_nasadem.tif",      "legend": "tpi",   "source": "NASADEM", "date": "static" },
+    { "id": "tpi_slide_series","type": "cog",     "path": "cog/tpi_slide_series.tif",       "legend": "tpi",   "source": "GEE: IMERG+SMAP+NASADEM", "bands": "one per day", "date": "2024-05-02" },
+    { "id": "permanent_water", "type": "geojson", "path": "geojson/permanent_water.geojson","legend": "water", "source": "JRC Global Surface Water", "date": "2023" },
+    { "id": "imerg_smap_daily","type": "series",  "path": "series/imerg_smap_daily.json",   "source": "GPM IMERG · SMAP L4", "date": "2024-05-02" },
+    { "id": "priority_zones",  "type": "geojson", "path": "geojson/priority_zones.geojson", "legend": "tpi",   "source": "TPI model output", "date": "2024-05-02" }
+  ]
+}

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b0e14;
+  --foreground: #ededed;
 }
 
 @theme inline {
@@ -12,15 +12,88 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Priority-zone map markers — dark card + pin, per mockup. */
+.tp-zone-marker {
+  cursor: default;
+}
+.tp-zone-card {
+  position: relative;
+  min-width: 132px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(13, 17, 23, 0.92);
+  padding: 6px 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.tp-zone-card::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid rgba(13, 17, 23, 0.92);
+}
+.tp-zone-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tp-zone-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #e8eaed;
+  white-space: nowrap;
+}
+.tp-zone-badge {
+  border-radius: 3px;
+  background: #bd0026;
+  padding: 1px 4px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #fff;
+}
+.tp-zone-sub {
+  margin-top: 1px;
+  font-size: 9.5px;
+  color: #a1a1aa;
+}
+
+/* MapLibre popup on TPI click. */
+.tp-popup .maplibregl-popup-content {
+  background: rgba(13, 17, 23, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.tp-popup .maplibregl-popup-tip {
+  border-top-color: rgba(13, 17, 23, 0.95);
+}
+.tp-popup-body {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #d4d4d8;
+}
+.tp-popup-body strong {
+  color: #fff;
+}
+.tp-popup-body span {
+  color: #a1a1aa;
+}
+
+/* Thin scrollbars for the side panel. */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 4px;
 }

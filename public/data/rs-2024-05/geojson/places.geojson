@@ -1,0 +1,9 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    { "type": "Feature", "properties": { "name": "Encantado", "kind": "town" }, "geometry": { "type": "Point", "coordinates": [-51.87, -29.24] } },
+    { "type": "Feature", "properties": { "name": "Lajeado", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-51.96, -29.47] } },
+    { "type": "Feature", "properties": { "name": "Porto Alegre", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-51.23, -30.03] } },
+    { "type": "Feature", "properties": { "name": "Taquari River", "kind": "river" }, "geometry": { "type": "Point", "coordinates": [-51.70, -29.30] } }
+  ]
+}
