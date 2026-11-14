@@ -134,7 +134,9 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
           {hasNisarPair ? (
             <>
               {pre && post ? `${fmtDate(pre)} → ${fmtDate(post)}. ` : null}
-              {swipe ? "Drag the divider below to compare." : null}
+              {swipe
+                ? "Drag the divider below to compare."
+                : "GCOV before/after rasters pending — not published for this pair."}
             </>
           ) : bundle.mode === "live" ? (
             "Awaiting a NISAR pair over the AOI."
