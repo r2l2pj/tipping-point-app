@@ -4,7 +4,7 @@
 import { readCogPixel, readCogRST, type CogRSTUrls } from "./cog";
 import { resolveAsset } from "./contract";
 import { rstFor } from "./tpi";
-import type { DayPoint, ManifestLayer } from "./types";
+import type { DayPoint, ManifestLayer, PriorityZone } from "./types";
 
 export type TabKey = "alert" | "radar" | "validation" | "impact";
 
@@ -64,6 +64,85 @@ export function overlayPlan(tab?: TabKey | string): OverlayPlan {
       Number(plan.operaValidation) +
       Number(plan.nightLights),
   };
+}
+
+// --- priority-zone label anchors ---------------------------------------------
+//
+// Real priority_zones files are Polygon features (rs_2024 ~4.8k, wa_2025
+// ~1.5k) — never Points. A marker needs one anchor: properties.label_lon/
+// label_lat win when present and finite; a Point uses its own coordinates;
+// a Polygon/MultiPolygon anchors at the centroid of its largest exterior ring
+// (shoelace area). Anything without finite coords returns null — the caller
+// must skip it (invalid LngLat would crash the map).
+
+const finite = (v: unknown): v is number =>
+  typeof v === "number" && Number.isFinite(v);
+
+const ringArea = (ring: number[][]): number => {
+  let a = 0;
+  for (let i = 0, n = ring.length; i < n; i++) {
+    const [x1, y1] = ring[i];
+    const [x2, y2] = ring[(i + 1) % n];
+    a += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(a / 2);
+};
+
+const ringCentroid = (ring: number[][]): [number, number] | null => {
+  // Vertex mean; the last vertex duplicates the first, so drop it.
+  const pts = ring.length > 1 ? ring.slice(0, -1) : ring;
+  if (pts.length === 0) return null;
+  let x = 0;
+  let y = 0;
+  for (const [px, py] of pts) {
+    if (!finite(px) || !finite(py)) return null;
+    x += px;
+    y += py;
+  }
+  return [x / pts.length, y / pts.length];
+};
+
+export function zoneLabelPoint(
+  feature: GeoJSON.Feature
+): [number, number] | null {
+  const p = feature.properties as Record<string, unknown> | null;
+  if (p && finite(p.label_lon) && finite(p.label_lat)) {
+    return [p.label_lon, p.label_lat];
+  }
+  const g = feature.geometry;
+  if (!g) return null;
+  if (g.type === "Point") {
+    const [lon, lat] = g.coordinates as number[];
+    return finite(lon) && finite(lat) ? [lon, lat] : null;
+  }
+  const exteriors: number[][][] =
+    g.type === "Polygon"
+      ? [g.coordinates[0]]
+      : g.type === "MultiPolygon"
+        ? g.coordinates.map((poly) => poly[0])
+        : [];
+  const largest = exteriors
+    .filter((r): r is number[][] => Array.isArray(r) && r.length > 0)
+    .sort((a, b) => ringArea(b) - ringArea(a))[0];
+  return largest ? ringCentroid(largest) : null;
+}
+
+// Ranked anchors for zone markers — worst offenders first, capped so a
+// 5k-polygon case never becomes 5k DOM nodes.
+export function rankedZonePoints(
+  features: GeoJSON.Feature[] | undefined,
+  max = 10
+): { zone: PriorityZone; at: [number, number] }[] {
+  return (features ?? [])
+    .map((f) => ({
+      zone: f.properties as PriorityZone,
+      at: zoneLabelPoint(f),
+    }))
+    .filter((x): x is { zone: PriorityZone; at: [number, number] } =>
+      x.at !== null &&
+      typeof x.zone?.rank === "number")
+    .sort((a, b) => a.zone.rank - b.zone.rank)
+    .slice(0, max);
 }
 
 // Max data layers on the map at once (viz rule 5).

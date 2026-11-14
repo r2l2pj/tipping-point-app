@@ -22,6 +22,7 @@ import {
   manifestRaster,
   overlayPlan,
   pointInPolygons,
+  rankedZonePoints,
   resolvePixelValues,
   type PixelValues,
   type TabKey,
@@ -61,6 +62,7 @@ const SRC = {
   muni: "tp-muni",
   catalog: "tp-catalog",
   places: "tp-places",
+  zones: "tp-zones",
 };
 
 // Doc layer order (bottom -> top): basemap > hillshade > TPI/forecast >
@@ -84,6 +86,8 @@ const LYR = {
   opera: "tp-opera-lyr",
   nl: "tp-nl-lyr",
   tml: "tp-tml-lyr",
+  zonesFill: "tp-zones-fill",
+  zonesLine: "tp-zones-line",
   muni: "tp-muni-line",
   catalog: "tp-catalog-circle",
   cityLabel: "tp-city-label",
@@ -161,6 +165,7 @@ export function useMapLayers(
     map.addSource(SRC.water, { type: "geojson", data: bundle?.water ?? EMPTY });
     map.addSource(SRC.flood, { type: "geojson", data: bundle?.flood ?? EMPTY });
     map.addSource(SRC.scars, { type: "geojson", data: bundle?.scars ?? EMPTY });
+    map.addSource(SRC.zones, { type: "geojson", data: bundle?.zones ?? EMPTY });
     map.addSource(SRC.muni, { type: "geojson", data: bundle?.municipalities ?? EMPTY });
     map.addSource(SRC.catalog, { type: "geojson", data: bundle?.catalog ?? EMPTY });
     map.addSource(SRC.places, { type: "geojson", data: bundle?.places ?? EMPTY });
@@ -192,6 +197,18 @@ export function useMapLayers(
       { id: LYR.scarsLine, type: "line", source: SRC.scars,
         paint: { "line-color": "#ffffff", "line-width": 1 },
         layout: { visibility: "none" } },
+      // Priority zones: the full polygon set paints as a subtle risk-shaded
+      // fill (top-10 get HTML label markers — see rankedZonePoints).
+      { id: LYR.zonesFill, type: "fill", source: SRC.zones,
+        paint: {
+          "fill-color": ["match", ["get", "class"],
+            "Critical", "#B2182B", "High", "#EF8A62", "#999999"],
+          "fill-opacity": 0.18,
+        },
+        layout: {} },
+      { id: LYR.zonesLine, type: "line", source: SRC.zones,
+        paint: { "line-color": "#B2182B", "line-width": 0.7, "line-opacity": 0.6 },
+        layout: {} },
       // Municipal boundaries: thin white reference lines (0.5 px, 40%).
       { id: LYR.muni, type: "line", source: SRC.muni,
         paint: { "line-color": "#FFFFFF", "line-width": 0.5, "line-opacity": 0.4 },
@@ -388,6 +405,7 @@ export function useMapLayers(
     set(SRC.water, bundle.water ?? EMPTY);
     set(SRC.flood, bundle.flood ?? EMPTY);
     set(SRC.scars, bundle.scars ?? EMPTY);
+    set(SRC.zones, bundle.zones ?? EMPTY);
     set(SRC.muni, bundle.municipalities ?? EMPTY);
     set(SRC.catalog, bundle.catalog ?? EMPTY);
     set(SRC.places, bundle.places ?? EMPTY);
@@ -423,15 +441,16 @@ export function useMapLayers(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, bundle, dayIndex, layers, showFlood, tab, activePng]);
 
-  // Priority-zone HTML markers.
+  // Priority-zone HTML markers — top 10 by rank, anchored at the polygon
+  // label point (real files are Polygons, not Points). The full set paints
+  // via the tp-zones fill/line layers above.
   useEffect(() => {
     if (!map) return;
-    markers.current = (bundle?.zones?.features ?? []).map((f) => {
-      const p = f.properties as PriorityZone;
-      const [lon, lat] = (f.geometry as GeoJSON.Point).coordinates;
-      const el = document.createElement("div");
-      el.className = "tp-zone-marker";
-      el.innerHTML = `
+    markers.current = rankedZonePoints(bundle?.zones?.features).map(
+      ({ zone: p, at }) => {
+        const el = document.createElement("div");
+        el.className = "tp-zone-marker";
+        el.innerHTML = `
         <div class="tp-zone-card">
           <div class="tp-zone-head">
             <span class="tp-zone-name">${p.name}</span>
@@ -440,10 +459,11 @@ export function useMapLayers(
           <div class="tp-zone-sub">${p.hazard}</div>
           <div class="tp-zone-sub">TPI ${p.tpi.toFixed(2)}</div>
         </div>`;
-      return new Marker({ element: el, anchor: "bottom" })
-        .setLngLat([lon, lat])
-        .addTo(map);
-    });
+        return new Marker({ element: el, anchor: "bottom" })
+          .setLngLat(at)
+          .addTo(map);
+      }
+    );
     return () => {
       markers.current.forEach((m) => m.remove());
       markers.current = [];

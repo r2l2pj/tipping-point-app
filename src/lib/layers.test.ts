@@ -528,3 +528,102 @@ describe("resolvePixelValues", () => {
     expect(px).toBeNull();
   });
 });
+
+describe("zoneLabelPoint / rankedZonePoints", () => {
+  const zone = (rank: number) => ({
+    rank,
+    name: `z${rank}`,
+    tpi: 0.7,
+    class: "Critical",
+    hazard: "landslide",
+    area_km2: 1,
+    people: 10,
+  });
+  const square = (x: number, y: number, s: number) => [
+    [x, y],
+    [x + s, y],
+    [x + s, y + s],
+    [x, y + s],
+    [x, y],
+  ];
+  const feat = (geometry: unknown, props: Record<string, unknown> = {}) =>
+    ({ type: "Feature", geometry, properties: { ...zone(1), ...props } }) as never;
+
+  test("Point uses its own coordinates", async () => {
+    const { zoneLabelPoint } = await import("./layers");
+    expect(
+      zoneLabelPoint(feat({ type: "Point", coordinates: [-51.5, -30.2] }))
+    ).toEqual([-51.5, -30.2]);
+  });
+
+  test("Polygon anchors at the centroid of its exterior ring", async () => {
+    const { zoneLabelPoint } = await import("./layers");
+    // 2x2 square at (-51, -30) -> centroid (-50, -29); inner ring ignored
+    const geom = {
+      type: "Polygon",
+      coordinates: [square(-51, -30, 2), square(-51.5, -30.5, 1)],
+    };
+    const at = zoneLabelPoint(feat(geom));
+    expect(at?.[0]).toBeCloseTo(-50, 6);
+    expect(at?.[1]).toBeCloseTo(-29, 6);
+  });
+
+  test("MultiPolygon anchors at the LARGEST polygon's centroid", async () => {
+    const { zoneLabelPoint } = await import("./layers");
+    const geom = {
+      type: "MultiPolygon",
+      coordinates: [
+        [square(0, 0, 1)], // area 1
+        [square(-52, -31, 4)], // area 16 -> centroid (-50, -29)
+      ],
+    };
+    const at = zoneLabelPoint(feat(geom));
+    expect(at?.[0]).toBeCloseTo(-50, 6);
+    expect(at?.[1]).toBeCloseTo(-29, 6);
+  });
+
+  test("label_lon/label_lat properties win over geometry", async () => {
+    const { zoneLabelPoint } = await import("./layers");
+    const at = zoneLabelPoint(
+      feat(
+        { type: "Polygon", coordinates: [square(-51, -30, 2)] },
+        { label_lon: -49, label_lat: -28 }
+      )
+    );
+    expect(at).toEqual([-49, -28]);
+  });
+
+  test("non-finite or missing geometry returns null (feature skipped)", async () => {
+    const { zoneLabelPoint } = await import("./layers");
+    expect(zoneLabelPoint(feat(null))).toBeNull();
+    expect(
+      zoneLabelPoint(feat({ type: "Point", coordinates: [NaN, NaN] }))
+    ).toBeNull();
+    expect(
+      zoneLabelPoint(feat({ type: "Polygon", coordinates: [] }))
+    ).toBeNull();
+    expect(
+      zoneLabelPoint(
+        feat({ type: "Polygon", coordinates: [[[NaN, 0], [1, 0], [1, 1], [NaN, 0]]] })
+      )
+    ).toBeNull();
+  });
+
+  test("rankedZonePoints caps at max, sorts by rank, drops invalid", async () => {
+    const { rankedZonePoints } = await import("./layers");
+    const poly = (rank: number) =>
+      ({
+        type: "Feature",
+        geometry: { type: "Polygon", coordinates: [square(-51, -30, 1)] },
+        properties: zone(rank),
+      }) as never;
+    // 5000 polygon features like the real rs_2024 file, shuffled ranks
+    const features = Array.from({ length: 5000 }, (_, i) => poly(5000 - i));
+    features.push(feat(null, { rank: 0 })); // invalid, must be skipped
+    const pts = rankedZonePoints(features as never);
+    expect(pts.length).toBe(10);
+    expect(pts[0].zone.rank).toBe(1);
+    expect(pts[9].zone.rank).toBe(10);
+    expect(pts.every((p) => Number.isFinite(p.at[0]) && Number.isFinite(p.at[1]))).toBe(true);
+  });
+});
