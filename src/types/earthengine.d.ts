@@ -31,9 +31,50 @@ declare module "@google/earthengine" {
     opt_project?: string
   ): void;
 
+  // Result of ee.data.getMapId / Image.getMapId. Newer builds return
+  // camelCase urlFormat; older raw responses used url_format — accept both.
+  interface MapId {
+    mapid?: string;
+    token?: string;
+    urlFormat?: string;
+    url_format?: string;
+    image?: Image;
+  }
+
+  interface ImageVisualizationParams {
+    min?: number;
+    max?: number;
+    palette?: string[];
+    bands?: string[];
+    format?: "jpg" | "png";
+  }
+
+  interface List {
+    getInfo(callback: (data: unknown, error?: string) => void): void;
+  }
+
+  // The ee.Image chain ops this app uses; extend as needed.
+  interface Image {
+    select(band: string): Image;
+    gt(value: number): Image;
+    add(other: Image): Image;
+    updateMask(mask: Image): Image;
+    bandNames(): List;
+    visualize(params: ImageVisualizationParams): Image;
+    getMapId(callback: (id?: MapId, error?: string) => void): void;
+    getMapId(
+      visParams: ImageVisualizationParams,
+      callback: (id?: MapId, error?: string) => void
+    ): void;
+    getInfo(callback: (data: unknown, error?: string) => void): void;
+  }
+
+  function Image(id: string): Image;
+
   const ee: {
     data: typeof data;
     initialize: typeof initialize;
+    Image: typeof Image;
     [k: string]: unknown;
   };
   export = ee;
