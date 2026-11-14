@@ -105,7 +105,7 @@ function FreshnessPill({ updatedAt }: { updatedAt?: string }) {
         NOW · {label.toUpperCase()}
       </span>
       {stale && (
-        <span className="rounded border border-amber-700 px-2 py-1 text-[11px] text-amber-400">
+        <span className="rounded border border-amber-700 px-2 py-1 text-xs text-amber-400">
           showing last good data
         </span>
       )}

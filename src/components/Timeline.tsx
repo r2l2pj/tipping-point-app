@@ -63,7 +63,7 @@ export default function Timeline({
                   }`}
                 />
                 <span
-                  className={`absolute top-5 whitespace-nowrap text-[10px] font-semibold tracking-wide ${
+                  className={`absolute top-5 whitespace-nowrap text-xs font-semibold tracking-wide ${
                     isEvent
                       ? "rounded bg-red-600 px-1.5 py-0.5 text-white"
                       : activeHere
@@ -82,7 +82,7 @@ export default function Timeline({
 
       <div className="flex w-40 items-center justify-center gap-2 rounded-md border border-dashed border-zinc-600 px-2 py-2">
         <CloudIcon />
-        <div className="text-[10px] leading-tight text-zinc-400">
+        <div className="text-xs leading-tight text-zinc-400">
           <span className="font-semibold text-zinc-300">Forecast +72h</span>
           <br />(projection)
         </div>

@@ -1,9 +1,24 @@
 "use client";
 
-import { fmtDate, fmtKm2 } from "@/lib/tpi";
+import { canonicalCaseId } from "@/lib/contract";
+import { assetUrl, fmtDate } from "@/lib/layers";
+import { fmtKm2 } from "@/lib/tpi";
 import type { CaseBundle, NisarPass } from "@/lib/types";
+import SwipeCompare from "../SwipeCompare";
 import NisarPassList from "./NisarPassList";
 import { StatCard } from "./Stat";
+
+type BBox = [number, number, number, number];
+
+const unionBounds = (a?: BBox, b?: BBox): BBox | undefined =>
+  a && b
+    ? [
+        Math.min(a[0], b[0]),
+        Math.min(a[1], b[1]),
+        Math.max(a[2], b[2]),
+        Math.max(a[3], b[3]),
+      ]
+    : (a ?? b);
 
 export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
   const dd = bundle.data_dates ?? {};
@@ -13,6 +28,30 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
     ? (dd.nisar_passes as NisarPass[])
     : null;
   const candidates = bundle.scars?.features.length;
+
+  const caseDir = canonicalCaseId(bundle.manifest?.event ?? bundle.id);
+  const ml = bundle.manifest?.layers ?? [];
+  const preLayer = ml.find((l) => l.id === "nisar_pre");
+  const postLayer = ml.find((l) => l.id === "nisar_post");
+  const preUrl = assetUrl(caseDir, preLayer?.png);
+  const postUrl = assetUrl(caseDir, postLayer?.png);
+  const swipe =
+    preLayer && postLayer && preUrl && postUrl
+      ? {
+          bounds:
+            unionBounds(preLayer.bounds, postLayer.bounds) ?? bundle.bbox,
+          before: {
+            url: preUrl,
+            label: `pre-event GCOV — ${fmtDate(preLayer.date ?? pre)}`,
+            bounds: preLayer.bounds,
+          },
+          after: {
+            url: postUrl,
+            label: `post-event GCOV — ${fmtDate(postLayer.date ?? post)}`,
+            bounds: postLayer.bounds,
+          },
+        }
+      : null;
 
   return (
     <div className="space-y-3">
@@ -40,7 +79,7 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
           {pre && post
             ? `${fmtDate(pre)} → ${fmtDate(post)}. `
             : "Awaiting a NISAR pair over the AOI. "}
-          The before/after swipe lands on the map in a follow-up.
+          {swipe && "Drag the divider below to compare."}
         </p>
       </div>
 
@@ -53,6 +92,21 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
       </div>
 
       {passes && <NisarPassList passes={passes} />}
+
+      {swipe && (
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-zinc-300">
+            NISAR before/after — drag to compare
+          </p>
+          <div className="h-56 overflow-hidden rounded-md border border-zinc-700">
+            <SwipeCompare
+              bounds={swipe.bounds}
+              before={swipe.before}
+              after={swipe.after}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,16 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapInstance } from "maplibre-gl";
-import type { CaseBundle } from "@/lib/types";
+import { fmtDate, type TabKey } from "@/lib/layers";
 import { TPI_CLASSES } from "@/lib/tpi";
+import type { CaseBundle } from "@/lib/types";
 import Header from "./Header";
 import LayersPanel from "./LayersPanel";
 import Map from "./Map";
 import { useMapLayers, type LayerState } from "./MapLayers";
-import SidePanel, { type TabKey } from "./SidePanel";
+import SidePanel from "./SidePanel";
 import Timeline from "./Timeline";
 
 const MAX_DATA_LAYERS = 2; // v3 viz rule
+
+const EXCLUSIVE_PARTNER: Partial<Record<keyof LayerState, keyof LayerState>> = {
+  tpiFlood: "tpiSlide",
+  tpiSlide: "tpiFlood",
+};
 
 export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
   const [activeId, setActiveId] = useState(cases[0]?.id ?? "");
@@ -28,13 +34,13 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
   const [tab, setTab] = useState<TabKey>("alert");
   const [map, setMap] = useState<MapInstance | null>(null);
   const [layers, setLayers] = useState<LayerState>({
-    tpiFlood: true,
+    tpiFlood: false,
     tpiSlide: true,
     imerg: false,
     smap: false,
     nisar: false,
   });
-  const enabledQueue = useRef<(keyof LayerState)[]>(["tpiFlood", "tpiSlide"]);
+  const enabledQueue = useRef<(keyof LayerState)[]>(["tpiSlide"]);
 
   // Playback loop.
   useEffect(() => {
@@ -50,7 +56,12 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
     setLayers((prev) => {
       const next = { ...prev, [key]: !prev[key] };
       if (next[key]) {
-        enabledQueue.current = [...enabledQueue.current.filter((k) => k !== key), key];
+        enabledQueue.current = [
+          ...enabledQueue.current.filter(
+            (k) => k !== key && k !== EXCLUSIVE_PARTNER[key]
+          ),
+          key,
+        ];
         while (enabledQueue.current.length > MAX_DATA_LAYERS) {
           const oldest = enabledQueue.current.shift()!;
           next[oldest] = false;
@@ -70,8 +81,8 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
       setDayIndex(Math.max(0, idx));
       setPlaying(false);
       setTab("alert");
-      setLayers({ tpiFlood: true, tpiSlide: true, imerg: false, smap: false, nisar: false });
-      enabledQueue.current = ["tpiFlood", "tpiSlide"];
+      setLayers({ tpiFlood: false, tpiSlide: true, imerg: false, smap: false, nisar: false });
+      enabledQueue.current = ["tpiSlide"];
     },
     [cases]
   );
@@ -84,7 +95,7 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
   }, [cases, selectCase]);
 
   const showFlood = tab === "radar";
-  const zones = useMapLayers(map, bundle, dayIndex, layers, showFlood);
+  const zones = useMapLayers(map, bundle, dayIndex, layers, showFlood, tab);
 
   if (!bundle) {
     return (
@@ -97,6 +108,16 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
   return (
     <div className="flex h-full flex-col bg-[#0b0e14] text-zinc-100">
       <Header cases={cases} activeId={activeId} onSelect={selectCase} onReplay={replay} />
+
+      {(bundle as CaseBundle & { fallback?: boolean }).fallback === true && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-amber-800/50 bg-amber-950/60 px-4 py-1 text-xs text-amber-200">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M6 1.5 11 9.7H1z" />
+            <path d="M6 4.3v2.4M6 8.4v.01" />
+          </svg>
+          Showing last saved data from {fmtDate(bundle.updated_at)}
+        </div>
+      )}
 
       <main className="flex min-h-0 flex-1">
         <div className="relative min-w-0 flex-1">
@@ -121,7 +142,7 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
         onPlayToggle={() => setPlaying((p) => !p)}
       />
 
-      <footer className="flex h-9 shrink-0 items-center gap-4 border-t border-zinc-800 bg-[#0b0e14] px-4 text-[10px] text-zinc-500">
+      <footer className="flex h-9 shrink-0 items-center gap-4 border-t border-zinc-800 bg-[#0b0e14] px-4 text-xs text-zinc-500">
         <span className="font-semibold text-zinc-400">TPI (Tipping Point Index) — Risk class</span>
         {TPI_CLASSES.map((c) => (
           <span key={c.key} className="flex items-center gap-1.5">
