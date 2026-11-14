@@ -19,6 +19,7 @@ export interface ManifestLayer {
   date?: string;
   png?: string;
   cog?: string;
+  asset?: string | null;
   bounds?: [number, number, number, number];
   legend?: string[] | "tpi" | "water" | "slides";
   type?: LayerType;

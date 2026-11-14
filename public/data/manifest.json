@@ -36,7 +36,8 @@
             -30.5,
             -50.5,
             -29.0
-          ]
+          ],
+          "asset": null
         },
         {
           "id": "tpi_slide",
@@ -264,7 +265,8 @@
             47.0,
             -121.5,
             48.5
-          ]
+          ],
+          "asset": null
         },
         {
           "id": "tpi_flood",
@@ -678,7 +680,8 @@
             -48.0,
             -22.5
           ],
-          "forecast": false
+          "forecast": false,
+          "asset": null
         },
         {
           "id": "tpi_slide_d1",
@@ -697,7 +700,8 @@
             -48.0,
             -22.5
           ],
-          "forecast": true
+          "forecast": true,
+          "asset": null
         },
         {
           "id": "tpi_slide_d2",
@@ -716,7 +720,8 @@
             -48.0,
             -22.5
           ],
-          "forecast": true
+          "forecast": true,
+          "asset": null
         },
         {
           "id": "tpi_slide_d3",
@@ -735,7 +740,8 @@
             -48.0,
             -22.5
           ],
-          "forecast": true
+          "forecast": true,
+          "asset": null
         },
         {
           "id": "tpi_flood_d0",
@@ -754,7 +760,8 @@
             -48.0,
             -22.5
           ],
-          "forecast": false
+          "forecast": false,
+          "asset": null
         },
         {
           "id": "tpi_flood_d1",
@@ -773,7 +780,8 @@
             -48.0,
             -22.5
           ],
-          "forecast": true
+          "forecast": true,
+          "asset": null
         },
         {
           "id": "tpi_flood_d2",
@@ -792,7 +800,8 @@
             -48.0,
             -22.5
           ],
-          "forecast": true
+          "forecast": true,
+          "asset": null
         },
         {
           "id": "tpi_flood_d3",
@@ -811,7 +820,8 @@
             -48.0,
             -22.5
           ],
-          "forecast": true
+          "forecast": true,
+          "asset": null
         }
       ],
       "products": {

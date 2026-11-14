@@ -27,8 +27,10 @@ map (fallback only).
 
 Each manifest layer renders as a MapLibre image source: `png` (EPSG:3857) +
 `bounds` [w,s,e,n]; `cog` is offered as a download link; `date` binds the
-layer to a timeline day. `legend` is a pt-BR array
-`[Baixo, Moderado, Alto, Crítico]` — the app maps classes by index 0-3.
+layer to a timeline day. `asset` is the full GEE asset id — the live path
+served via `/api/tiles`, with `png`/`cog` as the static fallback. `legend`
+is a pt-BR array `[Baixo, Moderado, Alto, Crítico]` — the app maps classes
+by index 0-3.
 
 | Layer id | App behavior |
 | --- | --- |
