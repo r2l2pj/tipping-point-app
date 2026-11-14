@@ -38,6 +38,17 @@ Vercel (repo is public — Hobby plan can deploy public org repos). `prebuild`
 runs the data sync, so committed `public/data` JSON is the deploy fallback.
 Live-data bucket (`DATA_BASE_URL`) + env vars: runbook in `docs/DEPLOY.md`.
 
+## Credentials
+
+Earthdata auth uses a bearer token: env var and GitHub secret
+`EARTHDATA_TOKEN` (the name earthaccess reads natively). Tokens expire
+~60 days — renew `EARTHDATA_TOKEN` before judging ends; the live cron
+(`now.yml`) fails loudly when the token dies. `EDL_USER`/`EDL_PASS`
+remain a local-only fallback, never in secrets.
+
+Full env list (`GCP_SA_KEY` canonical; `GEE_SERVICE_ACCOUNT_KEY` fallback):
+`docs/DEPLOY.md`.
+
 ## Replay forecast
 
 Replay cases run on a declared **"perfect forecast"**: observed IMERG is shown
