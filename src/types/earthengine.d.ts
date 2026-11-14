@@ -60,6 +60,7 @@ declare module "@google/earthengine" {
     gte(value: number): Image;
     add(other: Image): Image;
     updateMask(mask: Image): Image;
+    selfMask(): Image;
     bandNames(): List;
     visualize(params: ImageVisualizationParams): Image;
     getMapId(callback: (id?: MapId, error?: string) => void): void;

@@ -1,12 +1,14 @@
 // Live GEE tiles: GET /api/tiles?layer=tpi_slide&case=rs-2024-05&date=2024-05-01
-// → { tiles: [urlFormat], expires_at }. 503 when no service-account key is
-// configured; 404 when the case asset or date band doesn't exist.
+// → { tiles: [urlFormat], expires_at, data_date, layer, case, date }. 503
+// when no service-account key is configured or an EE roundtrip times out;
+// 404 when the case asset or date band doesn't exist.
 import { credentialEnv } from "@/lib/ee";
 import {
   CredsError,
   getTiles,
   TILE_LAYERS,
   TileNotFoundError,
+  TileServiceError,
   type TileLayer,
 } from "@/lib/ee-tiles";
 
@@ -47,6 +49,12 @@ export async function GET(request: Request) {
     );
   } catch (err) {
     if (err instanceof CredsError) {
+      return Response.json(
+        { error: "gee unavailable", reason: err.message },
+        { status: 503 }
+      );
+    }
+    if (err instanceof TileServiceError && err.message.startsWith("timeout")) {
       return Response.json(
         { error: "gee unavailable", reason: err.message },
         { status: 503 }
