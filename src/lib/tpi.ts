@@ -114,6 +114,84 @@ function hash(i: number, j: number) {
   return x - Math.floor(x);
 }
 
+// --- v4 PNG-layer helpers -------------------------------------------------
+
+// MapLibre image-source corner order: top-left, top-right, bottom-right,
+// bottom-left. Manifest `bounds` are [w, s, e, n] (EPSG:4326; PNGs are
+// rendered in EPSG:3857 and reprojected by MapLibre).
+export function boundsToImageCoordinates(
+  b: [number, number, number, number]
+): [[number, number], [number, number], [number, number], [number, number]] {
+  const [w, s, e, n] = b;
+  return [
+    [w, n],
+    [e, n],
+    [e, s],
+    [w, s],
+  ];
+}
+
+// Manifest png/cog paths are relative to the data root (gs://tipping-point-data),
+// which the app serves at /data. Accept absolute URLs unchanged.
+export function resolveDataUrl(p: string): string {
+  return p.startsWith("http") || p.startsWith("/") ? p : `/data/${p}`;
+}
+
+export function bboxPolygon(
+  b: [number, number, number, number]
+): GeoJSON.FeatureCollection {
+  const [w, s, e, n] = b;
+  return {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: {},
+        geometry: {
+          type: "Polygon",
+          coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]],
+        },
+      },
+    ],
+  };
+}
+
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
+// Approximate R/S/T component scores for a TPI value on a given day.
+// v4: TPI = (R·S·T)^(1/3). With only daily aggregates in the mock bundle we
+// take R from IMERG vs the P95 climatology, S from SMAP soil wetness, and
+// back out T so the geomean equals v. Illustrative, not pixel-exact.
+export function rstFor(
+  day: { imerg_mm: number; smap: number } | undefined,
+  rainP95: number | undefined,
+  v: number
+): { r: number; s: number; t: number } {
+  const r = day ? clamp01(day.imerg_mm / (rainP95 || 60)) : v;
+  const s = day ? clamp01(day.smap) : v;
+  const t = clamp01(
+    Math.pow(Math.max(v, 0.001), 3) / Math.max(r * s, 0.001)
+  );
+  return { r, s, t };
+}
+
+// Nearest named place (city/town, not rivers) to a click — mock proxy for the
+// município lookup in the v4 click spec.
+export function nearestPlace(
+  places: GeoJSON.FeatureCollection | undefined,
+  lon: number,
+  lat: number
+): string | undefined {
+  let best: { name: string; d: number } | undefined;
+  for (const f of places?.features ?? []) {
+    if (f.geometry.type !== "Point" || f.properties?.kind === "river") continue;
+    const [fx, fy] = f.geometry.coordinates;
+    const d = Math.hypot(fx - lon, (fy - lat) * Math.cos((lat * Math.PI) / 180));
+    if (!best || d < best.d) best = { name: String(f.properties?.name ?? ""), d };
+  }
+  return best?.name || undefined;
+}
+
 export function fmtKm2(v?: number) {
   return v == null ? "—" : `${v.toFixed(1)} km²`;
 }

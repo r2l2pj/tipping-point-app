@@ -89,6 +89,20 @@ body {
   color: #a1a1aa;
 }
 
+/* "Forecast" label pinned over forecast frames (v4: predicted data is
+   always hatched and labelled, never confused with observed). */
+.tp-forecast-label {
+  border: 1px dashed rgba(255, 255, 255, 0.55);
+  border-radius: 4px;
+  background: rgba(13, 17, 23, 0.85);
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #e8eaed;
+  pointer-events: none;
+}
+
 /* Thin scrollbars for the side panel. */
 ::-webkit-scrollbar {
   width: 8px;

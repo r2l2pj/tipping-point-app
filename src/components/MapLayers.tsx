@@ -1,10 +1,24 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Map as MapInstance } from "maplibre-gl";
+import type {
+  ImageSource,
+  Map as MapInstance,
+  MapMouseEvent,
+} from "maplibre-gl";
 import { Marker, Popup } from "maplibre-gl";
-import type { CaseBundle, PriorityZone } from "@/lib/types";
-import { mockScalarGrid, mockTpiGrid, fmtDate } from "@/lib/tpi";
+import type { CaseBundle, DayPoint, PriorityZone } from "@/lib/types";
+import {
+  bboxPolygon,
+  boundsToImageCoordinates,
+  fmtDate,
+  mockScalarGrid,
+  mockTpiGrid,
+  nearestPlace,
+  resolveDataUrl,
+  rstFor,
+  tpiClass,
+} from "@/lib/tpi";
 
 // Layer order per project doc v3 (bottom -> top):
 // basemap > hillshade > TPI/forecast > permanent water > confirmed flood >
@@ -20,6 +34,8 @@ export interface LayerState {
 const SRC = {
   dem: "tp-dem",
   tpi: "tp-tpi",
+  tpiImg: "tp-tpi-img",
+  fcast: "tp-fcast",
   imerg: "tp-imerg",
   smap: "tp-smap",
   nisar: "tp-nisar",
@@ -35,8 +51,10 @@ const LYR = {
   smap: "tp-smap-fill",
   nisar: "tp-nisar-fill",
   tpi: "tp-tpi-fill",
+  tpiRaster: "tp-tpi-raster",
   tpiCritical: "tp-tpi-critical-line",
   tpiHatch: "tp-tpi-hatch",
+  fcastHatch: "tp-fcast-hatch",
   waterFill: "tp-water-fill",
   river: "tp-river-line",
   floodFill: "tp-flood-fill",
@@ -61,8 +79,19 @@ export function useMapLayers(
   showFlood: boolean
 ) {
   const markers = useRef<Marker[]>([]);
+  const fcastMarker = useRef<Marker | null>(null);
+  const state = useRef<{ bundle?: CaseBundle; day?: DayPoint }>({});
   const day = bundle?.series?.days[dayIndex];
   const isForecast = day?.kind === "forecast";
+
+  // v4 image-source contract: when the manifest carries a pre-rendered
+  // EPSG:3857 PNG for this day, show it as a raster layer; the synthetic
+  // mockTpiGrid is only the fallback when no PNG exists.
+  const pngLayers = (bundle?.manifest?.layers ?? []).filter((l) => l.png);
+  const wanted = layers.tpiSlide ? "slide" : layers.tpiFlood ? "flood" : null;
+  const candidates = day ? pngLayers.filter((l) => l.date === day.date) : [];
+  const activePng =
+    candidates.find((l) => wanted && l.id.includes(wanted)) ?? candidates[0];
   const scale = day
     ? Math.max(0.15, day.tpi / (bundle?.series?.tpi_threshold ?? 0.6) / 1.3)
     : 1;
@@ -81,6 +110,7 @@ export function useMapLayers(
 
     map.addSource(SRC.dem, { type: "raster-dem", tiles: [TERRAIN], encoding: "terrarium", tileSize: 256, maxzoom: 12 });
     map.addSource(SRC.tpi, { type: "geojson", data: EMPTY });
+    map.addSource(SRC.fcast, { type: "geojson", data: EMPTY });
     map.addSource(SRC.imerg, { type: "geojson", data: EMPTY });
     map.addSource(SRC.smap, { type: "geojson", data: EMPTY });
     map.addSource(SRC.nisar, { type: "geojson", data: EMPTY });
@@ -109,6 +139,9 @@ export function useMapLayers(
         },
         layout: {} },
       { id: LYR.tpiHatch, type: "fill", source: SRC.tpi,
+        paint: { "fill-pattern": "tp-hatch", "fill-opacity": 0.35 },
+        layout: { visibility: "none" } },
+      { id: LYR.fcastHatch, type: "fill", source: SRC.fcast,
         paint: { "fill-pattern": "tp-hatch", "fill-opacity": 0.35 },
         layout: { visibility: "none" } },
       { id: LYR.tpiCritical, type: "line", source: SRC.tpi,
@@ -163,7 +196,9 @@ export function useMapLayers(
     }
 
     return () => {
+      fcastMarker.current?.remove();
       for (const l of layers) if (map.getLayer(l.id)) map.removeLayer(l.id);
+      if (map.getLayer(LYR.tpiRaster)) map.removeLayer(LYR.tpiRaster);
       for (const s of Object.values(SRC)) if (map.getSource(s)) map.removeSource(s);
       if (map.hasImage("tp-hatch")) map.removeImage("tp-hatch");
     };
@@ -173,13 +208,56 @@ export function useMapLayers(
   // Mutate data + visibility when state changes.
   useEffect(() => {
     if (!map || !bundle) return;
+    state.current = { bundle, day };
     const set = (s: string, d: GeoJSON.FeatureCollection) =>
       (map.getSource(s) as { setData?: (x: GeoJSON.FeatureCollection) => void } | undefined)?.setData?.(d);
     const vis = (id: string, on: boolean) => {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
     };
 
-    set(SRC.tpi, mockTpiGrid(bundle.bbox, hotspots, scale));
+    const tpiOn = layers.tpiFlood || layers.tpiSlide;
+    const usePng = tpiOn && !!activePng;
+
+    // Image source for the day's PNG frame (created lazily — MapLibre image
+    // sources need url+coordinates up front; the raster layer sits below
+    // permanent water per the v4 layer order).
+    const img = map.getSource(SRC.tpiImg) as ImageSource | undefined;
+    if (activePng) {
+      const b = activePng.bounds ?? bundle.bbox;
+      const spec = {
+        url: resolveDataUrl(activePng.png!),
+        coordinates: boundsToImageCoordinates(b),
+      };
+      if (img) img.updateImage(spec);
+      else {
+        map.addSource(SRC.tpiImg, { type: "image", ...spec });
+        map.addLayer(
+          {
+            id: LYR.tpiRaster,
+            type: "raster",
+            source: SRC.tpiImg,
+            paint: { "raster-opacity": 0.9 },
+            layout: { visibility: "none" },
+          } as never,
+          LYR.waterFill
+        );
+      }
+      // v4: forecast frames never look like observed — 50% opacity + hatch +
+      // label (observed frames keep full-strength palette).
+      map.setPaintProperty(
+        LYR.tpiRaster,
+        "raster-opacity",
+        isForecast ? 0.5 : 0.9
+      );
+    }
+
+    set(SRC.tpi, usePng ? EMPTY : mockTpiGrid(bundle.bbox, hotspots, scale));
+    set(
+      SRC.fcast,
+      usePng && isForecast
+        ? bboxPolygon(activePng!.bounds ?? bundle.bbox)
+        : EMPTY
+    );
     set(SRC.imerg, mockScalarGrid(bundle.bbox, dayIndex + 1, scale));
     set(SRC.smap, mockScalarGrid(bundle.bbox, dayIndex + 9, scale));
     set(SRC.nisar, mockScalarGrid(bundle.bbox, dayIndex + 17, scale));
@@ -188,10 +266,11 @@ export function useMapLayers(
     set(SRC.scars, bundle.scars ?? EMPTY);
     set(SRC.places, bundle.places ?? EMPTY);
 
-    const tpiOn = layers.tpiFlood || layers.tpiSlide;
-    vis(LYR.tpi, tpiOn);
-    vis(LYR.tpiCritical, tpiOn);
-    vis(LYR.tpiHatch, tpiOn && isForecast);
+    vis(LYR.tpiRaster, usePng);
+    vis(LYR.tpi, tpiOn && !usePng);
+    vis(LYR.tpiCritical, tpiOn && !usePng);
+    vis(LYR.tpiHatch, tpiOn && isForecast && !usePng);
+    vis(LYR.fcastHatch, usePng && isForecast);
     vis(LYR.imerg, layers.imerg);
     vis(LYR.smap, layers.smap);
     vis(LYR.nisar, layers.nisar);
@@ -199,8 +278,25 @@ export function useMapLayers(
     vis(LYR.floodLine, showFlood);
     vis(LYR.scarsFill, showFlood || layers.nisar);
     vis(LYR.scarsLine, showFlood || layers.nisar);
+
+    // "Forecast" label — pinned to the top edge of the frame on any
+    // forecast day, PNG or mock (v4: previsão sempre rotulada).
+    if (!fcastMarker.current) {
+      const el = document.createElement("div");
+      el.className = "tp-forecast-label";
+      el.textContent = "FORECAST";
+      fcastMarker.current = new Marker({ element: el, anchor: "top" });
+    }
+    if (tpiOn && isForecast) {
+      const b = activePng?.bounds ?? bundle.bbox;
+      fcastMarker.current
+        .setLngLat([(b[0] + b[2]) / 2, b[3]])
+        .addTo(map);
+    } else {
+      fcastMarker.current.remove();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, bundle, dayIndex, layers, showFlood]);
+  }, [map, bundle, dayIndex, layers, showFlood, activePng]);
 
   // Priority-zone HTML markers.
   useEffect(() => {
@@ -229,30 +325,56 @@ export function useMapLayers(
     };
   }, [map, bundle]);
 
-  // Click on a TPI cell -> popup with class, TPI and data dates (v3 spec).
+  // Click on a TPI frame -> popup with place name, TPI class, R/S/T values
+  // and the data date (v4 spec). Works on both the mock grid (per-cell values)
+  // and PNG raster frames (day-level values).
   useEffect(() => {
-    if (!map || !bundle) return;
+    if (!map) return;
     const popup = new Popup({ closeButton: false, className: "tp-popup" });
-    const onClick = (e: { features?: { properties?: Record<string, unknown> }[]; lngLat: { lng: number; lat: number } }) => {
-      const p = e.features?.[0]?.properties;
-      if (!p) return;
-      const dd = bundle?.data_dates ?? {};
+    const visible = (id: string) =>
+      map.getLayer(id) &&
+      map.getLayoutProperty(id, "visibility") === "visible";
+    const onClick = (e: MapMouseEvent) => {
+      const { bundle: b, day: d } = state.current;
+      if (!b) return;
+      let cls: string;
+      let v: number;
+      if (visible(LYR.tpi)) {
+        const feats = map.queryRenderedFeatures(e.point, {
+          layers: [LYR.tpi],
+        });
+        const p = feats?.[0]?.properties;
+        if (!p) return;
+        cls = String(p.class);
+        v = Number(p.tpi);
+      } else if (visible(LYR.tpiRaster)) {
+        if (!d) return;
+        v = d.tpi;
+        cls = tpiClass(v).label;
+      } else {
+        return;
+      }
+      const { r, s, t } = rstFor(d, b.series?.rain_p95_mm, v);
+      const place = nearestPlace(b.places, e.lngLat.lng, e.lngLat.lat);
+      const dd = b.data_dates ?? {};
       popup
         .setLngLat(e.lngLat)
         .setHTML(
-          `<div class="tp-popup-body">
-            <strong>${p.class} risk</strong> · TPI ${Number(p.tpi).toFixed(2)}<br/>
-            <span>IMERG through ${fmtDate(String(dd.imerg ?? ""))} · SMAP ${fmtDate(String(dd.smap ?? ""))}</span>
-          </div>`
+          `<div class="tp-popup-body">` +
+            (place ? `<strong>${place}</strong><br/>` : "") +
+            `<strong>${cls} risk</strong> · TPI ${v.toFixed(2)}<br/>` +
+            `R ${r.toFixed(2)} · S ${s.toFixed(2)} · T ${t.toFixed(2)}<br/>` +
+            `<span>data ${d ? fmtDate(d.date) : "—"} · IMERG ${fmtDate(String(dd.imerg ?? ""))} · SMAP ${fmtDate(String(dd.smap ?? ""))}</span>` +
+          `</div>`
         )
         .addTo(map);
     };
-    map.on("click", LYR.tpi, onClick as never);
+    map.on("click", onClick as never);
     return () => {
-      map.off("click", LYR.tpi, onClick as never);
+      map.off("click", onClick as never);
       popup.remove();
     };
-  }, [map, bundle]);
+  }, [map]);
 
   return zones;
 }

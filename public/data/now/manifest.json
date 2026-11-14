@@ -1,23 +1,222 @@
 {
   "event": "now",
   "mode": "live",
-  "bounds": [-58.0, -34.0, -48.0, -22.5],
+  "bounds": [
+    -58.0,
+    -34.0,
+    -48.0,
+    -22.5
+  ],
   "updated_at": "2026-11-14T12:00:00Z",
   "data_dates": {
     "imerg": "2026-11-14T08:00:00Z",
     "smap": "2026-11-11",
     "geos_fp_issued": "2026-11-14T00:00:00Z",
     "nisar_passes": [
-      { "date": "2026-11-09", "track": "172D", "note": "post-event coverage pending" },
-      { "date": "2026-11-02", "track": "172D" }
+      {
+        "date": "2026-11-09",
+        "track": "172D",
+        "note": "post-event coverage pending"
+      },
+      {
+        "date": "2026-11-02",
+        "track": "172D"
+      }
     ]
   },
   "layers": [
-    { "id": "hillshade",       "type": "cog",     "path": "cog/hillshade_nasadem.tif",       "legend": "tpi", "source": "NASADEM", "date": "static" },
-    { "id": "tpi_slide_series","type": "cog",     "path": "cog/tpi_slide_series.tif",        "legend": "tpi", "source": "GEE: IMERG Early+SMAP L4+NASADEM", "bands": "one per day", "date": "2026-11-14" },
-    { "id": "tpi_forecast",    "type": "cog",     "path": "cog/tpi_forecast_series.tif",     "legend": "tpi", "source": "GEOS-FP forecast D+1..D+3", "bands": "one per day", "date": "2026-11-14" },
-    { "id": "permanent_water", "type": "geojson", "path": "geojson/permanent_water.geojson", "legend": "water", "source": "JRC Global Surface Water", "date": "2024" },
-    { "id": "imerg_smap_daily","type": "series",  "path": "series/imerg_smap_daily.json",    "source": "GPM IMERG Early · SMAP L4 · GEOS-FP", "date": "2026-11-14" },
-    { "id": "priority_zones",  "type": "geojson", "path": "geojson/priority_zones.geojson",  "legend": "tpi", "source": "TPI model output", "date": "2026-11-14" }
+    {
+      "id": "tpi",
+      "date": "2026-11-09",
+      "png": "now/png/tpi_20261109.png",
+      "cog": "now/cog/tpi_series.tif",
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "legend": [
+        "Low",
+        "Moderate",
+        "High",
+        "Critical"
+      ]
+    },
+    {
+      "id": "tpi",
+      "date": "2026-11-10",
+      "png": "now/png/tpi_20261110.png",
+      "cog": "now/cog/tpi_series.tif",
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "legend": [
+        "Low",
+        "Moderate",
+        "High",
+        "Critical"
+      ]
+    },
+    {
+      "id": "tpi",
+      "date": "2026-11-11",
+      "png": "now/png/tpi_20261111.png",
+      "cog": "now/cog/tpi_series.tif",
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "legend": [
+        "Low",
+        "Moderate",
+        "High",
+        "Critical"
+      ]
+    },
+    {
+      "id": "tpi",
+      "date": "2026-11-12",
+      "png": "now/png/tpi_20261112.png",
+      "cog": "now/cog/tpi_series.tif",
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "legend": [
+        "Low",
+        "Moderate",
+        "High",
+        "Critical"
+      ]
+    },
+    {
+      "id": "tpi",
+      "date": "2026-11-13",
+      "png": "now/png/tpi_20261113.png",
+      "cog": "now/cog/tpi_series.tif",
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "legend": [
+        "Low",
+        "Moderate",
+        "High",
+        "Critical"
+      ]
+    },
+    {
+      "id": "tpi",
+      "date": "2026-11-14",
+      "png": "now/png/tpi_20261114.png",
+      "cog": "now/cog/tpi_series.tif",
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "legend": [
+        "Low",
+        "Moderate",
+        "High",
+        "Critical"
+      ]
+    },
+    {
+      "id": "tpi_forecast",
+      "date": "2026-11-15",
+      "png": "now/png/tpi_forecast_20261115.png",
+      "cog": "now/cog/tpi_forecast_series.tif",
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "legend": [
+        "Low",
+        "Moderate",
+        "High",
+        "Critical"
+      ]
+    },
+    {
+      "id": "tpi_forecast",
+      "date": "2026-11-16",
+      "png": "now/png/tpi_forecast_20261116.png",
+      "cog": "now/cog/tpi_forecast_series.tif",
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "legend": [
+        "Low",
+        "Moderate",
+        "High",
+        "Critical"
+      ]
+    },
+    {
+      "id": "tpi_forecast",
+      "date": "2026-11-17",
+      "png": "now/png/tpi_forecast_20261117.png",
+      "cog": "now/cog/tpi_forecast_series.tif",
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "legend": [
+        "Low",
+        "Moderate",
+        "High",
+        "Critical"
+      ]
+    },
+    {
+      "id": "hillshade",
+      "type": "cog",
+      "path": "cog/hillshade_nasadem.tif",
+      "legend": "tpi",
+      "source": "NASADEM",
+      "date": "static"
+    },
+    {
+      "id": "permanent_water",
+      "type": "geojson",
+      "path": "geojson/permanent_water.geojson",
+      "legend": "water",
+      "source": "JRC Global Surface Water",
+      "date": "2024"
+    },
+    {
+      "id": "imerg_smap_daily",
+      "type": "series",
+      "path": "series/imerg_smap_daily.json",
+      "source": "GPM IMERG Early \u00b7 SMAP L4 \u00b7 GEOS-FP",
+      "date": "2026-11-14"
+    },
+    {
+      "id": "priority_zones",
+      "type": "geojson",
+      "path": "geojson/priority_zones.geojson",
+      "legend": "tpi",
+      "source": "TPI model output",
+      "date": "2026-11-14"
+    }
   ]
 }

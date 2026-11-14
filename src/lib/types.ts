@@ -1,7 +1,49 @@
 // Types matching data/SCHEMA.md in r2l2pj/tipping-point-data — keep in sync.
 // Additive v3 extensions (mode/data_dates/model/alerts) are marked optional.
 
-export type LayerType = "cog" | "geojson" | "series";
+export type LayerType = "cog" | "geojson" | "series" | "png";
+
+// v4 manifest layer: pre-rendered EPSG:3857 PNG for display + COG for
+// download/reproducibility. `bounds` [w,s,e,n] locates the PNG on the map.
+// Legacy v3 fields (type/path/source/bands) stay optional for data synced
+// from older pipeline output.
+export interface ManifestLayer {
+  id: string;
+  date?: string;
+  png?: string;
+  cog?: string;
+  bounds?: [number, number, number, number];
+  legend?: string[] | "tpi" | "water" | "slides";
+  type?: LayerType;
+  path?: string;
+  source?: string;
+  bands?: string;
+}
+
+export interface NisarPass {
+  date: string;
+  track: string;
+  note?: string;
+}
+
+export type DataDates = Record<string, string | null | NisarPass[]>;
+
+// v4 root manifest.json — the single contract between data and front:
+// { updated_at, cases: { <id>: { mode, bounds, layers, metrics, data_dates },
+//   now: { mode: "live", bounds, data_dates } } }
+export interface ManifestCase {
+  mode?: "replay" | "live";
+  bounds?: [number, number, number, number];
+  updated_at?: string;
+  data_dates?: DataDates;
+  layers?: ManifestLayer[];
+  metrics?: string;
+}
+
+export interface RootManifest {
+  updated_at?: string;
+  cases: Record<string, ManifestCase>;
+}
 
 export interface EventIndexEntry {
   id: string;
@@ -16,29 +58,13 @@ export interface EventsIndex {
   events: EventIndexEntry[];
 }
 
-export interface ManifestLayer {
-  id: string;
-  type: LayerType;
-  path: string;
-  legend?: "tpi" | "water" | "slides";
-  source?: string;
-  date?: string;
-  bands?: string;
-}
-
-export interface NisarPass {
-  date: string;
-  track: string;
-  note?: string;
-}
-
-// v3: mode + data_dates live on the manifest (per-case), not on events.json.
+// Resolved per-case manifest entry (v4 root manifest or legacy per-case file).
 export interface EventManifest {
   event: string;
   mode?: "replay" | "live";
   bounds?: [number, number, number, number];
   updated_at?: string;
-  data_dates?: Record<string, string | null | NisarPass[]>;
+  data_dates?: DataDates;
   layers: ManifestLayer[];
 }
 
@@ -113,7 +139,7 @@ export interface CaseBundle {
   bbox: [number, number, number, number];
   reference_date: string;
   updated_at?: string;
-  data_dates?: Record<string, string | null | NisarPass[]>;
+  data_dates?: DataDates;
   manifest?: EventManifest;
   metrics?: EventMetrics;
   series?: SeriesDaily;

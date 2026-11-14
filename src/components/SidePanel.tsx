@@ -104,6 +104,8 @@ function AlertTab({
 
       {bundle.series && <TpiChart series={bundle.series} dayIndex={dayIndex} />}
 
+      {bundle.mode === "live" && <LiveSources bundle={bundle} />}
+
       <div>
         <p className="mb-1.5 text-[11px] font-medium text-zinc-300">
           Priority zones (TPI ≥ 0.60)
@@ -185,24 +187,87 @@ function RadarTab({ bundle }: { bundle: CaseBundle }) {
         </div>
       )}
 
-      {passes && (
-        <div className="rounded-md border border-zinc-800 p-3">
-          <p className="mb-2 text-[11px] font-medium text-zinc-300">
-            Recent NISAR passes over the area
-          </p>
-          <ul className="space-y-1.5">
-            {passes.map((p, i) => (
-              <li key={i} className="flex items-center justify-between text-[11px] text-zinc-400">
-                <span>{fmtDate(p.date)} · track {p.track}</span>
-                {p.note && <span className="text-zinc-600">{p.note}</span>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {passes && <NisarPassList passes={passes} />}
     </div>
   );
 }
+
+// "Agora" fields from the now/ bundle (v4): updated-at, per-source data
+// dates and the recent NISAR pass list. km² critical / people exposed are
+// already in the banner; live TPI + D+1..D+3 are in the chart/timeline.
+function LiveSources({ bundle }: { bundle: CaseBundle }) {
+  const dd = bundle.data_dates ?? {};
+  const passes = Array.isArray(dd.nisar_passes)
+    ? (dd.nisar_passes as NisarPass[])
+    : null;
+  const rows = [
+    ["IMERG Early — rain", dd.imerg],
+    ["SMAP L4 — soil moisture", dd.smap],
+    ["GEOS-FP — forecast D+1 to D+3", dd.geos_fp_issued],
+  ] as const;
+
+  return (
+    <>
+      <div className="rounded-md border border-zinc-800 p-3">
+        <p className="mb-2 text-[11px] font-medium text-zinc-300">
+          Live data sources
+          {bundle.updated_at && (
+            <span className="font-normal text-zinc-500">
+              {" "}· updated {fmtDateTime(bundle.updated_at)}
+            </span>
+          )}
+        </p>
+        <ul className="space-y-1">
+          {rows.map(
+            ([label, v]) =>
+              typeof v === "string" && (
+                <li
+                  key={label}
+                  className="flex items-center justify-between text-[11px] text-zinc-400"
+                >
+                  <span>{label}</span>
+                  <span className="text-zinc-500">{fmtDate(v)}</span>
+                </li>
+              )
+          )}
+        </ul>
+      </div>
+      {passes && <NisarPassList passes={passes} />}
+    </>
+  );
+}
+
+function NisarPassList({ passes }: { passes: NisarPass[] }) {
+  return (
+    <div className="rounded-md border border-zinc-800 p-3">
+      <p className="mb-2 text-[11px] font-medium text-zinc-300">
+        Recent NISAR passes over the area
+      </p>
+      <ul className="space-y-1.5">
+        {passes.map((p, i) => (
+          <li key={i} className="flex items-center justify-between text-[11px] text-zinc-400">
+            <span>{fmtDate(p.date)} · track {p.track}</span>
+            {p.note && <span className="text-zinc-600">{p.note}</span>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const fmtDateTime = (iso: string) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return (
+    d.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "UTC",
+    }) + " UTC"
+  );
+};
 
 function ValidationTab({ bundle }: { bundle: CaseBundle }) {
   const m = bundle.metrics;
