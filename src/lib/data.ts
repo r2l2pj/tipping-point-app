@@ -35,12 +35,9 @@ import type {
 // public/data mocks — production stays on public/data.
 const dataDir = () =>
   process.env.DATA_FS_DIR ??
-  path.join(
-    process.cwd(),
-    ...(process.env.NODE_ENV === "test"
-      ? ["test", "fixtures", "public-data"]
-      : ["public", "data"])
-  );
+  (process.env.NODE_ENV === "test"
+    ? path.join(process.cwd(), "test", "fixtures", "public-data")
+    : path.join(process.cwd(), "public", "data"));
 
 export interface LoadedCaseBundle extends CaseBundle {
   // True when a remote read failed and at least one file came from disk —
@@ -125,7 +122,10 @@ async function fetchJson<T>(url: string): Promise<T | undefined> {
 
 async function readFs<T>(key: string): Promise<T | undefined> {
   try {
-    const raw = await readFile(path.join(dataDir(), key), "utf-8");
+    const raw = await readFile(
+      path.join(/*turbopackIgnore: true*/ dataDir(), key),
+      "utf-8"
+    );
     return JSON.parse(raw) as T;
   } catch {
     return undefined;
