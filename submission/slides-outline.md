@@ -35,7 +35,6 @@
 - WA Dec 2025 replay vs NISAR GCOV reference: **IoU X, F1 X** over **X km²** confirmed flooded
 - Early warning headline: **"Tipping Point would have warned X hours earlier"** (X = median) — P% of zones warned before the event
   - supporting line (footnote): "In replay, using only data available at the time, the index crossed Critical a median of X h (IQR A-B h) before mapped landslides (n = N)" (in replay; median, IQR A-B h, n = N)
-- and **D h before the first official warning** (placeholder — sourced timestamp pending)
 - RS replay (no radar — event predates NISAR; flood metrics vs OPERA/optical reference): IoU X, F1 X, median X h (IQR A-B h, n = N), P% warned
 - **Optical saw only X% of the scene in both events (X% cloud) — that is why radar**
 - *Visual:* Did we get it right? tab screenshot next to a small metrics table for both cases

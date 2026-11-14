@@ -22,7 +22,6 @@ One page: every public-facing sentence in the pack, where it appears, and which 
 | "Optical satellites were blind: ~X% cloud cover during the event" | slides-outline.md: slide 2 | X | awaiting Lucas |
 | "TPI = geometric mean of Rain · Soil · Terrain scores, each in [0,1]" + class bands | slides-outline.md: slide 3 | none | awaiting Lucas |
 | "WA Dec 2025 replay vs NISAR GCOV reference: IoU X, F1 X over X km² confirmed flooded" | slides-outline.md: slide 5 | X, X, X | awaiting Lucas |
-| "D h before the first official warning" | slides-outline.md: slide 5 | D (sourced timestamp pending) | awaiting Lucas |
 | "RS replay ... IoU X, F1 X, median X h (IQR A-B h, n = N), P% warned" | slides-outline.md: slide 5 | X, X, X, A, B, N, P | awaiting Lucas |
 | "Optical saw only X% of the scene in both events (X% cloud) — that is why radar" | slides-outline.md: slide 5 | X, X | awaiting Lucas |
 | "X people in critical areas + night-light drop P% (WA); X + P% (RS)" | slides-outline.md: slide 6 | X, P, X, P | awaiting Lucas |
@@ -34,6 +33,6 @@ One page: every public-facing sentence in the pack, where it appears, and which 
 - **A, B** — IQR bounds of lead time: lead-time pipeline (lead-analysis).
 - **N** — number of mapped landslides in the lead-time sample: lead-time pipeline.
 - **P** — zones warned before event / night-light drop %: metrics pipeline.
-- **D** — hours before the first official warning: needs a sourced official-warning timestamp.
+- **Official-warning comparison** — REMOVED from public copy: real deltas are negative (official forecast warnings preceded our observed-rain crossing: rs_2024 -31.2 h vs INMET aviso 2024-04-26T16:50Z; wa_2025 -71.8 h vs NWS watch 2025-12-06T00:10Z). Never claim earlier-than-official; the lead-time headline stays vs the damage anchor. Lucas decides whether the honest comparison is shown.
 - **U5** — RADAR before/after swipe component (slide 4 visual, demo beat 3).
 - **Copy approval** — Lucas reviews all of the above on the morning of 2026-11-15 (L18).
