@@ -38,7 +38,7 @@ bun run dev          # predev syncs ../tipping-point-data/data -> public/data
 
 Vercel (repo is public — Hobby plan can deploy public org repos). `prebuild`
 runs the data sync, so committed `public/data` JSON is the deploy fallback.
-Live-data bucket (`DATA_BASE_URL`) + env vars: runbook in `docs/DEPLOY.md`.
+Live-data fallback (`DATA_BASE_URL` -> `raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback`) + env vars: runbook in `docs/DEPLOY.md`.
 The `now.yml` live job refreshes data every 6 h; the stale-data warning
 threshold is 12 h. Everything runs on free tiers: GEE non-commercial,
 GitHub Actions, Vercel Hobby, Earthdata, Telegram Bot API, Neon free.
