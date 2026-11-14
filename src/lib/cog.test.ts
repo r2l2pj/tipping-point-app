@@ -206,7 +206,7 @@ describe("cogLayerUrl", () => {
     );
     expect(
       cogLayerUrl("gs://bucket/ev-1/cog/r.tif", "https://x", "ev-1")
-    ).toBe("https://storage.googleapis.com/bucket/ev-1/cog/r.tif");
+    ).toBe("https://x/ev-1/gs://bucket/ev-1/cog/r.tif");
     expect(cogLayerUrl("https://cdn/x.tif", "https://x", "ev-1")).toBe(
       "https://cdn/x.tif"
     );

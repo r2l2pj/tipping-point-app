@@ -72,4 +72,19 @@ Verification on `545e1dc` plus this documentation update:
 - `bun test`: exit 0; `247 pass`, `6 skip`, `0 fail`, `735 expect() calls`, `Ran 253 tests across 16 files. [2.43s]`. Credential-gated live GEE tests remain skipped.
 - `bun run lint --quiet && git diff --check && git diff --stat`: exit 0; no lint errors, clean diff check; only .env.example and docs/DEPLOY.md changed before this report update.
 
-No dependency changes, no push, no fallback-branch publishing operations. This unit documents the data-repo publish and subscriber setup contracts; it does not implement those pipelines, the database schema file, or provision services.
+## L10 review follow-up: remove legacy URI translation
+
+Starting SHA: `f4f1288` on `unit/l10store`. Lead authorized contract.ts, contract.test.ts, docs/app-contract.md and explicitly authorized expectation-only changes in layers.test.ts and cog.test.ts.
+
+- Removed resolveAsset's gs:// to storage.googleapis.com branch and its header comment; removed that mapping from docs/app-contract.md.
+- Updated contract test to assert gs and custom schemes both use the pre-existing generic base/caseDir/key behavior (with and without a base). This preserves all other scheme/path behavior rather than adding passthrough/undefined handling that did not exist.
+- Updated only the dependent mapping expectations/test title in layers.test.ts and cog.test.ts. No changes to layers.ts or cog.ts.
+- docs/PLAN.md untouched. Flagged the stale comment in layers.ts:110-112 to the lead; left it untouched per scope.
+
+Proof:
+
+- Before runtime edit, `bun test src/lib/contract.test.ts`: exit 1, `25 pass`, `1 fail`. New regression expected `.../now/gs://tp-data/now/summary.json`, received legacy translated `.../now/summary.json`.
+- After branch removal, `bun test`: exit 0; `247 pass`, `6 skip`, `0 fail`, `738 expect() calls`, `Ran 253 tests across 16 files. [3.52s]`.
+- `bun run lint --quiet && git diff --check && git diff --stat`: exit 0, no lint errors, diff check clean. Five authorized code/doc/test files changed before report update.
+
+No dependency changes, no push, no fallback-branch publishing operations. Subscriber runtime implementation remains outside this unit's scope.

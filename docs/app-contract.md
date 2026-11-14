@@ -158,6 +158,5 @@ Case-level or now-level string. UI labels via `forecastSourceLabel()`:
 ## Asset paths
 
 `resolveAsset(base, caseDir, path)`: null/empty → `undefined`; absolute
-http(s) passthrough; `gs://bucket/key` →
-`https://storage.googleapis.com/bucket/key`; otherwise `base/caseDir/key`
+http(s) passthrough; otherwise `base/caseDir/key`
 (keys already carrying the case dir are not doubled).

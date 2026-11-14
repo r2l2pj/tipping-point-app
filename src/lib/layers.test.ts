@@ -194,10 +194,10 @@ describe("pointInPolygons", () => {
 });
 
 describe("assetUrl", () => {
-  test("absolute and gs:// URLs pass through", () => {
+  test("http(s) URLs pass through; gs:// has no special handling", () => {
     expect(assetUrl("wa_2025", "https://x/y.png")).toBe("https://x/y.png");
     expect(assetUrl("wa_2025", "gs://bucket/key.png")).toBe(
-      "https://storage.googleapis.com/bucket/key.png"
+      "/data/wa_2025/gs://bucket/key.png"
     );
   });
 

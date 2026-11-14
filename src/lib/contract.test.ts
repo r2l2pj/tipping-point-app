@@ -251,10 +251,15 @@ describe("resolveAsset", () => {
     );
   });
 
-  test("gs:// urls map to storage.googleapis.com", () => {
-    expect(resolveAsset(base, "now", "gs://tp-data/now/summary.json")).toBe(
-      "https://storage.googleapis.com/tp-data/now/summary.json"
-    );
+  test("gs:// paths follow the same resolution as other unrecognized schemes", () => {
+    for (const scheme of ["gs", "custom"]) {
+      expect(resolveAsset(base, "now", `${scheme}://tp-data/now/summary.json`)).toBe(
+        `${base}/now/${scheme}://tp-data/now/summary.json`
+      );
+      expect(resolveAsset("", "now", `${scheme}://tp-data/now/summary.json`)).toBe(
+        `now/${scheme}://tp-data/now/summary.json`
+      );
+    }
   });
 
   test("absolute http(s) urls pass through", () => {

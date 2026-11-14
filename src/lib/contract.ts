@@ -253,7 +253,6 @@ export const canonicalCaseId = (id: string): string =>
 // Resolves a manifest path against the data base URL.
 // - null/undefined/""      -> undefined (asset absent)
 // - absolute http(s)://    -> passthrough
-// - gs://bucket/key        -> https://storage.googleapis.com/bucket/key
 // - bucket-relative key    -> base/caseDir/key; keys already starting with
 //   caseDir (root-manifest style, e.g. "wa-2025-12/png/...") are not doubled.
 export function resolveAsset(
@@ -263,9 +262,6 @@ export function resolveAsset(
 ): string | undefined {
   if (path == null || path === "") return undefined;
   if (/^https?:\/\//i.test(path)) return path;
-  if (path.startsWith("gs://")) {
-    return `https://storage.googleapis.com/${path.slice(5)}`;
-  }
   const cleanBase = base.replace(/\/+$/, "");
   const rel = path.replace(/^\.?\//, "");
   const dir = caseDir.replace(/^\/+|\/+$/g, "");
