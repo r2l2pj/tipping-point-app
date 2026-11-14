@@ -13,6 +13,7 @@ import type {
   ManifestLayer,
   PriorityZone,
 } from "@/lib/types";
+import type { CogRSTUrls } from "@/lib/cog";
 import { canonicalCaseId, forecastSourceLabel } from "@/lib/contract";
 import {
   assetUrl,
@@ -123,6 +124,8 @@ export function useMapLayers(
     day?: DayPoint;
     activePng?: ManifestLayer;
     caseDir?: string;
+    rstUrls?: CogRSTUrls;
+    bandOrder?: string[];
   }>({});
   const day = bundle?.series?.days[dayIndex];
 
@@ -280,7 +283,26 @@ export function useMapLayers(
   // Mutate data + visibility when state changes.
   useEffect(() => {
     if (!map || !bundle) return;
-    state.current = { bundle, day, activePng, caseDir };
+    // COG score layers the case publishes (contract: r_series / s_series
+    // daily multiband, t_slide / t_flood static terrain) — resolved to URLs
+    // for the popup pixel read. Band order for series COGs falls back to the
+    // timeline day dates when GDAL descriptions are absent.
+    const cogById = (id: string) =>
+      assetUrl(
+        caseDir,
+        bundle.manifest?.layers?.find((l) => l.id === id)?.cog
+      );
+    const rstUrls: CogRSTUrls = {
+      r: cogById("r_series"),
+      s: cogById("s_series"),
+      t: cogById(activePng?.id.includes("flood") ? "t_flood" : "t_slide"),
+    };
+    const bandOrder =
+      bundle.series?.days?.map((d) => d.date) ??
+      bundle.manifest?.layers
+        ?.filter((l) => l.id === activePng?.id && l.date)
+        .map((l) => l.date as string);
+    state.current = { bundle, day, activePng, caseDir, rstUrls, bandOrder };
     const set = (s: string, d: GeoJSON.FeatureCollection) =>
       (map.getSource(s) as { setData?: (x: GeoJSON.FeatureCollection) => void } | undefined)?.setData?.(d);
     const vis = (id: string, on: boolean) => {
@@ -459,7 +481,14 @@ export function useMapLayers(
       map.getLayer(id) &&
       map.getLayoutProperty(id, "visibility") === "visible";
     const onClick = (e: MapMouseEvent) => {
-      const { bundle: b, day: d, activePng: ap, caseDir: cd } = state.current;
+      const {
+        bundle: b,
+        day: d,
+        activePng: ap,
+        caseDir: cd,
+        rstUrls,
+        bandOrder,
+      } = state.current;
       if (!b) return;
       let v: number;
       if (visible(LYR.tpi)) {
@@ -509,6 +538,8 @@ export function useMapLayers(
         day: d,
         rainP95Mm: b.series?.rain_p95_mm,
         tpi: v,
+        bandOrder,
+        rstUrls,
       }).then((px) => {
         if (px && seq === clickSeq.current && popup.isOpen()) {
           popup.setHTML(html(px, "COG pixel read"));
@@ -517,6 +548,9 @@ export function useMapLayers(
     };
     map.on("click", onClick as never);
     return () => {
+      // Invalidate pending pixel reads — a promise that resolves after
+      // unmount must never write into a dead popup.
+      clickSeq.current += 1;
       map.off("click", onClick as never);
       popup.remove();
     };

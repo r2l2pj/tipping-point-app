@@ -1,6 +1,7 @@
 // Pure map-layer helpers — no maplibre import so the module stays testable
 // under `bun test` (node). The MapLibre glue lives in components/MapLayers.tsx.
 
+import { readCogPixel, readCogRST, type CogRSTUrls } from "./cog";
 import { resolveAsset } from "./contract";
 import { rstFor } from "./tpi";
 import type { DayPoint } from "./types";
@@ -198,21 +199,39 @@ export interface PixelValues {
   t: number;
 }
 
-// Seam for the real COG pixel reader (geotiff.js lands in src/lib separately
-// and swaps INSIDE this function — callers don't change). Until then: null
-// without a cog URL, else the rstFor() day-level approximation so the async
-// popup path is exercised end to end.
+// COG pixel seam for the click popup. Reads the TPI value out of the frame's
+// COG (multiband series resolve the band by ctx.day.date — GDAL DESCRIPTION
+// or the bandOrder day list); r/s/t come from the case's COG-only score
+// layers (r_series / s_series / t_slide / t_flood) when published.
+//
+// Contract: null without a cog URL or when the TPI read fails — the popup
+// then keeps the "day estimate" fallback. Partial r/s/t failures merge over
+// the estimate, so "COG pixel read" is only claimed when the TPI value is a
+// real range-read.
 export async function resolvePixelValues(
   cogUrl: string | undefined,
   lon: number,
   lat: number,
-  ctx?: { day?: DayPoint; rainP95Mm?: number; tpi?: number }
+  ctx?: {
+    day?: DayPoint;
+    rainP95Mm?: number;
+    tpi?: number;
+    bandOrder?: string[];
+    rstUrls?: CogRSTUrls;
+  }
 ): Promise<PixelValues | null> {
-  void lon;
-  void lat;
   if (!cogUrl) return null;
-  const tpi = ctx?.tpi ?? ctx?.day?.tpi;
-  if (tpi === undefined) return null;
-  const { r, s, t } = rstFor(ctx?.day, ctx?.rainP95Mm, tpi);
-  return { tpi, r, s, t };
+  const opts = { date: ctx?.day?.date, bandOrder: ctx?.bandOrder };
+  const tpi = await readCogPixel(cogUrl, lon, lat, opts);
+  if (tpi === null) return null;
+
+  const est = rstFor(
+    ctx?.day,
+    ctx?.rainP95Mm,
+    ctx?.tpi ?? ctx?.day?.tpi ?? tpi
+  );
+  const { r, s, t } = ctx?.rstUrls
+    ? await readCogRST(ctx.rstUrls, lon, lat, opts)
+    : { r: null, s: null, t: null };
+  return { tpi, r: r ?? est.r, s: s ?? est.s, t: t ?? est.t };
 }

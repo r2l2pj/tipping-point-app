@@ -103,3 +103,38 @@ color for the COG download.
   side fills (products map); popup falls back to `nearestPlace` meanwhile.
 - Mock PNG paths still carry hyphen dirs while `caseDir` is canonical —
   expected until U3 lands the renamed folders; coded to the contract.
+
+## L5 wiring + review fix (follow-up on unit/u4)
+
+Rebased `unit/u4` onto `origin/main` (picked up `35b6c18` L5 COG reader,
+geotiff@3.0.5) + `bun install`.
+
+- **`resolvePixelValues` (src/lib/layers.ts)** now does the real read inside
+  the unchanged signature: `readCogPixel(cogUrl, lon, lat, {date:
+  ctx.day.date, bandOrder})` for the TPI value; `readCogRST(ctx.rstUrls, …)`
+  for components. `ctx` gained optional `bandOrder` (series day dates) and
+  `rstUrls` fields. Returns `null` when no cog URL or the TPI read fails —
+  the popup keeps the "day estimate" provenance; r/s/t partial failures
+  merge over the `rstFor` estimate, so "COG pixel read" is only claimed
+  when TPI is a real range-read.
+- **`MapLayers.tsx`** — builds `rstUrls` from manifest COG-only score
+  layers per SCHEMA.md: `r_series` / `s_series` (daily multiband) and
+  `t_slide` / `t_flood` (static terrain, picked by `activePng` id).
+  `bandOrder` = `series.days[].date`, falling back to the manifest date
+  list of the active layer id. Both are stashed in the click `state` ref.
+- **Review blocker fix** — the click effect's cleanup now does
+  `clickSeq.current += 1` before `popup.remove()`, so a pending
+  `resolvePixelValues` can never `setHTML` into a dead popup.
+- **`layers.test.ts`** — dropped the rstFor-approximation assertion; added
+  a hermetic range-server test (same trick as cog.test.ts) proving a real
+  banded read returns the pixel TPI with r/s/t merged over the estimate,
+  plus degradation tests (relative + unreachable URLs → null, TPI-fail →
+  null even with rst URLs).
+
+Proof after wiring:
+
+- `bun test src/lib/layers.test.ts` — **23 pass, 0 fail** (incl. real
+  range-read through geotiff).
+- `bunx eslint` on touched files — clean.
+- `bun run build` — **green** (sync-data no-op, 9/9 pages; fixed a
+  `GeotiffWriterMetadata` literal-type error via conditional spread).

@@ -1,6 +1,7 @@
 // @ts-expect-error -- bun:test resolves under `bun test`; bun-types isn't a
 // dependency so tsc can't see its types.
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import { globals, writeArrayBuffer } from "geotiff";
 
 import type { DayPoint } from "./types";
 import {
@@ -238,22 +239,103 @@ describe("BRT date formatting", () => {
   });
 });
 
-describe("resolvePixelValues", () => {
-  const day = { imerg_mm: 61, smap: 0.8, tpi: 0.7 } as DayPoint;
+// --- hermetic COG host -------------------------------------------------------
 
+// Same trick as cog.test.ts: geotiff's writer needs GDAL_METADATA (42112)
+// registered as ASCII to emit band descriptions.
+(globals.fieldTagTypes as Record<number, string>)[42112] = "ASCII";
+
+// bun-types isn't a dependency; declare the Bun.serve surface this test uses.
+declare const Bun: {
+  serve(options: {
+    port?: number;
+    fetch: (req: Request) => Response | Promise<Response>;
+  }): { port: number; stop(closeActiveConnections?: boolean): void };
+};
+
+// 4x2 EPSG:4326 grid, 0.5° pixels, top-left at lon -50 / lat -29
+// (lon in [-50,-48], lat in [-30,-29]). 2 bands = days 20260501/20260502;
+// pixel p on band b reads 0.1*b + p/100.
+const bandedTpi = () => {
+  const px = 8;
+  const data = new Float32Array(px * 2);
+  for (let p = 0; p < px; p++)
+    for (let b = 0; b < 2; b++) data[p * 2 + b] = 0.1 * b + p / 100;
+  const gdal = `<GDALMetadata><Item name="DESCRIPTION" sample="0" role="description">20260501</Item><Item name="DESCRIPTION" sample="1" role="description">20260502</Item></GDALMetadata>`;
+  return writeArrayBuffer(data, {
+    width: 4,
+    height: 2,
+    ModelPixelScale: [0.5, 0.5, 0],
+    ModelTiepoint: [0, 0, 0, -50, -29, 0],
+    GeographicTypeGeoKey: 4326,
+    ...{ GDAL_METADATA: gdal },
+  });
+};
+
+const servers: { stop(): void }[] = [];
+afterEach(() => {
+  while (servers.length) servers.pop()!.stop();
+});
+
+function serveCog(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  const server = Bun.serve({
+    port: 0,
+    fetch(req) {
+      const m = /bytes=(\d+)-(\d*)/.exec(req.headers.get("range") ?? "");
+      if (m) {
+        const start = Number(m[1]);
+        const end = m[2]
+          ? Math.min(Number(m[2]), bytes.length - 1)
+          : bytes.length - 1;
+        return new Response(bytes.slice(start, end + 1), {
+          status: 206,
+          headers: {
+            "Content-Range": `bytes ${start}-${end}/${bytes.length}`,
+            "Accept-Ranges": "bytes",
+          },
+        });
+      }
+      return new Response(bytes, { headers: { "Accept-Ranges": "bytes" } });
+    },
+  });
+  servers.push(server);
+  return `http://localhost:${server.port}/cog.tif`;
+}
+
+describe("resolvePixelValues", () => {
   test("no cog URL resolves to null", async () => {
     await expect(resolvePixelValues(undefined, 0, 0)).resolves.toBeNull();
   });
 
-  test("with a cog URL returns the day-level approximation for now", async () => {
-    const px = await resolvePixelValues("/data/x/cog.tif", -51, -30, {
-      day,
+  test("unreachable or relative COG URL degrades to null", async () => {
+    await expect(
+      resolvePixelValues("/data/x/cog.tif", -51, -30, { tpi: 0.7 })
+    ).resolves.toBeNull();
+    await expect(
+      resolvePixelValues("http://127.0.0.1:1/nope.tif", -51, -30)
+    ).resolves.toBeNull();
+  });
+
+  test("real COG read returns the banded TPI value; r/s/t merge over the estimate", async () => {
+    const url = serveCog(bandedTpi());
+    // lon -49.75 / lat -29.25 -> pixel (0,0) -> band 1 (2026-05-02) = 0.1
+    const px = await resolvePixelValues(url, -49.75, -29.25, {
+      day: { date: "2026-05-02", imerg_mm: 61, smap: 0.8, tpi: 0.7 } as DayPoint,
       rainP95Mm: 61,
       tpi: 0.7,
     });
-    expect(px?.tpi).toBe(0.7);
+    expect(px?.tpi).toBeCloseTo(0.1, 6);
+    // no rstUrls published -> r/s/t fall back to the day-level estimate
     expect(px?.r).toBe(1); // 61mm / p95 61mm
     expect(px?.s).toBe(0.8);
     expect(px?.t).toBeCloseTo(0.42875, 4);
+  });
+
+  test("a TPI read that hits nothing returns null even with rst URLs", async () => {
+    const px = await resolvePixelValues("http://127.0.0.1:1/nope.tif", -51, -30, {
+      rstUrls: { r: "http://127.0.0.1:1/r.tif" },
+    });
+    expect(px).toBeNull();
   });
 });
