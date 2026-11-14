@@ -91,7 +91,7 @@ function FreshnessPill({ updatedAt }: { updatedAt?: string }) {
           ? `Updated ${mins} min ago`
           : `Updated ${Math.round(mins / 60)} h ago`
       );
-      setStale(mins > 6 * 60); // pipeline runs every 3 h — flag after 6
+      setStale(mins > 12 * 60); // pipeline runs every 6 h — flag after 12
     };
     update();
     const t = setInterval(update, 60_000);
