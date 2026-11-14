@@ -1,12 +1,24 @@
 "use client";
 
+import { count } from "@/lib/contract";
 import { fmtKm2, fmtPct, fmtPeople } from "@/lib/tpi";
 import type { CaseBundle } from "@/lib/types";
 import { isMockDerived, pendingIncludes } from "./format";
 import { StatCard } from "./Stat";
 
-export default function ImpactTab({ bundle }: { bundle: CaseBundle }) {
+export default function ImpactTab({
+  bundle,
+  dayIndex,
+}: {
+  bundle: CaseBundle;
+  dayIndex?: number;
+}) {
   const m = bundle.metricsView;
+  // Same rule as the ALERT card: per-day values follow the selected
+  // timeline day; the metrics scalar (peak day) is the fallback.
+  const people =
+    count(bundle.series?.days[dayIndex ?? -1]?.people_critical) ??
+    m?.people_critical;
   return (
     <div className="space-y-3">
       {!m || pendingIncludes(bundle, "metrics") ? (
@@ -22,9 +34,9 @@ export default function ImpactTab({ bundle }: { bundle: CaseBundle }) {
         <div className="grid grid-cols-2 gap-2">
           <StatCard
             label="People in critical areas"
-            value={fmtPeople(m.people_critical)}
+            value={fmtPeople(people)}
             accent="red"
-            absent={m.people_critical == null}
+            absent={people == null}
           />
           <StatCard
             label="People flooded"

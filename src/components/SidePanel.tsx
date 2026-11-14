@@ -64,7 +64,7 @@ export default function SidePanel({
         )}
         {tab === "radar" && <RadarTab bundle={bundle} />}
         {tab === "validation" && <ValidationTab bundle={bundle} />}
-        {tab === "impact" && <ImpactTab bundle={bundle} />}
+        {tab === "impact" && <ImpactTab bundle={bundle} dayIndex={dayIndex} />}
       </div>
     </aside>
   );
