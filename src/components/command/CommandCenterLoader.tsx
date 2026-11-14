@@ -37,20 +37,28 @@ function liveRunTime(root: unknown): string | undefined {
 // Loads the case bundles and builds the alert list once, on the server, for
 // both routes (/ and /alerts). The alert list is built here because
 // candidatesToAlerts reads the clock when no issue time is given.
-async function Loaded({ basePath }: { basePath?: string }) {
+type Search = Promise<{ case?: string }> | undefined;
+
+async function Loaded({ basePath, searchParams }: { basePath?: string; searchParams?: Search }) {
+  const initialCase = (await searchParams)?.case;
   const [index, root] = await Promise.all([
     getEventsIndex().catch(() => null),
     getRootManifest().catch(() => undefined),
   ]);
-  const cases: CcBundle[] = [];
-  // A single bad case must not blank the whole screen: skip it.
-  for (const e of index?.events ?? []) {
-    const bundle: CcBundle | null = await getCaseBundle(e.id, e.title, e.bbox, e.reference_date).catch(() => null);
-    if (bundle) cases.push({ ...bundle, nullReasons: nullReasons(root, e.id) });
-  }
-  // Live case. No reference date is passed: the loader derives it from the
+  // All bundles load in parallel: a slow case must not serialize the page
+  // stream. A single bad case must not blank the whole screen: skip it.
+  // Live case: no reference date is passed, the loader derives it from the
   // data (manifest run time, data dates), never from a fixed date.
-  const now: CcBundle | null = await getCaseBundle("now", "Now — Southern Brazil", NOW_BBOX).catch(() => null);
+  const events = index?.events ?? [];
+  const [eventBundles, now] = await Promise.all([
+    Promise.all(events.map((e): Promise<CcBundle | null> =>
+      getCaseBundle(e.id, e.title, e.bbox, e.reference_date).catch(() => null))),
+    (getCaseBundle("now", "Now — Southern Brazil", NOW_BBOX) as Promise<CcBundle | null>).catch(() => null),
+  ]);
+  const cases: CcBundle[] = [];
+  eventBundles.forEach((bundle, i) => {
+    if (bundle) cases.push({ ...bundle, nullReasons: nullReasons(root, events[i].id) });
+  });
   // Run time of the live case: the `updated_at` of the live node itself. The
   // loader falls back to the root manifest time, which is the time of the
   // data snapshot and would make an empty live seed read as a fresh run.
@@ -69,11 +77,20 @@ async function Loaded({ basePath }: { basePath?: string }) {
       botUrl={process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || undefined}
       fontClass={fontClass}
       basePath={basePath}
+      initialCase={initialCase}
     />
   );
 }
 
-export default function CommandCenterLoader({ basePath }: { basePath?: string }) {
+// `searchParams` carries the `?case=<id|alias>` deep link (judge and demo
+// links): the screen opens on that case instead of Now.
+export default function CommandCenterLoader({
+  basePath,
+  searchParams,
+}: {
+  basePath?: string;
+  searchParams?: Search;
+}) {
   return (
     <Suspense
       fallback={
@@ -82,7 +99,7 @@ export default function CommandCenterLoader({ basePath }: { basePath?: string })
         </div>
       }
     >
-      <Loaded basePath={basePath} />
+      <Loaded basePath={basePath} searchParams={searchParams} />
     </Suspense>
   );
 }

@@ -101,6 +101,9 @@ export interface Stat {
 }
 
 export interface LeadTimeBlock {
+  // Set when the case has metrics and no lead time: the block shows this
+  // text and nothing else.
+  missing?: string;
   placeholder: boolean;
   median: string;
   iqr: string;
@@ -116,7 +119,7 @@ export interface Evidence {
   floodNote: string;
   modelTitle: string;
   modelStats: Stat[];
-  leadTime?: LeadTimeBlock; // hidden when the median is absent
+  leadTime?: LeadTimeBlock; // hidden when the case has no metrics at all
   whyRadar: string;
   featureImportance?: Record<string, number>;
   impactStats: Stat[];
@@ -130,8 +133,14 @@ const stat = (bundle: CcBundle, label: string, key: string, format: (v: unknown)
     : { label, value: missingText(availability(bundle, key)), missing: true };
 };
 
-function leadTimeBlock(m: M): LeadTimeBlock | undefined {
-  if (!finite(m.lead_time_median_h)) return undefined;
+function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
+  if (!bundle.metricsView) return undefined;
+  if (!finite(m.lead_time_median_h)) {
+    return {
+      missing: `Lead-time hindcast: ${missingText(availability(bundle, "lead_time_median_h"))} — IMERG latency-aware rerun not published for this case.`,
+      placeholder: false, median: "", iqr: "", shares: [], lines: [], histogram: undefined, note: "",
+    };
+  }
   const iqr = Array.isArray(m.lead_time_iqr_h) ? m.lead_time_iqr_h : [];
   const assumptions = m.lead_time_assumptions;
   const note = typeof assumptions === "string" ? assumptions
@@ -157,7 +166,7 @@ function leadTimeBlock(m: M): LeadTimeBlock | undefined {
   }
   return {
     placeholder: isPlaceholder(m),
-    median: `Median ${round(m.lead_time_median_h)} h before mapped landslides`,
+    median: `Tipping Point would have warned ${round(m.lead_time_median_h)} hours earlier`,
     iqr: `IQR ${round(iqr[0])}–${round(iqr[1])} h · n = ${round(m.n_points)}${precision ? ` · ${precision}` : ""}`,
     shares,
     lines,
@@ -184,7 +193,7 @@ export function evidence(bundle: CcBundle): Evidence {
       stat(bundle, "ML model AUC (XGBoost)", "rf_auc", fmtScore),
       stat(bundle, "Manual slope-rule AUC", "rule_auc", fmtScore),
     ],
-    leadTime: leadTimeBlock(m),
+    leadTime: leadTimeBlock(bundle, m),
     whyRadar: finite(cloud)
       ? `During the event the optical saw only ${Math.round((1 - cloud) * 100)}% of the scene — the rest was cloud. SAR sees through.`
       : "Cloud cover during the event is not reported for this case — SAR sees through either way.",

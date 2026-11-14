@@ -1,7 +1,7 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
-import { dataStatus, isSample, refreshHours, staleLimitMs } from "./dataStatus";
+import { dataStatus, refreshHours, staleLimitMs } from "./dataStatus";
 import { bundle, liveBundle, zones } from "./fixtures";
 
 describe("availability", () => {
@@ -40,6 +40,23 @@ describe("availability", () => {
   });
 });
 
+describe("availability of products the bundle does not carry", () => {
+  const wa = bundle({ products: { flood_confirmed: "wa_2025/geojson/flood_confirmed.geojson", landslide_candidates: null } as never });
+
+  test("a declared file is available; null and undeclared are not", () => {
+    expect(availability(wa, "flood_confirmed")).toEqual({ state: "ok" });
+    expect(availability(wa, "landslide_candidates").state).toBe("absent");
+    expect(availability(wa, "landslide_catalog").state).toBe("pending");
+    expect(availability(wa, "radar")).toEqual({ state: "ok" });
+  });
+
+  test("loading and missing states of a browser fetch", () => {
+    const declared = bundle({ products: { landslide_candidates: "x.geojson" } });
+    expect(missingText(availability({ ...declared, lazy: { landslide_candidates: "loading" } }, "landslide_candidates"))).toBe("loading");
+    expect(missingText(availability({ ...declared, lazy: { landslide_candidates: "missing" } }, "landslide_candidates"))).toBe("not published yet");
+  });
+});
+
 describe("dataStatus", () => {
   const t0 = Date.parse("2026-11-14T12:00:00Z");
   const live = (updated_at?: string) => liveBundle({ updated_at, summary: {} });
@@ -62,19 +79,11 @@ describe("dataStatus", () => {
     expect(dataStatus(live("2026-11-14T10:00:00Z")).kind).toBe("unknown-age");
   });
 
-  test("last saved data is not called sample", () => {
+  test("a fallback bundle is real last-saved data, with or without metrics", () => {
     const saved = bundle({ fallback: true, metricsView: { iou: 0.7 }, updated_at: "2026-11-14T10:00:00Z" });
     expect(dataStatus(saved, t0)).toEqual({ kind: "last-saved", date: "2026-11-14T10:00:00Z" });
-    expect(isSample(saved)).toBe(false);
-  });
-
-  test("sample only for a fallback bundle with neither metrics nor a summary", () => {
-    const shown = { series: { event: "x", reference_date: "2025-12-10", days: [] } };
-    expect(isSample(bundle({ fallback: true, ...shown }))).toBe(true);
-    expect(isSample(bundle(shown))).toBe(false);
-    // An empty saved bundle shows no values: last saved, not illustrative.
+    expect(dataStatus(bundle({ fallback: true })).kind).toBe("last-saved");
     expect(dataStatus(liveBundle({ fallback: true })).kind).toBe("last-saved");
-    expect(isSample(bundle({ fallback: true, summary: {}, ...shown }))).toBe(false);
   });
 
   test("a replay is never live or stale", () => {

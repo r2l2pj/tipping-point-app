@@ -8,7 +8,6 @@ export type DataStatusKind =
   | "stale"
   | "unknown-age"
   | "last-saved"
-  | "sample"
   // Replay bundle with a known run time. The design names five kinds and
   // defines them for the live run; a replay is never "live" or "stale".
   | "archive";
@@ -36,16 +35,10 @@ export function dataStatus(
   hours: number = refreshHours()
 ): DataStatus {
   const date = bundle.updated_at ?? bundle.dataDate;
-  if (bundle.fallback === true) {
-    // "Sample" needs something on screen that could be read as a result. An
-    // empty bundle (the live seed read from the saved copy) shows no values,
-    // so it is "last saved", not "illustrative".
-    const hasContent = Boolean(
-      bundle.series || bundle.zones?.features.length || bundle.manifest?.layers.length
-    );
-    if (!bundle.metricsView && !bundle.summary && hasContent) return { kind: "sample", date };
-    return { kind: "last-saved", date };
-  }
+  // A fallback bundle is real last-saved data (the repository holds no mock
+  // data since 2026-11-14), so there is no "sample" status and no
+  // "Illustrative demo data" label.
+  if (bundle.fallback === true) return { kind: "last-saved", date };
   if (!bundle.updated_at) return { kind: "unknown-age" };
   if (bundle.mode !== "live") return { kind: "archive", date: bundle.updated_at };
   const t = new Date(bundle.updated_at).getTime();
@@ -56,10 +49,6 @@ export function dataStatus(
   };
 }
 
-export const SAMPLE_LABEL = "Illustrative demo data";
-
-export const isSample = (bundle: CcBundle): boolean =>
-  dataStatus(bundle).kind === "sample";
 
 // Freshness text of the header. "live" is only said for a checked age.
 export function freshnessText(status: DataStatus, nowMs?: number): string {
@@ -74,8 +63,6 @@ export function freshnessText(status: DataStatus, nowMs?: number): string {
       return when ? `Unknown age · run ${when}` : "Unknown age · run time not published yet";
     case "last-saved":
       return `Showing last saved data from ${when ?? "an unknown date"}`;
-    case "sample":
-      return SAMPLE_LABEL;
     case "archive":
       return `Replay data · snapshot ${when}`;
   }
@@ -87,6 +74,5 @@ export const STATUS_WORD: Record<DataStatusKind, string> = {
   stale: "Stale data",
   "unknown-age": "Unknown age",
   "last-saved": "Last saved data",
-  sample: SAMPLE_LABEL,
   archive: "Replay data",
 };

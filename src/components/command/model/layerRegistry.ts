@@ -4,6 +4,7 @@
 // LayersPanel and toggleBudget(tab) / capToggleQueue for the new screen.
 import { manifestRaster, MAX_DATA_LAYERS } from "@/lib/layers";
 import { availability, missingText, NO_RADAR_TEXT } from "./availability";
+import { declared } from "./lazy";
 import { fmtDataDate, fmtDate } from "./format";
 import type { MapOverlays } from "./overlays";
 import { CANDIDATES_LABEL, floodLabels } from "./radar";
@@ -77,13 +78,24 @@ export function layerAvailable(bundle: CcBundle, id: LayerId, hazard: Hazard): b
     case "opera":
       return !!pngLayer(bundle, "opera_validation");
     case "flood":
-      return Boolean(bundle.flood?.features.length);
+      return hasProduct(bundle, bundle.flood, "flood_confirmed");
     case "candidates":
-      return Boolean(bundle.scars?.features.length);
+      return hasProduct(bundle, bundle.scars, "landslide_candidates");
     case "catalog":
-      return Boolean(bundle.catalog?.features.length);
+      return hasProduct(bundle, bundle.catalog, "landslide_catalog");
   }
 }
+
+// A vector product is there when the bundle carries features, or when the
+// bundle does not carry the file and the products map declares it (the map
+// fetches it by URL when the row is turned on).
+const hasProduct = (
+  bundle: CcBundle,
+  inline: GeoJSON.FeatureCollection | undefined,
+  key: string
+): boolean =>
+  inline ? inline.features.length > 0
+    : declared(bundle, key) && bundle.lazy?.[key as "landslide_candidates"] !== "missing";
 
 // Rows for a case. `stepDate` is the date of the selected step. Replay
 // evidence rows exist in Replay only.

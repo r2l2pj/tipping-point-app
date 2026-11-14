@@ -123,7 +123,7 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
       critical_area_with_damage_pct: 0.25, critical_area_km2: 40,
       anchor_precision: "mixed", lead_time_assumptions: { quality: "placeholder" },
     }) }));
-    for (const text of ["How early? (in replay)", "Median 30 h before mapped landslides",
+    for (const text of ["How early? (in replay)", "Tipping Point would have warned 30 hours earlier",
       "IQR 18–42 h · n = 12", "mixed-precision anchors", "Flagged before damage",
       "Warned &gt;= 24 h early", "Never crossed Critical", "80%", "60%", "20%",
       "vs first official warning: +6 h", "Event-level anchor lead: 24 h",
@@ -137,16 +137,21 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
 
   test("hours render whole — 47.5 shows as '48 h', never '47.5'", () => {
     const html = details(bundle({ metricsView: metrics({ lead_time_median_h: 47.5 }) }));
-    expect(html).toContain("Median 48 h before mapped landslides");
+    expect(html).toContain("Tipping Point would have warned 48 hours earlier");
+    expect(html).toContain("Median 48 h · IQR");
     expect(html).not.toContain("47.5");
   });
 
-  test("absent metrics or median hide the card; the row reads 'not published yet'", () => {
-    for (const m of [undefined, {}, { lead_time_median_h: null }]) {
+  test("absent median: the row and the card read 'not published yet'; no metrics hides the card", () => {
+    for (const m of [{}, { lead_time_median_h: null }]) {
       const html = details(bundle({ metricsView: mv(m as never) }));
-      expect(html).not.toContain("How early?");
+      expect(html).toContain("How early? (in replay)");
+      expect(html).toContain("Lead-time hindcast: not published yet");
       expect(html).toMatch(/data-check="lead-time".*?not published yet/);
     }
+    const none = details(bundle({ metricsView: undefined }));
+    expect(none).not.toContain("How early?");
+    expect(none).toMatch(/data-check="lead-time".*?not published yet/);
     const html = details(bundle({ metricsView: mv({ lead_time_median_h: 0 }) }));
     expect(html).toContain("IQR not reported–not reported h · n = not reported");
     expect(html).toContain("IMERG Early ~4 h");
@@ -308,14 +313,24 @@ describe("banned strings, both views", () => {
 describe("data status (M2, S23)", () => {
   const shown = { series: series([0.2]) };
 
-  test("'Illustrative demo data' hidden on real bundles", () => {
-    expect(render(bundle({ metricsView: FULL_METRICS, ...shown }))).not.toContain("Illustrative");
-    expect(render(liveBundle({ summary: { people_critical: 1200 } }))).not.toContain("Illustrative");
-    expect(render(bundle({ fallback: true, metricsView: FULL_METRICS, ...shown }))).not.toContain("Illustrative");
+  // main removed the "Illustrative demo data" marker: a fallback bundle is
+  // real last-saved data. The label is never shown.
+  test("'Illustrative demo data' is never shown", () => {
+    for (const b of [
+      bundle({ metricsView: FULL_METRICS, ...shown }),
+      liveBundle({ summary: { people_critical: 1200 } }),
+      bundle({ fallback: true, metricsView: FULL_METRICS, ...shown }),
+      bundle({ fallback: true, ...shown }),
+      bundle(shown),
+    ]) {
+      expect(render(b)).not.toContain("Illustrative");
+    }
   });
 
-  test("shown only when the bundle is sample-derived", () => {
-    expect(render(bundle({ fallback: true, ...shown }))).toContain("Illustrative demo data");
+  test("a bundle with neither metrics nor a summary reads 'not published yet'", () => {
+    const html = render(bundle(shown));
+    expect(html).toContain("not published yet");
+    expect(html).not.toContain("0.0 km²");
   });
 
   test("last saved data shows its date and is not called illustrative", () => {
@@ -329,6 +344,65 @@ describe("data status (M2, S23)", () => {
     expect(html).toContain("Unknown age");
     expect(html).not.toContain("Live ·");
     expect(render(liveBundle())).toContain("Unknown age · run time not published yet");
+  });
+});
+
+describe("pending states carried over from main (L14)", () => {
+  const withPending = (b: CcBundle, tokens: string[]): CcBundle => ({ ...b, pending: tokens });
+
+  test("pending tokens 'series' / 'priority_zones' force the neutral chip", () => {
+    const b = bundle({ series: series([0.9]) });
+    expect(render(b)).toContain("Tipping point reached");
+    for (const token of ["series", "priority_zones"]) {
+      const html = render(withPending(b, [token]));
+      expect(html).toContain("No data for this event");
+      expect(html).not.toContain("Tipping point reached");
+    }
+  });
+
+  test("pending token 'metrics' hides every metric value", () => {
+    const html = details(withPending(bundle({ metricsView: FULL_METRICS }), ["metrics"]));
+    expect(html).not.toContain("8,400");
+    expect(html).not.toContain("41.6 km²");
+    expect(html).toContain("Exposure basis");
+    const real = details(bundle({ metricsView: FULL_METRICS }));
+    expect(real).toContain("8,400");
+    expect(real).toContain("41.6 km²");
+  });
+
+  test("validation: missing fields read 'not published yet' next to real values", () => {
+    const html = details(bundle({ metricsView: mv({ iou: 0.5 }) }));
+    expect(html).toContain(">0.50<");
+    expect(html).toContain("not published yet");
+  });
+
+  test("radar: a NISAR pair without a flooded area shows the label and 'not published yet'", () => {
+    const html = render(bundle({ metricsView: mv({}), data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" } }));
+    expect(html).toMatch(/Flooded area \(NISAR\)<\/dt><dd[^>]*>not published yet/);
+    expect(render(bundle({ metricsView: mv({}) }))).not.toContain("Flooded area");
+  });
+
+  test("radar: scars absent is 'not published yet', empty scars is a real zero, the token wins", () => {
+    const label = /Landslide scar candidates \(HLS optical\)<\/dt><dd[^>]*>([^<]*)</;
+    expect(render(bundle({ metricsView: mv({}) })).match(label)![1]).toBe("not published yet");
+    expect(render(bundle({ metricsView: mv({}), scars: { type: "FeatureCollection", features: [] } })).match(label)![1]).toBe("0");
+    const tok = render(withPending(bundle({
+      metricsView: mv({}), scars: { type: "FeatureCollection", features: [point()] },
+    }), ["landslide_candidates"]));
+    expect(tok.match(label)![1]).toBe("not published yet");
+  });
+
+  test("now: an absent or pending summary shows no summary value; the source rows stay", () => {
+    const html = render(liveBundle());
+    for (const name of ["IMERG rain", "SMAP soil moisture", "GEOS-FP forecast"]) expect(html).toContain(name);
+    const tok = render(withPending(liveBundle({ summary: { people_critical: 1200, critical_km2: { any: 4 } } }), ["summary"]));
+    expect(tok).toContain("No live data yet");
+    expect(tok).not.toContain("1,200");
+  });
+
+  test("the boundary credit follows the case", () => {
+    expect(render(bundle())).toContain("US Census · Population");
+    expect(render(bundle({ id: "rs_2024" }))).toContain("IBGE");
   });
 });
 

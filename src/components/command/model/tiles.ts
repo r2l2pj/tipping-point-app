@@ -44,6 +44,11 @@ const finish = (
   };
 };
 
+// While only the trimmed inline zones are loaded the sum covers those zones
+// only, and the note says so.
+const zoneNote = (bundle: CcBundle, count: number): string =>
+  bundle.zonesTrimmed ? `in the ${count} top-ranked priority zones` : "in priority zones";
+
 export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: string): Tile {
   const label = "Critical area";
   if (bundle.mode === "live") {
@@ -61,7 +66,7 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
     ? known.reduce((acc, a) => acc + (a.areaKm2 as number), 0)
     : undefined;
   return finish(bundle, stepDate, label, sum, fmtKm2,
-    bundle.zones ? "critical_area_km2" : "priority_zones", "in priority zones");
+    bundle.zones ? "critical_area_km2" : "priority_zones", zoneNote(bundle, critical.length));
 }
 
 export function peopleTile(bundle: CcBundle, stepDate?: string): Tile {
@@ -77,7 +82,7 @@ export function peopleTile(bundle: CcBundle, stepDate?: string): Tile {
   const sum = critical.length > 0 && critical.every((a) => a.people !== null)
     ? critical.reduce((acc, a) => acc + (a.people as number), 0)
     : undefined;
-  return finish(bundle, stepDate, label, sum, fmtPeople, "people_critical", "in priority zones");
+  return finish(bundle, stepDate, label, sum, fmtPeople, "people_critical", zoneNote(bundle, critical.length));
 }
 
 // The zone snapshot has one date. Off that day the list is dimmed.

@@ -53,6 +53,28 @@ describe("layer rows", () => {
   });
 });
 
+describe("layer rows on the trimmed bundle (products by URL)", () => {
+  const trimmed = bundle({
+    manifest: manifest([frame("tpi_slide", "2025-12-10")]),
+    products: {
+      flood_confirmed: "wa_2025/geojson/flood_confirmed.geojson",
+      landslide_catalog: "wa_2025/geojson/landslide_catalog.geojson",
+      landslide_candidates: null,
+    } as never,
+  });
+
+  test("a declared product is available without the file in the bundle", () => {
+    const rows = layerRows(trimmed, ["tpi"], "slide");
+    expect(rows.filter((r) => r.available).map((r) => r.id)).toEqual(["tpi", "flood", "catalog"]);
+    expect(keepAvailable(trimmed, ["flood", "candidates"], "slide")).toEqual(["flood"]);
+  });
+
+  test("an undeclared product is not available (nothing is fetched for it)", () => {
+    const rows = layerRows(liveBundle(), [], "slide");
+    expect(rows.find((r) => r.id === "flood")!.available).toBe(false);
+  });
+});
+
 describe("layer budget", () => {
   test("at most two data layers after any sequence of toggles; the evicted layer is named", () => {
     const ids: LayerId[] = ["tpi", "imerg", "smap", "tml", "flood", "candidates", "catalog", "opera"];

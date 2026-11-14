@@ -5,12 +5,19 @@ import type { CaseBundle, NisarPass } from "@/lib/types";
 
 export type CcBundle = CaseBundle & {
   fallback?: boolean;
+  // First remote data base; lazy GeoJSON URLs are built from it.
+  assetBase?: string;
   dataDate?: string;
   tpiCuts?: readonly number[];
   nisarPasses?: NisarPass[];
   // `_null_reasons` of the case node in the root manifest. The loader in
   // src/lib does not carry it, so CommandCenterLoader attaches it.
   nullReasons?: Record<string, string>;
+  // Set by the screen while a GeoJSON product is being fetched in the
+  // browser, or when the fetch found no file (see model/lazy.ts).
+  lazy?: Partial<Record<"priority_zones" | "landslide_candidates", "loading" | "missing">>;
+  // True while `zones` is the trimmed inline copy (top 20 by rank).
+  zonesTrimmed?: boolean;
 };
 
 export type Hazard = "slide" | "flood";

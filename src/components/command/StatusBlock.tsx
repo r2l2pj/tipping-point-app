@@ -10,7 +10,7 @@ const TONE: Record<StatusChip["kind"], string> = {
   "no-data": "border-cc-line-strong bg-cc-well text-cc-muted",
 };
 
-// Status chip, one sentence, and the notice for saved or sample data.
+// Status chip, one sentence, and the notice for last-saved or stale data.
 export default function StatusBlock({
   chip,
   status,
@@ -41,7 +41,7 @@ export default function StatusBlock({
         </p>
       )}
       <p className="mt-1 text-[13px] text-cc-muted">{chip.sentence}</p>
-      {(status.kind === "last-saved" || status.kind === "sample" || status.kind === "stale") && (
+      {(status.kind === "last-saved" || status.kind === "stale") && (
         <p data-notice={status.kind} className="mt-1.5 flex items-center gap-1.5 rounded-md bg-cc-warn-soft px-2 py-1 text-xs font-semibold text-cc-warn">
           <Icon d={ICON.warn} size={14} /> {freshnessText(status)}
         </p>

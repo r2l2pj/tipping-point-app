@@ -13,6 +13,7 @@ import { availability, missingText } from "./model/availability";
 import { dataStatus, freshnessText } from "./model/dataStatus";
 import { fmtKm2 } from "./model/format";
 import { layerRows } from "./model/layerRegistry";
+import { caseDirOf, effectiveBundle, productUrl, withLazy, zonesAreTrimmed } from "./model/lazy";
 import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
 import { sourceRows } from "./model/sources";
@@ -32,6 +33,7 @@ import StatusBlock from "./StatusBlock";
 import Tiles from "./Tiles";
 import TimelineBar from "./TimelineBar";
 import TopBar, { type View } from "./TopBar";
+import { useGeo } from "./useGeo";
 
 export interface CommandCenterProps {
   cases: CcBundle[];
@@ -40,6 +42,8 @@ export interface CommandCenterProps {
   fontClass?: string;
   // Path prefix of the two routes ("" for / and /alerts).
   basePath?: string;
+  // `?case=<id|alias>` deep link: the case the screen opens on.
+  initialCase?: string;
 }
 
 // Browser clock, minute steps. Undefined on the server and during hydration,
@@ -74,6 +78,7 @@ export function CommandCenterView({
   alertList,
   botUrl,
   fontClass = "",
+  initialCase,
   view,
   onView,
   nowMs,
@@ -89,7 +94,7 @@ export function CommandCenterView({
     [cases]
   );
   const [state, dispatch] = useReducer(reducer, undefined, () => ({
-    ...initialState(cases),
+    ...initialState(cases, initialCase),
     ...initial,
   }));
   const [drawer, setDrawer] = useState(false); // Layers drawer, narrow screens
@@ -111,7 +116,18 @@ export function CommandCenterView({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const bundle = cases.find((c) => c.id === state.activeId);
+  // The loader sends a trimmed bundle: the full priority zones and the scar
+  // candidates are fetched here by URL (shared cache with the map hook). A
+  // pending token of the loader wins over any value.
+  const loaded = cases.find((c) => c.id === state.activeId);
+  const zonesUrl = loaded && zonesAreTrimmed(loaded) ? productUrl(loaded, "priority_zones") : undefined;
+  const scarsUrl = loaded && !loaded.scars ? productUrl(loaded, "landslide_candidates") : undefined;
+  const fullZones = useGeo(zonesUrl);
+  const scars = useGeo(scarsUrl);
+  const bundle = loaded && withLazy(effectiveBundle(loaded), {
+    zones: fullZones, zonesRequested: !!zonesUrl,
+    scars, scarsRequested: !!scarsUrl,
+  });
   const root = `cc-root flex min-h-screen flex-col min-[900px]:h-screen ${fontClass}`;
 
   if (!bundle) {
@@ -307,7 +323,8 @@ export function CommandCenterView({
       </TimelineBar>
 
       <footer className="shrink-0 px-5 pb-2 pt-1.5 text-xs text-cc-faint">
-        Data: NASA GPM · SMAP · NASADEM · NISAR · Basemap © CARTO © OpenStreetMap · Boundaries © IBGE · Population: GPW (NASA SEDAC) / US Census
+        Data: NASA GPM · SMAP · NASADEM · NISAR · Basemap © CARTO © OpenStreetMap · Boundaries ©{" "}
+        {caseDirOf(bundle) === "wa_2025" ? "US Census" : "IBGE"} · Population: GPW (NASA SEDAC) / US Census
       </footer>
     </div>
   );

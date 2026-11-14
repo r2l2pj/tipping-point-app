@@ -1,9 +1,11 @@
 // What is missing, and why. One function answers for every element of the
 // screen, so "no data" never renders as "no risk" (design G3).
+import { declared, LOADING_TEXT } from "./lazy";
 import { NOT_PUBLISHED, type CcBundle } from "./types";
 
 export type Availability =
   | { state: "ok" }
+  | { state: "loading" } // declared, being fetched in the browser
   | { state: "pending" } // declared by the contract, not in storage yet
   | { state: "absent"; reason?: string } // null in the data
   | { state: "not-applicable"; text: string }; // the case cannot have it
@@ -53,7 +55,7 @@ export function hasNisarPair(bundle: CcBundle): boolean {
 
 export function availability(bundle: CcBundle, key: string): Availability {
   if (key === "radar") {
-    if (hasNisarPair(bundle) || bundle.flood) return { state: "ok" };
+    if (hasNisarPair(bundle) || bundle.flood || declared(bundle, "flood_confirmed")) return { state: "ok" };
     if (bundle.mode === "replay") return { state: "not-applicable", text: NO_RADAR_TEXT };
     return { state: "pending" };
   }
@@ -62,6 +64,13 @@ export function availability(bundle: CcBundle, key: string): Availability {
   const value = field ? bundle[field] : metrics?.[key];
   if (value !== undefined && value !== null) return { state: "ok" };
   if (bundle.pending?.includes(key)) return { state: "pending" };
+  // A GeoJSON product the bundle does not carry: declared files are fetched
+  // in the browser (the screen records loading / missing in bundle.lazy).
+  if (field && declared(bundle, key)) {
+    const lazy = bundle.lazy?.[key as keyof NonNullable<CcBundle["lazy"]>];
+    if (lazy === "loading") return { state: "loading" };
+    if (lazy !== "missing") return { state: "ok" };
+  }
   const reason = nullReason(bundle, key);
   const declaredNull =
     (bundle.products as Record<string, unknown> | undefined)?.[key] === null ||
@@ -72,6 +81,7 @@ export function availability(bundle: CcBundle, key: string): Availability {
 
 // Text for a value that is not `ok`.
 export function missingText(a: Availability): string {
+  if (a.state === "loading") return LOADING_TEXT;
   if (a.state === "not-applicable") return a.text;
   if (a.state === "absent" && a.reason) return `${NOT_PUBLISHED} (${a.reason})`;
   return NOT_PUBLISHED;

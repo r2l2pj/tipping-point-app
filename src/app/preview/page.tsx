@@ -2,6 +2,10 @@
 // switch commit.
 import CommandCenterLoader from "@/components/command/CommandCenterLoader";
 
-export default function CommandCenterPreview() {
-  return <CommandCenterLoader basePath="/preview" />;
+export default function CommandCenterPreview({
+  searchParams,
+}: {
+  searchParams: Promise<{ case?: string }>;
+}) {
+  return <CommandCenterLoader basePath="/preview" searchParams={searchParams} />;
 }

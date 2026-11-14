@@ -41,7 +41,13 @@ export default function EvidenceDetails({
         <div className="mt-1"><StatGrid stats={e.modelStats} /></div>
       </div>
 
-      {e.leadTime && (
+      {e.leadTime?.missing && (
+        <div className="rounded-lg border border-dashed border-cc-line-strong p-2.5 text-xs">
+          <h3 className={h3}>How early? (in replay)</h3>
+          <p className="mt-1 italic text-cc-faint">{e.leadTime.missing}</p>
+        </div>
+      )}
+      {e.leadTime && !e.leadTime.missing && (
         <div className="rounded-lg border border-cc-line p-2.5 text-xs">
           <h3 className={h3}>How early? (in replay)</h3>
           {e.leadTime.placeholder && <p className="font-semibold text-cc-warn">Illustrative numbers</p>}

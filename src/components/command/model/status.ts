@@ -45,10 +45,13 @@ export function statusChip(
       bundle.metricsView?.forecast_source
   );
 
+  // An output the loader lists as pending is never read as a result.
+  const pending = (key: string) => bundle.pending?.includes(key) === true;
+
   if (bundle.mode === "live") {
     const km2 = bundle.summary?.critical_km2;
     const value = finite(km2?.[hazard]) ? km2?.[hazard] : km2?.any;
-    if (!bundle.summary || !finite(value)) {
+    if (!bundle.summary || pending("summary") || !finite(value)) {
       return {
         kind: "no-data",
         label: "No live data yet",
@@ -65,7 +68,7 @@ export function statusChip(
   }
 
   const day = steps[dayIndex]?.day;
-  if (!bundle.series || !day) {
+  if (!bundle.series || !day || pending("series") || pending("priority_zones")) {
     return {
       kind: "no-data",
       label: "No data for this event",

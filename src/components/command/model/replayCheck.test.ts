@@ -65,9 +65,12 @@ describe("evidence", () => {
       .toContain("the optical saw only 5%");
   });
 
-  test("the lead-time block is hidden without a median", () => {
+  test("the lead-time block: hidden without metrics, 'not published yet' without a median", () => {
     expect(evidence(bundle()).leadTime).toBeUndefined();
-    expect(evidence(bundle({ metricsView: mv({ lead_time_median_h: null }) })).leadTime).toBeUndefined();
+    const missing = evidence(bundle({ metricsView: mv({ lead_time_median_h: null }) })).leadTime!;
+    expect(missing.missing).toBe("Lead-time hindcast: not published yet — IMERG latency-aware rerun not published for this case.");
+    expect(evidence(bundle({ metricsView: mv({ lead_time_median_h: 52 }) })).leadTime!.median)
+      .toBe("Tipping Point would have warned 52 hours earlier");
     const lt = evidence(bundle({ metricsView: mv({ lead_time_median_h: 0 }) })).leadTime!;
     expect(lt.iqr).toBe("IQR not reported–not reported h · n = not reported");
     expect(lt.note).toContain("IMERG Early ~4 h");

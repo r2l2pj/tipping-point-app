@@ -5,6 +5,10 @@ import CommandCenterLoader from "@/components/command/CommandCenterLoader";
 
 export const metadata: Metadata = { title: "Public alerts — Tipping Point" };
 
-export default function PublicAlertsPreview() {
-  return <CommandCenterLoader basePath="/preview" />;
+export default function PublicAlertsPreview({
+  searchParams,
+}: {
+  searchParams: Promise<{ case?: string }>;
+}) {
+  return <CommandCenterLoader basePath="/preview" searchParams={searchParams} />;
 }

@@ -118,7 +118,11 @@ export default function RainSoilChart({
                 }}>
                 <CartesianGrid stroke="#edf0ea" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#44535a" }} tickLine={false} axisLine={{ stroke: "#9aa7a0" }} minTickGap={14} />
-                <YAxis yAxisId="rain" tick={{ fontSize: 12, fill: "#44535a" }} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="rain"
+                  // Round the top up to a tick multiple, so the axis never
+                  // shows a raw data maximum as a tick.
+                  domain={[0, (dataMax: number) => Math.max(10, Math.ceil(dataMax / 20) * 20)]}
+                  tick={{ fontSize: 12, fill: "#44535a" }} tickLine={false} axisLine={false} />
                 <YAxis yAxisId="idx" orientation="right" domain={[0, 1]} tick={{ fontSize: 12, fill: "#44535a" }} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{ background: "#ffffff", border: "1px solid #cfd6cf", fontSize: 12, color: "#16242b" }}

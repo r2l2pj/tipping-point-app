@@ -4,6 +4,7 @@ import { canonicalCaseId } from "@/lib/contract";
 import { assetUrl } from "@/lib/layers";
 import type { NisarPass } from "@/lib/types";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
+import { declared } from "./lazy";
 import { finite, fmtDate, fmtKm2 } from "./format";
 import type { CcBundle } from "./types";
 
@@ -138,7 +139,9 @@ export function radarCard(bundle: CcBundle): RadarCard {
     },
     limitation: pair ? GUNW_LIMIT_TEXT : undefined,
     passes: nisarPasses(bundle),
-    canShowOnMap: Boolean(bundle.flood?.features.length),
+    canShowOnMap: bundle.flood
+      ? bundle.flood.features.length > 0
+      : declared(bundle, "flood_confirmed"),
     compare: radarCompare(bundle),
   };
 }

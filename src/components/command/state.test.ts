@@ -26,6 +26,12 @@ describe("initial state", () => {
     expect(initialState([wa, rs])).toMatchObject({ activeId: "wa_2025", dayIndex: 2, hazard: "slide", layers: ["tpi"] });
     expect(initialState([]).activeId).toBe("");
   });
+
+  test("a ?case= deep link opens that case, by id or alias", () => {
+    expect(initialState(cases, "rs_2024")).toMatchObject({ activeId: "rs_2024", lastReplayId: "rs_2024", dayIndex: 1 });
+    expect(initialState(cases, "wa-2025-12").activeId).toBe("wa_2025");
+    expect(initialState(cases, "unknown").activeId).toBe("now");
+  });
 });
 
 describe("case change", () => {

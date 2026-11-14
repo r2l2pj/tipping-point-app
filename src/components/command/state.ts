@@ -1,6 +1,7 @@
 // Screen state of the Command Center: one object, named actions, reset rules
 // on a case change. Now / Replay is derived from the active case and the view
 // (command / public) from the address; neither is stored here.
+import { canonicalCaseId } from "@/lib/contract";
 import {
   confirmRadarLayers,
   DEFAULT_LAYERS,
@@ -63,12 +64,20 @@ const hazardFor = (bundle: CcBundle | undefined, current: Hazard): Hazard => {
 };
 
 // The screen opens on Now when a live case is loaded, else on the first case.
-export function initialState(cases: readonly CcBundle[]): ScreenState {
-  const first = cases.find((c) => c.mode === "live") ?? cases[0];
+// `initialCase` (the `?case=<id|alias>` deep link of the old screen) opens
+// that case when it is loaded.
+export function initialState(cases: readonly CcBundle[], initialCase?: string): ScreenState {
+  const want = initialCase ? canonicalCaseId(initialCase) : undefined;
+  const linked = initialCase
+    ? cases.find((c) =>
+        c.id === initialCase || canonicalCaseId(c.id) === want ||
+        canonicalCaseId(c.manifest?.event ?? c.id) === want)
+    : undefined;
+  const first = linked ?? cases.find((c) => c.mode === "live") ?? cases[0];
   const hazard = hazardFor(first, "slide");
   return {
     activeId: first?.id ?? "",
-    lastReplayId: null,
+    lastReplayId: first?.mode === "replay" ? first.id : null,
     dayIndex: defaultStepIndex(stepsFor(first)),
     playing: false,
     hazard,

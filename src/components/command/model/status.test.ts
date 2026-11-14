@@ -62,6 +62,17 @@ describe("status chip (replay)", () => {
   });
 });
 
+describe("pending tokens", () => {
+  test("a pending series or pending zones never read as a result", () => {
+    const b = bundle({ series: series([0.9]) });
+    expect(chip(b).kind).toBe("reached");
+    expect(chip({ ...b, pending: ["series"] }).label).toBe("No data for this event");
+    expect(chip({ ...b, pending: ["priority_zones"] }).label).toBe("No data for this event");
+    const live = liveBundle({ summary: { critical_km2: { any: 3 } }, pending: ["summary"] });
+    expect(chip(live).label).toBe("No live data yet");
+  });
+});
+
 describe("status chip (now)", () => {
   test("a Now bundle with no series and no summary never reads 'Below the tipping point'", () => {
     const c = chip(liveBundle());
