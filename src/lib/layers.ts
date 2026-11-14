@@ -422,3 +422,96 @@ export async function resolvePixelValues(
     : { r: null, s: null, t: null };
   return { tpi, r: r ?? est.r, s: s ?? est.s, t: t ?? est.t, provenance: "cog" };
 }
+
+// --- lazy geojson loading ----------------------------------------------------
+//
+// Whole geojson layers no longer ride inside the bundle/RSC payload (they
+// made the home page ~18 MB). The client resolves each product's URL from the
+// bundle's products map and fetches it lazily in the browser; a module-level
+// promise cache means the map source and any panel counting the same file
+// share ONE transfer. fetchGeo resolves null on 404/network so an absent
+// product just paints nothing (pending[] is the honest marker).
+
+const geoCache = new Map<string, Promise<GeoJSON.FeatureCollection | null>>();
+
+export function fetchGeo(
+  url: string
+): Promise<GeoJSON.FeatureCollection | null> {
+  let p = geoCache.get(url);
+  if (!p) {
+    p = fetch(url)
+      .then((r) =>
+        r.ok ? (r.json() as Promise<GeoJSON.FeatureCollection>) : null
+      )
+      .catch(() => null);
+    geoCache.set(url, p);
+  }
+  return p;
+}
+
+type ProductsLike = Record<string, string | null | undefined> | undefined;
+
+// URL for a geojson product: products map wins (explicit null = declared
+// absent -> undefined, never fetched), fixed filename as fallback.
+export function geoUrl(
+  bundle:
+    | {
+        products?: ProductsLike;
+        manifest?: { products?: ProductsLike };
+      }
+    | null
+    | undefined,
+  caseDir: string,
+  key: string,
+  fixed: string
+): string | undefined {
+  const products = bundle?.products ?? bundle?.manifest?.products;
+  const declared = products?.[key];
+  if (declared === null) return undefined;
+  return assetUrl(caseDir, declared ?? fixed);
+}
+
+// --- resilient map sources ---------------------------------------------------
+//
+// A 404'd PNG/geojson must never take the dashboard down. dropSource removes
+// a source and its layer pair, swallowing every MapLibre throw; safeImageUpdate
+// does the same for ImageSource.updateImage, which crashes when the source's
+// earlier image failed to load ("Cannot read properties of undefined
+// (reading 'getImage')"). Both return whether they succeeded.
+
+type SourceOps = {
+  getSource(id: string): unknown;
+  removeSource(id: string): void;
+  getLayer(id: string): unknown;
+  removeLayer(id: string): void;
+};
+
+export function dropSource(
+  map: SourceOps,
+  srcId: string,
+  layerId?: string
+): void {
+  try {
+    if (layerId && map.getLayer(layerId)) map.removeLayer(layerId);
+  } catch {
+    // layer may already be gone or mid-teardown — fine either way
+  }
+  try {
+    if (map.getSource(srcId)) map.removeSource(srcId);
+  } catch {
+    // source teardown racing a failed load — nothing more to clean
+  }
+}
+
+export function safeImageUpdate(
+  src: { updateImage(spec: unknown): void } | undefined,
+  spec: { url: string; coordinates: unknown }
+): boolean {
+  if (!src) return false;
+  try {
+    src.updateImage(spec);
+    return true;
+  } catch {
+    return false;
+  }
+}

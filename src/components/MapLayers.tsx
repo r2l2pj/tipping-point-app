@@ -17,13 +17,18 @@ import type { CogRSTUrls } from "@/lib/cog";
 import { canonicalCaseId, forecastSourceLabel } from "@/lib/contract";
 import {
   assetUrl,
+  dropSource,
+  fetchGeo,
   fmtDataDate,
+  fmtDate,
+  geoUrl,
   isForecastLayer,
   manifestRaster,
   overlayPlan,
   pointInPolygons,
   rankedZonePoints,
   resolvePixelValues,
+  safeImageUpdate,
   type PixelValues,
   type TabKey,
   type ToggleLayerKey,
@@ -132,6 +137,20 @@ export function useMapLayers(
     rstUrls?: CogRSTUrls;
     bandOrder?: string[];
   }>({});
+  // Lazily fetched geojson — sources start EMPTY; each product's file is
+  // pulled by URL the first time its layer is shown (payload ruling: no
+  // geojson rides inside the RSC bundle). `fc` is also the popup's lookup
+  // data (municipal boundaries, flood polygons).
+  const geoData = useRef<
+    Record<string, { url: string; fc: GeoJSON.FeatureCollection | null }>
+  >({});
+  const loading = useRef<Map<string, string>>(new Map());
+  const chip = useRef<HTMLDivElement | null>(null);
+  // PNG frames that 404'd — skipped on later days and noted via the chip
+  // ("frame unavailable") instead of crashing the map.
+  const frameFailed = useRef<Set<string>>(new Set());
+  const frameNote = useRef<string | null>(null);
+  const imgUrls = useRef<Record<string, string>>({});
   const day = bundle?.series?.days[dayIndex];
 
   // Manifest asset paths resolve under /data/<canonical-case-dir>/ — the v4
@@ -162,12 +181,12 @@ export function useMapLayers(
 
     map.addSource(SRC.dem, { type: "raster-dem", tiles: [TERRAIN], encoding: "terrarium", tileSize: 256, maxzoom: 12 });
     map.addSource(SRC.fcast, { type: "geojson", data: EMPTY });
-    map.addSource(SRC.water, { type: "geojson", data: bundle?.water ?? EMPTY });
-    map.addSource(SRC.flood, { type: "geojson", data: bundle?.flood ?? EMPTY });
-    map.addSource(SRC.scars, { type: "geojson", data: bundle?.scars ?? EMPTY });
-    map.addSource(SRC.zones, { type: "geojson", data: bundle?.zones ?? EMPTY });
-    map.addSource(SRC.muni, { type: "geojson", data: bundle?.municipalities ?? EMPTY });
-    map.addSource(SRC.catalog, { type: "geojson", data: bundle?.catalog ?? EMPTY });
+    map.addSource(SRC.water, { type: "geojson", data: EMPTY });
+    map.addSource(SRC.flood, { type: "geojson", data: EMPTY });
+    map.addSource(SRC.scars, { type: "geojson", data: EMPTY });
+    map.addSource(SRC.zones, { type: "geojson", data: EMPTY });
+    map.addSource(SRC.muni, { type: "geojson", data: EMPTY });
+    map.addSource(SRC.catalog, { type: "geojson", data: EMPTY });
     map.addSource(SRC.places, { type: "geojson", data: bundle?.places ?? EMPTY });
 
     const layers = [
@@ -242,6 +261,26 @@ export function useMapLayers(
     ] as const;
 
     addHatch(map);
+
+    // A dynamic image source whose PNG 404s fires 'error' asynchronously —
+    // drop it so it never paints a broken frame or crashes a later update.
+    const onMapError = (e: { sourceId?: string }) => {
+      const sid = e?.sourceId;
+      if (!sid) return;
+      const pair = DYNAMIC_IMG.find(([, s]) => s === sid);
+      if (!pair) return;
+      const [lyr] = pair;
+      const u = imgUrls.current[sid];
+      if (u) frameFailed.current.add(u);
+      dropSource(map, sid, lyr);
+      if (sid === SRC.tpiImg) {
+        const d = state.current.day;
+        frameNote.current = `TPI frame unavailable — ${d ? fmtDate(d.date) : "this day"}`;
+      }
+      refreshChip(map, loading.current, chip, frameNote.current);
+    };
+    map.on("error", onMapError as never);
+
     for (const l of layers) {
       const { id, type, source, paint, layout } = l;
       const spec = { id, type, source, paint, layout } as Record<string, unknown>;
@@ -250,7 +289,11 @@ export function useMapLayers(
     }
 
     return () => {
+      map.off("error", onMapError as never);
       fcastMarker.current?.remove();
+      chip.current?.remove();
+      chip.current = null;
+      loading.current.clear();
       for (const l of layers) if (map.getLayer(l.id)) map.removeLayer(l.id);
       for (const [lyr, src] of DYNAMIC_IMG) {
         if (map.getLayer(lyr)) map.removeLayer(lyr);
@@ -262,9 +305,12 @@ export function useMapLayers(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map]);
 
-  // Mutate data + visibility when state changes.
+  // Mutate data + visibility when state changes. The whole effect is guarded
+  // — a missing/failed layer must never throw through React into the error
+  // boundary ("Dashboard data failed to load").
   useEffect(() => {
     if (!map || !bundle) return;
+    try {
     // COG score layers the case publishes (contract: r_series / s_series
     // daily multiband, t_slide / t_flood static terrain) — resolved to URLs
     // for the popup pixel read. Band order for series COGs falls back to the
@@ -364,37 +410,53 @@ export function useMapLayers(
 
     // Image source for the day's PNG frame (created lazily — MapLibre image
     // sources need url+coordinates up front; the raster layer sits below
-    // permanent water per the v4 layer order).
+    // permanent water per the v4 layer order). A frame that 404'd before is
+    // skipped outright; a fresh failure drops the source/layer and leaves a
+    // "frame unavailable" note — never a throw.
     const img = map.getSource(SRC.tpiImg) as ImageSource | undefined;
     const tpiUrl = assetUrl(caseDir, activePng?.png);
-    if (activePng && tpiUrl) {
+    frameNote.current = null;
+    let frameOk = false;
+    if (activePng && tpiUrl && !frameFailed.current.has(tpiUrl)) {
       const b = activePng.bounds ?? bundle.bbox;
       const spec = {
         url: tpiUrl,
         coordinates: boundsToImageCoordinates(b),
       };
-      if (img) img.updateImage(spec);
-      else {
-        map.addSource(SRC.tpiImg, { type: "image", ...spec });
-        map.addLayer(
-          {
-            id: LYR.tpiRaster,
-            type: "raster",
-            source: SRC.tpiImg,
-            paint: { "raster-opacity": 0.9 },
-            layout: { visibility: "none" },
-          } as never,
-          LYR.waterFill
+      try {
+        imgUrls.current[SRC.tpiImg] = tpiUrl;
+        if (img) {
+          if (!safeImageUpdate(img, spec)) throw new Error("updateImage");
+        } else {
+          map.addSource(SRC.tpiImg, { type: "image", ...spec });
+          map.addLayer(
+            {
+              id: LYR.tpiRaster,
+              type: "raster",
+              source: SRC.tpiImg,
+              paint: { "raster-opacity": 0.9 },
+              layout: { visibility: "none" },
+            } as never,
+            LYR.waterFill
+          );
+        }
+        frameOk = true;
+        // v4: forecast frames never look like observed — 50% opacity +
+        // hatch + label (observed frames keep full-strength palette).
+        map.setPaintProperty(
+          LYR.tpiRaster,
+          "raster-opacity",
+          isForecast ? 0.5 : 0.9
         );
+      } catch {
+        frameFailed.current.add(tpiUrl);
+        dropSource(map, SRC.tpiImg, LYR.tpiRaster);
       }
-      // v4: forecast frames never look like observed — 50% opacity + hatch +
-      // label (observed frames keep full-strength palette).
-      map.setPaintProperty(
-        LYR.tpiRaster,
-        "raster-opacity",
-        isForecast ? 0.5 : 0.9
-      );
     }
+    if (activePng && tpiUrl && !frameOk) {
+      frameNote.current = `TPI frame unavailable — ${day ? fmtDate(day.date) : "this day"}`;
+    }
+    refreshChip(map, loading.current, chip, frameNote.current);
 
     set(
       SRC.fcast,
@@ -402,23 +464,65 @@ export function useMapLayers(
         ? bboxPolygon(activePng!.bounds ?? bundle.bbox)
         : EMPTY
     );
-    set(SRC.water, bundle.water ?? EMPTY);
-    set(SRC.flood, bundle.flood ?? EMPTY);
-    set(SRC.scars, bundle.scars ?? EMPTY);
-    set(SRC.zones, bundle.zones ?? EMPTY);
-    set(SRC.muni, bundle.municipalities ?? EMPTY);
-    set(SRC.catalog, bundle.catalog ?? EMPTY);
+
+    // Lazy geojson loads — a source fetches its product file by URL the
+    // first time it is wanted, then caches it (per-URL cache shared with
+    // any panel reader). Loading a URL the source already holds is a no-op.
+    const markLoading = (src: string, label: string, on: boolean) => {
+      if (on) loading.current.set(src, label);
+      else loading.current.delete(src);
+      refreshChip(map, loading.current, chip, frameNote.current);
+    };
+    const loadGeo = (src: string, label: string, url: string | undefined) => {
+      const srcObj = map.getSource(src) as
+        | { setData?: (d: GeoJSON.FeatureCollection) => void }
+        | undefined;
+      if (!srcObj) return;
+      if (!url) {
+        geoData.current[src] = { url: "", fc: null };
+        srcObj.setData?.(EMPTY);
+        return;
+      }
+      const hit = geoData.current[src];
+      if (hit?.url === url) {
+        if (hit.fc) srcObj.setData?.(hit.fc);
+        return; // already loaded (or fetch in flight — it will setData)
+      }
+      geoData.current[src] = { url, fc: null };
+      markLoading(src, label, true);
+      fetchGeo(url).then((fc) => {
+        geoData.current[src] = { url, fc };
+        (
+          map.getSource(src) as
+            | { setData?: (d: GeoJSON.FeatureCollection) => void }
+            | undefined
+        )?.setData?.(fc ?? EMPTY);
+        markLoading(src, label, false);
+      });
+    };
+    const url = (key: string, fixed: string) =>
+      geoUrl(bundle, caseDir, key, fixed);
+    // Map chrome loads eagerly; overlays only when their tab/toggle asks.
+    loadGeo(SRC.water, "permanent water", url("permanent_water", "geojson/permanent_water.geojson"));
+    loadGeo(SRC.zones, "priority zones", url("priority_zones", "geojson/priority_zones.geojson"));
+    loadGeo(SRC.muni, "boundaries", url("municipal_boundaries", "geojson/municipal_boundaries.geojson"));
+    const wantFlood = tab === undefined ? showFlood : plan.floodPolygons;
+    const wantScars = tab === undefined ? showFlood || layers.nisar : plan.landslideCandidates;
+    const wantCatalog = tab !== undefined && plan.catalogPoints;
+    if (wantFlood) loadGeo(SRC.flood, "flood extent", url("flood_confirmed", "geojson/flood_confirmed.geojson"));
+    if (wantScars) loadGeo(SRC.scars, "landslide candidates", url("landslide_candidates", "geojson/landslide_candidates.geojson"));
+    if (wantCatalog) loadGeo(SRC.catalog, "landslide catalog", url("landslide_catalog", "geojson/landslide_catalog.geojson"));
     set(SRC.places, bundle.places ?? EMPTY);
 
-    vis(LYR.tpiRaster, usePng);
-    vis(LYR.fcastHatch, usePng && isForecast);
+    vis(LYR.tpiRaster, usePng && frameOk);
+    vis(LYR.fcastHatch, usePng && isForecast && frameOk);
     // With no tab context the caller drives flood/scars via showFlood (and
     // the nisar toggle); with a tab the overlayPlan decides.
-    vis(LYR.floodFill, tab === undefined ? showFlood : plan.floodPolygons);
-    vis(LYR.floodLine, tab === undefined ? showFlood : plan.floodPolygons);
-    vis(LYR.scarsFill, tab === undefined ? showFlood || layers.nisar : plan.landslideCandidates);
-    vis(LYR.scarsLine, tab === undefined ? showFlood || layers.nisar : plan.landslideCandidates);
-    vis(LYR.catalog, tab === undefined ? false : plan.catalogPoints);
+    vis(LYR.floodFill, wantFlood);
+    vis(LYR.floodLine, wantFlood);
+    vis(LYR.scarsFill, wantScars);
+    vis(LYR.scarsLine, wantScars);
+    vis(LYR.catalog, wantCatalog);
 
     // Forecast label — pinned to the top edge of the frame on any forecast
     // day (v4: previsão sempre rotulada). The text names the
@@ -437,6 +541,9 @@ export function useMapLayers(
         .addTo(map);
     } else {
       fcastMarker.current.remove();
+    }
+    } catch (err) {
+      console.warn("MapLayers update failed (map kept alive)", err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, bundle, dayIndex, layers, showFlood, tab, activePng]);
@@ -491,11 +598,14 @@ export function useMapLayers(
       if (!b) return;
       if (!visible(LYR.tpiRaster) || !d) return;
       const v = d.tpi;
-      // Município from the boundaries polygons; nearest named place only as
-      // fallback (doc click spec).
+      // Município from the lazily loaded boundaries polygons (bundle copy
+      // only as a pre-L14-path fallback); nearest named place otherwise.
       const place =
-        pointInPolygons(b.municipalities, e.lngLat.lng, e.lngLat.lat) ??
-        nearestPlace(b.places, e.lngLat.lng, e.lngLat.lat);
+        pointInPolygons(
+          geoData.current[SRC.muni]?.fc ?? b.municipalities,
+          e.lngLat.lng,
+          e.lngLat.lat
+        ) ?? nearestPlace(b.places, e.lngLat.lng, e.lngLat.lat);
       const dd = b.data_dates ?? {};
       const cogUrl = assetUrl(cd ?? "", ap?.cog);
       const seq = ++clickSeq.current;
@@ -558,9 +668,38 @@ function zoneProps(bundle: CaseBundle): PriorityZone[] {
     .sort((a, b) => a.rank - b.rank);
 }
 
+// Bottom-left chip: currently-loading layers plus a persistent note when the
+// day's frame is unavailable. Never throws — the chip is cosmetic.
+function refreshChip(
+  map: MapInstance,
+  loadingMap: Map<string, string>,
+  chip: { current: HTMLDivElement | null },
+  note: string | null
+) {
+  try {
+    const parts = [...loadingMap.values()].map((l) => `loading ${l}…`);
+    if (note) parts.push(note);
+    if (parts.length === 0) {
+      chip.current?.remove();
+      chip.current = null;
+      return;
+    }
+    if (!chip.current) {
+      const el = document.createElement("div");
+      el.className = "tp-loading-chip";
+      map.getContainer().appendChild(el);
+      chip.current = el;
+    }
+    chip.current.textContent = parts.join(" · ");
+  } catch {
+    // chip write must never take the map down
+  }
+}
+
 // Lazily add (or update) an image source + raster layer at a fixed stack
 // position (`before`). Used for manifest PNGs: the day's TPI frame,
 // hillshade, and the tab overlays (opera_validation / night_lights / t_ml).
+// A failing PNG drops its source/layer instead of throwing out of the map.
 function ensureImageLayer(
   map: MapInstance,
   srcId: string,
@@ -571,20 +710,26 @@ function ensureImageLayer(
   before?: string
 ) {
   const src = map.getSource(srcId) as ImageSource | undefined;
-  if (src) {
-    src.updateImage({ url, coordinates });
-  } else {
-    map.addSource(srcId, { type: "image", url, coordinates });
-    map.addLayer(
-      {
-        id: lyrId,
-        type: "raster",
-        source: srcId,
-        paint: { "raster-opacity": opacity },
-        layout: { visibility: "none" },
-      } as never,
-      before
-    );
+  try {
+    if (src) {
+      if (!safeImageUpdate(src, { url, coordinates })) {
+        throw new Error("updateImage failed");
+      }
+    } else {
+      map.addSource(srcId, { type: "image", url, coordinates });
+      map.addLayer(
+        {
+          id: lyrId,
+          type: "raster",
+          source: srcId,
+          paint: { "raster-opacity": opacity },
+          layout: { visibility: "none" },
+        } as never,
+        before
+      );
+    }
+  } catch {
+    dropSource(map, srcId, lyrId);
   }
 }
 

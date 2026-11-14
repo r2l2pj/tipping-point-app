@@ -627,3 +627,98 @@ describe("zoneLabelPoint / rankedZonePoints", () => {
     expect(pts.every((p) => Number.isFinite(p.at[0]) && Number.isFinite(p.at[1]))).toBe(true);
   });
 });
+
+describe("resilient sources: dropSource / safeImageUpdate / geoUrl / fetchGeo", () => {
+  test("dropSource removes layer then source, swallows MapLibre throws", async () => {
+    const { dropSource } = await import("./layers");
+    const calls: string[] = [];
+    const map = {
+      getLayer: (id: string) => (id === "lyr" ? {} : undefined),
+      removeLayer: (id: string) => {
+        calls.push(`removeLayer:${id}`);
+      },
+      getSource: (id: string) => (id === "src" ? {} : undefined),
+      removeSource: (id: string) => {
+        calls.push(`removeSource:${id}`);
+      },
+    };
+    dropSource(map, "src", "lyr");
+    expect(calls).toEqual(["removeLayer:lyr", "removeSource:src"]);
+    // missing layer + throwing teardown must not propagate
+    const boom = {
+      getLayer: () => ({}),
+      removeLayer: () => {
+        throw new Error("style gone");
+      },
+      getSource: () => ({}),
+      removeSource: () => {
+        throw new Error("style gone");
+      },
+    };
+    expect(() => dropSource(boom, "src", "lyr")).not.toThrow();
+  });
+
+  test("safeImageUpdate returns false on a dead source instead of throwing", async () => {
+    const { safeImageUpdate } = await import("./layers");
+    const dead = {
+      updateImage: () => {
+        throw new TypeError(
+          "Cannot read properties of undefined (reading 'getImage')"
+        );
+      },
+    };
+    expect(
+      safeImageUpdate(dead, { url: "/data/x/a.png", coordinates: [] })
+    ).toBe(false);
+    const live = { updateImage: () => {} };
+    expect(
+      safeImageUpdate(live, { url: "/data/x/a.png", coordinates: [] })
+    ).toBe(true);
+    expect(
+      safeImageUpdate(undefined, { url: "/data/x/a.png", coordinates: [] })
+    ).toBe(false);
+  });
+
+  test("geoUrl: products map wins, null means absent, fixed name is fallback", async () => {
+    const { geoUrl } = await import("./layers");
+    const bundle = {
+      products: {
+        permanent_water: "rs_2024/geojson/custom_water.geojson",
+        flood_confirmed: null,
+      },
+    };
+    expect(
+      geoUrl(bundle as never, "rs_2024", "permanent_water", "geojson/permanent_water.geojson")
+    ).toBe("/data/rs_2024/geojson/custom_water.geojson");
+    expect(
+      geoUrl(bundle as never, "rs_2024", "flood_confirmed", "geojson/flood_confirmed.geojson")
+    ).toBeUndefined();
+    expect(
+      geoUrl(bundle as never, "rs_2024", "landslide_catalog", "geojson/landslide_catalog.geojson")
+    ).toBe("/data/rs_2024/geojson/landslide_catalog.geojson");
+    expect(
+      geoUrl(undefined, "rs_2024", "places", "geojson/places.geojson")
+    ).toBe("/data/rs_2024/geojson/places.geojson");
+  });
+
+  test("fetchGeo resolves the FC, resolves null on 404, caches per URL", async () => {
+    const { fetchGeo } = await import("./layers");
+    const hits: string[] = [];
+    const srv = Bun.serve({
+      port: 0,
+      fetch(req) {
+        hits.push(new URL(req.url).pathname);
+        return req.url.endsWith("/ok.geojson")
+          ? Response.json({ type: "FeatureCollection", features: [] })
+          : new Response("nope", { status: 404 });
+      },
+    });
+    const ok = await fetchGeo(`http://localhost:${srv.port}/ok.geojson`);
+    expect(ok?.type).toBe("FeatureCollection");
+    expect(await fetchGeo(`http://localhost:${srv.port}/missing.geojson`)).toBeNull();
+    // second call hits the cache — still one request
+    await fetchGeo(`http://localhost:${srv.port}/ok.geojson`);
+    expect(hits.filter((h) => h === "/ok.geojson").length).toBe(1);
+    srv.stop();
+  });
+});

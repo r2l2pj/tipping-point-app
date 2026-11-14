@@ -115,3 +115,19 @@ body {
   background: #3f3f46;
   border-radius: 4px;
 }
+
+/* Transient chip while a geojson layer is being fetched (lazy loading —
+   payload ruling). Bottom-left, above map controls. */
+.tp-loading-chip {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 5;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(13, 17, 23, 0.85);
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #a1a1aa;
+  pointer-events: none;
+}
