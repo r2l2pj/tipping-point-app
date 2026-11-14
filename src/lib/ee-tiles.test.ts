@@ -271,6 +271,14 @@ describe("createTileService", () => {
     expect(compact.calls).toContainEqual(["select", "20240501"]);
   });
 
+  test("dYYYYMMDD window-end band resolves through getMapId", async () => {
+    const { ee, calls } = makeFakeEe({ bands: ["d20240421", "d20240422"] });
+    const res = await svc(ee).getTiles({ ...QUERY, date: "2024-04-22" });
+    expect(calls).toContainEqual(["select", "d20240422"]);
+    expect(calls).toContainEqual(["getMapId"]);
+    expect(res.tiles).toHaveLength(1);
+  });
+
   test("single-band asset is used as-is (no select)", async () => {
     const { ee, calls } = makeFakeEe({ bands: ["tpi_slide_d1"] });
     const res = await svc(ee).getTiles(QUERY);

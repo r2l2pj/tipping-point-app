@@ -13,7 +13,7 @@ import type { ManifestLayer } from "./types";
 
 export interface NumbersQuery {
   caseId: string;
-  date: string; // YYYY-MM-DD — band on the TPI asset is YYYYMMDD
+  date: string; // YYYY-MM-DD — TPI bands: YYYY-MM-DD, YYYYMMDD, or dYYYYMMDD = window end date
 }
 
 export interface NumbersResult {
@@ -231,7 +231,7 @@ function bandIds(info: Record<string, unknown>): string[] {
     .filter((s): s is string => Boolean(s));
 }
 
-// Band name is YYYYMMDD per the data pipeline; accept the dashed form too.
+// Band names: YYYY-MM-DD, YYYYMMDD, or dYYYYMMDD = window end date.
 function matchBand(
   info: Record<string, unknown>,
   date: string,
@@ -241,6 +241,7 @@ function matchBand(
   const ids = bandIds(info);
   if (ids.includes(compact)) return compact;
   if (ids.includes(date)) return date;
+  if (ids.includes(`d${compact}`)) return `d${compact}`;
   throw new NumbersNotFoundError(`no band ${compact} on ${asset}`);
 }
 
@@ -428,7 +429,9 @@ export function createNumbersService(
         ? compact
         : fids.includes(date)
           ? date
-          : undefined;
+          : fids.includes(`d${compact}`)
+            ? `d${compact}`
+            : undefined;
       const floodMask = (fband ? flood.select(fband) : flood).neq(0);
       const [fAreaM2, fPeople] = await Promise.all([
         reduceSum(

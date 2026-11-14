@@ -2,7 +2,7 @@
 // for the map popup (ruling L10(d) — the GEE point query is primary, COG
 // reads are the fallback). Six assets are sampled per request: the four
 // daily series (tpi_slide, tpi_flood, r, s at <root>/<canonical>/<id>_series,
-// bands YYYY-MM-DD or YYYYMMDD) and the two statics (t_slide, t_flood at the
+// bands YYYY-MM-DD, YYYYMMDD, or dYYYYMMDD = window end date) and the two statics (t_slide, t_flood at the
 // bare <id>). A manifest layer entry's `asset` (matched on id+date) always
 // wins. Sampling is reduceRegion(Reducer.first()) over a Point geometry,
 // all six assets in parallel; a missing asset or band yields null for that
@@ -257,7 +257,7 @@ export function createPointService(
   }
 
   // Sample one asset: getInfo (does it exist / which bands), select the date
-  // band (dashed or compact; single-band assets used as-is), then
+  // band (YYYY-MM-DD, YYYYMMDD, or dYYYYMMDD = window end date; single-band assets used as-is), then
   // reduceRegion(first) at the point. TileNotFoundError at either roundtrip
   // degrades to value:null — at the asset level it also marks the asset as
   // unanswered for the all-missing 404 check. Other errors propagate (502 /
@@ -291,7 +291,7 @@ export function createPointService(
 
     const bands = bandIds(info);
     const compact = date.replace(/-/g, "");
-    const band = bands.find((b) => b === date || b === compact);
+    const band = bands.find((b) => b === date || b === compact || b === `d${compact}`);
     let target: EeImageLike;
     if (band !== undefined) {
       target = img.select(band);

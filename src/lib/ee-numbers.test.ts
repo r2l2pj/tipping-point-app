@@ -227,6 +227,32 @@ describe("createNumbersService", () => {
     expect(res.people_flooded).toBeUndefined();
   });
 
+  test("computed path selects dYYYYMMDD window-end bands for TPI and flood", async () => {
+    const { ee, calls } = makeFakeEe({
+      bands: ["d20240421", "d20240422"],
+      floodBands: ["d20240421", "d20240422"],
+      sums: [2_000_000, 5_000, 400_000, 300],
+    });
+    const svc = createNumbersService(ee, {
+      assetRoot: "root",
+      manifestLayers: NO_LAYERS,
+      popImage: "pop/img",
+    });
+    const res = await svc.getNumbers({ ...QUERY, date: "2024-04-22" });
+    expect(calls.filter((c) => c[0] === "select")).toEqual([
+      ["select", "d20240422"],
+      ["select", "d20240422"],
+    ]);
+    expect(calls.filter((c) => c[0] === "reduceRegion")).toHaveLength(4);
+    expect(res).toMatchObject({
+      source: "computed",
+      km2_critical: 2,
+      people_exposed: 5_000,
+      flooded_km2: 0.4,
+      people_flooded: 300,
+    });
+  });
+
   test("GEE_POP_IMAGE override uses an Image instead of the collection", async () => {
     const { ee, calls } = makeFakeEe({
       sums: [1_000_000, 10],
