@@ -25,6 +25,14 @@ Response: `{ case, canonical, data_date, updated_at, sources: ("manifest"|"gee")
   answers without credentials. `createMetricsService(ee?, opts)` — `ee` absent
   means "no overlay configured"; `opts.readManifest` is injectable for tests
   (default wraps `data.getMetrics`).
+- A failed `earthEngine()` init degrades like any overlay failure: the module
+  entry wraps the mapped init error in a sentinel `failedEe` whose `Image()`
+  throws it, so manifest data still yields 200 `sources: ["manifest"]`, and an
+  absent manifest surfaces the real init error (502 service / 503 timeout per
+  message prefix). Dead-init services are not cached — init retries next call
+  (result/negative caches live in the module map and persist). Test seam:
+  `setMetricsEeFactoryForTest` injects the init factory and resets the cached
+  service.
 
 ## Status semantics (changed from U12c)
 - 400 missing `case` (unchanged).
@@ -46,6 +54,6 @@ Response: `{ case, canonical, data_date, updated_at, sources: ("manifest"|"gee")
 
 ## Commands run
 - `bun install --frozen-lockfile` — 762 packages, clean.
-- `bun test` — 228 pass / 0 fail (baseline 212 + 16 new here, some replaced).
+- `bun test` — 231 pass / 0 fail (incl. dead-init cases a/b via eeFactory seam).
 - `bun run build` — green (sync:data warn-skip; /api/metrics dynamic).
 - `bun run lint` — 0 errors on touched files (repo has pre-existing warnings).

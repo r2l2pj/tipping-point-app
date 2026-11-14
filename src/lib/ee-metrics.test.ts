@@ -8,10 +8,13 @@ import {
   type EeLike,
   getMetrics,
   MetricsNotFoundError,
+  MetricsServiceError,
   MetricsTimeoutError,
   MetricsUnavailableError,
+  setMetricsEeFactoryForTest,
   setMetricsServiceForTest,
 } from "./ee-metrics";
+import { TileServiceError } from "./ee-shared";
 
 const DATES = { data_date: "2024-05-01", updated_at: "2024-05-02T12:00:00Z" };
 const QUERY = { caseId: "rs-2024-05" };
@@ -79,6 +82,7 @@ async function routeWithFake(
 afterEach(() => {
   clearMetricsCache();
   setMetricsServiceForTest(undefined);
+  setMetricsEeFactoryForTest(undefined);
 });
 
 describe("GET /api/metrics", () => {
@@ -404,5 +408,32 @@ describe("createMetricsService", () => {
     expect(result.sources).toEqual(["manifest"]);
     expect(result.data_date).toBeNull();
     expect(result.metrics.event).toBe("rs-2024-05");
+  });
+
+  test("dead gee init still serves manifest data", async () => {
+    setMetricsEeFactoryForTest(() => Promise.reject(new Error("auth boom")));
+    const result = await withEnv({ GCP_SA_KEY: "test-key" }, () => getMetrics(QUERY));
+    expect(result.sources).toEqual(["manifest"]);
+    expect(result.data_date).toBeNull();
+    expect(result.metrics.event).toBe("rs-2024-05");
+  });
+
+  test("dead gee init surfaces as service error when the manifest is absent", async () => {
+    setMetricsEeFactoryForTest(() => Promise.reject(new Error("auth boom")));
+    const error = await withEnv({ GCP_SA_KEY: "test-key" }, () =>
+      getMetrics({ caseId: "nope-9999" }).catch((e: unknown) => e)
+    );
+    expect(error).toBeInstanceOf(MetricsServiceError);
+    expect((error as Error).message).toContain("gee init failed");
+  });
+
+  test("dead gee init timeout surfaces as timeout when the manifest is absent", async () => {
+    setMetricsEeFactoryForTest(() =>
+      Promise.reject(new TileServiceError("timeout after 5ms waiting for gee init"))
+    );
+    const error = await withEnv({ GCP_SA_KEY: "test-key" }, () =>
+      getMetrics({ caseId: "nope-9999" }).catch((e: unknown) => e)
+    );
+    expect(error).toBeInstanceOf(MetricsTimeoutError);
   });
 });

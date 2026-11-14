@@ -135,7 +135,13 @@ function defaultTimeoutMs(): number {
 }
 
 function metricsError(error: unknown): Error {
-  if (error instanceof MetricsServiceError) return error;
+  if (
+    error instanceof MetricsServiceError ||
+    error instanceof MetricsNotFoundError ||
+    error instanceof MetricsTimeoutError
+  ) {
+    return error;
+  }
   const mapped = error instanceof TileNotFoundError || error instanceof TileServiceError
     ? error
     : mapComputeError(error, "metrics");
@@ -277,26 +283,53 @@ export function createMetricsService(
 
 let service: MetricsService | undefined;
 let serviceForTest: MetricsService | undefined;
+let eeFactoryForTest: (() => Promise<unknown>) | undefined;
 
 export function setMetricsServiceForTest(value: MetricsService | undefined): void {
   serviceForTest = value;
 }
 
+// Test seam for the module-level GEE init path; resets the cached service so
+// the next getMetrics call re-runs init through the injected factory.
+export function setMetricsEeFactoryForTest(
+  value: (() => Promise<unknown>) | undefined
+): void {
+  eeFactoryForTest = value;
+  service = undefined;
+}
+
+// A failed earthEngine() init is an overlay failure, not a request failure:
+// it must not block the manifest path. The sentinel surfaces the mapped init
+// error as the overlay error on every read.
+const failedEe = (error: Error): EeLike => ({
+  Image() {
+    throw error;
+  },
+});
+
 export async function getMetrics(query: MetricsQuery): Promise<MetricsResult> {
   if (serviceForTest) return serviceForTest.getMetrics(query);
   if (!service) {
     let ee: EeLike | undefined;
+    let initFailed = false;
     if (credentialEnv()) {
       try {
-        ee = (await withTimeout(earthEngine(), defaultTimeoutMs(), "gee init")) as unknown as EeLike;
+        const init = eeFactoryForTest ?? earthEngine;
+        ee = (await withTimeout(init(), defaultTimeoutMs(), "gee init")) as unknown as EeLike;
       } catch (error) {
-        if (error instanceof TileServiceError && error.message.startsWith("timeout")) {
-          throw new MetricsTimeoutError(error.message);
-        }
-        throw new MetricsServiceError(`gee init failed: ${errMessage(error)}`);
+        initFailed = true;
+        ee = failedEe(
+          error instanceof TileServiceError && error.message.startsWith("timeout")
+            ? new MetricsTimeoutError(error.message)
+            : new MetricsServiceError(`gee init failed: ${errMessage(error)}`)
+        );
       }
     }
-    service = createMetricsService(ee);
+    // A dead-init service is throwaway: the next call retries init. Result and
+    // negative caches live in the module-level map, so nothing is lost.
+    const svc = createMetricsService(ee);
+    if (!initFailed) service = svc;
+    return svc.getMetrics(query);
   }
   return service.getMetrics(query);
 }
