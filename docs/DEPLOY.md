@@ -117,7 +117,7 @@ GEE-first architecture: app tiles and numbers resolve through our `/api`
 routes against Earth Engine; the static manifest + raw branch copy stays the
 fallback contract the app degrades to. Workflows on the data repo:
 
-- `now.yml` — every 6 h (cron `0 */6 * * *`) + `workflow_dispatch`:
+- `now.yml` — every 3 h (cron `0 */3 * * *`) + `workflow_dispatch`:
   IMERG Early + SMAP L4 + GEOS-FP ingest →
   `tipping-point/now/` asset collections → TPI + D+1..D+3 in GEE → last-good
   static copy on the force-pushed `fallback` branch (`manifest.json` written last).
@@ -127,8 +127,8 @@ fallback contract the app degrades to. Workflows on the data repo:
 - `reference.yml` — weekly + `workflow_dispatch`: landslide catalogs +
   municipal boundaries.
 
-Freshness copy is “updated X h ago” against the six-hour refresh cadence.
-The stale-data warning threshold is **12 h** since the data update timestamp.
+Freshness copy is “updated X h ago” against the three-hour refresh cadence.
+The stale-data warning threshold is **6 h** since the data update timestamp.
 
 Secrets (`EARTHDATA_TOKEN` ~60-day renewal, `GCP_SA_KEY`) live in GitHub
 secrets; a missing/expired token fails the job loudly. Jobs are idempotent,
