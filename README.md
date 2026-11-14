@@ -29,7 +29,7 @@ bun run dev          # predev syncs ../tipping-point-data/data -> public/data
 | `src/app/alerts` | public alert feed — same message format as the Telegram bot |
 | `src/app/api/events` | events index + per-event manifest |
 | `src/app/api/ee/status` | live-GEE health check (service account) |
-| `src/app/api/telegram` + `src/lib/telegram/` | Telegram bot webhook + Supabase (free tier) subscriber store via PostgREST (plain fetch, no dep) — 503 until `TELEGRAM_TOKEN` + `TELEGRAM_SECRET` are set (cred-blocked) |
+| `src/app/api/telegram` + `src/lib/telegram/` | Telegram bot webhook + Neon (free) subscriber store via HTTPS SQL endpoint (plain fetch, no dep) — 503 until `TELEGRAM_TOKEN` + `TELEGRAM_SECRET` are set (cred-blocked) |
 | `src/lib/ee.ts` | server-only Earth Engine client (`GEE_PROJECT` + `GCP_SA_KEY` in `.env`; `GEE_SERVICE_ACCOUNT_KEY` (fallback) also accepted) |
 | `public/data/<event>/`, `public/data/now/`, `public/data/alerts.json` | mock artifacts per SCHEMA.md — overwritten by `sync:data` when real data lands |
 | `docs/`, `submission/` | `docs/{PLAN,app-contract,DEPLOY}.md` project doc + contract/deploy notes; `submission/{summary,nasa-data,ai-declaration,demo-script,slides-outline}.md` (incl. ≤30s demo script) |
@@ -39,8 +39,9 @@ bun run dev          # predev syncs ../tipping-point-data/data -> public/data
 Vercel (repo is public — Hobby plan can deploy public org repos). `prebuild`
 runs the data sync, so committed `public/data` JSON is the deploy fallback.
 Live-data bucket (`DATA_BASE_URL`) + env vars: runbook in `docs/DEPLOY.md`.
-Everything runs on free tiers: GEE non-commercial, GitHub Actions, Vercel
-Hobby, Earthdata, Telegram Bot API, Supabase free.
+The `now.yml` live job refreshes data every 6 h; the stale-data warning
+threshold is 12 h. Everything runs on free tiers: GEE non-commercial,
+GitHub Actions, Vercel Hobby, Earthdata, Telegram Bot API, Neon free.
 
 ## Credentials
 
@@ -50,13 +51,11 @@ Earthdata auth uses a bearer token: env var and GitHub secret
 (`now.yml`) fails loudly when the token dies. `EDL_USER`/`EDL_PASS`
 remain a local-only fallback, never in secrets.
 
-The Telegram subscriber store uses `SUPABASE_URL` +
-`SUPABASE_SERVICE_ROLE_KEY` (service role writes only; RLS on) — set in
-Vercel env + GitHub secrets, never in repos.
+The Telegram subscriber store uses `DATABASE_URL` (Neon connection string,
+server-only) — set in Vercel env + GitHub secrets, never in repos.
 
 Full env list (`GCP_SA_KEY` canonical; `GEE_SERVICE_ACCOUNT_KEY` fallback;
-`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` for the subscriber store):
-`docs/DEPLOY.md`.
+`DATABASE_URL` for the subscriber store): `docs/DEPLOY.md`.
 
 ## Replay forecast
 
