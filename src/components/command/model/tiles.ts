@@ -44,6 +44,9 @@ const finish = (
   };
 };
 
+// Critical zones by the class of the data, in any letter case.
+const isCritical = (a: { cls: string }): boolean => /^critical$/i.test(a.cls);
+
 // While only the trimmed inline zones are loaded the sum covers those zones
 // only, and the note says so.
 const zoneNote = (bundle: CcBundle, count: number): string =>
@@ -60,7 +63,7 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
   }
   const fromMetrics = bundle.metricsView?.critical_area_km2;
   if (finite(fromMetrics)) return finish(bundle, stepDate, label, fromMetrics, fmtKm2, "critical_area_km2");
-  const critical = priorityAreas(bundle).filter((a) => a.cls === "Critical");
+  const critical = priorityAreas(bundle).filter(isCritical);
   const known = critical.filter((a) => a.areaKm2 !== null);
   const sum = bundle.zones && known.length === critical.length && critical.length > 0
     ? known.reduce((acc, a) => acc + (a.areaKm2 as number), 0)
@@ -78,7 +81,7 @@ export function peopleTile(bundle: CcBundle, stepDate?: string): Tile {
   const fromMetrics = bundle.metricsView?.people_critical;
   if (finite(fromMetrics)) return finish(bundle, stepDate, label, fromMetrics, fmtPeople, "people_critical");
   // Zone sum only when every Critical zone reports people.
-  const critical = priorityAreas(bundle).filter((a) => a.cls === "Critical");
+  const critical = priorityAreas(bundle).filter(isCritical);
   const sum = critical.length > 0 && critical.every((a) => a.people !== null)
     ? critical.reduce((acc, a) => acc + (a.people as number), 0)
     : undefined;

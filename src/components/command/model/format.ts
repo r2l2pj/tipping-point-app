@@ -1,5 +1,5 @@
-// Date, hour and number text for the Command Center. Takes over
-// src/components/tabs/format.ts; src/lib is owned by other work.
+// Date, hour and number text for the Command Center (took over the old
+// tabs/format.ts). It lives here because src/lib is owned by other work.
 import { fmtDataDate, fmtDate, fmtDateTime } from "@/lib/layers";
 import { NOT_PUBLISHED } from "./types";
 

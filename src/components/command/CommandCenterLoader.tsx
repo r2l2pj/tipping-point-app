@@ -39,7 +39,7 @@ function liveRunTime(root: unknown): string | undefined {
 // candidatesToAlerts reads the clock when no issue time is given.
 type Search = Promise<{ case?: string }> | undefined;
 
-async function Loaded({ basePath, searchParams }: { basePath?: string; searchParams?: Search }) {
+async function Loaded({ searchParams }: { searchParams?: Search }) {
   const initialCase = (await searchParams)?.case;
   const [index, root] = await Promise.all([
     getEventsIndex().catch(() => null),
@@ -76,7 +76,6 @@ async function Loaded({ basePath, searchParams }: { basePath?: string; searchPar
       alertList={alertList}
       botUrl={process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || undefined}
       fontClass={fontClass}
-      basePath={basePath}
       initialCase={initialCase}
     />
   );
@@ -84,13 +83,7 @@ async function Loaded({ basePath, searchParams }: { basePath?: string; searchPar
 
 // `searchParams` carries the `?case=<id|alias>` deep link (judge and demo
 // links): the screen opens on that case instead of Now.
-export default function CommandCenterLoader({
-  basePath,
-  searchParams,
-}: {
-  basePath?: string;
-  searchParams?: Search;
-}) {
+export default function CommandCenterLoader({ searchParams }: { searchParams?: Search }) {
   return (
     <Suspense
       fallback={
@@ -99,7 +92,7 @@ export default function CommandCenterLoader({
         </div>
       }
     >
-      <Loaded basePath={basePath} searchParams={searchParams} />
+      <Loaded searchParams={searchParams} />
     </Suspense>
   );
 }

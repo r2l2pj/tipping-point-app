@@ -40,8 +40,6 @@ export interface CommandCenterProps {
   alertList: AlertList;
   botUrl?: string;
   fontClass?: string;
-  // Path prefix of the two routes ("" for / and /alerts).
-  basePath?: string;
   // `?case=<id|alias>` deep link: the case the screen opens on.
   initialCase?: string;
 }
@@ -59,17 +57,13 @@ const noClock = (): number | undefined => undefined;
 // uses the History API, so the client root is not remounted and the map, the
 // step and the layers stay as they were.
 export default function CommandCenter(props: CommandCenterProps) {
-  const base = props.basePath ?? "";
   const pathname = usePathname();
-  const view: View = pathname === `${base}/alerts` ? "public" : "command";
+  const view: View = pathname === "/alerts" ? "public" : "command";
   const nowMs = useSyncExternalStore(subscribeClock, clockNow, noClock);
-  const onView = useCallback(
-    (next: View) => {
-      const path = next === "public" ? `${base}/alerts` : base || "/";
-      if (window.location.pathname !== path) window.history.pushState(null, "", path);
-    },
-    [base]
-  );
+  const onView = useCallback((next: View) => {
+    const path = next === "public" ? "/alerts" : "/";
+    if (window.location.pathname !== path) window.history.pushState(null, "", path);
+  }, []);
   return <CommandCenterView {...props} view={view} onView={onView} nowMs={nowMs} />;
 }
 
