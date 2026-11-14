@@ -2,13 +2,13 @@
 
 > **DRAFT — pending approval.**
 
-Voiceover total: **69 words** (limit 75). On-screen text uses the ruled English labels, which have landed in the UI at 8d65729 (see production notes). Verified against the UI at 8d65729. Beats are numbered onto the doc's 5-step demo flow (steps 1–5).
+Voiceover total: **70 words** (limit 75). On-screen text uses the ruled English labels, which have landed in the UI at 8d65729 (see production notes). Verified against the UI at 8d65729. Beats are numbered onto the doc's 5-step demo flow (steps 1–5).
 
 | Step | Time | On screen | Voiceover |
 | --- | --- | --- | --- |
 | Cold open | 0–4 s | News-style stills of the May 2024 Rio Grande do Sul floods; caption "May 2024 · Rio Grande do Sul, Brazil" | "May 2024, Rio Grande do Sul. The alert said where floods could happen — not where they did." |
 | 1 | 4–8 s | Ops dashboard `/` opens already on the event (case selector → **Rio Grande do Sul flood, May 2024**). Cursor clicks **EVENT REPLAY · DEMO** and presses play on the timeline (**D-5 → EVENT**); the TPI heatmap turns red over the Taquari valley as the rain accumulates. | "Tipping Point replays it: extreme rain, saturated soil —" |
-| 2 | 8–11 s | The alert card appears as areas cross the tipping point: **TIPPING POINT REACHED** banner with the **perfect forecast** chip; public feed card titled "⚠ Tipping Point: CRITICAL landslide risk". | "would have crossed Critical a median X hours before the slides." |
+| 2 | 8–11 s | The alert card appears as areas cross the tipping point: **TIPPING POINT REACHED** banner with the **perfect forecast** chip; public feed card titled "⚠ Tipping Point: CRITICAL landslide risk". | "would have crossed Critical a median of X hours before the landslides." |
 | 3 | 11–16 s | Select **Washington atmospheric rivers, Dec 2025** (opens on ALERT), then click **Confirm with NISAR radar →** (opens RADAR). **RADAR tab:** **NISAR GCOV — before / after**, Dec 4, 2025 → Dec 16, 2025 [swipe pending U5]. **Flooded area (NISAR): 41.6 km²**; dark-blue confirmed flood polygons; purple landslide candidates; card **Landslide scar candidates (HLS optical)**, note: candidates, never confirmed. | "Then NISAR radar confirms through the clouds: 41.6 square kilometers flooded." |
 | 4 | 16–22 s | **Did we get it right?** tab: cards **IoU 0.71**, **F1 0.83**, **Median lead time X h (IQR A-B h, n = N)**, **Zones warned before event 87%**; **Why radar:** During the event the optical saw only 6% of the scene. SWOT river-level chart below the cards. | "IoU 0.71, median X hours early, P% warned first." |
 | 5 | 22–27 s | **IMPACT** tab: **People in critical areas 8,400**, **Night-light drop 18%**, exposure basis GPW v4 / VIIRS Black Marble. Brief glimpse of the `/alerts` public feed. | "8,400 people in critical areas, prioritized for Civil Defense." |
