@@ -187,4 +187,9 @@ export interface CaseBundle {
   flood?: GeoJSON.FeatureCollection;
   scars?: GeoJSON.FeatureCollection;
   places?: GeoJSON.FeatureCollection;
+  // Contract outputs that were absent at load time (L14): 'metrics',
+  // 'series', and product ids declared in the products map but missing
+  // from storage. Sorted; components render "pending" markers off this —
+  // the loader never fabricates values for unshipped outputs.
+  pending?: string[];
 }

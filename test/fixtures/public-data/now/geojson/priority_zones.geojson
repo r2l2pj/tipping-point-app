@@ -1,0 +1,11 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    { "type": "Feature", "properties": { "rank": 1, "name": "Taquari–Antas basin", "tpi": 0.64, "class": "Critical", "hazard": "Flood + landslide risk", "area_km2": 6.9, "people": 5200 },
+      "geometry": { "type": "Point", "coordinates": [-51.6, -29.1] } },
+    { "type": "Feature", "properties": { "rank": 2, "name": "Itajaí Valley", "tpi": 0.55, "class": "High", "hazard": "Flood risk (low elevation)", "area_km2": 4.1, "people": 3100 },
+      "geometry": { "type": "Point", "coordinates": [-49.4, -27.0] } },
+    { "type": "Feature", "properties": { "rank": 3, "name": "Serra do Mar (PR)", "tpi": 0.51, "class": "High", "hazard": "Landslide risk (steep slopes)", "area_km2": 2.8, "people": 1400 },
+      "geometry": { "type": "Point", "coordinates": [-48.9, -25.4] } }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "Encantado": [
+    {
+      "date": "2024-04-27",
+      "label": "Baixo"
+    },
+    {
+      "date": "2024-04-28",
+      "label": "Moderado"
+    },
+    {
+      "date": "2024-04-29",
+      "label": "Moderado"
+    },
+    {
+      "date": "2024-04-30",
+      "label": "Alto"
+    },
+    {
+      "date": "2024-05-01",
+      "label": "Alto"
+    },
+    {
+      "date": "2024-05-02",
+      "label": "Crítico"
+    },
+    {
+      "date": "2024-05-03",
+      "label": "Crítico"
+    },
+    {
+      "date": "2024-05-04",
+      "label": "Alto"
+    }
+  ]
+}

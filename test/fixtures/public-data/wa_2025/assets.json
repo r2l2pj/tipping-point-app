@@ -1,0 +1,45 @@
+{
+  "schema": "tipping-point/gee-assets@1",
+  "assets": [
+    {
+      "name": "municipal_boundaries",
+      "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/wa_2025/municipal_boundaries",
+      "kind": "table",
+      "status": "ingesting",
+      "ingested_at": "2026-11-14T19:16:11.625486Z",
+      "features": 260,
+      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data-wt/realrun/data/wa_2025/geojson/municipal_boundaries.geojson",
+      "parts": [
+        {
+          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/wa_2025/municipal_boundaries/part00",
+          "features": 50,
+          "status": "ingesting",
+          "operation": "E6GZSPK32B7CTLIKIVVHU6QK"
+        },
+        {
+          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/wa_2025/municipal_boundaries/part01",
+          "features": 196,
+          "status": "ingesting",
+          "operation": "Y3BOX4UYPNYZ6PESMSL565QG"
+        },
+        {
+          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/wa_2025/municipal_boundaries/part02",
+          "features": 14,
+          "status": "ingesting",
+          "operation": "6TH2GEYS5M5Y2BLLR2DHCAGS"
+        }
+      ]
+    },
+    {
+      "name": "landslide_catalog",
+      "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/wa_2025/landslide_catalog",
+      "kind": "table",
+      "status": "ingesting",
+      "ingested_at": "2026-11-14T19:29:50.465885Z",
+      "features": 15,
+      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data/data/wa_2025/geojson/landslide_catalog.geojson",
+      "operation": "PWDJ4BCVJGWDNTXOHD7E2YYE"
+    }
+  ],
+  "updated_at": "2026-11-14T19:29:50.466125Z"
+}

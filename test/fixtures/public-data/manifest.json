@@ -1,0 +1,318 @@
+{
+  "updated_at": "2026-11-14T19:02:15Z",
+  "cases": {
+    "rs_2024": {
+      "event_id": "rs-2024-05",
+      "mode": "replay",
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ],
+      "forecast_source": "perfect-forecast",
+      "layers": [
+        {
+          "id": "tpi_slide",
+          "date": "2024-05-02",
+          "png": "rs_2024/png/tpi_slide_20240502.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_slide_20240502.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null
+        },
+        {
+          "id": "tpi_slide_d1",
+          "date": "2024-05-03",
+          "png": "rs_2024/png/tpi_slide_d1_20240503.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_forecast_d1_20240502.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        },
+        {
+          "id": "tpi_slide_d2",
+          "date": "2024-05-04",
+          "png": "rs_2024/png/tpi_slide_d2_20240504.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_forecast_d2_20240502.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        },
+        {
+          "id": "tpi_slide_d3",
+          "date": "2024-05-05",
+          "png": "rs_2024/png/tpi_slide_d3_20240505.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_forecast_d3_20240502.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        },
+        {
+          "id": "tpi_flood",
+          "date": "2024-05-02",
+          "png": "rs_2024/png/tpi_flood_20240502.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_flood_20240502.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null
+        },
+        {
+          "id": "tpi_flood_d1",
+          "date": "2024-05-03",
+          "png": "rs_2024/png/tpi_flood_d1_20240503.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_forecast_d1_20240502.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        },
+        {
+          "id": "tpi_flood_d2",
+          "date": "2024-05-04",
+          "png": "rs_2024/png/tpi_flood_d2_20240504.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_forecast_d2_20240502.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        },
+        {
+          "id": "tpi_flood_d3",
+          "date": "2024-05-05",
+          "png": "rs_2024/png/tpi_flood_d3_20240505.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_forecast_d3_20240502.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        }
+      ],
+      "metrics": null,
+      "data_dates": {},
+      "products": {
+        "municipal_boundaries": "rs_2024/geojson/municipal_boundaries.geojson",
+        "landslide_catalog": "rs_2024/geojson/landslide_catalog.geojson",
+        "places": "rs_2024/geojson/places.geojson",
+        "priority_zones": null,
+        "permanent_water": null,
+        "flood_confirmed": null,
+        "landslide_candidates": null
+      },
+      "_null_reasons": {
+        "r_series": "rs_2024_r_series COG not yet produced",
+        "s_series": "rs_2024_s_series COG not yet produced",
+        "t_slide": "rs_2024_t_slide COG not yet produced",
+        "t_flood": "rs_2024_t_flood COG not yet produced",
+        "priority_zones": "not yet produced",
+        "permanent_water": "not yet produced",
+        "flood_confirmed": "No NISAR coverage — event predates launch (Jul 2025)",
+        "landslide_candidates": "no landslide candidate product yet",
+        "metrics": "metrics.json not yet written"
+      }
+    },
+    "wa_2025": {
+      "event_id": "wa-2025-12",
+      "mode": "replay",
+      "bounds": [
+        -122.6,
+        47.0,
+        -121.5,
+        48.5
+      ],
+      "forecast_source": "perfect-forecast",
+      "layers": [
+        {
+          "id": "tpi_slide",
+          "date": "2025-12-10",
+          "png": "wa_2025/png/tpi_slide_20251210.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_slide_20251210.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null
+        },
+        {
+          "id": "tpi_slide_d1",
+          "date": "2025-12-11",
+          "png": "wa_2025/png/tpi_slide_d1_20251211.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_forecast_d1_20251210.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        },
+        {
+          "id": "tpi_slide_d2",
+          "date": "2025-12-12",
+          "png": "wa_2025/png/tpi_slide_d2_20251212.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_forecast_d2_20251210.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        },
+        {
+          "id": "tpi_slide_d3",
+          "date": "2025-12-13",
+          "png": "wa_2025/png/tpi_slide_d3_20251213.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_forecast_d3_20251210.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        },
+        {
+          "id": "tpi_flood",
+          "date": "2025-12-10",
+          "png": "wa_2025/png/tpi_flood_20251210.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_flood_20251210.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null
+        },
+        {
+          "id": "tpi_flood_d1",
+          "date": "2025-12-11",
+          "png": "wa_2025/png/tpi_flood_d1_20251211.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_forecast_d1_20251210.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        },
+        {
+          "id": "tpi_flood_d2",
+          "date": "2025-12-12",
+          "png": "wa_2025/png/tpi_flood_d2_20251212.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_forecast_d2_20251210.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        },
+        {
+          "id": "tpi_flood_d3",
+          "date": "2025-12-13",
+          "png": "wa_2025/png/tpi_flood_d3_20251213.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_forecast_d3_20251210.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": null,
+          "forecast": true
+        }
+      ],
+      "metrics": null,
+      "data_dates": {
+        "nisar_pre": "2025-12-04",
+        "nisar_post": "2025-12-16"
+      },
+      "products": {
+        "municipal_boundaries": "wa_2025/geojson/municipal_boundaries.geojson",
+        "landslide_catalog": "wa_2025/geojson/landslide_catalog.geojson",
+        "places": "wa_2025/geojson/places.geojson",
+        "priority_zones": null,
+        "permanent_water": null,
+        "flood_confirmed": null,
+        "landslide_candidates": null
+      },
+      "_null_reasons": {
+        "r_series": "wa_2025_r_series COG not yet produced",
+        "s_series": "wa_2025_s_series COG not yet produced",
+        "t_slide": "wa_2025_t_slide COG not yet produced",
+        "t_flood": "wa_2025_t_flood COG not yet produced",
+        "priority_zones": "not yet produced",
+        "permanent_water": "not yet produced",
+        "flood_confirmed": "no validated NISAR flood mask yet",
+        "landslide_candidates": "no landslide candidate product yet",
+        "metrics": "metrics.json not yet written"
+      }
+    },
+    "now": {
+      "schema": "tipping-point/now@2",
+      "mode": "live",
+      "updated_at": null,
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "data_dates": {},
+      "layers": [],
+      "products": {
+        "critical_areas": "geojson/critical_areas.geojson",
+        "summary": "summary.json",
+        "alerts": "alerts.json"
+      },
+      "nisar_passes": [],
+      "note": "Seed manifest — populated by live/run_now.py every 3 h via .github/workflows/now.yml"
+    }
+  }
+}

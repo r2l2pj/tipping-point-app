@@ -1,0 +1,184 @@
+{
+  "cases": {
+    "rs_2024": {
+      "event": "rs-2024-05",
+      "iou": 0.64,
+      "f1": 0.78,
+      "cloud_pct": 97,
+      "landslide_hit_pct": null,
+      "hand_validation": null,
+      "people_critical": 41200,
+      "people_flooded": 18500,
+      "flooded_km2": 118.3,
+      "flood_source": "opera",
+      "night_light_drop_pct": 31,
+      "lead_time_mean_h": 41,
+      "lead_time_median_h": 46,
+      "warned_before_pct": 81,
+      "rf_auc": 0.88,
+      "rule_auc": 0.71,
+      "feature_importance": {
+        "imerg_p95_mm": 0.46,
+        "smap_l4": 0.31,
+        "nasadem_slope": 0.23
+      },
+      "forecast_source": "perfect-forecast",
+      "lead_time_iqr_h": [
+        32,
+        61
+      ],
+      "warned_24h_pct": 64,
+      "never_critical_pct": 12,
+      "n_points": 2400,
+      "anchor_precision": "mixed",
+      "event_lead_h": 38,
+      "official_warning_delta_h": 14,
+      "critical_area_km2": 310,
+      "critical_area_with_damage_pct": 27,
+      "lead_time_hist": {
+        "bin_h": 6,
+        "from_h": -12,
+        "counts": [
+          2,
+          4,
+          15,
+          46,
+          88,
+          120,
+          95,
+          60,
+          30,
+          12,
+          6,
+          2
+        ]
+      },
+      "lead_time_assumptions": {
+        "imerg": "IMERG Early ~4h latency",
+        "smap": "SMAP L4 ~2-3d latency",
+        "geos_fp": "excluded (perfect-forecast layer not used)",
+        "quality": "placeholder"
+      },
+      "damage_anchor": {
+        "at": "2024-05-02T03:00:00Z",
+        "source": "placeholder"
+      },
+      "collections": {
+        "IMERG": "GPM_3IMERGHHE V07",
+        "SMAP": "SPL4SMGP L4",
+        "NASADEM": "NASADEM",
+        "population": "GPW v4.11 (NASA SEDAC)"
+      },
+      "_null_reasons": {
+        "landslide_hit_pct": "no landslide catalog for the RS event",
+        "hand_validation": "HAND vs Merit validation not run for this case"
+      }
+    },
+    "wa_2025": {
+      "event": "wa-2025-12",
+      "iou": 0.71,
+      "f1": 0.83,
+      "cloud_pct": 94,
+      "landslide_hit_pct": 0.62,
+      "hand_validation": 0.78,
+      "people_critical": 8400,
+      "people_flooded": 2100,
+      "flooded_km2": 27.986782691534348,
+      "flood_source": "nisar",
+      "night_light_drop_pct": 18,
+      "lead_time_mean_h": 47.5,
+      "lead_time_median_h": 52,
+      "warned_before_pct": 87,
+      "rf_auc": 0.91,
+      "rule_auc": 0.74,
+      "feature_importance": {
+        "imerg_p95_mm": 0.41,
+        "smap_l4": 0.33,
+        "nasadem_slope": 0.26
+      },
+      "forecast_source": "perfect-forecast",
+      "lead_time_iqr_h": [
+        38,
+        68
+      ],
+      "warned_24h_pct": 72,
+      "never_critical_pct": 8,
+      "n_points": 86,
+      "anchor_precision": "date",
+      "event_lead_h": 44,
+      "official_warning_delta_h": 20,
+      "critical_area_km2": 52,
+      "critical_area_with_damage_pct": 34,
+      "lead_time_hist": {
+        "bin_h": 6,
+        "from_h": 0,
+        "counts": [
+          1,
+          3,
+          9,
+          18,
+          24,
+          16,
+          9,
+          4,
+          2
+        ]
+      },
+      "lead_time_assumptions": {
+        "imerg": "IMERG Early ~4h latency",
+        "smap": "SMAP L4 ~2-3d latency",
+        "geos_fp": "excluded (perfect-forecast layer not used)",
+        "quality": "placeholder"
+      },
+      "damage_anchor": {
+        "at": "2025-12-13",
+        "source": "placeholder"
+      },
+      "collections": {
+        "IMERG": "GPM_3IMERGHHE V07",
+        "SMAP": "SPL4SMGP L4",
+        "NASADEM": "NASADEM",
+        "population": "GPW v4.11 (NASA SEDAC)",
+        "NISAR": "NISAR_L2_GCOV_BETA_V1",
+        "OPERA_DSWX": "OPERA_L3_DSWX-HLS_V1"
+      },
+      "water_km2": 304.07798965256404,
+      "threshold_db": -15,
+      "flood_bright_km2": 0.6621649771870278,
+      "swath_coverage_pct": 74.1,
+      "flooded_km2_scope": "within NISAR swath",
+      "flood_top_clusters": [
+        {
+          "area_km2": 10.61,
+          "lat": 47.91,
+          "lon": -122.153,
+          "where": "Snohomish valley, Snohomish-Fobes Hill"
+        },
+        {
+          "area_km2": 3.18,
+          "lat": 47.898,
+          "lon": -122.048,
+          "where": "Snohomish-Monroe corridor"
+        },
+        {
+          "area_km2": 1.27,
+          "lat": 47.951,
+          "lon": -122.143,
+          "where": "lower Snohomish valley, Fobes Hill-Lake Stevens"
+        },
+        {
+          "area_km2": 1.05,
+          "lat": 47.8,
+          "lon": -121.99,
+          "where": "Skykomish R., Sultan"
+        },
+        {
+          "area_km2": 0.91,
+          "lat": 47.769,
+          "lon": -121.982,
+          "where": "Skykomish R., Sultan-Duvall"
+        }
+      ]
+    }
+  }
+}

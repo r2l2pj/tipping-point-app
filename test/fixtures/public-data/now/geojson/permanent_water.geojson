@@ -1,0 +1,24 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    { "type": "Feature", "properties": { "name": "Atlantic Ocean", "kind": "permanent" },
+      "geometry": { "type": "Polygon", "coordinates": [[
+        [-48.0, -34.0], [-48.0, -22.5], [-47.2, -22.5], [-47.4, -24.0], [-47.8, -25.5],
+        [-48.2, -27.0], [-48.4, -28.5], [-48.6, -30.0], [-48.9, -32.0], [-49.6, -34.0],
+        [-48.0, -34.0]
+      ]] } },
+    { "type": "Feature", "properties": { "name": "Guaíba / Lagoa dos Patos", "kind": "permanent" },
+      "geometry": { "type": "Polygon", "coordinates": [[
+        [-51.4, -30.0], [-51.2, -30.3], [-51.3, -31.0], [-51.6, -31.9], [-52.0, -32.3],
+        [-52.3, -31.8], [-52.1, -30.9], [-51.8, -30.2], [-51.5, -29.9], [-51.4, -30.0]
+      ]] } },
+    { "type": "Feature", "properties": { "name": "Taquari River", "kind": "river" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [-50.6, -28.9], [-51.0, -29.05], [-51.4, -29.18], [-51.8, -29.27], [-52.2, -29.4]
+      ] } },
+    { "type": "Feature", "properties": { "name": "Itajaí River", "kind": "river" },
+      "geometry": { "type": "LineString", "coordinates": [
+        [-49.9, -26.9], [-49.6, -26.95], [-49.38, -26.99], [-49.2, -27.05]
+      ] } }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "tipping-point/alerts@1",
+  "alerts": [
+    {
+      "id": "al-2026-11-14-taquari",
+      "area": "Taquari–Antas basin, RS",
+      "region": "Encantado, RS",
+      "hazard": "landslide",
+      "level": "emergency",
+      "certainty": "high",
+      "valid_from": "2026-11-14T09:00:00-03:00",
+      "valid_to": "2026-11-15T21:00:00-03:00",
+      "guidance": "Avoid slopes and riverbanks. Be ready to evacuate if Civil Defense orders it.",
+      "rain": "3-day rain above the 99th percentile of the historical record.",
+      "soil": "Soil saturated.",
+      "forecast": "Risk stays critical over the next 24 h.",
+      "data_dates": { "imerg": "2026-11-14T08:00:00Z", "smap": "2026-11-11" },
+      "map": "/"
+    },
+    {
+      "id": "al-2026-11-14-itajai",
+      "area": "Itajaí Valley, SC",
+      "region": "Itajaí Valley, SC",
+      "hazard": "flood",
+      "level": "warning",
+      "certainty": "medium",
+      "valid_from": "2026-11-14T09:00:00-03:00",
+      "valid_to": "2026-11-16T12:00:00-03:00",
+      "guidance": "Do not cross flooded roads. Move valuables to upper floors.",
+      "rain": "3-day rain above the 95th percentile of the historical record.",
+      "soil": "Soil near saturation.",
+      "forecast": "Risk rises to high on the D+1 forecast.",
+      "data_dates": { "imerg": "2026-11-14T08:00:00Z", "smap": "2026-11-11" },
+      "map": "/"
+    },
+    {
+      "id": "al-2026-11-14-serramar",
+      "area": "Serra do Mar, PR",
+      "region": "Serra do Mar, PR",
+      "hazard": "landslide",
+      "level": "watch",
+      "certainty": "medium",
+      "valid_from": "2026-11-14T09:00:00-03:00",
+      "valid_to": "2026-11-17T09:00:00-03:00",
+      "guidance": "Stay alert on steep-slope roads, especially at night.",
+      "rain": "3-day rain above the 90th percentile of the historical record.",
+      "soil": "Soil moisture rising.",
+      "forecast": "Risk may rise with the next GEOS-FP cycle.",
+      "data_dates": { "imerg": "2026-11-14T08:00:00Z", "smap": "2026-11-11" },
+      "map": "/"
+    }
+  ]
+}

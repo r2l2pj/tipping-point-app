@@ -3,7 +3,9 @@
 import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from "bun:test";
 import { createServer } from "node:http";
 
-import { getCaseBundle, getMetrics, getRootManifest } from "./data";
+import path from "node:path";
+
+import { getAlerts, getCaseBundle, getMetrics, getRootManifest } from "./data";
 import type { MetricsV4 } from "./contract";
 
 // bun-types isn't installed — declare the Bun.serve surface the tests use.
@@ -20,6 +22,11 @@ const files = new Map<string, unknown>();
 const hits: string[] = [];
 let server: { port: number; stop(): void };
 let base = "";
+
+// L14: under `bun test` bundled-copy reads default to test/fixtures/
+// public-data (see dataDir in data.ts) — never the repo's public/data.
+// Pending tests redirect DATA_FS_DIR to a dir that ships nothing.
+const EMPTY_DATA = path.join(process.cwd(), "test", "fixtures", "public-data-empty");
 
 beforeAll(() => {
   server = Bun.serve({
@@ -41,9 +48,12 @@ beforeAll(() => {
 afterAll(() => server.stop());
 
 const savedBase = process.env.DATA_BASE_URL;
+const savedFsDir = process.env.DATA_FS_DIR;
 afterEach(() => {
   if (savedBase === undefined) delete process.env.DATA_BASE_URL;
   else process.env.DATA_BASE_URL = savedBase;
+  if (savedFsDir === undefined) delete process.env.DATA_FS_DIR;
+  else process.env.DATA_FS_DIR = savedFsDir;
   files.clear();
   hits.length = 0;
 });
@@ -218,7 +228,7 @@ describe("remote-first reads (DATA_BASE_URL)", () => {
 
     expect(b.fallback).toBe(true);
     expect(b.manifest?.event_id).toBe("rs-2024-05");
-    expect((b.metrics as MetricsV4 | undefined)?.iou).toBe(0.64); // the bundled mock
+    expect((b.metrics as MetricsV4 | undefined)?.iou).toBe(0.64); // the fixture copy
     expect(hits).toContain("manifest.json");
   });
 
@@ -279,7 +289,7 @@ describe("remote returns 404 for everything", () => {
     const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02");
     expect(b.fallback).toBe(true);
     expect(b.manifest?.event_id).toBe("rs-2024-05");
-    expect((b.metrics as MetricsV4 | undefined)?.iou).toBe(0.64); // bundled
+    expect((b.metrics as MetricsV4 | undefined)?.iou).toBe(0.64); // fixture
 
     const metrics = await getMetrics("rs-2024-05");
     expect((metrics as MetricsV4).iou).toBe(0.64);
@@ -586,5 +596,84 @@ describe("contract-derived bbox / reference_date / tpiCuts", () => {
     const b = await getCaseBundle("rs_2024", "RS");
 
     expect(b.tpiCuts).toEqual([0.1, 0.5, 0.9]);
+  });
+});
+
+// L14: real outputs that haven't shipped surface as `pending` — the loader
+// never fabricates values and never throws for them (only the root
+// manifest and missing bounds still throw). DATA_FS_DIR points at an empty
+// dir so remote 404s have no bundled copy to fall back on.
+describe("pending semantics for absent real outputs (L14)", () => {
+  const stageEmpty = () => {
+    // DATA_FS_DIR must be set per test — the outer afterEach restores it.
+    process.env.DATA_FS_DIR = EMPTY_DATA;
+    process.env.DATA_BASE_URL = base;
+  };
+
+  test("everything present -> pending is empty", async () => {
+    stageReplay();
+    process.env.DATA_BASE_URL = base;
+
+    const b = await getCaseBundle("rs_2024", "RS", RS_BBOX, "2024-05-02");
+
+    expect(b.pending).toEqual([]);
+  });
+
+  test("metrics.json present but case key absent -> metricsView undefined + pending 'metrics'", async () => {
+    stageReplay();
+    files.set("metrics.json", {
+      cases: { wa_2025: { event: "wa-2025-12", iou: 0.71 } },
+    });
+    stageEmpty();
+
+    const b = await getCaseBundle("rs_2024", "RS", RS_BBOX, "2024-05-02");
+
+    expect(b.metrics).toBeUndefined();
+    expect(b.metricsView).toBeUndefined();
+    expect(b.pending).toContain("metrics");
+    expect(b.pending).not.toContain("series"); // series file still loads
+  });
+
+  test("series file absent -> series undefined + pending 'series'", async () => {
+    stageReplay();
+    files.delete("rs_2024/series/imerg_smap_daily.json");
+    stageEmpty();
+
+    const b = await getCaseBundle("rs_2024", "RS", RS_BBOX, "2024-05-02");
+
+    expect(b.series).toBeUndefined();
+    // 'series' marks the missing output; 'imerg_smap_daily' is the
+    // declared-but-missing product id for the same file.
+    expect(b.pending).toContain("series");
+    expect(b.pending).toContain("imerg_smap_daily");
+    expect(b.pending).not.toContain("metrics");
+  });
+
+  test("declared-but-missing product -> pending lists the product id", async () => {
+    stageReplay();
+    files.delete("rs_2024/geojson/priority_zones.geojson");
+    stageEmpty();
+
+    const b = await getCaseBundle("rs_2024", "RS", RS_BBOX, "2024-05-02");
+
+    expect(b.zones).toBeUndefined();
+    expect(b.pending).toContain("priority_zones");
+    // declared-null products are absent by contract — not pending
+    expect(b.pending).not.toContain("flood_confirmed");
+    expect(b.pending).toEqual([...b.pending].sort());
+  });
+
+  test("alerts.json absent -> getAlerts() returns undefined", async () => {
+    stageEmpty(); // files empty -> 404, no bundled copy
+
+    await expect(getAlerts()).resolves.toBeUndefined();
+  });
+
+  test("root manifest absent -> getCaseBundle still throws", async () => {
+    stageEmpty(); // files empty
+
+    await expect(
+      getCaseBundle("rs_2024", "RS", RS_BBOX, "2024-05-02")
+    ).rejects.toThrow("data: manifest.json not found");
   });
 });

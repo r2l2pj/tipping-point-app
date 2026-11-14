@@ -1,0 +1,259 @@
+{
+  "event": "rs-2024-05",
+  "event_id": "rs-2024-05",
+  "mode": "replay",
+  "bounds": [
+    -52.5,
+    -30.5,
+    -50.5,
+    -29.0
+  ],
+  "updated_at": "2024-05-10T12:00:00Z",
+  "forecast_source": "perfect-forecast",
+  "data_dates": {
+    "imerg": "2024-05-02",
+    "smap": "2024-04-30",
+    "nasadem": "static",
+    "nisar_pre": null,
+    "nisar_post": null
+  },
+  "layers": [
+    {
+      "id": "tpi_slide",
+      "date": "2024-04-27",
+      "png": "rs_2024/png/tpi_slide_20240427.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_slide_20240427.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ]
+    },
+    {
+      "id": "tpi_slide",
+      "date": "2024-04-28",
+      "png": "rs_2024/png/tpi_slide_20240428.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_slide_20240428.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ]
+    },
+    {
+      "id": "tpi_slide",
+      "date": "2024-04-29",
+      "png": "rs_2024/png/tpi_slide_20240429.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_slide_20240429.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ]
+    },
+    {
+      "id": "tpi_slide",
+      "date": "2024-04-30",
+      "png": "rs_2024/png/tpi_slide_20240430.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_slide_20240430.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ]
+    },
+    {
+      "id": "tpi_slide",
+      "date": "2024-05-01",
+      "png": "rs_2024/png/tpi_slide_20240501.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_slide_20240501.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ]
+    },
+    {
+      "id": "tpi_slide",
+      "date": "2024-05-02",
+      "png": "rs_2024/png/tpi_slide_20240502.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_slide_20240502.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ]
+    },
+    {
+      "id": "tpi_slide",
+      "date": "2024-05-03",
+      "png": "rs_2024/png/tpi_slide_20240503.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_slide_20240503.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ]
+    },
+    {
+      "id": "tpi_slide",
+      "date": "2024-05-04",
+      "png": "rs_2024/png/tpi_slide_20240504.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_slide_20240504.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ]
+    },
+    {
+      "id": "r_series",
+      "png": null,
+      "cog": "rs_2024/cog/rs_2024_r_series_20240502.tif",
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ],
+      "bands": "one band per day, named YYYYMMDD"
+    },
+    {
+      "id": "s_series",
+      "png": null,
+      "cog": "rs_2024/cog/rs_2024_s_series_20240502.tif",
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ],
+      "bands": "one band per day, named YYYYMMDD"
+    },
+    {
+      "id": "t_slide",
+      "png": null,
+      "cog": "rs_2024/cog/rs_2024_t_slide_20240502.tif",
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ]
+    },
+    {
+      "id": "t_flood",
+      "png": null,
+      "cog": "rs_2024/cog/rs_2024_t_flood_20240502.tif",
+      "bounds": [
+        -52.5,
+        -30.5,
+        -50.5,
+        -29.0
+      ]
+    },
+    {
+      "id": "hillshade",
+      "type": "cog",
+      "path": "cog/hillshade_nasadem.tif",
+      "legend": "tpi",
+      "source": "NASADEM",
+      "date": "static"
+    },
+    {
+      "id": "permanent_water",
+      "type": "geojson",
+      "path": "geojson/permanent_water.geojson",
+      "legend": "water",
+      "source": "JRC Global Surface Water",
+      "date": "2023"
+    },
+    {
+      "id": "imerg_smap_daily",
+      "type": "series",
+      "path": "series/imerg_smap_daily.json",
+      "source": "GPM IMERG · SMAP L4",
+      "date": "2024-05-02"
+    },
+    {
+      "id": "priority_zones",
+      "type": "geojson",
+      "path": "geojson/priority_zones.geojson",
+      "legend": "tpi",
+      "source": "TPI model output",
+      "date": "2024-05-02"
+    }
+  ],
+  "products": {
+    "municipal_boundaries": "rs_2024/geojson/municipal_boundaries.geojson",
+    "landslide_catalog": "rs_2024/geojson/landslide_catalog.geojson",
+    "places": "rs_2024/geojson/places.geojson",
+    "priority_zones": "rs_2024/geojson/priority_zones.geojson",
+    "permanent_water": "rs_2024/geojson/permanent_water.geojson",
+    "flood_confirmed": null,
+    "landslide_candidates": null,
+    "imerg_smap_daily": "rs_2024/series/imerg_smap_daily.json",
+    "swot": null
+  },
+  "_null_reasons": {
+    "flood_confirmed": "no NISAR coverage — event predates launch (Jul 2025)",
+    "landslide_candidates": "no coherence product — event predates NISAR launch",
+    "swot": "no SWOT reach over the AOI"
+  }
+}

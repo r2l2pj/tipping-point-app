@@ -1,0 +1,89 @@
+{
+  "event": "now",
+  "reference_date": "2026-11-14",
+  "rain_p95_mm": 61.0,
+  "tpi_threshold": 0.6,
+  "days": [
+    {
+      "date": "2026-11-09",
+      "offset": -5,
+      "kind": "observed",
+      "imerg_mm": 6.1,
+      "smap": 0.58,
+      "tpi": 0.24,
+      "river_m": null
+    },
+    {
+      "date": "2026-11-10",
+      "offset": -4,
+      "kind": "observed",
+      "imerg_mm": 11.7,
+      "smap": 0.61,
+      "tpi": 0.29,
+      "river_m": null
+    },
+    {
+      "date": "2026-11-11",
+      "offset": -3,
+      "kind": "observed",
+      "imerg_mm": 24.8,
+      "smap": 0.67,
+      "tpi": 0.38,
+      "river_m": null
+    },
+    {
+      "date": "2026-11-12",
+      "offset": -2,
+      "kind": "observed",
+      "imerg_mm": 39.4,
+      "smap": 0.74,
+      "tpi": 0.49,
+      "river_m": null
+    },
+    {
+      "date": "2026-11-13",
+      "offset": -1,
+      "kind": "observed",
+      "imerg_mm": 46.9,
+      "smap": 0.8,
+      "tpi": 0.58,
+      "river_m": null
+    },
+    {
+      "date": "2026-11-14",
+      "offset": 0,
+      "kind": "observed",
+      "imerg_mm": 33.2,
+      "smap": 0.84,
+      "tpi": 0.64,
+      "river_m": null
+    },
+    {
+      "date": "2026-11-15",
+      "offset": 1,
+      "kind": "forecast",
+      "imerg_mm": 28.5,
+      "smap": 0.83,
+      "tpi": 0.62,
+      "river_m": null
+    },
+    {
+      "date": "2026-11-16",
+      "offset": 2,
+      "kind": "forecast",
+      "imerg_mm": 17.0,
+      "smap": 0.81,
+      "tpi": 0.57,
+      "river_m": null
+    },
+    {
+      "date": "2026-11-17",
+      "offset": 3,
+      "kind": "forecast",
+      "imerg_mm": 9.5,
+      "smap": 0.78,
+      "tpi": 0.5,
+      "river_m": null
+    }
+  ]
+}

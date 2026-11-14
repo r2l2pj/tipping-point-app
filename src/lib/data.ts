@@ -31,7 +31,17 @@ import type {
   SeriesDaily,
 } from "./types";
 
-const DATA_DIR = path.join(process.cwd(), "public", "data");
+// Bundled-copy root (L14). DATA_FS_DIR overrides it; under `bun test` the
+// default is the fixture copy so the suite never reads the repo's
+// public/data mocks — production stays on public/data.
+const dataDir = () =>
+  process.env.DATA_FS_DIR ??
+  path.join(
+    process.cwd(),
+    ...(process.env.NODE_ENV === "test"
+      ? ["test", "fixtures", "public-data"]
+      : ["public", "data"])
+  );
 
 export interface LoadedCaseBundle extends CaseBundle {
   // True when a remote read failed and at least one file came from disk —
@@ -49,6 +59,11 @@ export interface LoadedCaseBundle extends CaseBundle {
   // 'gee' when at least one live call contributed content, 'static' when
   // credentialed but nothing live applied, undefined when not credentialed.
   dataSource?: "gee" | "static";
+  // Contract outputs that are absent (L14): 'metrics', 'series', and the
+  // product ids that were declared-but-missing. Sorted for determinism;
+  // components render "pending" markers off this list — the loader never
+  // fabricates values for files the real outputs haven't shipped.
+  pending: string[];
   // numbers.data_date when live numbers applied. The front renders
   // "Showing last saved data from <updated_at ?? dataDate>" on fallback.
   dataDate?: string;
@@ -111,7 +126,7 @@ async function fetchJson<T>(url: string): Promise<T | undefined> {
 
 async function readFs<T>(key: string): Promise<T | undefined> {
   try {
-    const raw = await readFile(path.join(DATA_DIR, key), "utf-8");
+    const raw = await readFile(path.join(dataDir(), key), "utf-8");
     return JSON.parse(raw) as T;
   } catch {
     return undefined;
@@ -223,23 +238,16 @@ export const getMetrics = async (id: string) => {
   const dirs = dirsFor(id);
   const root = await readData<RootManifest>(ctx, "", "manifest.json");
   const entry = root?.cases?.[dirs[0]] ?? root?.cases?.[id];
-  const metrics = await loadMetrics(
-    ctx,
-    entry?.metrics ?? `metrics.json#${dirs[0]}`,
-    dirs
-  );
-  if (metrics === undefined) throw new Error(`data: metrics for ${id} not found`);
-  return metrics;
+  // L14: absent metrics return undefined (pending), they do not throw.
+  return loadMetrics(ctx, entry?.metrics ?? `metrics.json#${dirs[0]}`, dirs);
 };
 
 export const getSeries = (id: string) =>
-  must(
-    firstOf<SeriesDaily>(newCtx(), dirsFor(id), "series/imerg_smap_daily.json"),
-    `${id}/series/imerg_smap_daily.json`
-  );
+  firstOf<SeriesDaily>(newCtx(), dirsFor(id), "series/imerg_smap_daily.json");
 
+// L14: absent alerts.json -> undefined; the /alerts page renders pending.
 export const getAlerts = () =>
-  must(readData<AlertsFile>(newCtx(), "", "alerts.json"), "alerts.json");
+  readData<AlertsFile>(newCtx(), "", "alerts.json");
 
 // now@2 has no series file — the timeline comes from the manifest's layer
 // dates; the forecast flag marks D+1..D+3. Used only when no series file
@@ -286,9 +294,10 @@ export async function getCaseBundle(
   const canonical = dirs[0];
 
   const root = await readData<RootManifest>(ctx, "", "manifest.json");
+  // L14: the root manifest is the one file a bundle cannot be built
+  // without — everything else absent degrades to `pending`, never throws.
+  if (root === undefined) throw new Error("data: manifest.json not found");
   const entry = root?.cases?.[canonical] ?? root?.cases?.[id];
-
-  // The legacy per-case manifest is only needed when the root node is
   // missing pieces the merge falls back on.
   const needPerCase =
     !entry || !entry.layers || !entry.products || !entry.data_dates;
@@ -460,6 +469,34 @@ export async function getCaseBundle(
   if (resolvedBbox === undefined)
     throw new Error(`data: bounds for ${id} not found`);
 
+  // L14: absent contract outputs surface as pending markers. `metrics` and
+  // `series` are named entries; products declared in the map (non-null path)
+  // but missing from storage list their product id. Keys declared `null`
+  // mean "absent by contract" — not pending.
+  const effectiveSeries =
+    series ?? (now ? nowSeriesFromLayers(now, referenceDate) : undefined);
+  const pending = new Set<string>();
+  if (metrics === undefined) pending.add("metrics");
+  if (effectiveSeries === undefined) pending.add("series");
+  const declaredMissing: Record<string, unknown> = {
+    imerg_smap_daily: series,
+    swot,
+    priority_zones: zones,
+    permanent_water: water,
+    flood_confirmed: flood,
+    landslide_candidates: scars,
+    places,
+    landslide_catalog: catalog,
+    municipal_boundaries: municipalities,
+    ...(now
+      ? { summary, alerts: nowAlerts, critical_areas: criticalAreas }
+      : {}),
+  };
+  for (const [key, value] of Object.entries(declaredMissing)) {
+    if (typeof rawProducts?.[key] === "string" && value === undefined)
+      pending.add(key);
+  }
+
   const numbersDate =
     canonical === "now"
       ? (d0Date ?? observedDate ?? referenceDate)
@@ -495,7 +532,8 @@ export async function getCaseBundle(
     catalog,
     municipalities,
     products: manifest?.products,
-    series: series ?? (now ? nowSeriesFromLayers(now, referenceDate) : undefined),
+    series: effectiveSeries,
+    pending: [...pending].sort(),
     tpiCuts: manifest?.tpi_cuts ?? TPI_CUTS,
     zones,
     water,

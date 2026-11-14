@@ -93,6 +93,27 @@ update). `now/` ships without a series file: timeline days derive from
 manifest layer dates + forecast flag. `events.json` remains the case index;
 its entries use the hyphen `event_id` forms.
 
+## Pending outputs (L14)
+
+Real outputs that haven't shipped surface as **pending**, never fabricated
+and never thrown (prerender-safe). `bundle.pending: string[]` is the sorted
+marker list components read:
+
+- `'metrics'` — `metrics.json` absent, or present without the case key
+  (`bundle.metrics`/`metricsView` are `undefined`).
+- `'series'` — no series file resolved (`bundle.series` is `undefined`;
+  `now` still derives its timeline from layer dates, so `'series'` only
+  appears there when even that yields nothing).
+- `<product-id>` — a product **declared** (non-null path) in the products
+  map but missing from storage; `null`-declared keys are absent by
+  contract, not pending.
+
+`getAlerts()` returns `AlertsFile | undefined` — absent `alerts.json` →
+`undefined` (the `/alerts` page renders pending). `getMetrics()` and
+`getSeries()` likewise return `undefined` on absence. Only two things still
+throw: a missing root `manifest.json`, and a case with no bounds anywhere
+(`data: bounds not found`).
+
 ## Live overlay (L8)
 
 When GEE service-account creds are present (`GCP_SA_KEY` /
