@@ -142,9 +142,10 @@ function metricsError(error: unknown): Error {
   ) {
     return error;
   }
-  const mapped = error instanceof TileNotFoundError || error instanceof TileServiceError
-    ? error
-    : mapComputeError(error, "metrics");
+  const mapped: Error =
+    error instanceof TileNotFoundError || error instanceof TileServiceError
+      ? error
+      : mapComputeError(error, "metrics");
   if (mapped instanceof TileNotFoundError) {
     return new MetricsNotFoundError(mapped.message);
   }
