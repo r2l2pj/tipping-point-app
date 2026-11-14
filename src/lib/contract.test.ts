@@ -5,10 +5,12 @@ import { describe, expect, test } from "bun:test";
 import flatMetrics from "../../test/fixtures/metrics.flat.json";
 import legacyMetrics from "../../test/fixtures/metrics.legacy.json";
 import nowManifest from "../../test/fixtures/now.manifest.json";
+import realMetrics from "../../test/fixtures/metrics-19c56df.json";
 import rootManifest from "../../test/fixtures/manifest.root.json";
 import {
   caseAlias,
   canonicalCaseId,
+  flattenLandslideHit,
   FORECAST_SOURCE_LABELS,
   forecastSourceLabel,
   resolveAsset,
@@ -180,6 +182,51 @@ describe("toMetricsView", () => {
   test("empty input -> undefined", () => {
     expect(toMetricsView(undefined)).toBeUndefined();
     expect(toMetricsView(null)).toBeUndefined();
+  });
+});
+
+// Real fallback-branch metrics (pinned 19c56df) — not a mock.
+describe("real metrics fixture (19c56df)", () => {
+  const wa = toMetricsView(realMetrics.cases.wa_2025)!;
+  const rs = toMetricsView(realMetrics.cases.rs_2024)!;
+
+  test("wa_2025 new keys flow to the view; swath_coverage_pct normalizes", () => {
+    expect(wa.flooded_km2).toBeCloseTo(27.986782691534348, 10);
+    expect(wa.water_km2).toBeCloseTo(304.07798965256404, 10);
+    expect(wa.threshold_db).toBe(-15);
+    expect(wa.flood_bright_km2).toBeCloseTo(0.6621649771870278, 10);
+    expect(wa.swath_coverage_pct).toBeCloseTo(0.741, 5);
+    expect(wa.flooded_km2_scope).toBe("within NISAR swath");
+    expect(wa.flood_top_clusters).toHaveLength(5);
+    expect(wa.flood_top_clusters?.[0]).toMatchObject({
+      area_km2: 10.61,
+      lat: 47.91,
+      lon: -122.153,
+    });
+  });
+
+  test("rs_2024 nested landslide_hit passes through; no flat hit_pct synthesized by toMetricsView", () => {
+    expect(rs.landslide_hit?.n_points).toBe(16027);
+    expect(rs.landslide_hit?.per_day).toHaveLength(3);
+    expect(rs.landslide_hit?.scale_m).toBe(90);
+    expect(rs.landslide_hit_pct).toBeUndefined();
+  });
+
+  test("flattenLandslideHit derives the event-day hit_pct, normalized like other percents", () => {
+    // 2024-05-02 hit_pct 85.855 -> 0.85855
+    expect(flattenLandslideHit(rs, "2024-05-02")?.landslide_hit_pct).toBeCloseTo(0.85855, 5);
+    // unknown/absent date -> last per_day entry
+    expect(flattenLandslideHit(rs, "1999-01-01")?.landslide_hit_pct).toBeCloseTo(0.85855, 5);
+    expect(flattenLandslideHit(rs)?.landslide_hit_pct).toBeCloseTo(0.85855, 5);
+    // an earlier date picks its own entry
+    expect(flattenLandslideHit(rs, "2024-05-01")?.landslide_hit_pct).toBeCloseTo(0.84863, 5);
+  });
+
+  test("flattenLandslideHit is a no-op for flat input, missing hit data, or missing view", () => {
+    const flat = toMetricsView({ landslide_hit_pct: 0.62 })!;
+    expect(flattenLandslideHit(flat, "2024-05-02")?.landslide_hit_pct).toBe(0.62);
+    expect(flattenLandslideHit(toMetricsView({ iou: 0.5 }))?.landslide_hit_pct).toBeUndefined();
+    expect(flattenLandslideHit(undefined)).toBeUndefined();
   });
 });
 

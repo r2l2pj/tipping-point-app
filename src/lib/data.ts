@@ -8,6 +8,7 @@ import { cacheLife } from "next/cache";
 import {
   canonicalCaseId,
   caseAlias,
+  flattenLandslideHit,
   FORECAST_DAY_RE,
   resolveAsset,
   TPI_CUTS,
@@ -493,7 +494,9 @@ export async function getCaseBundle(
     data_dates: manifest?.data_dates,
     manifest,
     metrics,
-    metricsView: toMetricsView(metrics),
+    // Nested landslide_hit -> flat event-day landslide_hit_pct (the day
+    // matching referenceDate, else the last per_day entry).
+    metricsView: flattenLandslideHit(toMetricsView(metrics), referenceDate),
     summary,
     nowAlerts,
     criticalAreas,

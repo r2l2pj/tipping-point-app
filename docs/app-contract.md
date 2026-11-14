@@ -158,7 +158,31 @@ pass through untouched. Legacy mapping: `flood.area_km2→flooded_km2`,
 Optional analysis keys (all absent-safe, passthrough unless noted):
 `swath_coverage_pct` (percent → 0-1), `flooded_km2_scope` (e.g. "within
 NISAR swath"), `flood_top_clusters` (`{area_km2, lat, lon, where?}[]`),
+`water_km2`, `threshold_db`, `flood_bright_km2`,
 `hand_validation_radii` (`radius_m -> iou` map), `hand_best_radius_m`.
+
+### `landslide_hit` (nested) → `landslide_hit_pct` (flat)
+
+The real pipeline ships hit stats nested:
+
+```json
+"landslide_hit": {
+  "definition": "share of inventory points with TPI_slide >= 0.6 (Critical)",
+  "scale_m": 90, "terrain_scale": "…", "n_points": 16027,
+  "per_day": [{ "date": "YYYY-MM-DD", "hit_pct": 85.855,
+               "p50": 0.898, "p90": 1.0, "max": 1.0, "ge04_pct": 91.67 }],
+  "note": "…"
+}
+```
+
+`hit_pct`/`ge04_pct` are authored 0-100; `p50`/`p90`/`max` are 0-1. The
+nested object passes through `toMetricsView()` untouched (typed
+`LandslideHit`) — `toMetricsView` never synthesizes a flat value.
+`getCaseBundle` then calls `flattenLandslideHit(view, reference_date)`:
+the flat `metricsView.landslide_hit_pct` is the **event-day** `hit_pct` —
+the `per_day` entry matching the case `reference_date`, else the last
+entry — normalized by the same `*_pct` rule (rs_2024: 85.855 → 0.85855).
+An already-flat `landslide_hit_pct` wins; no hit data → key stays absent.
 
 `flood_source` is an optional pipeline-written enum: `'nisar'|'opera'|'observed'|null`.
 It identifies the sensor source of `flooded_km2` and `people_flooded`:

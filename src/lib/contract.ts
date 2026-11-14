@@ -43,6 +43,26 @@ export interface LeadTimeAssumptions {
   [k: string]: unknown;
 }
 
+// Real nested landslide_hit (fallback branch 19c56df): per-day hit stats
+// sampled at the landslide inventory points. hit_pct/ge04_pct are authored
+// 0-100; p50/p90/max are 0-1 fractions.
+export interface LandslideHitDay {
+  date: string;
+  hit_pct: number;
+  p50?: number;
+  p90?: number;
+  max?: number;
+  ge04_pct?: number;
+}
+export interface LandslideHit {
+  definition?: string;
+  scale_m?: number;
+  terrain_scale?: string;
+  n_points?: number;
+  note?: string;
+  per_day?: LandslideHitDay[];
+}
+
 // metrics.json per event: flat keys (SCHEMA.md). All fields optional — the
 // pipeline writes them from several steps and a case may ship a subset.
 export interface MetricsV4 {
@@ -51,7 +71,11 @@ export interface MetricsV4 {
   f1?: number;
   cloud_pct?: number;
   landslide_hit_pct?: number;
+  landslide_hit?: LandslideHit; // nested form; flattened by flattenLandslideHit
   swath_coverage_pct?: number;
+  water_km2?: number;
+  threshold_db?: number;
+  flood_bright_km2?: number;
   hand_validation?: number;
   flooded_km2_scope?: string; // e.g. "within NISAR swath"
   flood_top_clusters?: { area_km2: number; lat: number; lon: number; where?: string }[];
@@ -150,6 +174,27 @@ export function toMetricsView(
 
   for (const k of PCT_KEYS) view[k] = pct(view[k]);
   return view;
+}
+
+// Nested `landslide_hit` -> flat `landslide_hit_pct`: the event-day
+// hit_pct — the per_day entry matching the case reference_date when known,
+// else the last entry — normalized by the same *_pct rule (0-100 -> /100).
+// The nested object passes through untouched. No-op when the view already
+// carries a flat value or ships no hit data; needs the reference date, so
+// callers run it post-normalization (getCaseBundle does).
+export function flattenLandslideHit(
+  view: MetricsView | undefined,
+  referenceDate?: string
+): MetricsView | undefined {
+  if (!view || view.landslide_hit_pct !== undefined) return view;
+  const days = view.landslide_hit?.per_day;
+  if (!Array.isArray(days) || days.length === 0) return view;
+  const day =
+    (referenceDate !== undefined
+      ? days.find((d) => isRecord(d) && d.date === referenceDate)
+      : undefined) ?? days[days.length - 1];
+  const hitPct = isRecord(day) ? pct(day.hit_pct) : undefined;
+  return hitPct === undefined ? view : { ...view, landslide_hit_pct: hitPct };
 }
 
 // --- now@2 -----------------------------------------------------------------

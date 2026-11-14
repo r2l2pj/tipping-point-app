@@ -2,8 +2,29 @@
 
 Commit 8522fcf (merged as fb65f4e) delivered the pending semantics; review
 fix-forward landed on `unit/l14fix`: `253afe4` "data: no fabricated series
-for absent now/ output (L14)" + `c2c9dd0` "test: pin manifest-fallback
-metrics tests to unreachable remote". Not pushed.
+for absent now/ output (L14)" + `e2727bd` "test: pin manifest-fallback
+metrics tests to unreachable remote" + `69d5236` "contract: map nested
+landslide_hit to flat landslide_hit_pct + real-metrics fixture". Not pushed.
+
+## Real metrics mapping (69d5236)
+
+- `test/fixtures/metrics-19c56df.json` — real pinned fallback-branch
+  metrics (wa_2025 flat flood keys; rs_2024 nested `landslide_hit`).
+- `contract.ts`: new `LandslideHit`/`LandslideHitDay` types; `MetricsV4`
+  gains `landslide_hit`, `water_km2`, `threshold_db`, `flood_bright_km2`
+  (nested object passes `toMetricsView` through untouched — never
+  synthesizes a flat value). New `flattenLandslideHit(view, refDate)`:
+  flat `landslide_hit_pct` = event-day `hit_pct` (entry matching
+  reference_date, else last per_day) normalized by the `*_pct` rule;
+  already-flat wins, no data → absent.
+- `data.ts`: `metricsView` built via `flattenLandslideHit(toMetricsView(
+  metrics), referenceDate)` — rs_2024 yields 0.85855 (2024-05-02).
+- Tests: contract.test asserts wa_2025 keys (swath_coverage_pct → 0.741,
+  scope, clusters) + flatten rules; data.test asserts `metrics.json#
+  rs_2024` resolves through the `cases` wrapper against the real fixture
+  and landslide_hit_pct → 0.85855 on the bundle.
+- `docs/app-contract.md`: documents the nested shape + event-day
+  flattening rule.
 
 ## Test determinism fix (c2c9dd0)
 

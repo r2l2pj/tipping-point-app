@@ -5,6 +5,7 @@ import { createServer } from "node:http";
 
 import path from "node:path";
 
+import realMetrics from "../../test/fixtures/metrics-19c56df.json";
 import { getAlerts, getCaseBundle, getMetrics, getRootManifest } from "./data";
 import type { MetricsV4 } from "./contract";
 
@@ -274,6 +275,22 @@ describe("remote-first reads (DATA_BASE_URL)", () => {
     // and via the bundle
     const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02");
     expect((b.metrics as MetricsV4 | undefined)?.f1).toBe(0.88);
+  });
+
+  test("real fallback metrics: #rs_2024 resolves through the cases wrapper; nested landslide_hit flattens to the event day", async () => {
+    stageReplay();
+    files.set("metrics.json", realMetrics); // real 19c56df, not a mock
+    process.env.DATA_BASE_URL = base;
+
+    const metrics = await getMetrics("rs-2024-05");
+    expect((metrics as MetricsV4).event).toBe("rs-2024-05");
+    expect((metrics as MetricsV4).landslide_hit?.per_day).toHaveLength(3);
+    expect((metrics as MetricsV4).landslide_hit_pct).toBeUndefined();
+
+    const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02");
+    // event day 2024-05-02 hit_pct 85.855 -> normalized 0-1
+    expect(b.metricsView?.landslide_hit_pct).toBeCloseTo(0.85855, 5);
+    expect(b.metricsView?.landslide_hit?.n_points).toBe(16027);
   });
 });
 

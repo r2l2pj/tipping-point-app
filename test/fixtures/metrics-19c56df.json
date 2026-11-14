@@ -1,0 +1,81 @@
+{
+  "cases": {
+    "wa_2025": {
+      "event": "wa-2025-12",
+      "flooded_km2": 27.986782691534348,
+      "water_km2": 304.07798965256404,
+      "threshold_db": -15.0,
+      "flood_bright_km2": 0.6621649771870278,
+      "swath_coverage_pct": 74.1,
+      "flooded_km2_scope": "within NISAR swath",
+      "flood_top_clusters": [
+        {
+          "area_km2": 10.61,
+          "lat": 47.91,
+          "lon": -122.153,
+          "where": "Snohomish valley, Snohomish-Fobes Hill"
+        },
+        {
+          "area_km2": 3.18,
+          "lat": 47.898,
+          "lon": -122.048,
+          "where": "Snohomish-Monroe corridor"
+        },
+        {
+          "area_km2": 1.27,
+          "lat": 47.951,
+          "lon": -122.143,
+          "where": "lower Snohomish valley, Fobes Hill-Lake Stevens"
+        },
+        {
+          "area_km2": 1.05,
+          "lat": 47.8,
+          "lon": -121.99,
+          "where": "Skykomish R., Sultan"
+        },
+        {
+          "area_km2": 0.91,
+          "lat": 47.769,
+          "lon": -121.982,
+          "where": "Skykomish R., Sultan-Duvall"
+        }
+      ]
+    },
+    "rs_2024": {
+      "event": "rs-2024-05",
+      "landslide_hit": {
+        "definition": "share of inventory points with TPI_slide >= 0.6 (Critical)",
+        "scale_m": 90,
+        "terrain_scale": "NASADEM native (doc rule 3 combination)",
+        "n_points": 16027,
+        "per_day": [
+          {
+            "date": "2024-04-30",
+            "hit_pct": 73.108,
+            "p50": 0.707,
+            "p90": 0.83,
+            "max": 0.982,
+            "ge04_pct": 89.63
+          },
+          {
+            "date": "2024-05-01",
+            "hit_pct": 84.863,
+            "p50": 0.871,
+            "p90": 0.986,
+            "max": 1.0,
+            "ge04_pct": 91.414
+          },
+          {
+            "date": "2024-05-02",
+            "hit_pct": 85.855,
+            "p50": 0.898,
+            "p90": 1.0,
+            "max": 1.0,
+            "ge04_pct": 91.67
+          }
+        ],
+        "note": "TPI_slide sampled at the 16,027 RS landslide inventory points; at 1 km scale slope flattening kept the same series below 0.6."
+      }
+    }
+  }
+}
