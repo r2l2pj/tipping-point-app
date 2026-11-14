@@ -74,8 +74,10 @@ export default function AlertTab({
         </div>
         {!monitoring && (
           <div className="mt-3 flex items-center gap-5">
-            <Stat big value={fmtKm2(areaKm2)} label="critical" />
-            <Stat big value={fmtPeople(people)} label="people exposed" />
+            {/* The bundle's zones list is trimmed to the top 20 (payload
+                ruling) — sums over it are partial and must read pending. */}
+            <Stat big value={fmtKm2(areaKm2)} label="critical" absent={zones.length >= 20} />
+            <Stat big value={fmtPeople(people)} label="people exposed" absent={zones.length >= 20} />
             {mock && (
               <span className="ml-auto text-right text-xs leading-tight text-zinc-500">
                 Data

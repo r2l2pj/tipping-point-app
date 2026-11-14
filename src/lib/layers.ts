@@ -221,13 +221,15 @@ export function pointInPolygons(
 
 // --- asset URLs --------------------------------------------------------------
 
-// Manifest png/cog paths are bucket-relative; the bucket is served at /data.
-// resolveAsset passes through gs:// and http(s) URLs and does not double
-// paths that already carry the case dir.
+// Manifest png/cog paths are bucket-relative; the bucket is served at /data
+// locally and at bundle.assetBase (Neon) when published. resolveAsset passes
+// through absolute http(s) URLs and does not double paths that already carry
+// the case dir.
 export const assetUrl = (
   caseDir: string,
-  p: string | null | undefined
-): string | undefined => resolveAsset("/data", caseDir, p);
+  p: string | null | undefined,
+  base = "/data"
+): string | undefined => resolveAsset(base, caseDir, p);
 
 // --- toggle-layer raster availability ---------------------------------------
 //
@@ -452,12 +454,15 @@ export function fetchGeo(
 type ProductsLike = Record<string, string | null | undefined> | undefined;
 
 // URL for a geojson product: products map wins (explicit null = declared
-// absent -> undefined, never fetched), fixed filename as fallback.
+// absent -> undefined, never fetched), fixed filename as fallback. The base
+// is the bundle's remote assetBase when published (Neon), else the bundled
+// /data copy.
 export function geoUrl(
   bundle:
     | {
         products?: ProductsLike;
         manifest?: { products?: ProductsLike };
+        assetBase?: string;
       }
     | null
     | undefined,
@@ -468,7 +473,11 @@ export function geoUrl(
   const products = bundle?.products ?? bundle?.manifest?.products;
   const declared = products?.[key];
   if (declared === null) return undefined;
-  return assetUrl(caseDir, declared ?? fixed);
+  return resolveAsset(
+    bundle?.assetBase ?? "/data",
+    caseDir,
+    declared ?? fixed
+  );
 }
 
 // --- resilient map sources ---------------------------------------------------

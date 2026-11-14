@@ -1,12 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { canonicalCaseId } from "@/lib/contract";
-import { assetUrl, fmtDate } from "@/lib/layers";
+import { assetUrl, fetchGeo, fmtDate, geoUrl } from "@/lib/layers";
 import { fmtKm2 } from "@/lib/tpi";
 import type { CaseBundle, NisarPass } from "@/lib/types";
 import SwipeCompare from "../SwipeCompare";
 import NisarPassList from "./NisarPassList";
-import { pendingIncludes } from "./format";
 import { StatCard } from "./Stat";
 
 type BBox = [number, number, number, number];
@@ -28,9 +28,28 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
   const passes = Array.isArray(dd.nisar_passes)
     ? (dd.nisar_passes as NisarPass[])
     : null;
-  const candidates = bundle.scars?.features.length;
-
   const caseDir = canonicalCaseId(bundle.manifest?.event ?? bundle.id);
+  // Scar count: the geojson left the bundle (payload ruling) — fetch its URL
+  // lazily through the shared cache the map source also uses. null = unknown.
+  const scarsUrl = geoUrl(
+    bundle,
+    caseDir,
+    "landslide_candidates",
+    "geojson/landslide_candidates.geojson"
+  );
+  const [fetched, setFetched] = useState<number | null>(null);
+  useEffect(() => {
+    if (bundle.scars || !scarsUrl) return;
+    let live = true;
+    fetchGeo(scarsUrl).then(
+      (fc) => live && setFetched(fc?.features.length ?? null)
+    );
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scarsUrl]);
+  const candidates = bundle.scars?.features.length ?? fetched;
   const ml = bundle.manifest?.layers ?? [];
   const preLayer = ml.find((l) => l.id === "nisar_pre");
   const postLayer = ml.find((l) => l.id === "nisar_post");
@@ -96,7 +115,7 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
           label="Landslide scar candidates (HLS optical)"
           value={candidates == null ? "—" : String(candidates)}
           accent="amber"
-          absent={bundle.scars == null || pendingIncludes(bundle, "landslide_candidates")}
+          absent={candidates == null}
         />
       </div>
       <p className="text-xs leading-snug text-zinc-500">
