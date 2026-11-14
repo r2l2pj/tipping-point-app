@@ -16,7 +16,7 @@ Voiceover total: **62 words** (limit 75). On-screen text uses the ruled English 
 
 ## Production notes
 
-- Provisional WA figure (not for recording yet): 27.99 km2 flooded within the NISAR swath (Dec 4 -> Dec 16, 2025); clusters in the Snohomish/Skykomish valleys; Skagit had receded before the pass. The post scene does not cover the SW of the AOI — always say within the NISAR swath when quoting it. X placeholder stays until metrics.json is final and Lucas approves copy.
+- Provisional WA figure (not for recording yet): 27.99 km2 flooded within the NISAR swath (Dec 4 -> Dec 16, 2025); clusters in the Snohomish/Skykomish valleys; Skagit had receded before the pass. The post scene covers only 74.1% of the AOI (SW cut off) — always say within the NISAR swath when quoting it. X placeholder stays until metrics.json is final and Lucas approves copy.
 - **English labels landed at 8d65729.** SidePanel now labels the tab "Did we get it right?" and the forecast chip reads "perfect forecast" — no more Portuguese/English discrepancy. Still verify every on-screen string on the recorded build before shooting.
 - **Forecast label.** Forecast frames carry a source label: on replay it reads "perfect forecast" (contract.ts `forecastSourceLabel` at 8d65729), on live "GEOS-FP". Replay uses a declared **perfect forecast** (observed IMERG as D+1..D+3, `forecast_source=perfect-forecast`), stated in the README. Keep any forecast shot visibly labeled.
 - **RS-2024 has no radar confirmation.** The event predates NISAR. The RS case's RADAR tab shows "Awaiting a NISAR pair over the AOI." The radar beat (step 3, 11–16 s) is on the WA Dec 2025 case only — do not imply NISAR data exists for RS.
