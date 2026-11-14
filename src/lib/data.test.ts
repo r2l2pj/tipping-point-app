@@ -297,5 +297,135 @@ describe("fs-only mode (no DATA_BASE_URL)", () => {
     expect(b.metricsView?.warned_before_pct).toBe(0.81);
     expect(b.series?.days[0].kind).toBe("observed");
     expect(b.fallback).toBe(false);
+    // no creds, no injected gee -> live overlay untouched
+    expect(b.dataSource).toBeUndefined();
+    expect(b.liveLayers).toBeUndefined();
+    expect(b.dataDate).toBeUndefined();
+  });
+});
+
+// L8: injected gee fakes drive the live overlay without credentials.
+describe("live GEE overlay (injected gee)", () => {
+  test("live numbers overlay metricsView incl. flood_source='nisar'; layers land on liveLayers", async () => {
+    stageReplay();
+    process.env.DATA_BASE_URL = base;
+
+    const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02", {
+      gee: {
+        numbers: async (q) => {
+          expect(q).toEqual({ caseId: "rs_2024", date: "2024-05-02" });
+          return {
+            case: "rs_2024",
+            date: "2024-05-02",
+            people_exposed: 1234,
+            flooded_km2: 55.5,
+            people_flooded: 321,
+            data_date: "2024-05-03",
+            source: "properties",
+          };
+        },
+        layers: async (caseId) => {
+          expect(caseId).toBe("rs_2024");
+          return {
+            case: "rs_2024",
+            layers: [{ id: "tpi_slide", dates: ["2024-05-02"], asset: "x" }],
+          };
+        },
+      },
+    });
+
+    expect(b.metricsView?.people_critical).toBe(1234);
+    expect(b.metricsView?.flooded_km2).toBe(55.5);
+    expect(b.metricsView?.flood_source).toBe("nisar");
+    expect(b.metricsView?.people_flooded).toBe(321);
+    expect(b.metricsView?.iou).toBe(0.99); // untouched fields preserved
+    expect(b.liveLayers).toHaveLength(1);
+    expect(b.liveLayers?.[0].id).toBe("tpi_slide");
+    expect(b.dataSource).toBe("gee");
+    expect(b.dataDate).toBe("2024-05-03");
+    expect(b.fallback).toBe(false);
+  });
+
+  test("now case: numbers overlay summary.critical_km2.any + people fields, query date is the d0 layer date", async () => {
+    // fs mode: the bundled now/ copy ships summary/alerts/critical_areas and
+    // no remote miss can flag fellBack.
+    delete process.env.DATA_BASE_URL;
+
+    const b = await getCaseBundle(
+      "now",
+      "Now",
+      [-58, -34, -48, -22.5],
+      "2026-11-14",
+      {
+        gee: {
+          numbers: async (q) => {
+            expect(q).toEqual({ caseId: "now", date: "2026-11-14" });
+            return {
+              case: "now",
+              date: "2026-11-14",
+              km2_critical: 42.5,
+              people_exposed: 999,
+              source: "computed",
+            };
+          },
+          layers: async () => ({
+            case: "now",
+            layers: [{ id: "tpi_slide", dates: ["2026-11-14"] }],
+          }),
+        },
+      }
+    );
+
+    expect(b.summary?.critical_km2?.any).toBe(42.5);
+    expect(b.summary?.critical_km2?.slide).toBe(3.1); // other keys preserved
+    expect(b.summary?.people_exposed).toBe(999);
+    expect(b.summary?.people_critical).toBe(999);
+    expect(b.dataSource).toBe("gee");
+    expect(b.fallback).toBe(false);
+  });
+
+  test("numbers error + layers error -> fallback, static values preserved", async () => {
+    stageReplay();
+    process.env.DATA_BASE_URL = base;
+
+    const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02", {
+      gee: {
+        numbers: async () => {
+          throw new Error("no band 20240502 on asset");
+        },
+        layers: async () => {
+          throw new Error("gee unreachable");
+        },
+      },
+    });
+
+    expect(b.fallback).toBe(true);
+    expect(b.dataSource).toBe("static");
+    expect(b.liveLayers).toBeUndefined();
+    expect(b.dataDate).toBeUndefined();
+    expect((b.metrics as MetricsV4 | undefined)?.iou).toBe(0.99);
+    expect(b.metricsView?.flood_source).toBeUndefined();
+  });
+
+  test("empty layers array means degraded -> fallback even when numbers applied", async () => {
+    stageReplay();
+    process.env.DATA_BASE_URL = base;
+
+    const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02", {
+      gee: {
+        numbers: async () => ({
+          case: "rs_2024",
+          date: "2024-05-02",
+          people_exposed: 10,
+          source: "properties",
+        }),
+        layers: async () => ({ case: "rs_2024", layers: [] }),
+      },
+    });
+
+    expect(b.liveLayers).toEqual([]);
+    expect(b.metricsView?.people_critical).toBe(10);
+    expect(b.dataSource).toBe("gee"); // numbers still contributed content
+    expect(b.fallback).toBe(true); // but nothing published -> degraded
   });
 });

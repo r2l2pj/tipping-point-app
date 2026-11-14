@@ -77,6 +77,32 @@ update). `now/` ships without a series file: timeline days derive from
 manifest layer dates + forecast flag. `events.json` remains the case index;
 its entries use the hyphen `event_id` forms.
 
+## Live overlay (L8)
+
+When GEE service-account creds are present (`GCP_SA_KEY` /
+`GEE_SERVICE_ACCOUNT_KEY`), `getCaseBundle` overlays live Earth Engine data
+onto the static bundle before returning:
+
+- `getNumbers({caseId, date})` — replay cases query `reference_date`; `now`
+  queries the latest observed date (the `_d0` layer date, else
+  `data_dates.observed`, else `reference_date`). Applied fields:
+  `people_exposed` → `metricsView.people_critical`; `flooded_km2` →
+  `metricsView.flooded_km2` and `metricsView.flood_source = 'nisar'` (the live
+  flood asset is NISAR GCOV); `people_flooded` → `metricsView.people_flooded`.
+  On `now`, `km2_critical` → `summary.critical_km2.any` (only that key) and
+  `people_exposed` → `summary.people_exposed` + `summary.people_critical`.
+- `getLayerMeta(caseId)` → `bundle.liveLayers: LayerMeta[]`. An answered but
+  **empty** layers array means GEE is up yet nothing is published — degraded.
+
+New bundle fields: `liveLayers`, `dataSource` (`'gee'` when live content
+applied, `'static'` when credentialed but nothing applied, undefined when not
+credentialed), `dataDate` (`numbers.data_date` when live numbers applied).
+`fallback` additionally becomes true when credentialed and every live call
+failed or the layer probe came back empty — the user sees last-good static
+although live was expected. Without creds `fallback` keeps its remote-miss
+meaning only. The front renders "Showing last saved data from
+`<updated_at ?? dataDate>`" when `fallback` is true.
+
 ## metrics.json (flat keys)
 
 `toMetricsView()` accepts the flat v4 metrics and the legacy nested mock

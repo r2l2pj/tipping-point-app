@@ -11,10 +11,12 @@ import {
   resolveAsset,
   toMetricsView,
   toNowView,
+  type MetricsView,
   type NowAlertsFile,
   type NowSummary,
   type NowView,
 } from "./contract";
+import type { LayerMeta } from "./ee-layers";
 import type {
   AlertsFile,
   CaseBundle,
@@ -31,12 +33,33 @@ const DATA_DIR = path.join(process.cwd(), "public", "data");
 
 export interface LoadedCaseBundle extends CaseBundle {
   // True when DATA_BASE_URL was set but at least one file came from disk —
-  // the bundle is a mix of bucket data and the bundled fallback.
+  // the bundle is a mix of bucket data and the bundled fallback. Also true
+  // when GEE creds exist but the live overlay degraded (every call failed,
+  // or the layer probe answered with nothing published).
   fallback?: boolean;
   // now/ critical-area polygons (products.critical_areas or fixed name).
   criticalAreas?: GeoJSON.FeatureCollection;
   // Upcoming NISAR passes for the live bundle (hoisted by toNowView).
   nisarPasses?: NisarPass[];
+  // Live GEE layer metadata (L8); present when the probe answered, even
+  // when the layers array is empty (GEE up, nothing published).
+  liveLayers?: LayerMeta[];
+  // 'gee' when at least one live call contributed content, 'static' when
+  // credentialed but nothing live applied, undefined when not credentialed.
+  dataSource?: "gee" | "static";
+  // numbers.data_date when live numbers applied. The front renders
+  // "Showing last saved data from <updated_at ?? dataDate>" on fallback.
+  dataDate?: string;
+}
+
+// Optional test/injection seam for the live GEE overlay (L8). When `gee` is
+// provided its functions are used as-is and the credential gate is skipped —
+// presence of an injected gee means "credentialed".
+export interface CaseBundleOpts {
+  gee?: {
+    numbers?: (q: { caseId: string; date: string }) => Promise<unknown>;
+    layers?: (caseId: string) => Promise<unknown>;
+  };
 }
 
 // products map values are strictly string | null; null = absent.
@@ -54,6 +77,9 @@ const newCtx = (): ReadCtx => ({ base: remoteBase(), fellBack: false });
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null;
+
+const num = (v: unknown): number | undefined =>
+  typeof v === "number" && Number.isFinite(v) ? v : undefined;
 
 // Remote fetch inside `use cache` so bucket reads share the "minutes"
 // profile; the directive is inert under `bun test`, where cacheLife has no
@@ -238,7 +264,8 @@ export async function getCaseBundle(
   id: string,
   title: string,
   bbox: [number, number, number, number],
-  reference_date: string
+  reference_date: string,
+  opts?: CaseBundleOpts
 ): Promise<LoadedCaseBundle> {
   const ctx = newCtx();
   const dirs = dirsFor(id);
@@ -305,6 +332,50 @@ export async function getCaseBundle(
   const geo = (key: string, fixed: string) =>
     loadProduct<GeoJSON.FeatureCollection>(ctx, canonical, rawProducts, key, fixed);
 
+  // --- live GEE overlay (L8) ------------------------------------------------
+  // Injected gee (tests) skips the credential gate; otherwise the helpers load
+  // via dynamic import so this module has no static edge to ee-* (they import
+  // getRootManifest from here) and ee stays off the no-creds path entirely.
+  let gee = opts?.gee;
+  if (!gee && (process.env.GCP_SA_KEY || process.env.GEE_SERVICE_ACCOUNT_KEY)) {
+    const [eeMod, numbersMod, layersMod] = await Promise.all([
+      import("./ee"),
+      import("./ee-numbers"),
+      import("./ee-layers"),
+    ]);
+    if (eeMod.credentialEnv()) {
+      gee = {
+        numbers: (q) => numbersMod.getNumbers(q),
+        layers: (c) => layersMod.getLayerMeta(c),
+      };
+    }
+  }
+  const credentialed = Boolean(gee);
+
+  // Numbers query date: replay cases use the reference date; the live `now`
+  // case wants the latest observed data date — the d0 layer date, else
+  // data_dates.observed, else the reference date.
+  const d0Date = now?.layers.find(
+    (l) => /_d0$/.test(l.id) && typeof l.date === "string"
+  )?.date;
+  const observedDate =
+    now?.data_dates && typeof now.data_dates.observed === "string"
+      ? now.data_dates.observed
+      : undefined;
+  const numbersDate =
+    canonical === "now"
+      ? (d0Date ?? observedDate ?? reference_date)
+      : reference_date;
+
+  // One slow/failed call must not hang the other — the helpers carry their
+  // own internal timeouts.
+  const livePending = gee
+    ? Promise.allSettled([
+        gee.numbers?.({ caseId: canonical, date: numbersDate }),
+        gee.layers?.(canonical),
+      ])
+    : undefined;
+
   const [
     metrics,
     series,
@@ -345,7 +416,7 @@ export async function getCaseBundle(
     now ? geo("critical_areas", "geojson/critical_areas.geojson") : undefined,
   ]);
 
-  return {
+  const bundle: LoadedCaseBundle = {
     id,
     title,
     mode: manifest?.mode ?? (now ? "live" : "replay"),
@@ -372,4 +443,67 @@ export async function getCaseBundle(
     places,
     fallback: ctx.fellBack,
   };
+
+  // Apply whatever the live GEE calls returned (L8). Numbers overlay the
+  // metricsView/summary fields; layer meta lands on liveLayers. An answered
+  // but EMPTY layers array means GEE is up yet nothing is published —
+  // degraded, not content.
+  const [numbersSettled, layersSettled] = (await livePending) ?? [];
+  const numbers =
+    numbersSettled?.status === "fulfilled" && isRecord(numbersSettled.value)
+      ? numbersSettled.value
+      : undefined;
+  const layerResult =
+    layersSettled?.status === "fulfilled" && isRecord(layersSettled.value)
+      ? layersSettled.value
+      : undefined;
+  const liveLayers = Array.isArray(layerResult?.layers)
+    ? (layerResult.layers as LayerMeta[])
+    : undefined;
+  const layersEmpty = liveLayers !== undefined && liveLayers.length === 0;
+  if (liveLayers) bundle.liveLayers = liveLayers;
+
+  let numbersApplied = false;
+  if (numbers) {
+    const mv: MetricsView = { ...(bundle.metricsView ?? {}) };
+    const peopleExposed = num(numbers.people_exposed);
+    const floodedKm2 = num(numbers.flooded_km2);
+    const peopleFlooded = num(numbers.people_flooded);
+    const km2Critical = num(numbers.km2_critical);
+    if (peopleExposed !== undefined) mv.people_critical = peopleExposed;
+    if (floodedKm2 !== undefined) {
+      mv.flooded_km2 = floodedKm2;
+      // The live flood asset is NISAR GCOV per contract.
+      mv.flood_source = "nisar";
+    }
+    if (peopleFlooded !== undefined) mv.people_flooded = peopleFlooded;
+    bundle.metricsView = mv;
+    if (bundle.summary) {
+      if (km2Critical !== undefined)
+        bundle.summary = {
+          ...bundle.summary,
+          critical_km2: { ...bundle.summary.critical_km2, any: km2Critical },
+        };
+      if (peopleExposed !== undefined)
+        bundle.summary = {
+          ...bundle.summary,
+          people_exposed: peopleExposed,
+          people_critical: peopleExposed,
+        };
+    }
+    if (typeof numbers.data_date === "string")
+      bundle.dataDate = numbers.data_date;
+    numbersApplied = true;
+  }
+
+  const anyContent = numbersApplied || Boolean(liveLayers?.length);
+  const attempted = Boolean(gee?.numbers || gee?.layers);
+  if (credentialed) bundle.dataSource = anyContent ? "gee" : "static";
+  // Credentialed-but-degraded (all live calls failed, or the probe answered
+  // with zero published layers) counts as stale: the user sees last-good
+  // static although live was expected. No creds -> not stale, just offline.
+  bundle.fallback =
+    ctx.fellBack || (credentialed && (layersEmpty || (attempted && !anyContent)));
+
+  return bundle;
 }
