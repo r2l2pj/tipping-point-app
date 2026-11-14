@@ -1,10 +1,29 @@
 {
   "type": "FeatureCollection",
   "features": [
-    { "type": "Feature", "properties": { "name": "Bellingham", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-122.48, 48.75] } },
-    { "type": "Feature", "properties": { "name": "Mount Vernon", "kind": "town" }, "geometry": { "type": "Point", "coordinates": [-122.33, 48.42] } },
-    { "type": "Feature", "properties": { "name": "Everett", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-122.21, 47.98] } },
-    { "type": "Feature", "properties": { "name": "Seattle", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-122.33, 47.61] } },
-    { "type": "Feature", "properties": { "name": "Skagit River", "kind": "river" }, "geometry": { "type": "Point", "coordinates": [-122.02, 48.505] } }
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-122.34, 48.42] },
+      "properties": { "name": "Mount Vernon", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-122.33, 48.47] },
+      "properties": { "name": "Burlington", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-122.24, 48.50] },
+      "properties": { "name": "Sedro-Woolley", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-121.75, 48.54] },
+      "properties": { "name": "Concrete", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-121.60, 48.26] },
+      "properties": { "name": "Darrington", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-122.13, 48.20] },
+      "properties": { "name": "Arlington", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-122.20, 47.98] },
+      "properties": { "name": "Everett", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-122.18, 48.05] },
+      "properties": { "name": "Marysville", "kind": "town" } }
   ]
 }

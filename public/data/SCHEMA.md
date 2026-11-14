@@ -429,6 +429,21 @@ tipping-point/
 - Extra ingested rasters beyond the names above are recorded by asset id in
   `data/<case>/assets.json` (per case, written by the gathering ingest tool).
 
+## Fallback branch (no GCS)
+
+There is no Cloud Storage bucket anywhere in this pipeline (ruling L10).
+`tools/export_fallback.py --now|--case` writes fallback files **locally**
+into `data/` — PNGs via `getThumbURL` (EPSG:3857), JSON numbers via
+`reduceRegion().getInfo()`, GeoJSON via `reduceToVectors().getInfo()`, and
+COGs only via `getDownloadURL` when the download is under 10 MB (larger
+rasters are skipped with a logged reason). The live workflow then publishes
+`data/` to the orphan branch `fallback` of this repo (force-pushed each run
+so history does not grow), and the app reads it via
+`DATA_BASE_URL=https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`.
+The layout on that branch is exactly the `data/` tree above, with manifests
+written last (`data/now/manifest.json` last in its group, `data/manifest.json`
+last overall).
+
 ## Who writes what
 
 | File | Writer |

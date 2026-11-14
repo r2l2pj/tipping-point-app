@@ -1,11 +1,11 @@
 {
   "type": "FeatureCollection",
   "features": [
-    { "type": "Feature", "properties": { "kind": "candidate", "source": "NISAR GUNW coherence", "date": "2025-12-16", "confidence": 0.81 },
+    { "type": "Feature", "properties": { "kind": "candidate", "source": "HLS optical", "date": "2025-12-16", "confidence": 0.81 },
       "geometry": { "type": "Polygon", "coordinates": [[[-121.92, 48.18], [-121.86, 48.20], [-121.83, 48.15], [-121.89, 48.13], [-121.92, 48.18]]] } },
-    { "type": "Feature", "properties": { "kind": "candidate", "source": "NISAR GUNW coherence", "date": "2025-12-16", "confidence": 0.74 },
+    { "type": "Feature", "properties": { "kind": "candidate", "source": "HLS optical", "date": "2025-12-16", "confidence": 0.74 },
       "geometry": { "type": "Polygon", "coordinates": [[[-121.78, 48.08], [-121.72, 48.10], [-121.70, 48.05], [-121.76, 48.03], [-121.78, 48.08]]] } },
-    { "type": "Feature", "properties": { "kind": "candidate", "source": "NISAR GUNW coherence", "date": "2025-12-16", "confidence": 0.68 },
+    { "type": "Feature", "properties": { "kind": "candidate", "source": "HLS optical", "date": "2025-12-16", "confidence": 0.68 },
       "geometry": { "type": "Polygon", "coordinates": [[[-122.02, 48.36], [-121.96, 48.38], [-121.94, 48.33], [-122.00, 48.31], [-122.02, 48.36]]] } }
   ]
 }

@@ -1,9 +1,23 @@
 {
   "type": "FeatureCollection",
   "features": [
-    { "type": "Feature", "properties": { "name": "Encantado", "kind": "town" }, "geometry": { "type": "Point", "coordinates": [-51.87, -29.24] } },
-    { "type": "Feature", "properties": { "name": "Lajeado", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-51.96, -29.47] } },
-    { "type": "Feature", "properties": { "name": "Porto Alegre", "kind": "city" }, "geometry": { "type": "Point", "coordinates": [-51.23, -30.03] } },
-    { "type": "Feature", "properties": { "name": "Taquari River", "kind": "river" }, "geometry": { "type": "Point", "coordinates": [-51.70, -29.30] } }
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-51.87, -29.24] },
+      "properties": { "name": "Encantado", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-51.87, -29.16] },
+      "properties": { "name": "Muçum", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-51.87, -29.28] },
+      "properties": { "name": "Roca Sales", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-51.96, -29.47] },
+      "properties": { "name": "Lajeado", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-51.18, -29.92] },
+      "properties": { "name": "Canoas", "kind": "town" } },
+    { "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [-51.23, -30.03] },
+      "properties": { "name": "Porto Alegre", "kind": "town" } }
   ]
 }
