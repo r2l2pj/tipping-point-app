@@ -156,6 +156,21 @@ fallback contract the app degrades to. Workflows on the data repo:
 Freshness copy is “updated X h ago” against the three-hour refresh cadence.
 The stale-data warning threshold is **6 h** since the data update timestamp.
 
+### Command Center settings
+
+Two public settings, read by the Command Center screen. Both are optional.
+
+| Variable | Default | Effect |
+| --- | --- | --- |
+| `NEXT_PUBLIC_REFRESH_HOURS` | `3` | Refresh period of the live run in hours. The screen calls the live data "stale" after two periods (6 h by default). Change it together with the cron of `now.yml`. |
+| `NEXT_PUBLIC_TELEGRAM_BOT_URL` | unset | Address of the Telegram bot, for example `https://t.me/<bot>`. When unset, the "Get alerts on Telegram" card is not shown. |
+
+`NEXT_PUBLIC_*` values are fixed at build time: redeploy after a change.
+
+A scripted browser pass over the screen lives in
+`scripts/command-center-check.mjs` (not a CI job). Its header lists the
+settings.
+
 Secrets (`EARTHDATA_TOKEN` ~60-day renewal, `GCP_SA_KEY`) live in GitHub
 secrets; a missing/expired token fails the job loudly. Jobs are idempotent,
 log their ingestions, and publish the last-good static copy the app falls
