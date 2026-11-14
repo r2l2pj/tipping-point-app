@@ -1,6 +1,13 @@
 // Types matching data/SCHEMA.md in r2l2pj/tipping-point-data — keep in sync.
 // Additive v3 extensions (mode/data_dates/model/alerts) are marked optional.
 
+import type {
+  MetricsView,
+  NowAlertsFile,
+  NowSummary,
+  ProductMap,
+} from "./contract";
+
 export type LayerType = "cog" | "geojson" | "series" | "png";
 
 // v4 manifest layer: pre-rendered EPSG:3857 PNG for display + COG for
@@ -28,16 +35,23 @@ export interface NisarPass {
 
 export type DataDates = Record<string, string | null | NisarPass[]>;
 
-// v4 root manifest.json — the single contract between data and front:
-// { updated_at, cases: { <id>: { mode, bounds, layers, metrics, data_dates },
+// v4 root manifest.json — the single contract between data and front. Case
+// keys are the canonical underscore ids (rs_2024, wa_2025, now); each node
+// carries its hyphen event id and explicit asset paths — the app never
+// derives paths from keys or event ids.
+// { updated_at, cases: { <id>: { event_id, mode, bounds, layers, metrics,
+//   products, forecast_source, data_dates },
 //   now: { mode: "live", bounds, data_dates } } }
 export interface ManifestCase {
+  event_id?: string;
   mode?: "replay" | "live";
   bounds?: [number, number, number, number];
   updated_at?: string;
   data_dates?: DataDates;
   layers?: ManifestLayer[];
   metrics?: string;
+  products?: ProductMap;
+  forecast_source?: string;
 }
 
 export interface RootManifest {
@@ -61,11 +75,14 @@ export interface EventsIndex {
 // Resolved per-case manifest entry (v4 root manifest or legacy per-case file).
 export interface EventManifest {
   event: string;
+  event_id?: string;
   mode?: "replay" | "live";
   bounds?: [number, number, number, number];
   updated_at?: string;
   data_dates?: DataDates;
   layers: ManifestLayer[];
+  products?: ProductMap;
+  forecast_source?: string;
 }
 
 export interface EventMetrics {
@@ -142,6 +159,13 @@ export interface CaseBundle {
   data_dates?: DataDates;
   manifest?: EventManifest;
   metrics?: EventMetrics;
+  metricsView?: MetricsView;
+  summary?: NowSummary;
+  swot?: unknown;
+  catalog?: GeoJSON.FeatureCollection;
+  municipalities?: GeoJSON.FeatureCollection;
+  products?: ProductMap;
+  nowAlerts?: NowAlertsFile;
   series?: SeriesDaily;
   zones?: GeoJSON.FeatureCollection;
   water?: GeoJSON.FeatureCollection;

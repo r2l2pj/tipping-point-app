@@ -1,0 +1,53 @@
+{
+  "schema": "tipping-point/now@2",
+  "mode": "live",
+  "updated_at": "2026-11-14T12:00:00Z",
+  "bounds": [-58.0, -34.0, -48.0, -22.5],
+  "forecast_source": "geos-fp",
+  "data_dates": {
+    "imerg": "2026-11-14T08:00:00Z",
+    "smap": "2026-11-11",
+    "geos_fp_issued": "2026-11-14T00:00:00Z"
+  },
+  "layers": [
+    {
+      "id": "tpi_slide_d0",
+      "date": "2026-11-14",
+      "png": "png/tpi_slide_d0.png",
+      "cog": null,
+      "legend": ["Baixo", "Moderado", "Alto", "Crítico"],
+      "bounds": [-58.0, -34.0, -48.0, -22.5],
+      "forecast": false
+    },
+    {
+      "id": "tpi_slide_d1",
+      "date": "2026-11-15",
+      "png": "png/tpi_slide_d1.png",
+      "cog": null,
+      "legend": ["Baixo", "Moderado", "Alto", "Crítico"],
+      "bounds": [-58.0, -34.0, -48.0, -22.5],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d2",
+      "date": "2026-11-16",
+      "png": "png/tpi_flood_d2.png",
+      "cog": null,
+      "legend": ["Baixo", "Moderado", "Alto", "Crítico"],
+      "bounds": [-58.0, -34.0, -48.0, -22.5]
+    }
+  ],
+  "products": {
+    "critical_areas": "geojson/critical_areas.geojson",
+    "summary": "summary.json",
+    "alerts": "alerts.json"
+  },
+  "nisar_passes": [
+    {
+      "date": "2026-11-09",
+      "track": "172D",
+      "note": "post-event coverage pending"
+    },
+    { "date": "2026-11-02", "track": "172D" }
+  ]
+}

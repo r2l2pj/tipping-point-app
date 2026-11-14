@@ -1,0 +1,51 @@
+{
+  "updated_at": "2026-11-15T09:00:00Z",
+  "cases": {
+    "rs_2024": {
+      "event_id": "rs-2024-05",
+      "mode": "replay",
+      "bounds": [-52.5, -30.5, -50.5, -29.0],
+      "forecast_source": "perfect-forecast",
+      "layers": [
+        {
+          "id": "tpi_slide",
+          "date": "2024-05-02",
+          "png": "rs-2024-05/png/tpi_slide_20240502.png",
+          "cog": "rs-2024-05/cog/rs_2024_tpi_slide_series.tif",
+          "legend": ["Baixo", "Moderado", "Alto", "Crítico"],
+          "bounds": [-52.6, -30.6, -50.4, -28.9]
+        }
+      ],
+      "products": {
+        "municipal_boundaries": "rs-2024-05/geojson/municipal_boundaries.geojson",
+        "landslide_catalog": "rs-2024-05/geojson/landslide_catalog.geojson",
+        "places": "rs-2024-05/geojson/places.geojson",
+        "priority_zones": "rs-2024-05/geojson/priority_zones.geojson",
+        "permanent_water": "rs-2024-05/geojson/permanent_water.geojson",
+        "flood_confirmed": "rs-2024-05/geojson/flood_confirmed.geojson",
+        "landslide_candidates": "rs-2024-05/geojson/landslide_candidates.geojson",
+        "imerg_smap_daily": "rs-2024-05/series/imerg_smap_daily.json",
+        "swot": "rs-2024-05/series/swot.json"
+      },
+      "metrics": "rs-2024-05/metrics.json",
+      "data_dates": { "imerg": "2024-05-02", "smap": "2024-04-30" }
+    },
+    "wa_2025": {
+      "event_id": "wa-2025-12",
+      "mode": "replay",
+      "bounds": [-122.6, 47.0, -121.5, 48.5],
+      "forecast_source": "perfect-forecast",
+      "metrics": "wa-2025-12/metrics.json",
+      "data_dates": { "imerg": "2025-12-10", "smap": "2025-12-08" }
+    },
+    "now": {
+      "mode": "live",
+      "bounds": [-58.0, -34.0, -48.0, -22.5],
+      "data_dates": {
+        "imerg": "2026-11-15T08:00:00Z",
+        "smap": "2026-11-12",
+        "geos_fp_issued": "2026-11-15T00:00:00Z"
+      }
+    }
+  }
+}

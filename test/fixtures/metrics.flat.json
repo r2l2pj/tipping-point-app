@@ -1,0 +1,23 @@
+{
+  "event": "wa-2025-12",
+  "iou": 0.71,
+  "f1": 0.83,
+  "cloud_pct": 94,
+  "landslide_hit_pct": 0.62,
+  "hand_validation": 0.78,
+  "people_critical": 8400,
+  "people_flooded": 2100,
+  "flooded_km2": 41.6,
+  "night_light_drop_pct": 18,
+  "lead_time_mean_h": 47.5,
+  "lead_time_median_h": 52,
+  "warned_before_pct": 87,
+  "rf_auc": 0.91,
+  "rule_auc": 0.74,
+  "feature_importance": {
+    "imerg_p95_mm": 0.41,
+    "smap_l4": 0.33,
+    "nasadem_slope": 0.26
+  },
+  "forecast_source": "perfect-forecast"
+}
