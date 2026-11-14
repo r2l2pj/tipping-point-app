@@ -189,7 +189,7 @@ export default function MapStage({
 
       {!comparing && (
         <div className="absolute z-10 flex items-end gap-2" style={{ right: R(14), bottom: B(12) }}>
-          <Legend bundle={bundle} layers={state.layers} compact
+          <Legend bundle={bundle} layers={state.layers} hazard={state.hazard} compact
             className={`rounded-[10px] bg-white/95 px-2.5 py-2 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)] ${state.layersOpen ? "min-[900px]:hidden" : ""}`} />
           <LocatorInset bbox={bundle.bbox} className="max-[899px]:hidden" />
         </div>

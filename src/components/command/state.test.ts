@@ -1,7 +1,8 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
 import { bundle, frame, liveBundle, manifest, point, series, zones } from "./model/fixtures";
-import { initialState, reduce, type Action, type ScreenState } from "./state";
+import { caseHazard, initialState, reduce, type Action, type ScreenState } from "./state";
+import { zone } from "./model/fixtures";
 
 const fc = (n: number) => zones(Array.from({ length: n }, () => point()));
 const wa = bundle({
@@ -79,6 +80,27 @@ describe("case change", () => {
     expect(run(s, { type: "selectCase", id: "rs_2024" }).layers).toEqual(["tpi"]);
     expect(run(s, { type: "toggleLayer", id: "tpi" }, { type: "selectCase", id: "rs_2024" }).layers).toEqual(["tpi"]);
     expect(run(s, { type: "selectCase", id: "now" }).layers).toEqual([]);
+  });
+});
+
+describe("hazard a case opens on", () => {
+  const both = manifest([frame("tpi_slide", "2025-12-10"), frame("tpi_flood", "2025-12-10")]);
+  const floodEvent = bundle({ id: "rs_2024", manifest: both, series: series([0.9]),
+    zones: zones([zone(1, { hazard: "flood" }), zone(2, { hazard: "flood" }), zone(3, { hazard: "landslide" })]) });
+  const slideEvent = bundle({ manifest: both, series: series([0.9]),
+    zones: zones([zone(1, { hazard: "landslide" })]) });
+
+  test("the hazard most priority zones name, when the case has that raster", () => {
+    expect(caseHazard(floodEvent)).toBe("flood");
+    expect(caseHazard(slideEvent)).toBe("slide");
+    expect(caseHazard(bundle({ manifest: both }))).toBeUndefined();
+    expect(caseHazard({ ...floodEvent, manifest: manifest([frame("tpi_slide", "2025-12-10")]) })).toBeUndefined();
+  });
+
+  test("a flood event opens on the flood raster, not on the landslide one", () => {
+    expect(initialState([floodEvent]).hazard).toBe("flood");
+    const s = reduce(initialState([slideEvent, floodEvent]), { type: "selectCase", id: "rs_2024" }, [slideEvent, floodEvent]);
+    expect(s.hazard).toBe("flood");
   });
 });
 

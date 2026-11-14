@@ -123,7 +123,7 @@ export default function LayersColumn({
         </div>
       )}
 
-      <Legend bundle={bundle} layers={layers} className="mt-2 shrink-0 border-t border-cc-rule pt-2.5" />
+      <Legend bundle={bundle} layers={layers} hazard={hazard} className="mt-2 shrink-0 border-t border-cc-rule pt-2.5" />
     </aside>
   );
 }
@@ -132,18 +132,20 @@ export default function LayersColumn({
 export function Legend({
   bundle,
   layers,
+  hazard,
   compact = false,
   className = "",
 }: {
   bundle: CcBundle;
   layers: readonly LayerId[];
+  hazard: Hazard; // named in the title: the raster is one hazard at a time
   compact?: boolean;
   className?: string;
 }) {
   const swatch = "inline-block h-4 w-[22px] shrink-0 rounded-[3px]";
   return (
     <div className={className} data-legend={compact ? "compact" : "full"}>
-      <div className={`mb-1.5 font-semibold ${compact ? "text-xs" : "text-sm"}`}>TPI - Risk class</div>
+      <div className={`mb-1.5 font-semibold ${compact ? "text-xs" : "text-sm"}`}>TPI - {HAZARD_LABEL[hazard]} risk class</div>
       <div className={`flex flex-col gap-1 ${compact ? "text-xs" : "text-[13px]"}`}>
         {classRows(bundle).map((c) => (
           <span key={c.key} className="inline-flex items-center gap-2.5">

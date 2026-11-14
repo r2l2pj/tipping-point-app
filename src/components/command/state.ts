@@ -57,7 +57,24 @@ export type Action =
 
 const find = (cases: readonly CcBundle[], id: string) => cases.find((c) => c.id === id);
 
-const hazardFor = (bundle: CcBundle | undefined, current: Hazard): Hazard => {
+// Hazard a case opens on: the hazard most of its priority zones name (from
+// the data), when the case has that raster. A flood event must not open on
+// the landslide raster: its red slopes read as an "inverted" flood map.
+// Without zones the current choice is kept.
+export function caseHazard(bundle: CcBundle | undefined): Hazard | undefined {
+  const count = { slide: 0, flood: 0 };
+  for (const f of bundle?.zones?.features ?? []) {
+    const h = String(f.properties?.hazard ?? "").toLowerCase();
+    if (h.includes("flood")) count.flood += 1;
+    else if (h.includes("slide")) count.slide += 1;
+  }
+  if (count.flood === count.slide) return undefined;
+  const top: Hazard = count.flood > count.slide ? "flood" : "slide";
+  return bundle && caseHasHazard(bundle, top) ? top : undefined;
+}
+
+const hazardFor = (bundle: CcBundle | undefined, kept: Hazard): Hazard => {
+  const current = caseHazard(bundle) ?? kept;
   if (!bundle || caseHasHazard(bundle, current)) return current;
   const other: Hazard = current === "slide" ? "flood" : "slide";
   return caseHasHazard(bundle, other) ? other : current;
