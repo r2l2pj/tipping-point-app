@@ -34,6 +34,12 @@ import {
   type ToggleLayerKey,
 } from "@/lib/layers";
 import {
+  resolveFrameDate,
+  resolveOverlays,
+  zoneMarkersOn,
+  type MapLayerOptions,
+} from "./command/model/overlays";
+import {
   bboxPolygon,
   boundsToImageCoordinates,
   nearestPlace,
@@ -124,7 +130,9 @@ export function useMapLayers(
   dayIndex: number,
   layers: LayerState,
   showFlood: boolean,
-  tab?: TabKey
+  tab?: TabKey,
+  // Additive (Command Center): without it the hook behaves as before.
+  options?: MapLayerOptions
 ) {
   const markers = useRef<Marker[]>([]);
   const fcastMarker = useRef<Marker | null>(null);
@@ -164,15 +172,23 @@ export function useMapLayers(
   // the manifest means no pixels, never a synthetic grid.
   const pngLayers = (bundle?.manifest?.layers ?? []).filter((l) => l.png);
   const wanted = layers.tpiSlide ? "slide" : layers.tpiFlood ? "flood" : null;
-  const candidates = day ? pngLayers.filter((l) => l.date === day.date) : [];
+  const frameDate = resolveFrameDate(day?.date, options);
+  const candidates = frameDate
+    ? pngLayers.filter((l) => l.date === frameDate)
+    : [];
   const activePng =
     candidates.find((l) => wanted && l.id.includes(wanted)) ?? candidates[0];
   // Forecast frames never look observed: the manifest flag or a *_d[1-3] id
   // marks a forecast PNG, or the timeline day itself is a forecast day.
   const isForecast =
     (activePng ? isForecastLayer(activePng) : false) ||
-    day?.kind === "forecast";
+    day?.kind === "forecast" ||
+    // With options a hindcast day is drawn as forecast: not an observation.
+    (options !== undefined && day?.kind === "hindcast");
   const plan = overlayPlan(tab);
+  const overlay = resolveOverlays(tab, showFlood, layers.nisar, options?.overlays);
+  const overlayKey = Object.values(overlay).join();
+  const zoneMarkers = zoneMarkersOn(options);
   const zones = bundle ? zoneProps(bundle) : [];
 
   // Create sources/layers once per map instance.
@@ -343,7 +359,7 @@ export function useMapLayers(
     // NASA toggle rasters (IMERG / SMAP / NISAR): pixels only when the
     // manifest ships a real raster for the layer — never synthetic data.
     const rasterToggle = (key: ToggleLayerKey, src: string, lyr: string) => {
-      const l = manifestRaster(bundle.manifest?.layers, key, day?.date);
+      const l = manifestRaster(bundle.manifest?.layers, key, frameDate);
       const url = assetUrl(caseDir, l?.png);
       if (l && url) {
         ensureImageLayer(
@@ -403,10 +419,10 @@ export function useMapLayers(
 
     // Tab overlays (doc order): pre-painted rasters below the muni lines.
     imgOverlay("opera_validation", SRC.opera, LYR.opera, 0.85, LYR.muni,
-      tab === undefined ? false : plan.operaValidation);
+      overlay.opera);
     imgOverlay("night_lights", SRC.nl, LYR.nl, 0.85, LYR.muni,
-      tab === undefined ? false : plan.nightLights);
-    imgOverlay("t_ml", SRC.tml, LYR.tml, 0.7, LYR.muni, true);
+      overlay.nightLights);
+    imgOverlay("t_ml", SRC.tml, LYR.tml, 0.7, LYR.muni, overlay.tml);
 
     // Image source for the day's PNG frame (created lazily — MapLibre image
     // sources need url+coordinates up front; the raster layer sits below
@@ -454,12 +470,12 @@ export function useMapLayers(
       }
     }
     if (activePng && tpiUrl && !frameOk) {
-      frameNote.current = `TPI frame unavailable — ${day ? fmtDate(day.date) : "this day"}`;
+      frameNote.current = `TPI frame unavailable — ${frameDate ? fmtDate(frameDate) : "this day"}`;
     } else if (tpiOn && !activePng) {
       // The manifest published no PNG for this day — say so instead of
       // leaving a bare basemap that reads as broken.
-      frameNote.current = day
-        ? `No TPI frame published for ${fmtDate(day.date)}`
+      frameNote.current = frameDate
+        ? `No TPI frame published for ${fmtDate(frameDate)}`
         : "No TPI frames published for this case";
     }
     refreshChip(map, loading.current, chip, frameNote.current);
@@ -512,9 +528,12 @@ export function useMapLayers(
     loadGeo(SRC.water, "permanent water", url("permanent_water", "geojson/permanent_water.geojson"));
     loadGeo(SRC.zones, "priority zones", url("priority_zones", "geojson/priority_zones.geojson"));
     loadGeo(SRC.muni, "boundaries", url("municipal_boundaries", "geojson/municipal_boundaries.geojson"));
-    const wantFlood = tab === undefined ? showFlood : plan.floodPolygons;
-    const wantScars = tab === undefined ? showFlood || layers.nisar : plan.landslideCandidates;
-    const wantCatalog = tab !== undefined && plan.catalogPoints;
+    // With no tab context the caller drives flood/scars via showFlood (and
+    // the nisar toggle); with a tab the overlayPlan decides; explicit
+    // options.overlays replace both (see resolveOverlays).
+    const wantFlood = overlay.flood;
+    const wantScars = overlay.scars;
+    const wantCatalog = overlay.catalog;
     if (wantFlood) loadGeo(SRC.flood, "flood extent", url("flood_confirmed", "geojson/flood_confirmed.geojson"));
     if (wantScars) loadGeo(SRC.scars, "landslide candidates", url("landslide_candidates", "geojson/landslide_candidates.geojson"));
     if (wantCatalog) loadGeo(SRC.catalog, "landslide catalog", url("landslide_catalog", "geojson/landslide_catalog.geojson"));
@@ -552,13 +571,13 @@ export function useMapLayers(
       console.warn("MapLayers update failed (map kept alive)", err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng]);
+  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey]);
 
   // Priority-zone HTML markers — top 10 by rank, anchored at the polygon
   // label point (real files are Polygons, not Points). The full set paints
   // via the tp-zones fill/line layers above.
   useEffect(() => {
-    if (!map) return;
+    if (!map || !zoneMarkers) return;
     markers.current = rankedZonePoints(bundle?.zones?.features).map(
       ({ zone: p, at }) => {
         const el = document.createElement("div");
@@ -581,7 +600,7 @@ export function useMapLayers(
       markers.current.forEach((m) => m.remove());
       markers.current = [];
     };
-  }, [map, bundle]);
+  }, [map, bundle, zoneMarkers]);
 
   // Click on a TPI frame -> popup with place name, TPI class, R/S/T values
   // and the data date (v4 spec). Reads day-level values off the PNG raster
