@@ -87,25 +87,43 @@ type Products = Record<string, string | null | undefined>;
 interface ReadCtx {
   bases: string[];
   fellBack: boolean;
+  // Remote-attempt budget (Cache Components forbids Date.now() during
+  // prerender, so the budget is counted, not timed): after this many misses
+  // no new remote request starts — the bundled copy answers instead.
+  remoteTries: number;
 }
 
 const GITHUB_FALLBACK_BASE =
   "https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data";
+// Public-read bucket URL — not a secret. Built-in default so the app works
+// on a host with no data env configured at all.
+const NEON_PUBLIC_BASE =
+  "https://br-lively-poetry-bdub0r34.storage.c-8.us-east-2.aws.neon.tech/tipping-point-data/data";
+
+// Max remote attempts per read context before short-circuiting to disk.
+// DATA_MAX_REMOTE_TRIES overrides; ~14 files × ≤3 bases fits in 60.
+const maxRemoteTries = () =>
+  Number(process.env.DATA_MAX_REMOTE_TRIES) || 60;
 
 // Remote bases in priority order (L17). An explicit DATA_BASE_URL is the sole
 // remote source (override semantics — tests pin it unreachable to force the
-// bundled copy). Unset, the default is the public Neon bucket derived from
-// NEON_S3_ENDPOINT, then the GitHub fallback branch; disk is always last.
+// bundled copy). Unset, the default is the public Neon bucket (env endpoint
+// if set, else the built-in public URL), then the GitHub fallback branch;
+// disk is always last.
 const remoteBases = (): string[] => {
   const explicit = process.env.DATA_BASE_URL;
   if (explicit) return [explicit.replace(/\/+$/, "")];
   const neon = process.env.NEON_S3_ENDPOINT
     ? `${process.env.NEON_S3_ENDPOINT.replace(/\/+$/, "")}/tipping-point-data/data`
-    : undefined;
-  return [...new Set([neon, GITHUB_FALLBACK_BASE].filter((b): b is string => !!b))];
+    : NEON_PUBLIC_BASE;
+  return [...new Set([neon, GITHUB_FALLBACK_BASE])];
 };
 
-const newCtx = (): ReadCtx => ({ bases: remoteBases(), fellBack: false });
+const newCtx = (): ReadCtx => ({
+  bases: remoteBases(),
+  fellBack: false,
+  remoteTries: 0,
+});
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null;
@@ -156,10 +174,16 @@ async function readData<T>(
   p: string
 ): Promise<T | undefined> {
   // Try each remote base in order (absolute p resolves identically on every
-  // base — dedupe so it isn't fetched once per base).
+  // base — dedupe so it isn't fetched once per base). Once the attempt
+  // budget is spent no new remote request starts — straight to disk.
   const urls = ctx.bases.map((b) => resolveAsset(b, dir, p));
   if (urls[0] === undefined) return undefined;
   for (const url of new Set(urls as string[])) {
+    if (ctx.remoteTries >= maxRemoteTries()) {
+      ctx.fellBack = true;
+      break;
+    }
+    ctx.remoteTries++;
     const remote = await fetchJson<T>(url).catch(() => undefined);
     if (remote !== undefined) return remote;
     ctx.fellBack = true;
@@ -491,7 +515,9 @@ export async function getCaseBundle(
       : referenceDate;
 
   // One slow/failed call must not hang the other — the helpers carry their
-  // own internal timeouts.
+  // own internal timeouts, and the whole overlay is capped at
+  // GEE_OVERLAY_TIMEOUT_MS (default 6 s) so a hung GEE roundtrip can never
+  // stall the page stream.
   const livePending = gee
     ? Promise.allSettled([
         numbersDate !== undefined
@@ -537,7 +563,16 @@ export async function getCaseBundle(
   // metricsView/summary fields; layer meta lands on liveLayers. An answered
   // but EMPTY layers array means GEE is up yet nothing is published —
   // degraded, not content.
-  const [numbersSettled, layersSettled] = (await livePending) ?? [];
+  const overlayTimeoutMs =
+    Number(process.env.GEE_OVERLAY_TIMEOUT_MS) || 6000;
+  const [numbersSettled, layersSettled] = livePending
+    ? await Promise.race([
+        livePending,
+        new Promise<[]>(
+          (resolve) => setTimeout(() => resolve([]), overlayTimeoutMs)
+        ),
+      ])
+    : [];
   const numbers =
     numbersSettled?.status === "fulfilled" && isRecord(numbersSettled.value)
       ? numbersSettled.value

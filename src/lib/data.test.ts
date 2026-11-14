@@ -430,8 +430,10 @@ describe("default remote bases (no DATA_BASE_URL)", () => {
       expect(b.dataSource).toBeUndefined();
       expect(b.liveLayers).toBeUndefined();
       expect(b.dataDate).toBeUndefined();
-      expect(requested[0]).toBe("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/manifest.json");
-      expect(requested.every((url) => url.startsWith("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/"))).toBe(true);
+      // Built-in public Neon bucket first, GitHub fallback branch second.
+      expect(requested[0]).toContain("/tipping-point-data/data/manifest.json");
+      expect(requested[0]).toContain("aws.neon.tech");
+      expect(requested[1]).toBe("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/manifest.json");
     } finally {
       remote.mockRestore();
     }

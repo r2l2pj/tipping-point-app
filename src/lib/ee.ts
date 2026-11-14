@@ -57,28 +57,40 @@ export async function loadServiceAccount(): Promise<{
 
 let ready: Promise<typeof ee> | null = null;
 
+// Bound the auth+init roundtrip: a hung authenticate/initialize (unreachable
+// endpoint, malformed key) must reject so callers degrade instead of pending
+// forever. GEE_INIT_TIMEOUT_MS overrides the 8s default.
 export function earthEngine(): Promise<typeof ee> {
   if (!ready) {
-    ready = loadServiceAccount().then(
-      ({ privateKey }) =>
-        new Promise<typeof ee>((resolve, reject) => {
-          ee.data.authenticateViaPrivateKey(
-            privateKey as Parameters<
-              typeof ee.data.authenticateViaPrivateKey
-            >[0],
-            () =>
-              ee.initialize(
-                null,
-                null,
-                () => resolve(ee),
-                reject,
-                undefined,
-                process.env.GEE_PROJECT
-              ),
-            reject
-          );
-        })
-    );
+    const timeoutMs = Number(process.env.GEE_INIT_TIMEOUT_MS) || 8000;
+    ready = Promise.race([
+      loadServiceAccount().then(
+        ({ privateKey }) =>
+          new Promise<typeof ee>((resolve, reject) => {
+            ee.data.authenticateViaPrivateKey(
+              privateKey as Parameters<
+                typeof ee.data.authenticateViaPrivateKey
+              >[0],
+              () =>
+                ee.initialize(
+                  null,
+                  null,
+                  () => resolve(ee),
+                  reject,
+                  undefined,
+                  process.env.GEE_PROJECT
+                ),
+              reject
+            );
+          })
+      ),
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`gee init timeout after ${timeoutMs}ms`)),
+          timeoutMs
+        )
+      ),
+    ]);
     ready.catch(() => {
       ready = null; // allow retry after a failed init
     });
