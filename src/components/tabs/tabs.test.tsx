@@ -225,6 +225,29 @@ describe("fmtBrt date-only handling", () => {
 });
 
 describe("radar tab NISAR gating", () => {
+  test("swath scope renders whole coverage for either flooded card and either percent scale", () => {
+    for (const data_dates of [{ nisar_pre: null, nisar_post: null }, { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" }]) {
+      for (const swath_coverage_pct of [0.426, 42.6]) {
+        const html = render("radar", bundle({ data_dates, metricsView: {
+          flooded_km2: 41.6, flooded_km2_scope: "within NISAR swath", swath_coverage_pct,
+        } as CaseBundle["metricsView"] }));
+        expect(html).toContain("within the NISAR swath — 43% of the area covered");
+      }
+    }
+  });
+
+  test("swath coverage stays hidden without scope, finite coverage, or a flooded card", () => {
+    for (const extra of [{}, { swath_coverage_pct: 0.4 },
+      { flooded_km2_scope: "within NISAR swath" },
+      { flooded_km2_scope: "within NISAR swath", swath_coverage_pct: NaN },
+      { flooded_km2_scope: "within NISAR swath", swath_coverage_pct: Infinity },
+      { flooded_km2_scope: "within NISAR swath", swath_coverage_pct: "40" },
+      { flooded_km2_scope: "within NISAR swath", swath_coverage_pct: 0.4, flooded_km2: undefined }]) {
+      expect(render("radar", bundle({ metricsView: { flooded_km2: 41.6, ...extra } as CaseBundle["metricsView"] })))
+        .not.toContain("of the area covered");
+    }
+  });
+
   test("replay without a pair: observed reference card, no NISAR label", () => {
     const html = render(
       "radar",

@@ -42,9 +42,15 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
         (preUrl || assetUrl(caseDir, preLayer.cog)) &&
         (postUrl || assetUrl(caseDir, postLayer.cog)))
   );
-  const floodSource = (
-    bundle.metricsView as { flood_source?: string } | undefined
-  )?.flood_source;
+  const metrics = bundle.metricsView as (CaseBundle["metricsView"] & {
+    flooded_km2_scope?: string;
+    swath_coverage_pct?: unknown;
+  }) | undefined;
+  const floodSource = metrics?.flood_source;
+  const coverage = metrics?.swath_coverage_pct;
+  const swathCoverage = metrics?.flooded_km2_scope === "within NISAR swath" &&
+    typeof coverage === "number" && Number.isFinite(coverage)
+    ? Math.round(coverage > 1 ? coverage : coverage * 100) : null;
   const swipe =
     preLayer && postLayer && preUrl && postUrl
       ? {
@@ -66,24 +72,23 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
-        {hasNisarPair ? (
-          <StatCard
-            label="Flooded area (NISAR)"
-            value={fmtKm2(bundle.metricsView?.flooded_km2)}
-            accent="blue"
-          />
-        ) : (
-          bundle.metricsView?.flooded_km2 != null && (
+        {(hasNisarPair || metrics?.flooded_km2 != null) && (
+          <div>
             <StatCard
-              label={
+              label={hasNisarPair ? "Flooded area (NISAR)" :
                 floodSource === "opera"
                   ? "Flooded area (optical/OPERA reference)"
                   : "Flooded area (observed reference)"
               }
-              value={fmtKm2(bundle.metricsView.flooded_km2)}
+              value={fmtKm2(metrics?.flooded_km2)}
               accent="blue"
             />
-          )
+            {swathCoverage !== null && (
+              <p className="mt-1 text-xs text-zinc-500">
+                {`within the NISAR swath — ${swathCoverage}% of the area covered`}
+              </p>
+            )}
+          </div>
         )}
         <StatCard
           label="Landslide scar candidates (HLS optical)"
