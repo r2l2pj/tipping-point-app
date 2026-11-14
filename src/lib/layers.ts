@@ -4,7 +4,7 @@
 import { readCogPixel, readCogRST, type CogRSTUrls } from "./cog";
 import { resolveAsset } from "./contract";
 import { rstFor } from "./tpi";
-import type { DayPoint } from "./types";
+import type { DayPoint, ManifestLayer } from "./types";
 
 export type TabKey = "alert" | "radar" | "validation" | "impact";
 
@@ -40,10 +40,14 @@ export interface OverlayPlan {
   catalogPoints: boolean;
   operaValidation: boolean;
   nightLights: boolean;
+  // Data layers the tab adds beyond user toggles — they count toward the
+  // two-layer budget (viz rule 5), so toggles get max(0, 2 - count). TPI is
+  // excluded: it is itself a toggle.
+  count: number;
 }
 
 export function overlayPlan(tab?: TabKey | string): OverlayPlan {
-  return {
+  const plan = {
     tpi: true,
     floodPolygons: tab === "radar",
     landslideCandidates: tab === "radar",
@@ -51,6 +55,37 @@ export function overlayPlan(tab?: TabKey | string): OverlayPlan {
     operaValidation: tab === "validation",
     nightLights: tab === "impact",
   };
+  return {
+    ...plan,
+    count:
+      Number(plan.floodPolygons) +
+      Number(plan.landslideCandidates) +
+      Number(plan.catalogPoints) +
+      Number(plan.operaValidation) +
+      Number(plan.nightLights),
+  };
+}
+
+// Max data layers on the map at once (viz rule 5).
+export const MAX_DATA_LAYERS = 2;
+
+export const toggleBudget = (tab?: TabKey | string): number =>
+  Math.max(0, MAX_DATA_LAYERS - overlayPlan(tab).count);
+
+// Enabled-toggle bookkeeping for the layer budget. Entries whose raster is
+// not available in the current bundle are dead — they paint nothing and must
+// not consume a budget slot (a dead entry evicting a live layer would blank
+// the map). Returns the queue to keep (oldest-first) and every key to switch
+// off: dead entries plus the oldest live ones over budget.
+export function capToggleQueue<K extends string>(
+  queue: readonly K[],
+  budget: number,
+  available: (key: K) => boolean
+): { queue: K[]; off: K[] } {
+  const dead = queue.filter((k) => !available(k));
+  const live = queue.filter((k) => available(k));
+  const evicted = live.slice(0, Math.max(0, live.length - budget));
+  return { queue: live.slice(evicted.length), off: [...dead, ...evicted] };
 }
 
 // --- município lookup --------------------------------------------------------
@@ -114,6 +149,49 @@ export const assetUrl = (
   caseDir: string,
   p: string | null | undefined
 ): string | undefined => resolveAsset("/data", caseDir, p);
+
+// --- toggle-layer raster availability ---------------------------------------
+//
+// A toggle layer only paints when the manifest ships a real raster for it —
+// never synthetic data dressed up as a NASA product. Manifest layers match
+// by id prefix (imerg_* / smap_* / nisar_* / tpi_*); nisar excludes the
+// nisar_pre/nisar_post pair, which backs the radar before/after swipe.
+export type ToggleLayerKey = "tpiSlide" | "tpiFlood" | "imerg" | "smap" | "nisar";
+
+const TOGGLE_PREFIX: Record<ToggleLayerKey, string> = {
+  tpiSlide: "tpi_slide",
+  tpiFlood: "tpi_flood",
+  imerg: "imerg_",
+  smap: "smap_",
+  nisar: "nisar_",
+};
+
+const NISAR_SWIPE_IDS = new Set(["nisar_pre", "nisar_post"]);
+
+// First manifest layer backing a toggle, preferring one stamped with the
+// given day date. A png or cog both count as a real raster (resolved through
+// assetUrl); callers that need a paintable image still require l.png.
+export function manifestRaster(
+  layers: ManifestLayer[] | undefined,
+  key: ToggleLayerKey,
+  date?: string
+): ManifestLayer | undefined {
+  const prefix = TOGGLE_PREFIX[key];
+  const matches = (layers ?? []).filter(
+    (l) =>
+      l.id.startsWith(prefix) &&
+      !(key === "nisar" && NISAR_SWIPE_IDS.has(l.id)) &&
+      (l.png || l.cog)
+  );
+  return matches.find((l) => l.date === date) ?? matches[0];
+}
+
+export function layerAvailable(
+  bundle: { manifest?: { layers?: ManifestLayer[] } } | undefined,
+  key: ToggleLayerKey
+): boolean {
+  return manifestRaster(bundle?.manifest?.layers, key) !== undefined;
+}
 
 // --- BRT date formatting ------------------------------------------------------
 //

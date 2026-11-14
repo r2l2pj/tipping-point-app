@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapInstance } from "maplibre-gl";
-import { fmtDate, type TabKey } from "@/lib/layers";
+import {
+  capToggleQueue,
+  fmtDataDate,
+  fmtDate,
+  layerAvailable,
+  toggleBudget,
+  type TabKey,
+  type ToggleLayerKey,
+} from "@/lib/layers";
 import { TPI_CLASSES } from "@/lib/tpi";
 import type { CaseBundle } from "@/lib/types";
 import Header from "./Header";
@@ -11,8 +19,6 @@ import Map from "./Map";
 import { useMapLayers, type LayerState } from "./MapLayers";
 import SidePanel from "./SidePanel";
 import Timeline from "./Timeline";
-
-const MAX_DATA_LAYERS = 2; // v3 viz rule
 
 const EXCLUSIVE_PARTNER: Partial<Record<keyof LayerState, keyof LayerState>> = {
   tpiFlood: "tpiSlide",
@@ -54,6 +60,10 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
   });
   const enabledQueue = useRef<(keyof LayerState)[]>(["tpiSlide"]);
 
+  // v3 viz rule: at most 2 data layers at once — tab overlay-plan layers
+  // count toward the budget, so the toggle cap depends on the active tab.
+  const budget = toggleBudget(tab);
+
   // Playback loop.
   useEffect(() => {
     if (!playing || days.length < 2) return;
@@ -68,22 +78,44 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
     setLayers((prev) => {
       const next = { ...prev, [key]: !prev[key] };
       if (next[key]) {
-        enabledQueue.current = [
-          ...enabledQueue.current.filter(
-            (k) => k !== key && k !== EXCLUSIVE_PARTNER[key]
-          ),
-          key,
-        ];
-        while (enabledQueue.current.length > MAX_DATA_LAYERS) {
-          const oldest = enabledQueue.current.shift()!;
-          next[oldest] = false;
-        }
+        // Dead entries (no raster in this bundle) are pruned before the cap
+        // check so they can't push a live layer out of the budget.
+        const { queue, off } = capToggleQueue(
+          [
+            ...enabledQueue.current.filter(
+              (k) => k !== key && k !== EXCLUSIVE_PARTNER[key]
+            ),
+            key,
+          ],
+          budget,
+          (k) => layerAvailable(bundle, k as ToggleLayerKey)
+        );
+        enabledQueue.current = queue;
+        for (const k of off) next[k] = false;
       } else {
         enabledQueue.current = enabledQueue.current.filter((k) => k !== key);
       }
       return next;
     });
-  }, []);
+  }, [bundle, budget]);
+
+  // Tab switches shrink the budget — evict the oldest enabled toggles that
+  // no longer fit. Dead queue entries (raster absent from this bundle) are
+  // dropped first; only live entries count against the budget.
+  useEffect(() => {
+    const { queue, off } = capToggleQueue(
+      enabledQueue.current,
+      budget,
+      (k) => layerAvailable(bundle, k as ToggleLayerKey)
+    );
+    if (!off.length) return;
+    enabledQueue.current = queue;
+    setLayers((prev) => {
+      const next = { ...prev };
+      for (const k of off) next[k] = false;
+      return next;
+    });
+  }, [bundle, budget]);
 
   const selectCase = useCallback(
     (id: string) => {
@@ -135,7 +167,7 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
       <main className="flex min-h-0 flex-1">
         <div className="relative min-w-0 flex-1">
           <Map bounds={bundle.bbox} onReady={setMap} />
-          <LayersPanel layers={layers} onToggle={toggleLayer} bundle={bundle} />
+          <LayersPanel layers={layers} onToggle={toggleLayer} bundle={bundle} budget={budget} />
         </div>
         <SidePanel
           tab={tab}
@@ -156,8 +188,8 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
         onPlayToggle={() => setPlaying((p) => !p)}
       />
 
-      <footer className="flex h-9 shrink-0 items-center gap-4 border-t border-zinc-800 bg-[#0b0e14] px-4 text-xs text-zinc-500">
-        <span className="font-semibold text-zinc-400">TPI (Tipping Point Index) — Risk class</span>
+      <footer className="flex min-h-9 shrink-0 flex-wrap items-center gap-x-4 gap-y-0.5 border-t border-zinc-800 bg-[#0b0e14] px-4 py-1 text-xs text-zinc-500">
+        <span className="font-semibold text-zinc-400">TPI index (0–1) — Risk class</span>
         {TPI_CLASSES.map((c) => (
           <span key={c.key} className="flex items-center gap-1.5">
             <span className="inline-block h-3 w-5 rounded-sm" style={{ background: c.color }} />
@@ -167,8 +199,11 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
               : `(${c.min.toFixed(2)} – ${c.max.toFixed(2)})`}
           </span>
         ))}
-        <span className="mx-2 h-4 w-px bg-zinc-800" />
-        <span>Data: NASA GPM · SMAP · NASADEM · NISAR · © OpenStreetMap</span>
+        <span>data {fmtDataDate(days[dayIndex]?.date)}</span>
+        <span className="mx-2 hidden h-4 w-px bg-zinc-800 sm:block" />
+        <span className="basis-full sm:basis-auto">
+          Data: NASA GPM · SMAP · NASADEM · NISAR · Basemap © CARTO © OpenStreetMap · Boundaries © IBGE · Population: GPW (NASA SEDAC) / US Census
+        </span>
       </footer>
     </div>
   );

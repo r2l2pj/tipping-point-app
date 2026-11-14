@@ -2,10 +2,14 @@
 
 import type { LayerState } from "./MapLayers";
 import type { CaseBundle } from "@/lib/types";
-import { fmtDataDate } from "@/lib/layers";
+import {
+  fmtDataDate,
+  layerAvailable,
+  type ToggleLayerKey,
+} from "@/lib/layers";
 
 interface Row {
-  key: keyof LayerState;
+  key: keyof LayerState & ToggleLayerKey;
   label: string;
   dateKey?: string;
 }
@@ -29,12 +33,17 @@ export default function LayersPanel({
   layers,
   onToggle,
   bundle,
+  budget,
 }: {
   layers: LayerState;
   onToggle: (key: keyof LayerState) => void;
   bundle: CaseBundle;
+  budget: number;
 }) {
   const dd = bundle.data_dates ?? {};
+  // A row only exists when the manifest ships a real raster for the layer —
+  // toggles never paint synthetic data as a NASA product.
+  const rows = ROWS.filter((r) => layerAvailable(bundle, r.key));
   const handle = (key: keyof LayerState) => {
     const other = EXCLUSIVE[key];
     onToggle(key);
@@ -46,15 +55,28 @@ export default function LayersPanel({
         <LayersIcon /> Layers
       </div>
       <ul className="p-2">
-        {ROWS.map((r) => {
+        {rows.map((r) => {
           const raw = dd[r.dateKey ?? ""];
           const date = typeof raw === "string" ? fmtDataDate(raw) : null;
+          const capped = budget === 0 && !layers[r.key];
           return (
             <li key={r.key}>
-              <label className="flex cursor-pointer items-start gap-2 rounded px-1.5 py-1.5 hover:bg-zinc-800/60">
+              <label
+                className={`flex items-start gap-2 rounded px-1.5 py-1.5 ${
+                  capped
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer hover:bg-zinc-800/60"
+                }`}
+                title={
+                  capped
+                    ? "Max two data layers at once — this tab's overlays use the budget"
+                    : undefined
+                }
+              >
                 <input
                   type="checkbox"
                   checked={layers[r.key]}
+                  disabled={capped}
                   onChange={() => handle(r.key)}
                   className="mt-0.5 h-3.5 w-3.5 accent-cyan-500"
                 />
@@ -73,7 +95,7 @@ export default function LayersPanel({
       </ul>
       <p className="border-t border-zinc-800 px-3 py-1.5 text-xs leading-snug text-zinc-500">
         Slide and flood TPI are mutually exclusive — max two data layers at
-        once (v3 viz rule).
+        once, tab overlays included (v3 viz rule).
       </p>
     </div>
   );

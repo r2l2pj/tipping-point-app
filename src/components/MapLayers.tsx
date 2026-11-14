@@ -19,17 +19,17 @@ import {
   assetUrl,
   fmtDataDate,
   isForecastLayer,
+  manifestRaster,
   overlayPlan,
   pointInPolygons,
   resolvePixelValues,
   type PixelValues,
   type TabKey,
+  type ToggleLayerKey,
 } from "@/lib/layers";
 import {
   bboxPolygon,
   boundsToImageCoordinates,
-  mockScalarGrid,
-  mockTpiGrid,
   nearestPlace,
   rstFor,
   tpiClass,
@@ -70,13 +70,10 @@ const SRC = {
 const LYR = {
   hillshade: "tp-hillshade",
   hillImg: "tp-hill-img-lyr",
-  imerg: "tp-imerg-fill",
-  smap: "tp-smap-fill",
-  nisar: "tp-nisar-fill",
-  tpi: "tp-tpi-fill",
+  imerg: "tp-imerg-lyr",
+  smap: "tp-smap-lyr",
+  nisar: "tp-nisar-lyr",
   tpiRaster: "tp-tpi-raster",
-  tpiCritical: "tp-tpi-critical-line",
-  tpiHatch: "tp-tpi-hatch",
   fcastHatch: "tp-fcast-hatch",
   waterFill: "tp-water-fill",
   river: "tp-river-line",
@@ -98,6 +95,9 @@ const LYR = {
 const DYNAMIC_IMG: [string, string][] = [
   [LYR.tpiRaster, SRC.tpiImg],
   [LYR.hillImg, SRC.hillImg],
+  [LYR.imerg, SRC.imerg],
+  [LYR.smap, SRC.smap],
+  [LYR.nisar, SRC.nisar],
   [LYR.opera, SRC.opera],
   [LYR.nl, SRC.nl],
   [LYR.tml, SRC.tml],
@@ -137,8 +137,8 @@ export function useMapLayers(
   );
 
   // v4 image-source contract: when the manifest carries a pre-rendered
-  // EPSG:3857 PNG for this day, show it as a raster layer; the synthetic
-  // mockTpiGrid is only the fallback when no PNG exists.
+  // EPSG:3857 PNG for this day, show it as a raster layer — no raster in
+  // the manifest means no pixels, never a synthetic grid.
   const pngLayers = (bundle?.manifest?.layers ?? []).filter((l) => l.png);
   const wanted = layers.tpiSlide ? "slide" : layers.tpiFlood ? "flood" : null;
   const candidates = day ? pngLayers.filter((l) => l.date === day.date) : [];
@@ -150,28 +150,14 @@ export function useMapLayers(
     (activePng ? isForecastLayer(activePng) : false) ||
     day?.kind === "forecast";
   const plan = overlayPlan(tab);
-  const scale = day
-    ? Math.max(0.15, day.tpi / (bundle?.series?.tpi_threshold ?? 0.6) / 1.3)
-    : 1;
   const zones = bundle ? zoneProps(bundle) : [];
-  const hotspots = (bundle?.zones?.features ?? [])
-    .filter((f) => f.geometry.type === "Point")
-    .map((f) => ({
-      lon: (f.geometry as GeoJSON.Point).coordinates[0],
-      lat: (f.geometry as GeoJSON.Point).coordinates[1],
-      tpi: (f.properties?.tpi as number) ?? 0.6,
-    }));
 
   // Create sources/layers once per map instance.
   useEffect(() => {
     if (!map) return;
 
     map.addSource(SRC.dem, { type: "raster-dem", tiles: [TERRAIN], encoding: "terrarium", tileSize: 256, maxzoom: 12 });
-    map.addSource(SRC.tpi, { type: "geojson", data: EMPTY });
     map.addSource(SRC.fcast, { type: "geojson", data: EMPTY });
-    map.addSource(SRC.imerg, { type: "geojson", data: EMPTY });
-    map.addSource(SRC.smap, { type: "geojson", data: EMPTY });
-    map.addSource(SRC.nisar, { type: "geojson", data: EMPTY });
     map.addSource(SRC.water, { type: "geojson", data: bundle?.water ?? EMPTY });
     map.addSource(SRC.flood, { type: "geojson", data: bundle?.flood ?? EMPTY });
     map.addSource(SRC.scars, { type: "geojson", data: bundle?.scars ?? EMPTY });
@@ -181,33 +167,11 @@ export function useMapLayers(
 
     const layers = [
       { id: LYR.hillshade, type: "hillshade", source: SRC.dem,
-        paint: { "hillshade-exaggeration": 0.2, "hillshade-shadow-color": "#0b0d12" },
+        paint: { "hillshade-exaggeration": 0.15, "hillshade-shadow-color": "#0b0d12" },
         layout: {} },
-      { id: LYR.imerg, type: "fill", source: SRC.imerg,
-        paint: { "fill-color": ["interpolate", ["linear"], ["get", "v"], 0.3, "rgba(33,102,172,0)", 1, "rgba(33,102,172,0.75)"] },
-        layout: { visibility: "none" } },
-      { id: LYR.smap, type: "fill", source: SRC.smap,
-        paint: { "fill-color": ["interpolate", ["linear"], ["get", "v"], 0.3, "rgba(140,81,10,0)", 1, "rgba(140,81,10,0.7)"] },
-        layout: { visibility: "none" } },
-      { id: LYR.nisar, type: "fill", source: SRC.nisar,
-        paint: { "fill-color": ["interpolate", ["linear"], ["get", "v"], 0.3, "rgba(84,39,143,0)", 1, "rgba(84,39,143,0.8)"] },
-        layout: { visibility: "none" } },
-      { id: LYR.tpi, type: "fill", source: SRC.tpi,
-        paint: {
-          "fill-color": ["match", ["get", "class"], "Moderate", "#FECC5C", "High", "#FD8D3C", "Critical", "#BD0026", "#FFFFB2"],
-          "fill-opacity": ["match", ["get", "class"], "Critical", 0.75, "Low", 0.4, 0.65],
-        },
-        layout: {} },
-      { id: LYR.tpiHatch, type: "fill", source: SRC.tpi,
-        paint: { "fill-pattern": "tp-hatch", "fill-opacity": 0.35 },
-        layout: { visibility: "none" } },
       { id: LYR.fcastHatch, type: "fill", source: SRC.fcast,
         paint: { "fill-pattern": "tp-hatch", "fill-opacity": 0.35 },
         layout: { visibility: "none" } },
-      { id: LYR.tpiCritical, type: "line", source: SRC.tpi,
-        paint: { "line-color": "#BD0026", "line-width": 1 },
-        layout: {},
-        filter: ["==", ["get", "class"], "Critical"] },
       { id: LYR.waterFill, type: "fill", source: SRC.water,
         paint: { "fill-color": "#9ECAE1", "fill-opacity": 0.6 },
         layout: {},
@@ -313,6 +277,30 @@ export function useMapLayers(
     const tpiOn = (layers.tpiFlood || layers.tpiSlide) && plan.tpi;
     const usePng = tpiOn && !!activePng;
 
+    // NASA toggle rasters (IMERG / SMAP / NISAR): pixels only when the
+    // manifest ships a real raster for the layer — never synthetic data.
+    const rasterToggle = (key: ToggleLayerKey, src: string, lyr: string) => {
+      const l = manifestRaster(bundle.manifest?.layers, key, day?.date);
+      const url = assetUrl(caseDir, l?.png);
+      if (l && url) {
+        ensureImageLayer(
+          map,
+          src,
+          lyr,
+          url,
+          boundsToImageCoordinates(l.bounds ?? bundle.bbox),
+          0.7,
+          LYR.muni
+        );
+        vis(lyr, layers[key]);
+      } else {
+        vis(lyr, false);
+      }
+    };
+    rasterToggle("imerg", SRC.imerg, LYR.imerg);
+    rasterToggle("smap", SRC.smap, LYR.smap);
+    rasterToggle("nisar", SRC.nisar, LYR.nisar);
+
     // Pre-rendered EPSG:3857 PNGs become image sources on demand; the raster
     // layer goes in at `before` so the doc order holds. `on` is applied after
     // creation (layers start hidden).
@@ -391,16 +379,12 @@ export function useMapLayers(
       );
     }
 
-    set(SRC.tpi, usePng ? EMPTY : mockTpiGrid(bundle.bbox, hotspots, scale));
     set(
       SRC.fcast,
       usePng && isForecast
         ? bboxPolygon(activePng!.bounds ?? bundle.bbox)
         : EMPTY
     );
-    set(SRC.imerg, mockScalarGrid(bundle.bbox, dayIndex + 1, scale));
-    set(SRC.smap, mockScalarGrid(bundle.bbox, dayIndex + 9, scale));
-    set(SRC.nisar, mockScalarGrid(bundle.bbox, dayIndex + 17, scale));
     set(SRC.water, bundle.water ?? EMPTY);
     set(SRC.flood, bundle.flood ?? EMPTY);
     set(SRC.scars, bundle.scars ?? EMPTY);
@@ -409,13 +393,7 @@ export function useMapLayers(
     set(SRC.places, bundle.places ?? EMPTY);
 
     vis(LYR.tpiRaster, usePng);
-    vis(LYR.tpi, tpiOn && !usePng);
-    vis(LYR.tpiCritical, tpiOn && !usePng);
-    vis(LYR.tpiHatch, tpiOn && isForecast && !usePng);
     vis(LYR.fcastHatch, usePng && isForecast);
-    vis(LYR.imerg, layers.imerg);
-    vis(LYR.smap, layers.smap);
-    vis(LYR.nisar, layers.nisar);
     // With no tab context the caller drives flood/scars via showFlood (and
     // the nisar toggle); with a tab the overlayPlan decides.
     vis(LYR.floodFill, tab === undefined ? showFlood : plan.floodPolygons);
@@ -425,7 +403,7 @@ export function useMapLayers(
     vis(LYR.catalog, tab === undefined ? false : plan.catalogPoints);
 
     // Forecast label — pinned to the top edge of the frame on any forecast
-    // day, PNG or mock (v4: previsão sempre rotulada). The text names the
+    // day (v4: previsão sempre rotulada). The text names the
     // forecast source: "previsão perfeita" on replay, "GEOS-FP" live.
     if (!fcastMarker.current) {
       const el = document.createElement("div");
@@ -473,8 +451,8 @@ export function useMapLayers(
   }, [map, bundle]);
 
   // Click on a TPI frame -> popup with place name, TPI class, R/S/T values
-  // and the data date (v4 spec). Works on both the mock grid (per-cell values)
-  // and PNG raster frames (day-level values).
+  // and the data date (v4 spec). Reads day-level values off the PNG raster
+  // frame — there is no synthetic grid to query.
   useEffect(() => {
     if (!map) return;
     const popup = new Popup({ closeButton: false, className: "tp-popup" });
@@ -491,20 +469,8 @@ export function useMapLayers(
         bandOrder,
       } = state.current;
       if (!b) return;
-      let v: number;
-      if (visible(LYR.tpi)) {
-        const feats = map.queryRenderedFeatures(e.point, {
-          layers: [LYR.tpi],
-        });
-        const p = feats?.[0]?.properties;
-        if (!p) return;
-        v = Number(p.tpi);
-      } else if (visible(LYR.tpiRaster)) {
-        if (!d) return;
-        v = d.tpi;
-      } else {
-        return;
-      }
+      if (!visible(LYR.tpiRaster) || !d) return;
+      const v = d.tpi;
       // Município from the boundaries polygons; nearest named place only as
       // fallback (doc click spec).
       const place =

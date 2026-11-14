@@ -6,12 +6,15 @@ import { globals, writeArrayBuffer } from "geotiff";
 import type { DayPoint } from "./types";
 import {
   assetUrl,
+  capToggleQueue,
   fmtDate,
   fmtDateTime,
   isForecastLayer,
+  layerAvailable,
   overlayPlan,
   pointInPolygons,
   resolvePixelValues,
+  toggleBudget,
 } from "./layers";
 
 describe("isForecastLayer", () => {
@@ -46,7 +49,7 @@ describe("overlayPlan", () => {
   };
 
   test("alert shows TPI only", () => {
-    expect(overlayPlan("alert")).toEqual({ tpi: true, ...OFF });
+    expect(overlayPlan("alert")).toEqual({ tpi: true, ...OFF, count: 0 });
   });
 
   test("radar adds flood polygons and landslide candidates", () => {
@@ -55,6 +58,7 @@ describe("overlayPlan", () => {
       ...OFF,
       floodPolygons: true,
       landslideCandidates: true,
+      count: 2,
     });
   });
 
@@ -64,6 +68,7 @@ describe("overlayPlan", () => {
       ...OFF,
       catalogPoints: true,
       operaValidation: true,
+      count: 2,
     });
   });
 
@@ -72,12 +77,102 @@ describe("overlayPlan", () => {
       tpi: true,
       ...OFF,
       nightLights: true,
+      count: 1,
     });
   });
 
   test("no tab / unknown tab behaves like alert", () => {
-    expect(overlayPlan(undefined)).toEqual({ tpi: true, ...OFF });
-    expect(overlayPlan("bogus")).toEqual({ tpi: true, ...OFF });
+    expect(overlayPlan(undefined)).toEqual({ tpi: true, ...OFF, count: 0 });
+    expect(overlayPlan("bogus")).toEqual({ tpi: true, ...OFF, count: 0 });
+  });
+
+  // viz rule 5: plan overlays count toward the two-layer budget.
+  test("counts drive the toggle budget", () => {
+    expect(toggleBudget("alert")).toBe(2);
+    expect(toggleBudget("radar")).toBe(0);
+    expect(toggleBudget("validation")).toBe(0);
+    expect(toggleBudget("impact")).toBe(1);
+    expect(toggleBudget(undefined)).toBe(2);
+  });
+});
+
+describe("layerAvailable", () => {
+  const bundle = (ids: { id: string; png?: string; cog?: string }[]) => ({
+    manifest: { layers: ids },
+  });
+
+  test("a toggle is available only with a real raster in the manifest", () => {
+    expect(layerAvailable(bundle([{ id: "imerg_daily", png: "a.png" }]), "imerg")).toBe(true);
+    expect(layerAvailable(bundle([{ id: "imerg_daily", cog: "a.tif" }]), "imerg")).toBe(true);
+    expect(layerAvailable(bundle([{ id: "imerg_daily" }]), "imerg")).toBe(false);
+    expect(layerAvailable(bundle([]), "imerg")).toBe(false);
+    expect(layerAvailable(undefined, "imerg")).toBe(false);
+    expect(layerAvailable({} , "imerg")).toBe(false);
+  });
+
+  test("id prefixes route to the right toggle", () => {
+    const b = bundle([
+      { id: "tpi_slide", png: "s.png" },
+      { id: "smap_2026", cog: "s.tif" },
+      { id: "nisar_change", png: "n.png" },
+    ]);
+    expect(layerAvailable(b, "tpiSlide")).toBe(true);
+    expect(layerAvailable(b, "tpiFlood")).toBe(false);
+    expect(layerAvailable(b, "smap")).toBe(true);
+    expect(layerAvailable(b, "nisar")).toBe(true);
+    expect(layerAvailable(b, "imerg")).toBe(false);
+  });
+
+  test("the nisar swipe pair does not count for the toggle", () => {
+    const swipe = bundle([
+      { id: "nisar_pre", png: "a.png" },
+      { id: "nisar_post", png: "b.png" },
+    ]);
+    expect(layerAvailable(swipe, "nisar")).toBe(false);
+  });
+});
+
+describe("capToggleQueue", () => {
+  const all = () => true;
+
+  test("live entries over budget evict oldest-first", () => {
+    expect(capToggleQueue(["a", "b", "c"], 2, all)).toEqual({
+      queue: ["b", "c"],
+      off: ["a"],
+    });
+    expect(capToggleQueue(["a", "b"], 2, all)).toEqual({
+      queue: ["a", "b"],
+      off: [],
+    });
+  });
+
+  // Reviewer finding: a dead entry (no raster in the bundle) must not
+  // consume a budget slot nor evict a live layer.
+  test("dead entries are dropped without evicting live ones", () => {
+    const available = (k: string) => k !== "deadImerg";
+    expect(
+      capToggleQueue(["tpiSlide", "deadImerg"], 1, available)
+    ).toEqual({ queue: ["tpiSlide"], off: ["deadImerg"] });
+    expect(
+      capToggleQueue(["deadA", "liveB", "deadC"], 1, (k) => k === "liveB")
+    ).toEqual({ queue: ["liveB"], off: ["deadA", "deadC"] });
+  });
+
+  test("dead entries plus over-budget live ones both turn off", () => {
+    const available = (k: string) => k !== "dead";
+    expect(
+      capToggleQueue(["dead", "a", "b", "c"], 1, available)
+    ).toEqual({ queue: ["c"], off: ["dead", "a", "b"] });
+  });
+});
+
+describe("no synthetic layer fills", () => {
+  test("MapLayers never references the mock grids", async () => {
+    const src = await Bun.file(
+      new URL("../components/MapLayers.tsx", import.meta.url)
+    ).text();
+    expect(src).not.toContain("mockScalarGrid");
+    expect(src).not.toContain("mockTpiGrid");
   });
 });
 
@@ -251,6 +346,7 @@ declare const Bun: {
     port?: number;
     fetch: (req: Request) => Response | Promise<Response>;
   }): { port: number; stop(closeActiveConnections?: boolean): void };
+  file(path: string | URL): { text(): Promise<string> };
 };
 
 // 4x2 EPSG:4326 grid, 0.5° pixels, top-left at lon -50 / lat -29
