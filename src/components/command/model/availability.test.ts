@@ -69,9 +69,12 @@ describe("dataStatus", () => {
   });
 
   test("sample only for a fallback bundle with neither metrics nor a summary", () => {
-    expect(isSample(bundle({ fallback: true }))).toBe(true);
-    expect(isSample(bundle())).toBe(false);
-    expect(isSample(bundle({ fallback: true, summary: {} }))).toBe(false);
+    const shown = { series: { event: "x", reference_date: "2025-12-10", days: [] } };
+    expect(isSample(bundle({ fallback: true, ...shown }))).toBe(true);
+    expect(isSample(bundle(shown))).toBe(false);
+    // An empty saved bundle shows no values: last saved, not illustrative.
+    expect(dataStatus(liveBundle({ fallback: true })).kind).toBe("last-saved");
+    expect(isSample(bundle({ fallback: true, summary: {}, ...shown }))).toBe(false);
   });
 
   test("a replay is never live or stale", () => {

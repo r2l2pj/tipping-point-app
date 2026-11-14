@@ -1,5 +1,6 @@
 // One data-status signal for the screen. Replaces the fallback banner, the
 // stale pill and isMockDerived of the old screen.
+import { ageText, fmtBrt } from "./format";
 import type { CcBundle } from "./types";
 
 export type DataStatusKind =
@@ -36,7 +37,13 @@ export function dataStatus(
 ): DataStatus {
   const date = bundle.updated_at ?? bundle.dataDate;
   if (bundle.fallback === true) {
-    if (!bundle.metricsView && !bundle.summary) return { kind: "sample", date };
+    // "Sample" needs something on screen that could be read as a result. An
+    // empty bundle (the live seed read from the saved copy) shows no values,
+    // so it is "last saved", not "illustrative".
+    const hasContent = Boolean(
+      bundle.series || bundle.zones?.features.length || bundle.manifest?.layers.length
+    );
+    if (!bundle.metricsView && !bundle.summary && hasContent) return { kind: "sample", date };
     return { kind: "last-saved", date };
   }
   if (!bundle.updated_at) return { kind: "unknown-age" };
@@ -53,3 +60,33 @@ export const SAMPLE_LABEL = "Illustrative demo data";
 
 export const isSample = (bundle: CcBundle): boolean =>
   dataStatus(bundle).kind === "sample";
+
+// Freshness text of the header. "live" is only said for a checked age.
+export function freshnessText(status: DataStatus, nowMs?: number): string {
+  const when = status.date ? fmtBrt(status.date) : undefined;
+  const age = status.date && nowMs !== undefined ? ageText(status.date, nowMs) : undefined;
+  switch (status.kind) {
+    case "live":
+      return `Live · updated ${age ?? when}`;
+    case "stale":
+      return `Stale · last run ${when}${age ? ` (${age})` : ""}`;
+    case "unknown-age":
+      return when ? `Unknown age · run ${when}` : "Unknown age · run time not published yet";
+    case "last-saved":
+      return `Showing last saved data from ${when ?? "an unknown date"}`;
+    case "sample":
+      return SAMPLE_LABEL;
+    case "archive":
+      return `Replay data · snapshot ${when}`;
+  }
+}
+
+// Short word for the chip on the map.
+export const STATUS_WORD: Record<DataStatusKind, string> = {
+  live: "Live data",
+  stale: "Stale data",
+  "unknown-age": "Unknown age",
+  "last-saved": "Last saved data",
+  sample: SAMPLE_LABEL,
+  archive: "Replay data",
+};

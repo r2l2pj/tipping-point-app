@@ -79,10 +79,12 @@ export function statusChip(
       ? { kind: "reached", label: "Tipping point reached", sentence: `${REACHED_SENTENCE} ${line}` }
       : { kind: "forecast", label: "Tipping point forecast", source, sentence: `${WATCH_SENTENCE} ${line}` };
   }
+  // The next day that reaches the threshold. Only a forecast day makes a
+  // forecast; an observed day ahead in a replay is not a forecast.
   const later = steps.find(
-    (s) => s.index > dayIndex && s.day && s.forecast && reaches(s.day.tpi, threshold)
+    (s) => s.index > dayIndex && s.day && reaches(s.day.tpi, threshold)
   );
-  if (later) {
+  if (later?.forecast) {
     return {
       kind: "forecast-later",
       label: `Tipping point forecast for ${fmtDate(later.date)}`,

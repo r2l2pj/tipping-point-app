@@ -51,6 +51,8 @@ describe("status chip (replay)", () => {
 
   test("a later observed day does not make a forecast", () => {
     expect(chip(bundle({ series: series([0.2, 0.9]) }), 0).label).toBe("Below the tipping point");
+    const b = bundle({ series: series([0.2, 0.9, 0.9], ["observed", "observed", "forecast"]) });
+    expect(chip(b, 0).label).toBe("Below the tipping point");
   });
 
   test("exactly 0.60 reaches the threshold and is Critical (Q5 default)", () => {

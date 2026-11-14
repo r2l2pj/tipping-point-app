@@ -3,9 +3,10 @@
 import { forecastSourceLabel } from "@/lib/contract";
 import { isForecastLayer } from "@/lib/layers";
 import type { DayPoint, ManifestLayer } from "@/lib/types";
-import { fmtDayShort } from "./format";
+import { fmtDate, fmtDayShort } from "./format";
 import { reaches, thresholdFor } from "./status";
-import type { CcBundle, Hazard } from "./types";
+import type { LayerId } from "./layerRegistry";
+import { HAZARD_LABEL, type CcBundle, type Hazard } from "./types";
 
 export interface Step {
   index: number;
@@ -69,12 +70,17 @@ export function defaultStepIndex(steps: Step[]): number {
 
 export const NO_STEPS_TEXT = "No frames published yet";
 
-// Forecast tag of the timeline: always the source named by the data.
-export function forecastTag(bundle: CcBundle): string {
-  const label = forecastSourceLabel(
+// Forecast source named by the data ("perfect forecast" in Replay,
+// "GEOS-FP" in Now). Never a fixed name.
+export const forecastSource = (bundle: CcBundle): string | undefined =>
+  forecastSourceLabel(
     bundle.manifest?.forecast_source ?? bundle.summary?.forecast_source ??
       bundle.metricsView?.forecast_source
   );
+
+// Forecast tag of the timeline.
+export function forecastTag(bundle: CcBundle): string {
+  const label = forecastSource(bundle);
   return label ? `Forecast (${label})` : "Forecast";
 }
 
@@ -134,3 +140,26 @@ export const caseHasHazard = (bundle: CcBundle, hazard: Hazard): boolean =>
   (bundle.manifest?.layers ?? []).some(
     (l) => l.id.startsWith(`tpi_${hazard}`) && (l.png || l.cog)
   );
+
+// Caption chip of the map: what is drawn, for which step. Says so when the
+// step has no frame, so an empty map is never read as "no risk".
+export function mapCaption(
+  bundle: CcBundle,
+  steps: Step[],
+  dayIndex: number,
+  hazard: Hazard,
+  on: readonly LayerId[]
+): { text: string; forecast: boolean } {
+  const step = steps[dayIndex];
+  if (!step) return { text: NO_STEPS_TEXT, forecast: false };
+  const when = `${fmtDate(step.date)}${step.sub ? ` (${step.sub})` : ""}`;
+  if (!on.includes("tpi")) return { text: `TPI index off · ${when}`, forecast: false };
+  const frame = frameFor(bundle, step.date, hazard);
+  if (!frame) return { text: `No map frame published for ${when}`, forecast: false };
+  const forecast = frame.forecast || step.forecast;
+  return {
+    text: `${HAZARD_LABEL[frame.hazard]} TPI · ${when}` +
+      (forecast ? ` · ${forecastTag(bundle).toLowerCase()}` : ""),
+    forecast,
+  };
+}

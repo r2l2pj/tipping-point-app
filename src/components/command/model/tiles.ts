@@ -79,3 +79,12 @@ export function peopleTile(bundle: CcBundle, stepDate?: string): Tile {
     : undefined;
   return finish(bundle, stepDate, label, sum, fmtPeople, "people_critical", "in priority zones");
 }
+
+// The zone snapshot has one date. Off that day the list is dimmed.
+export function zoneSnapshot(bundle: CcBundle, stepDate?: string): { asOf?: string; dimmed: boolean } {
+  const snap = snapshot(bundle);
+  return {
+    asOf: snap.text,
+    dimmed: !!stepDate && !!snap.iso && stepDate.slice(0, 10) !== snap.iso.slice(0, 10),
+  };
+}

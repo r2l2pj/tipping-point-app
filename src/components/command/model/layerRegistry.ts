@@ -132,7 +132,10 @@ export function layerRows(
       label: label[d.id],
       available,
       on: available && on.includes(d.id),
-      sub: available ? okSub[d.id] : reason[d.id],
+      // The pass dates are real data: they show on the flood row even
+      // while the polygons are missing.
+      sub: available ? okSub[d.id]
+        : d.id === "flood" && okSub.flood ? `${reason.flood} · ${okSub.flood}` : reason[d.id],
     };
   });
 }
