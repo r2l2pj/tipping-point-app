@@ -5,9 +5,14 @@ import {
   Map as MapLibreMap,
   NavigationControl,
   ScaleControl,
+  setWorkerUrl,
   type Map as MapInstance,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+// Turbopack can't resolve maplibre-gl v6's default worker import; the worker
+// bundle is copied to public/ and wired up explicitly.
+setWorkerUrl("/maplibre-gl-worker.js");
 
 // Dark basemap without labels (project doc v3) so the TPI reds and water blues
 // stand out; city labels go in a separate layer on top. CARTO basemaps are
