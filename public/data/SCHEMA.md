@@ -275,6 +275,7 @@ at its blob via the `metrics` field (`"metrics.json#rs_2024"`).
       "iou": 0.0, "f1": 0.0, "cloud_pct": 0.0,
       "landslide_hit_pct": 0.0, "hand_validation": 0.0,
       "people_critical": 0, "people_flooded": 0, "flooded_km2": 0.0,
+      "flood_source": "opera",
       "night_light_drop_pct": 0.0,
       "lead_time_mean_h": 0.0, "lead_time_median_h": 0.0,
       "warned_before_pct": 0.0,
@@ -287,6 +288,12 @@ at its blob via the `metrics` field (`"metrics.json#rs_2024"`).
   } }
 ```
 
+- `flood_source` — flat string identifying the input behind the flood numbers:
+  `"nisar"` for a NISAR GCOV flood-mask asset, `"opera"` for a validated OPERA
+  DSWx product, `"observed"` for other observed inputs; `null` with a reason
+  when no flood number is emitted. A null update never clobbers a written
+  source (`tp.metrics.merge_metrics`). Mock cases use `wa_2025: "nisar"` and
+  `rs_2024: "opera"`; runtime values describe the input actually used.
 - `forecast_source` — `"perfect-forecast"` for replay cases; the live now
   bundle uses `"geos-fp"`.
 - `collections` — `{ "<dataset>": "<collection id/version>" }` for the inputs
@@ -391,8 +398,9 @@ them server-side (geotiff.js/ee range reads). Tree:
 ```
 tipping-point/
 ├── static/<domain>/             # domain = south_brazil | wa_2025
-│   ├── clim_rain                # ImageCollection, 366 images, `doy` property;
-│   │                            #   bands p90|p95|p99 = 3-day-sum mm percentiles (~10 km)
+│   ├── clim_rain                # ImageCollection, `doy` property;
+│   │                            #   bands p90|p95|p99 = 3-day-sum mm percentiles,
+│   │                            #   int16 mm*10 (config.yaml climatology.scale)
 │   ├── slope                    # degrees
 │   └── hand                     # metres
 ├── <case>/                      # rs_2024, wa_2025
@@ -409,6 +417,13 @@ tipping-point/
 - Every derived asset carries the image properties `data_date`
   (YYYY-MM-DD) and `updated_at` (ISO-8601) — readers can check freshness
   without the manifest.
+- Climatology layout (approved): per-case `static/<case>/clim_rain`
+  collections cover the case's event window (~25 doys over the case AOI);
+  the live now mode uses a rolling ~75-doy window over the `domains.now`
+  bbox in config.yaml at `static/south_brazil/clim_rain`. Percentile bands
+  are stored int16 mm*10 (~0.9 GB total). The read interface is unchanged —
+  `doy` image property, `p90|p95|p99` bands — with consumers dividing by
+  `climatology.scale` (`tp.config.clim_scale()`) before scoring.
 - Reader rule: a manifest layer's `asset` is the PRIMARY source (served via
   the app server); `png`/`cog` remain the fallback, unchanged.
 - Extra ingested rasters beyond the names above are recorded by asset id in
