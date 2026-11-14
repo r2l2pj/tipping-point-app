@@ -5,6 +5,8 @@
 import { handleUpdate, type TelegramUpdate } from "@/lib/telegram/bot";
 import { depsFromEnv } from "@/lib/telegram/deps";
 
+export const maxDuration = 30;
+
 export async function POST(request: Request) {
   const secret = process.env.TELEGRAM_SECRET;
   if (!secret || !process.env.TELEGRAM_TOKEN) {

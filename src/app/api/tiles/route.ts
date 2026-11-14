@@ -12,6 +12,8 @@ import {
   type TileLayer,
 } from "@/lib/ee-tiles";
 
+export const maxDuration = 60;
+
 const LAYERS = new Set<string>(TILE_LAYERS);
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 

@@ -6,6 +6,8 @@ import {
   MetricsUnavailableError,
 } from "@/lib/ee-metrics";
 
+export const maxDuration = 60;
+
 export async function GET(request: Request) {
   const caseId = new URL(request.url).searchParams.get("case");
   if (!caseId) {

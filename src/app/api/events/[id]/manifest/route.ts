@@ -2,6 +2,8 @@ import { canonicalCaseId } from "@/lib/contract";
 import { getManifest, getRootManifest } from "@/lib/data";
 import type { EventManifest } from "@/lib/types";
 
+export const maxDuration = 30;
+
 export async function GET(_req: Request, ctx: RouteContext<"/api/events/[id]/manifest">) {
   const { id } = await ctx.params;
   const canonical = canonicalCaseId(id);

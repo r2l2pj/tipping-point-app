@@ -1,5 +1,7 @@
 import { getEventsIndex, getRootManifest } from "@/lib/data";
 
+export const maxDuration = 30;
+
 export async function GET() {
   try {
     const [index, root] = await Promise.all([

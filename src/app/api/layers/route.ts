@@ -10,6 +10,8 @@ import {
   LayersUnavailableError,
 } from "@/lib/ee-layers";
 
+export const maxDuration = 60;
+
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const caseId = params.get("case");

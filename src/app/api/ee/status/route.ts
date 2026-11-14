@@ -4,6 +4,8 @@
 // fallback), null when neither is set.
 import { credentialEnv, earthEngine } from "@/lib/ee";
 
+export const maxDuration = 60;
+
 export async function GET() {
   try {
     await earthEngine();
