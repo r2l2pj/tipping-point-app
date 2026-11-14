@@ -58,4 +58,18 @@ Verification on `05ead2e` plus these documentation changes:
 - `bun run lint --quiet && git diff --check && git diff --stat`: exit 0; lint no errors, diff check clean; only .env.example and docs/DEPLOY.md changed before this report update.
 - Search for Supabase/SUPABASE/Firestore/FIREBASE/old three-hour cadence in .env.example and docs/DEPLOY.md: no matches.
 
+## L12c local SQLite follow-up
+
+Read decisions.md L12c. Starting SHA: `545e1dc` on `unit/l10store`.
+
+- `.env.example`: DATABASE_URL remains empty and optional locally. Documents automatic gitignored `.data/tipping-point.sqlite`, explicit sqlite:<path>, and infra-configured production Neon.
+- `docs/DEPLOY.md`: describes local SQLite automatically, bun:sqlite under Bun, node:sqlite under Node 22 with its experimental warning, Python stdlib sqlite3, one portable db/schema.sql and one store interface; documents in-memory SQLite tests and a fake HTTP server for the Neon path per L12c.
+- Production setup is explicitly infra-owned: DATABASE_URL selects Neon, with existing Neon schema/server-only/RLS-free access, LGPD and scale-to-zero guidance retained.
+- This is documentation of the requested L12c contract, not evidence that the separate SQLite/Neon implementation has landed in this worktree. Runtime/backend files and their test implementation remain outside this unit's scope.
+
+Verification on `545e1dc` plus this documentation update:
+
+- `bun test`: exit 0; `247 pass`, `6 skip`, `0 fail`, `735 expect() calls`, `Ran 253 tests across 16 files. [2.43s]`. Credential-gated live GEE tests remain skipped.
+- `bun run lint --quiet && git diff --check && git diff --stat`: exit 0; no lint errors, clean diff check; only .env.example and docs/DEPLOY.md changed before this report update.
+
 No dependency changes, no push, no fallback-branch publishing operations. This unit documents the data-repo publish and subscriber setup contracts; it does not implement those pipelines, the database schema file, or provision services.

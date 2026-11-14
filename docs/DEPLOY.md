@@ -22,7 +22,7 @@ is ever committed; `.gitignore` already blocks the usual key file patterns.
 | `DATA_BASE_URL` | Optional fallback data base URL override. Defaults to `https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`; bundled `public/data` is the last resort on a remote miss. |
 | `GEE_PROJECT` | Google Cloud project registered for the Earth Engine API. |
 | `GCP_SA_KEY` | Service-account JSON key (single line) for Earth Engine access. Server-side only — never `NEXT_PUBLIC_`-prefixed. |
-| `DATABASE_URL` | Secret Neon Postgres connection string for server-only Telegram subscriber access via HTTPS SQL using plain fetch/requests, with no new dependency. Never expose to browser code or commit it. |
+| `DATABASE_URL` | Subscriber backend selector, not required locally: unset or `sqlite:<path>` uses local SQLite (default `.data/tipping-point.sqlite`). Infra sets a secret `postgres://` or `postgresql://` Neon connection string in production for server-only HTTPS SQL access. Never expose or commit the production value. |
 | `TELEGRAM_TOKEN` | Bot token from BotFather, used to call the Telegram Bot API. |
 | `TELEGRAM_SECRET` | Shared secret Telegram sends as `X-Telegram-Bot-Api-Secret-Token`; the webhook route verifies it. |
 | `APP_URL` | Canonical public URL of the deployment (e.g. `https://<project>.vercel.app`), used to register the webhook. |
@@ -42,11 +42,24 @@ updating fallback data does not require a redeploy. The copy bundled into
 `public/data` by `bun run sync:data` is the last resort when a remote read
 fails; it is not the live source of truth.
 
-## Telegram subscriber store (Neon)
+## Telegram subscriber store (local SQLite, production Neon)
 
-Only the Telegram subscriber store needs a database. Create a free Neon
-Postgres project and run `db/schema.sql` in its SQL editor. The `subscribers`
-table has this schema:
+Only the Telegram subscriber store needs a database. Local development and
+tests use SQLite automatically; no Neon project or `DATABASE_URL` is required
+locally. Unset `DATABASE_URL` uses the automatic, gitignored file
+`.data/tipping-point.sqlite`; `sqlite:<path>` selects an explicit local file.
+The app uses `bun:sqlite` under Bun and `node:sqlite` under Node 22 (which
+emits an experimental warning); the data pipeline uses Python's stdlib
+`sqlite3`. No new dependency is needed.
+
+Both backends share the same store interface and one portable `db/schema.sql`.
+Store tests use in-memory SQLite, and the Neon HTTP path is tested against a
+fake HTTP server rather than requiring live infrastructure.
+
+For production, the infra person creates a free Neon Postgres project, runs
+`db/schema.sql` in its SQL editor, and sets `DATABASE_URL` to its `postgres://`
+or `postgresql://` connection string. This switches the backend to Neon.
+The Neon `subscribers` table has this schema:
 
 ```sql
 create table subscribers (
@@ -142,5 +155,7 @@ until they exist.
 - Vercel project created with the env vars above.
 - `GEE_PROJECT` registered for the Earth Engine API with a service account.
 - Telegram bot token from BotFather.
-- Free Neon Postgres project with `db/schema.sql` applied and server-only
-  `DATABASE_URL` configured in Vercel and GitHub Actions secrets.
+- Production only: infra creates a free Neon Postgres project with
+  `db/schema.sql` applied and server-only `DATABASE_URL` configured in Vercel
+  and GitHub Actions secrets. Local development uses automatic SQLite and
+  does not wait for Neon infrastructure.
