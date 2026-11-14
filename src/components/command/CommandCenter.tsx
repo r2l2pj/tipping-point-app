@@ -11,7 +11,7 @@ import type { AlertList } from "./model/alerts";
 import { priorityAreas } from "./model/areas";
 import { availability, missingText } from "./model/availability";
 import { dataStatus, freshnessText } from "./model/dataStatus";
-import { fmtKm2 } from "./model/format";
+import { classLabel, fmtKm2 } from "./model/format";
 import { layerRows } from "./model/layerRegistry";
 import { caseDirOf, effectiveBundle, productUrl, withLazy, zonesAreTrimmed } from "./model/lazy";
 import { nightLightsCompare, radarCard } from "./model/radar";
@@ -270,7 +270,7 @@ export function CommandCenterView({
                 <dl className="grid grid-cols-2 gap-x-4 text-xs text-cc-muted" aria-label="Area by class">
                   {classesKm2.map(([cls, km2]) => (
                     <div key={cls} className="flex justify-between border-t border-cc-rule py-0.5">
-                      <dt>class {cls}</dt><dd>{fmtKm2(km2)}</dd>
+                      <dt>class {classLabel(cls)}</dt><dd>{fmtKm2(km2)}</dd>
                     </div>
                   ))}
                 </dl>

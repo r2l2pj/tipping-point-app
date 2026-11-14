@@ -1,7 +1,7 @@
 // Priority areas: the zone snapshot sorted by rank. Class, TPI and people
 // come from the data; nothing is recomputed here.
 import { zoneLabelPoint } from "@/lib/layers";
-import { finite } from "./format";
+import { classLabel, finite } from "./format";
 import type { CcBundle } from "./types";
 
 export interface PriorityArea {
@@ -36,7 +36,7 @@ export function priorityAreas(bundle: CcBundle | undefined): PriorityArea[] {
       rank: p.rank as number,
       name,
       label: (count.get(String(p.name ?? "")) ?? 0) > 1 ? `${name} #${p.rank}` : name,
-      cls: typeof p.class === "string" ? p.class : "",
+      cls: typeof p.class === "string" ? classLabel(p.class) : "",
       tpi: finite(p.tpi) ? p.tpi : null,
       hazard: typeof p.hazard === "string" ? p.hazard : "",
       areaKm2: finite(p.area_km2) ? p.area_km2 : null,

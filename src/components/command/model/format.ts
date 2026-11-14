@@ -92,3 +92,14 @@ export function sourceTime(raw: string | undefined | null): string | undefined {
   }
   return undefined;
 }
+
+// English word of a TPI class. The live run names classes in Portuguese
+// ("Baixo", "Moderado", "Alto", "Crítico"); an unknown name is shown as is.
+const CLASS_EN: Record<string, string> = {
+  baixo: "Low",
+  moderado: "Moderate",
+  alto: "High",
+  critico: "Critical",
+};
+export const classLabel = (name: string): string =>
+  CLASS_EN[name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()] ?? name;

@@ -2,7 +2,7 @@
 import { describe, expect, test } from "bun:test";
 import { alertsByRegion, buildAlertList } from "./alerts";
 import { bundle, liveBundle } from "./fixtures";
-import { ageText, fmtBrt, fmtDate, fmtHours, sourceTime } from "./format";
+import { ageText, classLabel, fmtBrt, fmtDate, fmtHours, sourceTime } from "./format";
 import { sourceRows } from "./sources";
 
 describe("alert list", () => {
@@ -93,6 +93,13 @@ describe("live run text", () => {
     const rows = sourceRows(liveBundle({ data_dates: { imerg: "run 12" } }), Date.now());
     expect(rows[0]).toMatchObject({ date: "run 12", missing: false });
     expect(rows[0].age).toBeUndefined();
+  });
+
+  test("class names of the live run are shown in English", () => {
+    expect(["Baixo", "Moderado", "Alto", "Crítico", "Critico"].map(classLabel))
+      .toEqual(["Low", "Moderate", "High", "Critical", "Critical"]);
+    expect(classLabel("Critical")).toBe("Critical");
+    expect(classLabel("Extreme")).toBe("Extreme");
   });
 });
 
