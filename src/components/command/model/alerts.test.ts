@@ -2,7 +2,7 @@
 import { describe, expect, test } from "bun:test";
 import { alertsByRegion, buildAlertList } from "./alerts";
 import { bundle, liveBundle } from "./fixtures";
-import { ageText, fmtBrt, fmtDate, fmtHours } from "./format";
+import { ageText, fmtBrt, fmtDate, fmtHours, sourceTime } from "./format";
 import { sourceRows } from "./sources";
 
 describe("alert list", () => {
@@ -63,6 +63,36 @@ describe("format", () => {
     expect(ageText("2026-11-14T07:00:00Z", now)).toBe("5 h ago");
     expect(ageText("2026-11-12", now)).toBe("2 days ago");
     expect(ageText(undefined, now)).toBeUndefined();
+  });
+});
+
+describe("live run text", () => {
+  test("source times are read from the three published shapes", () => {
+    expect(sourceTime("2026-11-14T12:00:00Z")).toBe("2026-11-14T12:00:00Z");
+    expect(sourceTime("2026-11-14T00Z")).toBe("2026-11-14T00:00:00Z");
+    expect(sourceTime("SMAP_L4_SM_gph_20261110T223000_Vv8013_001.h5_u9loH5HD")).toBe("2026-11-10T22:30:00Z");
+    expect(sourceTime("2024-05-07")).toBe("2024-05-07");
+    expect(sourceTime("some text")).toBeUndefined();
+  });
+
+  test("IMERG and SMAP rows show a date, not the raw value", () => {
+    const live = liveBundle({
+      data_dates: {
+        imerg: "2026-11-14T00Z",
+        smap: "SMAP_L4_SM_gph_20261110T223000_Vv8013_001.h5_u9loH5HD",
+        geos_fp_issued: "2026-11-14T12:00:00Z",
+      },
+    });
+    const rows = sourceRows(live, new Date("2026-11-14T23:00:00Z").getTime());
+    expect(rows[0]).toMatchObject({ date: "Nov 13, 09:00 PM BRT", age: "23 h ago", missing: false });
+    expect(rows[1]).toMatchObject({ date: "Nov 10, 07:30 PM BRT", age: "4 days ago", missing: false });
+    expect(rows[2]).toMatchObject({ date: "Nov 14, 09:00 AM BRT" });
+  });
+
+  test("a value in an unknown shape is shown as published", () => {
+    const rows = sourceRows(liveBundle({ data_dates: { imerg: "run 12" } }), Date.now());
+    expect(rows[0]).toMatchObject({ date: "run 12", missing: false });
+    expect(rows[0].age).toBeUndefined();
   });
 });
 

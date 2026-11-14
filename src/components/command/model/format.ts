@@ -74,3 +74,21 @@ export function ageText(iso: string | undefined | null, nowMs: number): string |
   if (mins < 48 * 60) return `${Math.round(mins / 60)} h ago`;
   return `${Math.round(mins / 1440)} days ago`;
 }
+
+// Time of a data source as an ISO string. The live run publishes three
+// shapes: a full timestamp, an hour without minutes ("2026-11-14T00Z") and a
+// granule file name that carries the time ("..._20261110T223000_..."). The
+// time is read from the published text; an unknown shape returns undefined.
+export function sourceTime(raw: string | undefined | null): string | undefined {
+  if (!raw) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const hour = /^(\d{4}-\d{2}-\d{2})T(\d{2})Z$/.exec(raw);
+  if (hour) return `${hour[1]}T${hour[2]}:00:00Z`;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(raw) && !Number.isNaN(new Date(raw).getTime())) return raw;
+  const stamp = /(?:^|[^0-9])(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(?:[^0-9]|$)/.exec(raw);
+  if (stamp) {
+    const iso = `${stamp[1]}-${stamp[2]}-${stamp[3]}T${stamp[4]}:${stamp[5]}:${stamp[6]}Z`;
+    if (!Number.isNaN(new Date(iso).getTime())) return iso;
+  }
+  return undefined;
+}

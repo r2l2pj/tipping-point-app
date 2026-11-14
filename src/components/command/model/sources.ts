@@ -1,7 +1,7 @@
 // Data sources of the timeline: absolute date first, age second.
 import { forecastSourceLabel } from "@/lib/contract";
 import { NO_RADAR_TEXT } from "./availability";
-import { ageText, fmtBrt, fmtDate } from "./format";
+import { ageText, fmtBrt, fmtDate, sourceTime } from "./format";
 import { nisarPasses } from "./radar";
 import { NOT_PUBLISHED, type CcBundle } from "./types";
 
@@ -20,13 +20,15 @@ export function sourceRows(bundle: CcBundle, nowMs?: number): SourceRow[] {
   };
   const live = bundle.mode === "live";
   const row = (id: string, name: string, key: string): SourceRow => {
-    const iso = typeof dd[key] === "string" ? (dd[key] as string) : undefined;
+    const raw = typeof dd[key] === "string" && dd[key] ? (dd[key] as string) : undefined;
+    const iso = sourceTime(raw);
     return {
       id,
       name,
-      date: iso ? fmtBrt(iso) : NOT_PUBLISHED,
+      // A value in an unknown shape is shown as published, without an age.
+      date: iso ? fmtBrt(iso) : (raw ?? NOT_PUBLISHED),
       age: iso && live && nowMs !== undefined ? ageText(iso, nowMs) : undefined,
-      missing: !iso,
+      missing: !raw,
     };
   };
   const rows = [
