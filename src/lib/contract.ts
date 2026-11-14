@@ -6,6 +6,7 @@
 import type { EventMetrics, ManifestLayer, NisarPass } from "./types";
 
 export type ForecastSource = "perfect-forecast" | "geos-fp" | (string & {});
+export type FloodSource = "nisar" | "opera" | "observed";
 export type ProductMap = Record<string, string>;
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
@@ -29,6 +30,7 @@ export interface MetricsV4 {
   people_critical?: number;
   people_flooded?: number;
   flooded_km2?: number;
+  flood_source?: FloodSource;
   night_light_drop_pct?: number;
   lead_time_mean_h?: number;
   lead_time_median_h?: number;
@@ -239,7 +241,7 @@ export function resolveAsset(
 // --- forecast_source labels -------------------------------------------------
 
 export const FORECAST_SOURCE_LABELS: Record<string, string> = {
-  "perfect-forecast": "previsão perfeita", // replay cases
+  "perfect-forecast": "perfect forecast", // replay cases
   "geos-fp": "GEOS-FP", // live now/ runs
 };
 

@@ -35,6 +35,38 @@ describe("toMetricsView", () => {
     expect(flat.forecast_source).toBe("perfect-forecast");
   });
 
+  test("flat flood sources pass through without making an absent source claim", () => {
+    for (const flood_source of ["nisar", "opera", "observed"] as const) {
+      expect(toMetricsView({ ...flatMetrics, flood_source })!.flood_source).toBe(flood_source);
+    }
+    expect(toMetricsView({ ...flatMetrics, flood_source: null })!.flood_source).toBeNull();
+    expect(flat.flood_source).toBeUndefined();
+  });
+
+  test("legacy nested metrics do not claim a flood source", () => {
+    expect(legacy.flood_source).toBeUndefined();
+    expect(toMetricsView({ ...legacyMetrics, flood_source: "nisar" })!.flood_source).toBeUndefined();
+  });
+
+  test("flood source survives normalization of every percent key", () => {
+    const view = toMetricsView({
+      flood_source: "opera",
+      cloud_pct: 94,
+      landslide_hit_pct: 62,
+      hand_validation: 78,
+      night_light_drop_pct: 18,
+      warned_before_pct: 87,
+    })!;
+    expect(view).toMatchObject({
+      flood_source: "opera",
+      cloud_pct: 0.94,
+      landslide_hit_pct: 0.62,
+      hand_validation: 0.78,
+      night_light_drop_pct: 0.18,
+      warned_before_pct: 0.87,
+    });
+  });
+
   test("percent fields arriving on a 0-100 scale normalize to 0-1", () => {
     expect(flat.cloud_pct).toBe(0.94);
     expect(flat.night_light_drop_pct).toBe(0.18);
@@ -203,9 +235,9 @@ describe("resolveAsset", () => {
 
 describe("forecast_source labels", () => {
   test("map and label helper", () => {
-    expect(FORECAST_SOURCE_LABELS["perfect-forecast"]).toBe("previsão perfeita");
+    expect(FORECAST_SOURCE_LABELS["perfect-forecast"]).toBe("perfect forecast");
     expect(FORECAST_SOURCE_LABELS["geos-fp"]).toBe("GEOS-FP");
-    expect(forecastSourceLabel("perfect-forecast")).toBe("previsão perfeita");
+    expect(forecastSourceLabel("perfect-forecast")).toBe("perfect forecast");
     expect(forecastSourceLabel("geos-fp")).toBe("GEOS-FP");
   });
 

@@ -89,10 +89,17 @@ pass through untouched. Legacy mapping: `flood.area_km2→flooded_km2`,
 `model.auc→rf_auc`, `alert.lead_hours_median→lead_time_median_h`,
 `impact.people_exposed→people_critical`, `impact.lights_out_pct→night_light_drop_pct`.
 
+`flood_source` is an optional pipeline-written enum: `'nisar'|'opera'|'observed'|null`.
+It identifies the sensor source of `flooded_km2` and `people_flooded`:
+`nisar` means NISAR GCOV confirmed, `opera` means OPERA DSWx/optical reference,
+and `observed` means anything else. Null or absent means no source claim.
+Flat metrics pass it through untouched; legacy nested metrics leave it undefined.
+The UI labels "Flooded area (NISAR)" only when `flood_source === 'nisar'`.
+
 ## forecast_source
 
 Case-level or now-level string. UI labels via `forecastSourceLabel()`:
-`perfect-forecast` → "previsão perfeita" (replay), `geos-fp` → "GEOS-FP"
+`perfect-forecast` → "perfect forecast" (replay), `geos-fp` → "GEOS-FP"
 (live). Unknown values pass through verbatim.
 
 ## Asset paths
