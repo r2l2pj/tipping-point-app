@@ -16,6 +16,11 @@ const num = (v: unknown): number | undefined =>
 const str = (v: unknown): string | undefined =>
   typeof v === "string" ? v : undefined;
 
+// Default TPI class cuts (upper bounds of Low/Moderate/High; Critical runs to
+// 1). A manifest case node may override with `tpi_cuts`; components read the
+// effective cuts from `LoadedCaseBundle.tpiCuts` and must not hard-code them.
+export const TPI_CUTS = [0.2, 0.4, 0.6] as const;
+
 // --- metrics ---------------------------------------------------------------
 
 // Lead-time (retrospective) shapes — see docs/app-contract.md "lead time".
@@ -46,7 +51,12 @@ export interface MetricsV4 {
   f1?: number;
   cloud_pct?: number;
   landslide_hit_pct?: number;
+  swath_coverage_pct?: number;
   hand_validation?: number;
+  flooded_km2_scope?: string; // e.g. "within NISAR swath"
+  flood_top_clusters?: { area_km2: number; lat: number; lon: number; where?: string }[];
+  hand_validation_radii?: Record<string, number>; // radius_m -> iou
+  hand_best_radius_m?: number;
   people_critical?: number;
   people_flooded?: number;
   flooded_km2?: number;
@@ -79,11 +89,14 @@ export interface MetricsV4 {
 // no `raw` copy.
 export type MetricsView = MetricsV4;
 
-// Percent fields: a value > 1 is read as a 0-100 scale and divided by 100.
-// Scores (iou/f1/aucs) are ratios by definition and pass through untouched.
+// Percent fields: a value >= 1 is read as a 0-100 scale and divided by 100 —
+// *_pct fields are authored 0-100 (SCHEMA convention), so an authored 1 means
+// 1%, not 100%. Only values < 1 get the 0-1 tolerance. Scores (iou/f1/aucs)
+// are ratios by definition and pass through untouched.
 const PCT_KEYS = [
   "cloud_pct",
   "landslide_hit_pct",
+  "swath_coverage_pct",
   "hand_validation",
   "night_light_drop_pct",
   "warned_before_pct",
@@ -94,7 +107,7 @@ const PCT_KEYS = [
 
 const pct = (v: unknown): number | undefined => {
   const n = num(v);
-  return n === undefined ? undefined : n > 1 ? n / 100 : n;
+  return n === undefined ? undefined : n >= 1 ? n / 100 : n;
 };
 
 const LEGACY_SECTIONS = ["flood", "model", "alert", "cloud", "impact"] as const;
@@ -143,7 +156,7 @@ export function toMetricsView(
 
 // Forecast day fallback: now@2 layers may carry `forecast: true`; when the
 // flag is absent, a `<id>_d<k>` suffix (k = 1..3) marks a forecast day.
-const FORECAST_DAY_RE = /_d[1-3]$/;
+export const FORECAST_DAY_RE = /_d[1-3]$/;
 
 export interface NowLayer extends ManifestLayer {
   forecast: boolean;

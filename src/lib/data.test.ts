@@ -541,3 +541,50 @@ describe("live GEE overlay (injected gee)", () => {
     expect(b.fallback).toBe(true); // but nothing published -> degraded
   });
 });
+
+// A10: bbox / reference_date / TPI class cuts come from the contract
+// (manifest case node + series + events.json), never from caller literals.
+describe("contract-derived bbox / reference_date / tpiCuts", () => {
+  test("bbox and reference_date derive from the manifest when args are omitted", async () => {
+    stageReplay();
+    process.env.DATA_BASE_URL = base;
+
+    const b = await getCaseBundle("rs_2024", "RS");
+
+    expect(b.bbox).toEqual(RS_BBOX); // case-node bounds
+    expect(b.reference_date).toBe("2024-05-10"); // entry.updated_at first 10 chars
+    expect(b.tpiCuts).toEqual([0.2, 0.4, 0.6]); // contract default TPI_CUTS
+  });
+
+  test("reference_date falls to the latest non-forecast layer date", async () => {
+    stageReplay();
+    const root = remoteRoot();
+    delete (root.cases.rs_2024 as Record<string, unknown>).updated_at;
+    delete (root as Record<string, unknown>).updated_at;
+    (root.cases.rs_2024.layers as Record<string, unknown>[]).push({
+      id: "tpi_slide_d1",
+      date: "2024-05-03",
+      forecast: true,
+    });
+    files.set("manifest.json", root);
+    process.env.DATA_BASE_URL = base;
+
+    const b = await getCaseBundle("rs_2024", "RS");
+
+    // data_dates.observed absent -> latest observed (non-forecast) layer date;
+    // the forecast d1 layer's later date must not win.
+    expect(b.reference_date).toBe("2024-05-02");
+  });
+
+  test("manifest tpi_cuts override the contract default", async () => {
+    stageReplay();
+    const root = remoteRoot();
+    (root.cases.rs_2024 as Record<string, unknown>).tpi_cuts = [0.1, 0.5, 0.9];
+    files.set("manifest.json", root);
+    process.env.DATA_BASE_URL = base;
+
+    const b = await getCaseBundle("rs_2024", "RS");
+
+    expect(b.tpiCuts).toEqual([0.1, 0.5, 0.9]);
+  });
+});

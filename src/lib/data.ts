@@ -8,7 +8,9 @@ import { cacheLife } from "next/cache";
 import {
   canonicalCaseId,
   caseAlias,
+  FORECAST_DAY_RE,
   resolveAsset,
+  TPI_CUTS,
   toMetricsView,
   toNowView,
   type MetricsView,
@@ -50,6 +52,10 @@ export interface LoadedCaseBundle extends CaseBundle {
   // numbers.data_date when live numbers applied. The front renders
   // "Showing last saved data from <updated_at ?? dataDate>" on fallback.
   dataDate?: string;
+  // Effective TPI class cuts: manifest case-node `tpi_cuts`, else the
+  // contract default (contract.TPI_CUTS). Components must use this — never
+  // hard-code the cuts (A10).
+  tpiCuts: readonly number[];
 }
 
 // Optional test/injection seam for the live GEE overlay (L8). When `gee` is
@@ -240,7 +246,7 @@ export const getAlerts = () =>
 // resolves for the live bundle.
 function nowSeriesFromLayers(
   view: NowView,
-  reference_date: string
+  reference_date: string | undefined
 ): SeriesDaily | undefined {
   const dated = view.layers.filter((l) => l.date);
   if (!dated.length) return undefined;
@@ -248,7 +254,8 @@ function nowSeriesFromLayers(
   const observed = dates.filter((d) =>
     dated.some((l) => l.date === d && !l.forecast)
   );
-  const ref = observed[observed.length - 1] ?? reference_date;
+  const ref =
+    observed[observed.length - 1] ?? reference_date ?? dates[dates.length - 1];
   const refMs = Date.parse(`${ref}T00:00:00Z`);
   const days: DayPoint[] = dates.map((date) => ({
     date,
@@ -270,8 +277,8 @@ function nowSeriesFromLayers(
 export async function getCaseBundle(
   id: string,
   title: string,
-  bbox: [number, number, number, number],
-  reference_date: string,
+  bbox?: [number, number, number, number],
+  reference_date?: string,
   opts?: CaseBundleOpts
 ): Promise<LoadedCaseBundle> {
   const ctx = newCtx();
@@ -304,6 +311,7 @@ export async function getCaseBundle(
         layers: now.layers,
         products: now.products,
         forecast_source: now.forecast_source,
+        tpi_cuts: entry?.tpi_cuts ?? perCase?.tpi_cuts,
       }
     : entry
       ? {
@@ -318,6 +326,7 @@ export async function getCaseBundle(
           products: entry.products ?? perCase?.products,
           forecast_source:
             entry.forecast_source ?? perCase?.forecast_source,
+          tpi_cuts: entry.tpi_cuts ?? perCase?.tpi_cuts,
         }
       : perCase;
 
@@ -361,7 +370,8 @@ export async function getCaseBundle(
 
   // Numbers query date: replay cases use the reference date; the live `now`
   // case wants the latest observed data date — the d0 layer date, else
-  // data_dates.observed, else the reference date.
+  // data_dates.observed, else the reference date. The live calls are kicked
+  // once referenceDate is derived below (it can come from the series file).
   const d0Date = now?.layers.find(
     (l) => /_d0$/.test(l.id) && typeof l.date === "string"
   )?.date;
@@ -369,19 +379,6 @@ export async function getCaseBundle(
     now?.data_dates && typeof now.data_dates.observed === "string"
       ? now.data_dates.observed
       : undefined;
-  const numbersDate =
-    canonical === "now"
-      ? (d0Date ?? observedDate ?? reference_date)
-      : reference_date;
-
-  // One slow/failed call must not hang the other — the helpers carry their
-  // own internal timeouts.
-  const livePending = gee
-    ? Promise.allSettled([
-        gee.numbers?.({ caseId: canonical, date: numbersDate }),
-        gee.layers?.(canonical),
-      ])
-    : undefined;
 
   const [
     metrics,
@@ -423,12 +420,68 @@ export async function getCaseBundle(
     now ? geo("critical_areas", "geojson/critical_areas.geojson") : undefined,
   ]);
 
+  // A10: bbox and reference_date come from the contract, not caller literals.
+  // bbox = manifest `bounds` ?? caller arg ?? events.json entry `bbox`;
+  // `bounds` is a required contract field, so a case with no bounds anywhere
+  // is a contract violation and throws (same spirit as `must` on required
+  // files). reference_date chain: explicit arg ?? manifest.updated_at (first
+  // 10 chars) ?? data_dates.observed ?? latest non-forecast layer.date ??
+  // series.reference_date ?? events.json entry.
+  const latestObservedLayerDate = (manifest?.layers ?? [])
+    .filter(
+      (l) =>
+        typeof l.date === "string" &&
+        !(l.forecast === true ||
+          (l.forecast === undefined && FORECAST_DAY_RE.test(l.id)))
+    )
+    .map((l) => l.date as string)
+    .sort()
+    .pop();
+  const dataDateObserved =
+    typeof manifest?.data_dates?.observed === "string"
+      ? manifest.data_dates.observed.slice(0, 10)
+      : undefined;
+  let resolvedBbox = manifest?.bounds ?? bbox;
+  let referenceDate =
+    reference_date ??
+    manifest?.updated_at?.slice(0, 10) ??
+    dataDateObserved ??
+    latestObservedLayerDate ??
+    series?.reference_date;
+  if (resolvedBbox === undefined || referenceDate === undefined) {
+    const index = await readData<EventsIndex>(ctx, "", "events.json");
+    const eventId = manifest?.event_id ?? manifest?.event;
+    const event = index?.events.find(
+      (e) => e.id === eventId || e.id === id
+    );
+    resolvedBbox ??= event?.bbox;
+    referenceDate ??= event?.reference_date;
+  }
+  if (resolvedBbox === undefined)
+    throw new Error(`data: bounds for ${id} not found`);
+
+  const numbersDate =
+    canonical === "now"
+      ? (d0Date ?? observedDate ?? referenceDate)
+      : referenceDate;
+
+  // One slow/failed call must not hang the other — the helpers carry their
+  // own internal timeouts.
+  const livePending = gee
+    ? Promise.allSettled([
+        numbersDate !== undefined
+          ? gee.numbers?.({ caseId: canonical, date: numbersDate })
+          : undefined,
+        gee.layers?.(canonical),
+      ])
+    : undefined;
+
   const bundle: LoadedCaseBundle = {
     id,
     title,
     mode: manifest?.mode ?? (now ? "live" : "replay"),
-    bbox: manifest?.bounds ?? bbox,
-    reference_date,
+    bbox: resolvedBbox,
+    reference_date: referenceDate,
     updated_at: manifest?.updated_at,
     data_dates: manifest?.data_dates,
     manifest,
@@ -442,7 +495,8 @@ export async function getCaseBundle(
     catalog,
     municipalities,
     products: manifest?.products,
-    series: series ?? (now ? nowSeriesFromLayers(now, reference_date) : undefined),
+    series: series ?? (now ? nowSeriesFromLayers(now, referenceDate) : undefined),
+    tpiCuts: manifest?.tpi_cuts ?? TPI_CUTS,
     zones,
     water,
     flood,

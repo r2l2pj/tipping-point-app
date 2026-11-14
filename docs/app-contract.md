@@ -19,9 +19,25 @@ in `src/lib/contract.ts`.
 
 `{ updated_at, cases: { <canonical-id>: ManifestCase, now: {…} } }`.
 Per-case fields the app reads: `mode`, `bounds`, `updated_at`, `layers`,
-`metrics` (path), `products` (map), `forecast_source`, `data_dates`. A legacy
-per-case `<dir>/manifest.json` still resolves when the case isn't in the root
-map (fallback only).
+`metrics` (path), `products` (map), `forecast_source`, `data_dates`,
+`tpi_cuts`. A legacy per-case `<dir>/manifest.json` still resolves when the
+case isn't in the root map (fallback only).
+
+- **`tpi_cuts`** (optional `number[]`, default `TPI_CUTS = [0.2, 0.4, 0.6]` in
+  `contract.ts`): TPI class boundaries — the upper bounds of Low/Moderate/
+  High (Critical runs to 1). `getCaseBundle` surfaces the effective cuts as
+  `bundle.tpiCuts`; `TPI_CLASSES`/`TPI_THRESHOLD` in `lib/tpi.ts` derive from
+  `TPI_CUTS` so the literal lives in one place. Components must read
+  `bundle.tpiCuts`, never hard-code cuts.
+- **`bbox` / `reference_date`** come from the contract, not call-site
+  literals. `getCaseBundle` accepts them optionally; derivation order:
+  `bundle.bbox` = case-node `bounds` ?? the caller arg ?? the `events.json`
+  entry `bbox` — `bounds` is required by SCHEMA, so the loader throws when
+  nothing supplies one (`bundle.bbox` is never null). `bundle.reference_date`
+  = caller arg ?? `manifest.updated_at` (first 10 chars) ??
+  `data_dates.observed` ?? latest non-forecast `layers[].date` ??
+  `series.reference_date` ?? the `events.json` entry `reference_date`.
+  Components must not hard-code bounds or "today" — read them off the bundle.
 
 ## Layers
 
@@ -109,11 +125,18 @@ meaning only. The front renders "Showing last saved data from
 (`flood`/`model`/`alert`/`cloud`/`impact`) and returns one `MetricsView`.
 Percent fields (`cloud_pct`, `landslide_hit_pct`, `hand_validation`,
 `night_light_drop_pct`, `warned_before_pct`) arriving on a 0-100 scale are
-divided by 100 — **the UI always gets 0-1 fractions**. Scores (`iou`, `f1`,
+divided by 100 — **the UI always gets 0-1 fractions**. `*_pct` is authored
+0-100 per SCHEMA, so any value `>= 1` is read as 0-100 (an authored `1` means
+1% → `0.01`); only values `< 1` get the 0-1 tolerance. Scores (`iou`, `f1`,
 `*_auc`) are ratios and pass through; unknown flat keys (e.g. `landslide_ml`)
 pass through untouched. Legacy mapping: `flood.area_km2→flooded_km2`,
 `model.auc→rf_auc`, `alert.lead_hours_median→lead_time_median_h`,
 `impact.people_exposed→people_critical`, `impact.lights_out_pct→night_light_drop_pct`.
+
+Optional analysis keys (all absent-safe, passthrough unless noted):
+`swath_coverage_pct` (percent → 0-1), `flooded_km2_scope` (e.g. "within
+NISAR swath"), `flood_top_clusters` (`{area_km2, lat, lon, where?}[]`),
+`hand_validation_radii` (`radius_m -> iou` map), `hand_best_radius_m`.
 
 `flood_source` is an optional pipeline-written enum: `'nisar'|'opera'|'observed'|null`.
 It identifies the sensor source of `flooded_km2` and `people_flooded`:

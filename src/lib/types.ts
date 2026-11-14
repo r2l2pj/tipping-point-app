@@ -26,6 +26,9 @@ export interface ManifestLayer {
   path?: string;
   source?: string;
   bands?: string;
+  // Forecast-day flag (now/ and replay forecast overlays); when absent a
+  // `<id>_d[1-3]` suffix marks the forecast day — see FORECAST_DAY_RE.
+  forecast?: boolean;
 }
 
 export interface NisarPass {
@@ -53,6 +56,9 @@ export interface ManifestCase {
   metrics?: string;
   products?: ProductMap;
   forecast_source?: string;
+  // TPI class cuts overriding the contract default (contract.TPI_CUTS,
+  // [0.2, 0.4, 0.6]) — upper bounds of Low/Moderate/High.
+  tpi_cuts?: number[];
 }
 
 export interface RootManifest {
@@ -84,6 +90,7 @@ export interface EventManifest {
   layers: ManifestLayer[];
   products?: ProductMap;
   forecast_source?: string;
+  tpi_cuts?: number[];
 }
 
 export interface EventMetrics {
@@ -150,12 +157,19 @@ export interface AlertsFile {
 }
 
 // Everything the dashboard needs for one case, loaded server-side.
+// `bbox` and `reference_date` derive from the contract (A10): bbox = the case
+// node's `bounds` ?? caller arg ?? the events.json entry `bbox` — `bounds` is
+// required by SCHEMA, so getCaseBundle throws when nothing supplies one.
+// reference_date = caller arg ?? manifest.updated_at (first 10 chars) ??
+// data_dates.observed ?? latest non-forecast layer.date ??
+// series.reference_date ?? the events.json entry date — absent only when the
+// case ships none of those.
 export interface CaseBundle {
   id: string;
   title: string;
   mode: "replay" | "live";
   bbox: [number, number, number, number];
-  reference_date: string;
+  reference_date?: string;
   updated_at?: string;
   data_dates?: DataDates;
   manifest?: EventManifest;
