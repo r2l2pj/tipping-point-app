@@ -5,7 +5,12 @@ import type { CaseBundle } from "@/lib/types";
 
 // Loads every case's bundle server-side (small mock JSONs from public/data),
 // then hands the whole set to the client dashboard. `now/` is the live mode.
-async function DashboardLoader() {
+async function DashboardLoader({
+  searchParams,
+}: {
+  searchParams: Promise<{ case?: string }>;
+}) {
+  const { case: initialCase } = await searchParams;
   const index = await getEventsIndex().catch(() => null);
   const cases: CaseBundle[] = [];
 
@@ -27,10 +32,16 @@ async function DashboardLoader() {
     cases.push(now);
   }
 
-  return <Dashboard cases={cases} />;
+  return <Dashboard cases={cases} initialCase={initialCase} />;
 }
 
-export default function Home() {
+// `?case=<id|alias>` deep-links a replay case (judge/demo links); the
+// dashboard falls back to the first case when the id is unknown.
+export default function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ case?: string }>;
+}) {
   return (
     <div className="flex h-screen flex-col bg-[#0b0e14] text-zinc-100">
       <Suspense
@@ -40,7 +51,7 @@ export default function Home() {
           </div>
         }
       >
-        <DashboardLoader />
+        <DashboardLoader searchParams={searchParams} />
       </Suspense>
     </div>
   );

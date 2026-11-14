@@ -43,7 +43,10 @@ export default function TpiChart({ series, dayIndex }: { series: SeriesDaily; da
             />
             <YAxis
               yAxisId="rain"
-              domain={[0, 100]}
+              // Round the top up to a tick multiple — a literal dataMax
+              // domain edge renders an ugly raw-value tick (e.g. a
+              // "144.5334261516383" axis label on a 144 mm peak day).
+              domain={[0, (dataMax: number) => Math.max(10, Math.ceil(dataMax / 20) * 20)]}
               tick={{ fontSize: 12, fill: "#71717a" }}
               tickLine={false}
               axisLine={false}

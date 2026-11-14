@@ -34,11 +34,13 @@ export default function LayersPanel({
   onToggle,
   bundle,
   budget,
+  frameDate,
 }: {
   layers: LayerState;
   onToggle: (key: keyof LayerState) => void;
   bundle: CaseBundle;
   budget: number;
+  frameDate?: string;
 }) {
   const dd = bundle.data_dates ?? {};
   // A row only exists when the manifest ships a real raster for the layer —
@@ -56,7 +58,10 @@ export default function LayersPanel({
       </div>
       <ul className="p-2">
         {rows.map((r) => {
-          const raw = dd[r.dateKey ?? ""];
+          // TPI frames are per-day products — their chip tracks the
+          // selected timeline day, not the case data date.
+          const isTpi = r.key === "tpiFlood" || r.key === "tpiSlide";
+          const raw = isTpi ? frameDate : dd[r.dateKey ?? ""];
           const date = typeof raw === "string" ? fmtDataDate(raw) : null;
           const capped = budget === 0 && !layers[r.key];
           return (

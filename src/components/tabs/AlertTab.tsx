@@ -22,7 +22,7 @@ export default function AlertTab({
   const seriesThreshold = bundle.series?.tpi_threshold;
   const threshold = typeof seriesThreshold === "number" && Number.isFinite(seriesThreshold)
     ? seriesThreshold : cutsFor(bundle)[2];
-  const critical = zones.filter((z) => z.tpi >= threshold);
+  const critical = zones.filter((z) => /^critical$/i.test(z.class));
   const monitoring =
     (!bundle.series && zones.length === 0) ||
     pendingIncludes(bundle, "series") ||
@@ -30,7 +30,15 @@ export default function AlertTab({
   const reached = !monitoring &&
     (bundle.series?.days[dayIndex]?.tpi ?? -Infinity) >= threshold;
   const areaKm2 = critical.reduce((a, z) => a + z.area_km2, 0);
-  const people = critical.reduce((a, z) => a + z.people, 0);
+  // GPW population join is optional in the pipeline — when every zone
+  // ships people:null the exposed count is pending, not zero.
+  const hasPeople = zones.some(
+    (z) => typeof z.people === "number" && Number.isFinite(z.people)
+  );
+  const people = critical.reduce(
+    (a, z) => a + (typeof z.people === "number" ? z.people : 0),
+    0
+  );
   const mock = isMockDerived(bundle);
   const source = forecastSourceLabel(
     bundle.manifest?.forecast_source ?? bundle.summary?.forecast_source
@@ -74,10 +82,8 @@ export default function AlertTab({
         </div>
         {!monitoring && (
           <div className="mt-3 flex items-center gap-5">
-            {/* The bundle's zones list is trimmed to the top 20 (payload
-                ruling) — sums over it are partial and must read pending. */}
-            <Stat big value={fmtKm2(areaKm2)} label="critical" absent={zones.length >= 20} />
-            <Stat big value={fmtPeople(people)} label="people exposed" absent={zones.length >= 20} />
+            <Stat big value={fmtKm2(areaKm2)} label="critical" absent={zones.length === 0} />
+            <Stat big value={fmtPeople(people)} label="people exposed" absent={!hasPeople} />
             {mock && (
               <span className="ml-auto text-right text-xs leading-tight text-zinc-500">
                 Data

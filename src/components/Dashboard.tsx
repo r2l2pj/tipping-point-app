@@ -11,6 +11,7 @@ import {
   type TabKey,
   type ToggleLayerKey,
 } from "@/lib/layers";
+import { canonicalCaseId } from "@/lib/contract";
 import { cutsFor, TPI_CLASSES } from "@/lib/tpi";
 import type { CaseBundle } from "@/lib/types";
 import Header from "./Header";
@@ -25,8 +26,20 @@ const EXCLUSIVE_PARTNER: Partial<Record<keyof LayerState, keyof LayerState>> = {
   tpiSlide: "tpiFlood",
 };
 
-export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
-  const [activeId, setActiveId] = useState(cases[0]?.id ?? "");
+export default function Dashboard({ cases, initialCase }: { cases: CaseBundle[]; initialCase?: string }) {
+  const [activeId, setActiveId] = useState(() => {
+    const want = initialCase ? canonicalCaseId(initialCase) : undefined;
+    return (
+      cases.find(
+        (c) =>
+          c.id === initialCase ||
+          canonicalCaseId(c.id) === want ||
+          canonicalCaseId(c.manifest?.event ?? c.id) === want
+      )?.id ??
+      cases[0]?.id ??
+      ""
+    );
+  });
   const bundle = useMemo(
     () => cases.find((c) => c.id === activeId) ?? cases[0],
     [cases, activeId]
@@ -170,7 +183,7 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
       <main className="flex min-h-0 flex-1">
         <div className="relative min-w-0 flex-1">
           <Map bounds={bundle.bbox} onReady={setMap} />
-          <LayersPanel layers={layers} onToggle={toggleLayer} bundle={bundle} budget={budget} />
+          <LayersPanel layers={layers} onToggle={toggleLayer} bundle={bundle} budget={budget} frameDate={days[dayIndex]?.date} />
         </div>
         <SidePanel
           tab={tab}
@@ -205,7 +218,11 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
         <span>data {fmtDataDate(days[dayIndex]?.date)}</span>
         <span className="mx-2 hidden h-4 w-px bg-zinc-800 sm:block" />
         <span className="basis-full sm:basis-auto">
-          Data: NASA GPM · SMAP · NASADEM · NISAR · Basemap © CARTO © OpenStreetMap · Boundaries © IBGE · Population: GPW (NASA SEDAC) / US Census
+          Data: NASA GPM · SMAP · NASADEM · NISAR · Basemap © CARTO © OpenStreetMap · Boundaries ©{" "}
+          {canonicalCaseId(bundle.manifest?.event ?? bundle.id) === "wa_2025"
+            ? "US Census"
+            : "IBGE"}{" "}
+          · Population: GPW (NASA SEDAC) / US Census
         </span>
       </footer>
     </div>

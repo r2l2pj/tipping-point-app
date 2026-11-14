@@ -455,6 +455,12 @@ export function useMapLayers(
     }
     if (activePng && tpiUrl && !frameOk) {
       frameNote.current = `TPI frame unavailable — ${day ? fmtDate(day.date) : "this day"}`;
+    } else if (tpiOn && !activePng) {
+      // The manifest published no PNG for this day — say so instead of
+      // leaving a bare basemap that reads as broken.
+      frameNote.current = day
+        ? `No TPI frame published for ${fmtDate(day.date)}`
+        : "No TPI frames published for this case";
     }
     refreshChip(map, loading.current, chip, frameNote.current);
 
