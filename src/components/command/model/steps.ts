@@ -157,7 +157,8 @@ export function mapCaption(
   const when = `${fmtDate(step.date)}${step.sub ? ` (${step.sub})` : ""}`;
   if (!on.includes("tpi")) return { text: `TPI index off · ${when}`, forecast: false };
   const frame = frameFor(bundle, step.date, hazard);
-  if (!frame) return { text: `No map frame published for ${when}`, forecast: false };
+  // The map hook shows its own note for a missing frame; the caption stays short.
+  if (!frame) return { text: `${when} · no map frame`, forecast: false };
   const forecast = frame.forecast || step.forecast;
   return {
     text: `${HAZARD_LABEL[frame.hazard]} TPI · ${when}` +

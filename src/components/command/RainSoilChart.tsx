@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import {
   Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -21,7 +22,7 @@ const TPI = "#BD0026";
 // 0 to 1), TPI line, dashed TPI threshold, dashed P95 rain when published,
 // event marker. Forecast days: lighter bars, soil line dashed in the soil
 // color, so the red dashed line keeps one meaning (the threshold).
-export default function RainSoilChart({
+function RainSoilChart({
   bundle,
   steps,
   dayIndex,
@@ -134,16 +135,16 @@ export default function RainSoilChart({
                     typeof v !== "number" ? [String(v ?? "—"), String(name)]
                     : name === "Rain (mm)" ? [`${v.toFixed(1)} mm`, name] : [v.toFixed(2), name]}
                 />
-                <Bar yAxisId="rain" dataKey="imerg_mm" name="Rain (mm)" radius={[3, 3, 0, 0]} cursor="pointer"
+                <Bar yAxisId="rain" isAnimationActive={false} dataKey="imerg_mm" name="Rain (mm)" radius={[3, 3, 0, 0]} cursor="pointer"
                   onClick={(_, i) => {
                     if (days[i]) onSeek(days[i].index);
                   }}>
                   {data.map((d) => <Cell key={d.label} fill={d.forecast ? RAIN_FC : RAIN} />)}
                 </Bar>
-                <Line yAxisId="idx" type="monotone" dataKey="smapObs" name="Soil moisture (SMAP)" stroke={SOIL} strokeWidth={2} dot={false} connectNulls={false} />
-                <Line yAxisId="idx" type="monotone" dataKey="smapFc" name="Soil moisture (forecast days)" stroke={SOIL} strokeWidth={2} strokeDasharray="6 5" dot={false} connectNulls={false} legendType="none" />
+                <Line yAxisId="idx" type="monotone" dataKey="smapObs" isAnimationActive={false} name="Soil moisture (SMAP)" stroke={SOIL} strokeWidth={2} dot={false} connectNulls={false} />
+                <Line yAxisId="idx" type="monotone" dataKey="smapFc" isAnimationActive={false} name="Soil moisture (forecast days)" stroke={SOIL} strokeWidth={2} strokeDasharray="6 5" dot={false} connectNulls={false} legendType="none" />
                 {/* null is a gap, never a zero. */}
-                <Line yAxisId="idx" type="monotone" dataKey="tpi" name="TPI (risk index)" stroke={TPI} strokeWidth={2} dot={false} connectNulls={false} />
+                <Line yAxisId="idx" type="monotone" dataKey="tpi" isAnimationActive={false} name="TPI (risk index)" stroke={TPI} strokeWidth={2} dot={false} connectNulls={false} />
                 <ReferenceLine yAxisId="idx" y={threshold} stroke={TPI} strokeDasharray="5 4" />
                 {typeof series.rain_p95_mm === "number" && (
                   <ReferenceLine yAxisId="rain" y={series.rain_p95_mm} stroke={RAIN} strokeDasharray="3 3" />
@@ -169,6 +170,9 @@ export default function RainSoilChart({
     </section>
   );
 }
+
+// Memoized: the chart redraws only when its own inputs change.
+export default memo(RainSoilChart);
 
 function Swatch({ color, label, dashed, block }: { color: string; label: string; dashed?: boolean; block?: boolean }) {
   return (

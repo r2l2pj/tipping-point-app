@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { NO_STEPS_TEXT, type Step, type StepMark } from "./model/steps";
 import { Icon, ICON } from "./ui";
 
@@ -28,10 +29,23 @@ export default function TimelineBar({
   children?: React.ReactNode; // data sources
 }) {
   const n = steps.length;
+  // Keep the selected step in view when the steps scroll sideways.
+  const track = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // Scrolls the track only, never the page.
+    const box = track.current;
+    const el = box?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!box || !el) return;
+    const left = el.offsetLeft - box.offsetLeft;
+    if (left < box.scrollLeft) box.scrollLeft = left;
+    else if (left + el.offsetWidth > box.scrollLeft + box.clientWidth) {
+      box.scrollLeft = left + el.offsetWidth - box.clientWidth;
+    }
+  }, [dayIndex, n]);
   const firstFc = steps.findIndex((s) => s.forecast);
   const small = "inline-flex h-[38px] w-10 items-center justify-center rounded-lg border border-cc-line-strong bg-cc-surface disabled:cursor-not-allowed disabled:opacity-50";
   return (
-    <div className="mx-4 mt-2.5 flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2.5 rounded-xl border border-cc-line bg-cc-surface px-4 py-2">
+    <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2.5 rounded-xl border border-cc-line bg-cc-surface px-4 py-2 shadow-[0_4px_18px_rgba(0,0,0,0.28)]">
       <div className="flex items-center gap-2">
         <button type="button" onClick={onPlayToggle} disabled={n < 2} aria-label={playing ? "Pause" : "Play"}
           className="inline-flex h-[46px] w-[50px] items-center justify-center rounded-[10px] bg-cc-accent text-white disabled:cursor-not-allowed disabled:opacity-50">
@@ -49,11 +63,11 @@ export default function TimelineBar({
         </button>
       </div>
 
-      <div className="min-w-0 flex-[1_1_460px] overflow-x-auto">
+      <div ref={track} className="min-w-0 flex-[1_1_460px] overflow-x-auto">
         {n === 0 ? (
           <p className="py-3 text-[13px] italic text-cc-faint">{NO_STEPS_TEXT}</p>
         ) : (
-          <div className="relative flex pt-5" style={{ minWidth: Math.max(470, n * 38) }} role="group" aria-label="Timeline steps">
+          <div className="relative flex pt-5" style={{ minWidth: Math.max(470, n * 46) }} role="group" aria-label="Timeline steps">
             {firstFc >= 0 && (
               <span className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-md bg-cc-forecast px-3 py-px text-xs font-semibold text-cc-forecast-ink"
                 style={{ left: `${((firstFc + (n - firstFc) / 2) / n) * 100}%` }}>

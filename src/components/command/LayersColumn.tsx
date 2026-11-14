@@ -37,7 +37,7 @@ export default function LayersColumn({
   return (
     <aside
       aria-label="Map layers"
-      className={`w-[236px] shrink-0 flex-col rounded-xl border border-cc-line bg-cc-surface px-3.5 py-2.5 max-[899px]:fixed max-[899px]:inset-y-0 max-[899px]:left-0 max-[899px]:z-40 max-[899px]:w-[280px] max-[899px]:rounded-none max-[899px]:shadow-2xl ${className}`}
+      className={`max-h-full w-[236px] shrink-0 flex-col rounded-xl min-[900px]:shadow-[0_4px_18px_rgba(0,0,0,0.28)] border border-cc-line bg-cc-surface px-3.5 py-2.5 max-[899px]:fixed max-[899px]:inset-y-0 max-[899px]:left-0 max-[899px]:z-40 max-[899px]:w-[280px] max-[899px]:rounded-none max-[899px]:shadow-2xl ${className}`}
     >
       <div className="flex items-center gap-1">
         <button

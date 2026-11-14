@@ -123,8 +123,8 @@ export default function CompareOverlay({
     <div ref={containerRef} data-compare={pair.kind} className="absolute inset-0 z-20 overflow-hidden bg-cc-map">
       <div ref={beforeEl} className="absolute inset-0" />
       <div ref={afterEl} className="absolute inset-0" style={{ clipPath: clipPathFor(pct) }} />
-      <div className={`${tag} left-3`}>{pair.before.label}</div>
-      <div className={`${tag} right-16`}>{pair.after.label}</div>
+      <div className={tag} style={{ left: "calc(var(--cc-il, 0px) + 56px)", top: 44 }}>{pair.before.label}</div>
+      <div className={tag} style={{ right: "calc(var(--cc-ir, 0px) + 68px)" }}>{pair.after.label}</div>
       <div
         role="slider"
         tabIndex={0}
@@ -164,7 +164,8 @@ export default function CompareOverlay({
         </div>
       </div>
       <button type="button" onClick={onClose}
-        className="absolute bottom-3 left-1/2 z-30 -translate-x-1/2 rounded-lg bg-white px-3.5 py-2 text-[13px] font-semibold text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+        style={{ bottom: "calc(var(--cc-ib, 0px) + 12px)" }}
+        className="absolute left-1/2 z-30 -translate-x-1/2 rounded-lg bg-white px-3.5 py-2 text-[13px] font-semibold text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
         Close compare
       </button>
     </div>

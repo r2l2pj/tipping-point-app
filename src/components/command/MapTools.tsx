@@ -14,6 +14,7 @@ export default function MapTools({
   onZoomIn,
   onZoomOut,
   className = "",
+  style,
 }: {
   layersShown: boolean;
   onToggleLayers: () => void;
@@ -21,10 +22,11 @@ export default function MapTools({
   onZoomIn: () => void;
   onZoomOut: () => void;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   const label = layersShown ? "Hide the Layers column" : "Show the Layers column";
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
+    <div className={`flex flex-col gap-2 ${className}`} style={style}>
       <button type="button" onClick={onToggleLayers} aria-pressed={layersShown} aria-label={label} title={label}
         data-tool="layers" className={`${btn} rounded-[10px]`}>
         <Icon d={ICON.layers} size={22} />

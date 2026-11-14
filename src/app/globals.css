@@ -203,16 +203,21 @@ body {
   display: none;
 }
 .cc-root .tp-loading-chip {
-  left: 14px;
-  bottom: 74px;
+  left: calc(var(--cc-il, 0px) + 14px);
+  bottom: calc(var(--cc-ib, 0px) + 74px);
   border-color: transparent;
   background: rgba(255, 255, 255, 0.95);
   color: #16242b;
   font-weight: 600;
 }
+/* MapLibre controls stay inside the part of the map that no card covers. */
 .cc-root .maplibregl-ctrl-bottom-left {
-  left: 6px;
-  bottom: 4px;
+  left: calc(var(--cc-il, 0px) + 6px);
+  bottom: calc(var(--cc-ib, 0px) + 4px);
+}
+.cc-root .maplibregl-ctrl-bottom-right {
+  right: var(--cc-ir, 0px);
+  bottom: var(--cc-ib, 0px);
 }
 /* Numbered pins of the priority areas. Built from text nodes. */
 .cc-pin {

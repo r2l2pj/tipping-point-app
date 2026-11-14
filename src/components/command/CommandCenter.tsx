@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useReducer, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import type { AlertCardData } from "@/lib/alerts";
 import EvidenceDetails from "./EvidenceDetails";
@@ -34,6 +34,7 @@ import Tiles from "./Tiles";
 import TimelineBar from "./TimelineBar";
 import TopBar, { type View } from "./TopBar";
 import { useGeo } from "./useGeo";
+import { useInsets } from "./useInsets";
 
 export interface CommandCenterProps {
   cases: CcBundle[];
@@ -121,13 +122,33 @@ export function CommandCenterView({
   const scarsUrl = loaded && !loaded.scars ? productUrl(loaded, "landslide_candidates") : undefined;
   const fullZones = useGeo(zonesUrl);
   const scars = useGeo(scarsUrl);
-  const bundle = loaded && withLazy(effectiveBundle(loaded), {
-    zones: fullZones, zonesRequested: !!zonesUrl,
-    scars, scarsRequested: !!scarsUrl,
-  });
+  // Memoized: the bundle, the steps and the areas keep their identity
+  // between timeline steps, so a step does not rebuild the map sources, the
+  // pins or the zone list (that made playback stutter).
+  const bundle = useMemo(
+    () => loaded && withLazy(effectiveBundle(loaded), {
+      zones: fullZones, zonesRequested: !!zonesUrl,
+      scars, scarsRequested: !!scarsUrl,
+    }),
+    [loaded, fullZones, zonesUrl, scars, scarsUrl]
+  );
+  const steps = useMemo(() => stepsFor(bundle), [bundle]);
+  const areas = useMemo(() => priorityAreas(bundle), [bundle]);
+  const marks = useMemo(() => (bundle ? stepMarks(bundle, steps) : []), [bundle, steps]);
+  const radar = useMemo(() => (bundle ? radarCard(bundle) : undefined), [bundle]);
+
+  const seek = useCallback((index: number) => dispatch({ type: "seek", index }), []);
+  const toggleTable = useCallback(() => dispatch({ type: "toggleTable" }), []);
+
+  // Floating cards over the full-bleed map (wide screens).
+  const stageRef = useRef<HTMLDivElement>(null);
+  const layersRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const insets = useInsets(stageRef, layersRef, panelRef, timelineRef);
   const root = `cc-root flex min-h-screen flex-col min-[900px]:h-screen ${fontClass}`;
 
-  if (!bundle) {
+  if (!bundle || !radar) {
     return (
       <div className={root}>
         <TopBar cases={cases} bundle={undefined} view={view} onView={onView}
@@ -141,13 +162,10 @@ export function CommandCenterView({
   }
 
   const live = bundle.mode === "live";
-  const steps = stepsFor(bundle);
   const step = steps[state.dayIndex];
   const status = dataStatus(bundle, nowMs);
   const chip = statusChip(bundle, steps, state.dayIndex, state.hazard);
-  const areas = priorityAreas(bundle);
   const rows = layerRows(bundle, state.layers, state.hazard, step?.date);
-  const radar = radarCard(bundle);
   const nightLights = nightLightsCompare(bundle);
   const comparePair =
     state.compareOpen === "radar" ? radar.compare.pair
@@ -177,11 +195,30 @@ export function CommandCenterView({
         freshnessKind={status.kind}
       />
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pt-3 min-[900px]:flex-row">
+      {/* Wide: the map fills the whole area and the cards float over it.
+          Narrow: one column (map, panel, timeline); Layers is a drawer. */}
+      <div className="relative min-h-0 flex-1">
+        <MapStage
+          bundle={bundle}
+          steps={steps}
+          state={state}
+          areas={areas}
+          status={status}
+          comparePair={comparePair}
+          dispatch={dispatch}
+          insets={insets}
+          stageRef={stageRef}
+          onToggleLayers={() => {
+            dispatch({ type: "toggleLayersOpen" });
+            setDrawer((d) => !d);
+          }}
+        />
         {drawer && (
           <button type="button" aria-label="Close the Layers column" onClick={() => setDrawer(false)}
             className="fixed inset-0 z-30 bg-black/40 min-[900px]:hidden" />
         )}
+        <div className="pointer-events-none z-20 flex flex-col gap-3 p-3 min-[900px]:absolute min-[900px]:inset-0 min-[900px]:grid min-[900px]:grid-cols-[auto_minmax(0,1fr)_auto] min-[900px]:grid-rows-[minmax(0,1fr)_auto]">
+        <div ref={layersRef} className="pointer-events-auto flex min-h-0 max-[899px]:contents min-[900px]:col-start-1 min-[900px]:row-start-1 min-[900px]:self-start min-[900px]:max-h-full">
         <LayersColumn
           bundle={bundle}
           rows={rows}
@@ -194,20 +231,9 @@ export function CommandCenterView({
           className={`${drawer ? "max-[899px]:flex" : "max-[899px]:hidden"} ${state.layersOpen ? "min-[900px]:flex" : "min-[900px]:hidden"}`}
         />
 
-        <MapStage
-          bundle={bundle}
-          steps={steps}
-          state={state}
-          areas={areas}
-          status={status}
-          comparePair={comparePair}
-          dispatch={dispatch}
-          onToggleLayers={() => {
-            dispatch({ type: "toggleLayersOpen" });
-            setDrawer((d) => !d);
-          }}
-        />
+        </div>
 
+        <div ref={panelRef} className="pointer-events-auto flex min-h-0 min-[900px]:col-start-3 min-[900px]:row-span-2 min-[900px]:row-start-1 min-[900px]:self-start min-[900px]:max-h-full">
         <SituationPanel label={view === "public" ? "Public alerts" : "Situation overview"}>
           {view === "public" ? (
             <PublicAlertsPanel
@@ -268,8 +294,8 @@ export function CommandCenterView({
                 dayIndex={state.dayIndex}
                 asTable={state.chartAsTable}
                 forecastLabel={forecastSource(bundle) ?? "source not published"}
-                onSeek={(index) => dispatch({ type: "seek", index })}
-                onToggleTable={() => dispatch({ type: "toggleTable" })}
+                onSeek={seek}
+                onToggleTable={toggleTable}
               />
 
               <RadarCard
@@ -302,12 +328,15 @@ export function CommandCenterView({
               <GetAlertsCard botUrl={botUrl} />
             </>
           )}
+          {/* Source dates sit in the panel, so the floating timeline stays low. */}
+          <SourceAges rows={sourceRows(bundle, nowMs)} />
         </SituationPanel>
-      </div>
+        </div>
 
+        <div ref={timelineRef} className="pointer-events-auto min-w-0 min-[900px]:col-span-2 min-[900px]:col-start-1 min-[900px]:row-start-2">
       <TimelineBar
         steps={steps}
-        marks={stepMarks(bundle, steps)}
+        marks={marks}
         dayIndex={state.dayIndex}
         playing={state.playing}
         forecastTag={tag}
@@ -315,9 +344,10 @@ export function CommandCenterView({
         onPrev={() => dispatch({ type: "prev" })}
         onNext={() => dispatch({ type: "next" })}
         onPlayToggle={() => dispatch({ type: "togglePlay" })}
-      >
-        <SourceAges rows={sourceRows(bundle, nowMs)} />
-      </TimelineBar>
+      />
+        </div>
+        </div>
+      </div>
 
       <footer className="shrink-0 px-5 pb-2 pt-1.5 text-xs text-cc-faint">
         Data: NASA GPM · SMAP · NASADEM · NISAR · Basemap © CARTO © OpenStreetMap · Boundaries ©{" "}

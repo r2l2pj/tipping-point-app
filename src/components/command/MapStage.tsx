@@ -14,9 +14,17 @@ import { pinAreas, type PriorityArea } from "./model/areas";
 import { STATUS_WORD, type DataStatus } from "./model/dataStatus";
 import { layerStateFor, overlaysFor } from "./model/layerRegistry";
 import type { ComparePair } from "./model/radar";
-import { mapCaption, type Step } from "./model/steps";
+import { assetUrl } from "@/lib/layers";
+import { caseDirOf } from "./model/lazy";
+import { frameFor, mapCaption, type Step } from "./model/steps";
 import type { CcBundle } from "./model/types";
 import type { Action, ScreenState } from "./state";
+import type { Insets } from "./useInsets";
+
+// Offsets from the stage edges: the floating cards plus a margin.
+const L = (px: number) => `calc(var(--cc-il, 0px) + ${px}px)`;
+const R = (px: number) => `calc(var(--cc-ir, 0px) + ${px}px)`;
+const B = (px: number) => `calc(var(--cc-ib, 0px) + ${px}px)`;
 
 export default function MapStage({
   bundle,
@@ -27,6 +35,8 @@ export default function MapStage({
   comparePair,
   dispatch,
   onToggleLayers,
+  insets,
+  stageRef,
 }: {
   bundle: CcBundle;
   steps: Step[];
@@ -36,6 +46,8 @@ export default function MapStage({
   comparePair: ComparePair | undefined;
   dispatch: (a: Action) => void;
   onToggleLayers: () => void;
+  insets: Insets; // space covered by the floating cards
+  stageRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const [map, setMap] = useState<MapInstance | null>(null);
   const [bearing, setBearing] = useState(0);
@@ -55,6 +67,26 @@ export default function MapStage({
     [step?.date, state.layers]
   );
   useMapLayers(map, bundle, state.dayIndex, layerState, false, undefined, options);
+
+  // Warm the browser cache with the TPI frames of the chosen hazard, so a
+  // timeline step swaps an image that is already downloaded.
+  useEffect(() => {
+    const urls = new Set<string>();
+    for (const s of steps) {
+      const png = frameFor(bundle, s.date, state.hazard)?.layer.png;
+      const url = assetUrl(caseDirOf(bundle), png);
+      if (url) urls.add(url);
+    }
+    const images = [...urls].map((url) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = url;
+      return img;
+    });
+    return () => {
+      for (const img of images) img.src = "";
+    };
+  }, [bundle, steps, state.hazard]);
 
   const pins = useMemo(() => pinAreas(areas), [areas]);
   const selected = areas.find((a) => a.rank === state.selectedArea);
@@ -82,13 +114,31 @@ export default function MapStage({
       [[bundle.bbox[0], bundle.bbox[1]], [bundle.bbox[2], bundle.bbox[3]]],
       { padding: 60, duration: 500 }
     );
+
+  // The camera treats the area under the cards as padding, so "fit" and
+  // "center on the area" use the visible part of the map.
+  useEffect(() => {
+    if (!map) return;
+    map.easeTo({
+      padding: { left: insets.left, right: insets.right, bottom: insets.bottom, top: 0 },
+      duration: 300,
+    });
+  }, [map, insets.left, insets.right, insets.bottom]);
   const comparing = !!comparePair;
   const caption = mapCaption(bundle, steps, state.dayIndex, state.hazard, state.layers);
   const chip =
     "rounded-lg bg-white/95 px-2.5 py-1 text-[13px] font-semibold text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]";
 
   return (
-    <div className="relative min-h-[400px] min-w-0 flex-1 overflow-hidden rounded-xl border border-cc-line-strong bg-cc-map">
+    <div
+      ref={stageRef}
+      className="relative overflow-hidden bg-cc-map max-[899px]:h-[60vh] max-[899px]:min-h-[400px] min-[900px]:absolute min-[900px]:inset-0"
+      style={{
+        "--cc-il": `${insets.left}px`,
+        "--cc-ir": `${insets.right}px`,
+        "--cc-ib": `${insets.bottom}px`,
+      } as React.CSSProperties}
+    >
       <Map bounds={bundle.bbox} onReady={setMap} />
       <AreaPins map={map} areas={pins} selected={state.selectedArea}
         onSelect={(rank) => dispatch({ type: "selectArea", rank })} />
@@ -104,25 +154,25 @@ export default function MapStage({
       />
 
       {/* North arrow: follows the map bearing. */}
-      <div aria-hidden="true" className="pointer-events-none absolute left-3.5 top-3 z-10 flex flex-col items-center text-[13px] font-bold text-white [text-shadow:0_1px_3px_#000]">
+      <div aria-hidden="true" className="pointer-events-none absolute top-3 z-10 flex flex-col items-center text-[13px] font-bold text-white [text-shadow:0_1px_3px_#000]" style={{ left: L(14) }}>
         N
         <svg width="20" height="24" viewBox="0 0 20 24" fill="#ffffff" stroke="#16242b" strokeWidth="1" strokeLinejoin="round" style={{ transform: `rotate(${-bearing}deg)` }}>
           <path d="M10 1l7 21-7-5-7 5z" />
         </svg>
       </div>
 
-      <span data-status={status.kind} className={`absolute left-14 top-3 z-10 ${chip} !text-xs tracking-[0.02em]`}>
+      <span data-status={status.kind} className={`absolute top-3 z-10 ${chip} !text-xs tracking-[0.02em]`} style={{ left: L(56) }}>
         {STATUS_WORD[status.kind]}
       </span>
 
       {!comparing && (
-        <span data-caption className={`absolute bottom-9 left-3.5 z-10 max-w-[62%] ${chip} ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`}>
+        <span data-caption className={`absolute z-10 max-w-[46%] ${chip} ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`} style={{ left: L(14), bottom: B(36) }}>
           {caption.text}
         </span>
       )}
 
       {!comparing && (
-        <div className={`absolute bottom-3 right-16 z-10 flex items-end gap-2`}>
+        <div className="absolute z-10 flex items-end gap-2" style={{ right: R(14), bottom: B(12) }}>
           <Legend bundle={bundle} layers={state.layers} compact
             className={`rounded-[10px] bg-white/95 px-2.5 py-2 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)] ${state.layersOpen ? "min-[900px]:hidden" : ""}`} />
           <LocatorInset bbox={bundle.bbox} className="max-[899px]:hidden" />
@@ -135,7 +185,8 @@ export default function MapStage({
       )}
 
       <MapTools
-        className="absolute right-3.5 top-3 z-30"
+        className="absolute top-3 z-30"
+        style={{ right: R(14) }}
         layersShown={state.layersOpen}
         onToggleLayers={onToggleLayers}
         onRecenter={() => (comparing ? compare.current?.recenter() : fit())}
