@@ -4,6 +4,12 @@ import { useEffect, useRef } from "react";
 import { NO_STEPS_TEXT, type Step, type StepMark } from "./model/steps";
 import { Icon, ICON } from "./ui";
 
+// Width of one step. Above DENSE_FROM steps the narrow width is used, so a
+// 21-step case fits the 768 px track of a 1440 px screen without a scroll.
+const STEP_PX = 46;
+const STEP_DENSE_PX = 36;
+const DENSE_FROM = 16;
+
 // Transport, steps, marks and the forecast tag. Previous / next move one step.
 export default function TimelineBar({
   steps,
@@ -43,6 +49,18 @@ export default function TimelineBar({
     }
   }, [dayIndex, n]);
   const firstFc = steps.findIndex((s) => s.forecast);
+  // A long case (Washington has 21 steps) keeps every step and its offset in
+  // view, and prints the date of every second step. The selected step and
+  // the event day always show their date; the full date is in the title and
+  // in the accessible name of each step.
+  const dense = n > DENSE_FROM;
+  const eventIndex = Math.max(0, steps.findIndex((s) => s.offset === 0));
+  const showDate = (i: number): boolean => {
+    if (!dense || i === dayIndex) return true;
+    if (Math.abs(i - dayIndex) === 1) return false; // room for the selected date
+    if (i === eventIndex) return true;
+    return (i - eventIndex) % 2 === 0 && Math.abs(i - eventIndex) !== 1;
+  };
   const small = "inline-flex h-[38px] w-10 items-center justify-center rounded-lg border border-cc-line-strong bg-cc-surface disabled:cursor-not-allowed disabled:opacity-50";
   return (
     <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2.5 rounded-xl border border-cc-line bg-cc-surface px-4 py-2 shadow-[0_4px_18px_rgba(0,0,0,0.28)]">
@@ -67,7 +85,7 @@ export default function TimelineBar({
         {n === 0 ? (
           <p className="py-3 text-[13px] italic text-cc-faint">{NO_STEPS_TEXT}</p>
         ) : (
-          <div className="relative flex pt-5" style={{ minWidth: Math.max(470, n * 46) }} role="group" aria-label="Timeline steps">
+          <div className="relative flex px-2 pt-5" style={{ minWidth: Math.max(470, n * (dense ? STEP_DENSE_PX : STEP_PX)) }} role="group" aria-label="Timeline steps">
             {firstFc >= 0 && (
               <span className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-md bg-cc-forecast px-3 py-px text-xs font-semibold text-cc-forecast-ink"
                 style={{ left: `${((firstFc + (n - firstFc) / 2) / n) * 100}%` }}>
@@ -101,7 +119,7 @@ export default function TimelineBar({
                         className={`h-2 w-1.5 rounded-full ${m.color === "red" ? "bg-[#bd0026]" : "bg-[#d98a00]"}`} />
                     ))}
                   </span>
-                  <span className={`mt-2 whitespace-nowrap leading-tight ${on ? "text-[13px] font-bold" : "text-xs font-medium"}`}>{s.top}</span>
+                  <span className={`mt-2 whitespace-nowrap leading-tight ${on ? "text-[13px] font-bold" : "text-xs font-medium"} ${showDate(s.index) ? "" : "invisible"}`}>{s.top}</span>
                   <span className={`whitespace-nowrap text-xs leading-tight ${event ? "rounded bg-cc-ink px-1 font-semibold text-white" : "text-cc-muted"}`}>{s.sub}</span>
                 </button>
               );
