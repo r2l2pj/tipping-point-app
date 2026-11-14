@@ -92,3 +92,12 @@ export function imageInfo(
     }
   });
 }
+
+export function eeAssetRoot(): string {
+  return (
+    process.env.GEE_ASSET_ROOT ??
+    (process.env.GEE_PROJECT
+      ? `projects/${process.env.GEE_PROJECT}/assets/tipping-point`
+      : "tipping-point")
+  );
+}

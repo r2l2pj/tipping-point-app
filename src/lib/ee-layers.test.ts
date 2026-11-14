@@ -6,8 +6,10 @@ import {
   createLayerService,
   getLayerMeta,
   LayersCredsError,
+  LayersUnavailableError,
   type EeLike,
 } from "./ee-layers";
+import { TILE_LAYERS } from "./ee-tiles";
 import type { RootManifest } from "./types";
 import { GET } from "../app/api/layers/route";
 
@@ -38,6 +40,13 @@ function fakeEe(
 const ROOT = "projects/test-proj/assets/tipping-point";
 const asset = (id: string) => `${ROOT}/now/${id}`;
 const series = (id: string) => `${ROOT}/now/${id}_series`;
+const everyLayer = (v: unknown) =>
+  Object.fromEntries(
+    TILE_LAYERS.flatMap((id): [string, unknown][] => [
+      [series(id), v],
+      [asset(id), v],
+    ])
+  );
 
 const ENV_KEYS = [
   "GCP_SA_KEY",
@@ -115,6 +124,55 @@ describe("createLayerService.probe", () => {
     });
     const layers = await svc.probe("now", ["ok", "boom", "slow"]);
     expect(layers.map((l) => l.id)).toEqual(["ok"]);
+  });
+
+  test("all probed layers time out -> LayersUnavailableError", async () => {
+    const ee = fakeEe(everyLayer("hang"));
+    const svc = createLayerService(ee, {
+      assetRoot: ROOT,
+      timeoutMs: 10,
+      manifest: null,
+    });
+    await expect(svc.probe("now")).rejects.toBeInstanceOf(
+      LayersUnavailableError
+    );
+  });
+
+  test("non-not-found errors do not count as an answer", async () => {
+    const ee = fakeEe(everyLayer(new Error("permission denied")));
+    const svc = createLayerService(ee, { assetRoot: ROOT, manifest: null });
+    await expect(svc.probe("now")).rejects.toBeInstanceOf(
+      LayersUnavailableError
+    );
+  });
+
+  test("all probed layers not-found -> resolves with []", async () => {
+    const ee = fakeEe({});
+    const svc = createLayerService(ee, { assetRoot: ROOT, manifest: null });
+    expect(await svc.probe("now")).toEqual([]);
+  });
+
+  test("mixed answers keep only the found layers", async () => {
+    const ee = fakeEe({
+      [series("tpi_slide")]: { bands: [{ id: "20240501" }] },
+      [series("imerg")]: "hang",
+      [asset("imerg")]: "hang",
+    });
+    const svc = createLayerService(ee, {
+      assetRoot: ROOT,
+      timeoutMs: 10,
+      manifest: null,
+    });
+    const layers = await svc.probe("now", ["tpi_slide", "imerg", "smap"]);
+    expect(layers.map((l) => l.id)).toEqual(["tpi_slide"]);
+  });
+
+  test("default root never builds projects/undefined", async () => {
+    delete process.env.GEE_PROJECT;
+    const requested: string[] = [];
+    const svc = createLayerService(fakeEe({}, requested), { manifest: null });
+    await svc.probe("now", ["smap"]);
+    expect(requested[0]).toBe("tipping-point/now/smap_series");
   });
 
   test("manifest-declared assets merge in as declared:true", async () => {
@@ -257,5 +315,20 @@ describe("GET /api/layers", () => {
       canonical: "rs_2024",
       layers,
     });
+  });
+
+  test("LayersUnavailableError -> 503 gee unavailable", async () => {
+    process.env.GCP_SA_KEY = "{}";
+    const real = await import("./ee-layers");
+    mock.module("@/lib/ee-layers", () => ({
+      ...real,
+      getLayerMeta: async () => {
+        throw new LayersUnavailableError();
+      },
+    }));
+
+    const res = await get("http://localhost/api/layers?case=now");
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({ error: "gee unavailable" });
   });
 });

@@ -4,7 +4,11 @@
 // 502 on unexpected ee init/compute failures. `canonical` echoes the resolved
 // case id so hyphen aliases are visible; `layer=` probes a single layer.
 import { credentialEnv } from "@/lib/ee";
-import { getLayerMeta, LayersCredsError } from "@/lib/ee-layers";
+import {
+  getLayerMeta,
+  LayersCredsError,
+  LayersUnavailableError,
+} from "@/lib/ee-layers";
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
@@ -35,7 +39,10 @@ export async function GET(request: Request) {
       layers: result.layers,
     });
   } catch (err) {
-    if (err instanceof LayersCredsError) {
+    if (
+      err instanceof LayersCredsError ||
+      err instanceof LayersUnavailableError
+    ) {
       return Response.json(
         { error: "gee unavailable", reason: err.message },
         { status: 503 }

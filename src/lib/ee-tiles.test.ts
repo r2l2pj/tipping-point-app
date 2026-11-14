@@ -53,6 +53,7 @@ interface FakeOpts {
   infoErr?: string; // getInfo error
   mapErr?: string; // getMapId error
   hang?: "getInfo" | "getMapId"; // callback never fires → timeout
+  missing?: string[]; // asset ids whose getInfo reports not-found
 }
 
 function makeFakeEe(opts: FakeOpts = {}) {
@@ -69,7 +70,8 @@ function makeFakeEe(opts: FakeOpts = {}) {
       getInfo: (cb: (d: unknown, e?: string) => void) => {
         calls.push(["getInfo"]);
         if (opts.hang === "getInfo") return;
-        if (opts.infoErr) cb(undefined, opts.infoErr);
+        if (opts.missing?.includes(id)) cb(undefined, `${id} does not exist`);
+        else if (opts.infoErr) cb(undefined, opts.infoErr);
         else cb(info);
       },
       select: (band: string) => {
@@ -161,6 +163,58 @@ describe("createTileService", () => {
     await svcExplicit.getTiles(QUERY);
     expect(seen[0]).toEqual(["rs-2024-05", "tpi_slide", "2024-05-01"]);
     expect(calls[0]).toEqual(["Image", "projects/x/assets/explicit"]);
+  });
+
+  test("manifest asset wins over both convention candidates", async () => {
+    const { ee, calls } = makeFakeEe();
+    await createTileService(ee, {
+      assetRoot: "root",
+      manifestAsset: async () => "projects/x/assets/explicit",
+    }).getTiles(QUERY);
+    expect(calls.filter((c) => c[0] === "Image")).toEqual([
+      ["Image", "projects/x/assets/explicit"],
+    ]);
+  });
+
+  test("a missing manifest asset is a 404, not a convention fallback", async () => {
+    const { ee, calls } = makeFakeEe({
+      missing: ["projects/x/assets/explicit"],
+    });
+    const err = await createTileService(ee, {
+      assetRoot: "root",
+      manifestAsset: async () => "projects/x/assets/explicit",
+    })
+      .getTiles(QUERY)
+      .then(
+        () => null,
+        (e) => e as Error
+      );
+    expect(err).toBeInstanceOf(TileNotFoundError);
+    expect(calls.filter((c) => c[0] === "Image")).toHaveLength(1);
+  });
+
+  test("bare <layer> is the fallback when <layer>_series is absent", async () => {
+    const { ee, calls } = makeFakeEe({
+      missing: ["root/rs_2024/tpi_slide_series"],
+    });
+    const res = await svc(ee).getTiles(QUERY);
+    expect(calls.filter((c) => c[0] === "Image")).toEqual([
+      ["Image", "root/rs_2024/tpi_slide_series"],
+      ["Image", "root/rs_2024/tpi_slide"],
+    ]);
+    expect(res.tiles).toHaveLength(1);
+  });
+
+  test("non-not-found error on <layer>_series does not fall through", async () => {
+    const { ee, calls } = makeFakeEe({ infoErr: "internal compute error" });
+    const err = await svc(ee)
+      .getTiles(QUERY)
+      .then(
+        () => null,
+        (e) => e as Error
+      );
+    expect(err).toBeInstanceOf(TileServiceError);
+    expect(calls.filter((c) => c[0] === "Image")).toHaveLength(1);
   });
 
   test("convention fallback: <root>/<canonical>/<layer>_series", async () => {

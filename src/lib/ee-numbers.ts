@@ -8,6 +8,7 @@ import { credentialEnv, earthEngine } from "./ee";
 import { canonicalCaseId, caseAlias } from "./contract";
 import { getRootManifest } from "./data";
 import { TPI_THRESHOLD } from "./tpi";
+import { eeAssetRoot } from "./ee-shared";
 import type { ManifestLayer } from "./types";
 
 export interface NumbersQuery {
@@ -131,17 +132,6 @@ const cache = new Map<string, CacheEntry>();
 // Test hook — the cache is module-level per the spec, so suites reset it.
 export function clearNumbersCache(): void {
   cache.clear();
-}
-
-function defaultAssetRoot(): string {
-  // reconcile with ee-tiles resolveAsset after merge — sibling worktree
-  // resolves `${root}/${canonical}_<layer>_series` under assets/tpi.
-  return (
-    process.env.GEE_ASSET_ROOT ??
-    (process.env.GEE_PROJECT
-      ? `projects/${process.env.GEE_PROJECT}/assets/tipping-point`
-      : "tipping-point")
-  );
 }
 
 function defaultTimeoutMs(): number {
@@ -360,7 +350,7 @@ export function createNumbersService(
   ): Promise<NumbersResult> {
     const timeout = opts.timeoutMs ?? defaultTimeoutMs();
     const compact = date.replace(/-/g, "");
-    const assetRoot = opts.assetRoot ?? defaultAssetRoot();
+    const assetRoot = opts.assetRoot ?? eeAssetRoot();
 
     const layers = opts.manifestLayers
       ? await opts.manifestLayers(canonical, caseId)

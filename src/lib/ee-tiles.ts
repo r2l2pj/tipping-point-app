@@ -13,6 +13,7 @@ import { getRootManifest } from "./data";
 import { TPI_CLASSES } from "./tpi";
 import {
   CredsError,
+  eeAssetRoot,
   errMessage,
   imageInfo,
   mapComputeError,
@@ -114,15 +115,6 @@ export function clearTileCache(): void {
   cache.clear();
 }
 
-function defaultAssetRoot(): string {
-  return (
-    process.env.GEE_ASSET_ROOT ??
-    (process.env.GEE_PROJECT
-      ? `projects/${process.env.GEE_PROJECT}/assets/tipping-point`
-      : "tipping-point")
-  );
-}
-
 // v4 SCHEMA-pinned extension: a manifest layer entry may carry `asset`
 // (explicit GEE asset id). Absent on older syncs → convention fallback.
 async function manifestAssetFromRoot(
@@ -210,25 +202,47 @@ export function createTileService(
   const envTimeout = Number(process.env.GEE_TIMEOUT_MS);
   const timeoutMs =
     opts.timeoutMs ?? (envTimeout > 0 ? envTimeout : DEFAULT_TIMEOUT_MS);
-  const assetRoot = opts.assetRoot ?? defaultAssetRoot();
+  const assetRoot = opts.assetRoot ?? eeAssetRoot();
   const manifestAsset = opts.manifestAsset ?? manifestAssetFromRoot;
 
   // Manifest `asset` first; else the `<root>/<canonical>/<layer>_series`
   // convention. `now` has no convention (the date→_dN mapping lives in the
   // manifest), so a missing manifest asset is a 404.
-  async function resolveAsset(
+  async function resolveAssets(
     layer: string,
     canonical: string,
     caseId: string,
     date: string
-  ): Promise<string> {
+  ): Promise<string[]> {
     const explicit = await manifestAsset(caseId, layer, date);
-    if (explicit) return explicit;
+    if (explicit) return [explicit];
     if (canonical === "now")
       throw new TileNotFoundError(
         `no manifest asset for case now layer ${layer} date ${date}`
       );
-    return `${assetRoot}/${canonical}/${layer}_series`;
+    return [
+      `${assetRoot}/${canonical}/${layer}_series`,
+      `${assetRoot}/${canonical}/${layer}`,
+    ];
+  }
+
+  async function loadFirst(candidates: string[]) {
+    let missing: TileNotFoundError | undefined;
+    for (const asset of candidates) {
+      const img = eeClient.Image(asset);
+      try {
+        const info = await withTimeout(
+          imageInfo(img, `getInfo on ${asset}`),
+          timeoutMs,
+          `getInfo on ${asset}`
+        );
+        return { asset, img, info };
+      } catch (e) {
+        if (!(e instanceof TileNotFoundError)) throw e;
+        missing = e;
+      }
+    }
+    throw missing;
   }
 
   async function getTiles({
@@ -250,12 +264,8 @@ export function createTileService(
       };
     }
 
-    const asset = await resolveAsset(layer, canonical, caseId, date);
-    const img = eeClient.Image(asset);
-    const info = await withTimeout(
-      imageInfo(img, `getInfo on ${asset}`),
-      timeoutMs,
-      `getInfo on ${asset}`
+    const { asset, img, info } = await loadFirst(
+      await resolveAssets(layer, canonical, caseId, date)
     );
 
     // One getInfo per call, before selecting: the date band must exist

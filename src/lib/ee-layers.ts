@@ -7,6 +7,8 @@
 import { credentialEnv, earthEngine } from "./ee";
 import { canonicalCaseId } from "./contract";
 import { getRootManifest } from "./data";
+import { eeAssetRoot, mapComputeError, TileNotFoundError } from "./ee-shared";
+import { TILE_LAYERS } from "./ee-tiles";
 import type { RootManifest } from "./types";
 
 export interface EeImageLike {
@@ -24,6 +26,13 @@ export class LayersCredsError extends Error {
   }
 }
 
+export class LayersUnavailableError extends Error {
+  constructor(message = "no probed layer answered (gee unreachable or timing out)") {
+    super(message);
+    this.name = "LayersUnavailableError";
+  }
+}
+
 export interface LayerMeta {
   id: string;
   dates: string[];
@@ -38,34 +47,8 @@ export interface LayerMetaResult {
   layers: LayerMeta[];
 }
 
-// reconcile with LAYER_VIS registry after merge
-const PROBE_LAYERS = [
-  "tpi_slide",
-  "tpi_flood",
-  "t_ml",
-  "nisar_pre",
-  "nisar_post",
-  "night_lights_pre",
-  "night_lights_post",
-  "opera_validation",
-  "hillshade",
-  "flood_confirmed",
-  "permanent_water",
-  "landslide_candidates",
-  "imerg",
-  "smap",
-] as const;
-
 const PROBE_TIMEOUT_MS = 5000;
 const CACHE_TTL_MS = 15 * 60 * 1000;
-
-// reconcile with ee-tiles resolveAsset after merge
-function assetRoot(): string {
-  return (
-    process.env.GEE_ASSET_ROOT ??
-    `projects/${process.env.GEE_PROJECT}/assets/tipping-point`
-  );
-}
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -101,7 +84,9 @@ const normalizeBandDate = (id: string): string =>
 function getInfo(ee: EeLike, assetId: string): Promise<unknown> {
   return new Promise<unknown>((resolve, reject) => {
     ee.Image(assetId).getInfo((data, err) =>
-      err ? reject(new Error(err)) : resolve(data)
+      err
+        ? reject(mapComputeError(err, `getInfo on ${assetId}`))
+        : resolve(data)
     );
   });
 }
@@ -236,12 +221,12 @@ export interface LayerServiceOpts {
 
 // Test seam: inject a structural ee so no credentials are needed.
 export function createLayerService(ee: EeLike, opts: LayerServiceOpts = {}) {
-  const root = opts.assetRoot ?? assetRoot();
+  const root = opts.assetRoot ?? eeAssetRoot();
   const timeoutMs = opts.timeoutMs ?? PROBE_TIMEOUT_MS;
   return {
     async probe(
       canonical: string,
-      ids: readonly string[] = PROBE_LAYERS
+      ids: readonly string[] = TILE_LAYERS
     ): Promise<LayerMeta[]> {
       const [settled, manifest] = await Promise.all([
         Promise.allSettled(
@@ -251,6 +236,10 @@ export function createLayerService(ee: EeLike, opts: LayerServiceOpts = {}) {
           ? Promise.resolve(opts.manifest)
           : getRootManifest(),
       ]);
+      const answered = settled.some(
+        (r) => r.status === "fulfilled" || r.reason instanceof TileNotFoundError
+      );
+      if (ids.length > 0 && !answered) throw new LayersUnavailableError();
       const layers = settled.flatMap((r) =>
         r.status === "fulfilled" ? [r.value] : []
       );
