@@ -2,7 +2,7 @@
 
 > **DRAFT — pending approval.**
 
-Voiceover total: **66 words** (limit 75). On-screen text uses the ruled English labels, which have landed in the UI at 8d65729 (see production notes). Verified against the UI at 8d65729. Beats are numbered onto the doc's 5-step demo flow (steps 1–5).
+Voiceover total: **62 words** (limit 75). On-screen text uses the ruled English labels, which have landed in the UI at 8d65729 (see production notes). Verified against the UI at 8d65729. Beats are numbered onto the doc's 5-step demo flow (steps 1–5).
 
 | Step | Time | On screen | Voiceover |
 | --- | --- | --- | --- |
@@ -10,7 +10,7 @@ Voiceover total: **66 words** (limit 75). On-screen text uses the ruled English 
 | 1 | 4–8 s | Ops dashboard `/` opens already on the event (case selector → **Rio Grande do Sul flood, May 2024**). Cursor clicks **EVENT REPLAY · DEMO** and presses play on the timeline (**D-5 → EVENT**); the TPI heatmap turns red over the Taquari valley as the rain accumulates. | "Tipping Point replays it: extreme rain, saturated soil —" |
 | 2 | 8–11 s | The alert card appears as areas cross the tipping point: **TIPPING POINT REACHED** banner with the **perfect forecast** chip; public feed card titled "⚠ Tipping Point: CRITICAL landslide risk"; supporting card **Median lead time X h (IQR A-B h, n = N)**. | "Tipping Point would have warned X hours earlier." |
 | 3 | 11–16 s | Select **Washington atmospheric rivers, Dec 2025** (opens on ALERT), then click **Confirm with NISAR radar →** (opens RADAR). **RADAR tab:** **NISAR GCOV — before / after**, Dec 4, 2025 → Dec 16, 2025 [swipe pending U5]. **Flooded area (NISAR): X km²**; dark-blue confirmed flood polygons; purple landslide candidates; card **Landslide scar candidates (HLS optical)**, note: candidates, never confirmed. | "Then NISAR radar confirms through the clouds: X square kilometers flooded." |
-| 4 | 16–22 s | **Did we get it right?** tab: cards **IoU X**, **F1 X**, **Median lead time X h (IQR A-B h, n = N)**, **Zones warned before event P%**; **Why radar:** During the event the optical saw only X% of the scene. SWOT river-level chart below the cards. | "IoU X, median X hours early, P% warned first." |
+| 4 | 16–22 s | **Did we get it right?** tab: cards **IoU X**, **F1 X**, **Median lead time X h (IQR A-B h, n = N)**, **Zones warned before event P%**; **Why radar:** During the event the optical saw only X% of the scene. SWOT river-level chart below the cards. | "IoU X, P% warned first." |
 | 5 | 22–27 s | **IMPACT** tab: **People in critical areas X**, **Night-light drop P%**, exposure basis GPW v4 / VIIRS Black Marble. Brief glimpse of the `/alerts` public feed. | "X people in critical areas, prioritized for Civil Defense." |
 | Close | 27–30 s | Logo + tagline "TIPPING POINT \| Rain warns. Radar confirms." over dark map; credit line "Data: NASA GPM · SMAP · NASADEM · NISAR". | "Rain warns. Radar confirms." |
 
@@ -27,4 +27,4 @@ Voiceover total: **66 words** (limit 75). On-screen text uses the ruled English 
 - **Lead-time headline (L18):** "Tipping Point would have warned X hours earlier" (X = median). This is the headline form everywhere it appears — VO, card copy, slide, summary. The full template sentence — "In replay, using only data available at the time, the index crossed Critical a median of X h (IQR A-B h) before mapped landslides (n = N)" — is required supporting detail wherever the headline appears (on-screen card, slide footnote, README, summary); never remove it, it just is not the headline. All placeholders (X, A, B, N, P) await the lead-time pipeline (lead-analysis, E7 metrics) plus Lucas's wording approval.
 - VO uses the headline form ("Tipping Point would have warned X hours earlier") — the earlier VO-may-compress-to-median-only clause is superseded by L18.
 - Selecting a case resets the tab to ALERT.
-- Pace: ~2.2 words/second voiceover. If VO runs long, trim step 4 to "IoU X, median X h early, P% warned first."
+- Pace: ~2.2 words/second voiceover. If VO runs long, trim step 4 to "IoU X, P% warned."

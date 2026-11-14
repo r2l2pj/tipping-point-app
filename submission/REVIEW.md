@@ -15,7 +15,7 @@ One page: every public-facing sentence in the pack, where it appears, and which 
 | "May 2024, Rio Grande do Sul. The alert said where floods could happen — not where they did." | demo-script.md: cold open VO | none | awaiting Lucas |
 | "Tipping Point replays it: extreme rain, saturated soil —" | demo-script.md: beat 1 VO | none | awaiting Lucas |
 | "Then NISAR radar confirms through the clouds: X square kilometers flooded." | demo-script.md: beat 3 VO | X (flooded km²; provisional 27.99 within NISAR swath) | awaiting Lucas |
-| "IoU X, median X hours early, P% warned first." | demo-script.md: beat 4 VO | X, X, P | awaiting Lucas |
+| "IoU X, P% warned first." | demo-script.md: beat 4 VO | X, P | awaiting Lucas |
 | "X people in critical areas, prioritized for Civil Defense." | demo-script.md: beat 5 VO | X | awaiting Lucas |
 | "May 2024, Rio Grande do Sul: worst floods in state history — 446 of 497 municipalities hit / 185 dead, 581,000+ displaced, ~R$88.9 billion in damage" | slides-outline.md: slide 2 | none (documented facts) | awaiting Lucas |
 | "Alerts cover whole municipalities — they say where it could happen, not where it did" | slides-outline.md: slide 2 | none | awaiting Lucas |
