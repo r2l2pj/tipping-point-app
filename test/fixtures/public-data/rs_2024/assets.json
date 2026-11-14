@@ -1,0 +1,51 @@
+{
+  "schema": "tipping-point/gee-assets@1",
+  "assets": [
+    {
+      "name": "municipal_boundaries",
+      "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/municipal_boundaries",
+      "kind": "table",
+      "status": "ingesting",
+      "ingested_at": "2026-11-14T19:12:10.349473Z",
+      "features": 138,
+      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data-wt/realrun/data/rs_2024/geojson/municipal_boundaries.geojson",
+      "operation": "UZKAQGYMPIYTWO2AVI4KQHUT"
+    },
+    {
+      "name": "landslide_catalog",
+      "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/landslide_catalog",
+      "kind": "table",
+      "status": "ingesting",
+      "ingested_at": "2026-11-14T19:16:58.385557Z",
+      "features": 16027,
+      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data-wt/realrun/data/rs_2024/geojson/landslide_catalog.geojson",
+      "parts": [
+        {
+          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/landslide_catalog/part00",
+          "features": 5000,
+          "status": "ingesting",
+          "operation": "DRLLV6M6GS3LSIGGJPWWJIXY"
+        },
+        {
+          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/landslide_catalog/part01",
+          "features": 5000,
+          "status": "ingesting",
+          "operation": "L42O7N75FUFA32MYYL3N4ZMJ"
+        },
+        {
+          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/landslide_catalog/part02",
+          "features": 5000,
+          "status": "ingesting",
+          "operation": "BJWLUADOBZOJRQBJ7QJ3KECI"
+        },
+        {
+          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/landslide_catalog/part03",
+          "features": 1027,
+          "status": "ingesting",
+          "operation": "5WJ2MMP2M6ZIFLY5SMZNIHCW"
+        }
+      ]
+    }
+  ],
+  "updated_at": "2026-11-14T19:16:58.393650Z"
+}
