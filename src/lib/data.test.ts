@@ -1,6 +1,7 @@
 // @ts-expect-error -- bun:test resolves under `bun test`; bun-types isn't a
 // dependency so tsc can't see its types.
-import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from "bun:test";
+import { createServer } from "node:http";
 
 import { getCaseBundle, getMetrics, getRootManifest } from "./data";
 import type { MetricsV4 } from "./contract";
@@ -135,7 +136,62 @@ const NOW_NODE = {
 };
 
 describe("remote-first reads (DATA_BASE_URL)", () => {
-  test("bundle data comes from the bucket; layer pngs resolve to URLs", async () => {
+  test("raw-style localhost JSON loads remotely and binary GET honors Range", async () => {
+    stageReplay();
+    const prefix = "/r2l2pj/tipping-point-data/fallback/data/";
+    const binary = Buffer.from([0x49, 0x49, 0x2a, 0, 8, 0, 0, 0]);
+    const fixture = createServer((req, res) => {
+      const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      if (!pathname.startsWith(prefix)) {
+        res.writeHead(404).end();
+        return;
+      }
+      const key = pathname.slice(prefix.length);
+      if (key === "fixture.tif") {
+        res.setHeader("Content-Type", "image/tiff");
+        res.setHeader("Accept-Ranges", "bytes");
+        const range = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? "");
+        const start = range ? Number(range[1]) : 0;
+        const end = range?.[2] ? Math.min(Number(range[2]), binary.length - 1) : binary.length - 1;
+        if (start > end || start >= binary.length) {
+          res.writeHead(416, { "Content-Range": `bytes */${binary.length}` }).end();
+          return;
+        }
+        if (range) res.setHeader("Content-Range", `bytes ${start}-${end}/${binary.length}`);
+        res.writeHead(range ? 206 : 200, { "Content-Length": end - start + 1 });
+        res.end(binary.subarray(start, end + 1));
+        return;
+      }
+      const body = files.get(key);
+      res.writeHead(body === undefined ? 404 : 200, { "Content-Type": "application/json" });
+      res.end(body === undefined ? "null" : JSON.stringify(body));
+    });
+    await new Promise<void>((resolve) => fixture.listen(0, "127.0.0.1", resolve));
+    try {
+      const address = fixture.address();
+      if (!address || typeof address === "string") throw new Error("fixture has no port");
+      const rawBase = `http://127.0.0.1:${address.port}${prefix}`;
+      process.env.DATA_BASE_URL = `${rawBase}//`;
+      expect((await getRootManifest())?.updated_at).toBe("2026-11-14T12:00:00Z");
+      const bundle = await getCaseBundle("rs_2024", "RS", RS_BBOX, "2024-05-02");
+      expect(bundle.metricsView?.iou).toBe(0.99);
+      expect(bundle.places?.features[0].properties?.name).toBe("Remoto");
+      expect(bundle.manifest?.layers[0].png).toBe(`${rawBase}rs_2024/png/tpi_slide_20240502.png`);
+      expect(bundle.fallback).toBe(false);
+      const json = await fetch(`${rawBase}manifest.json`);
+      expect(json.headers.get("Access-Control-Allow-Origin")).toBe("*");
+      const ranged = await fetch(`${rawBase}fixture.tif`, { headers: { Range: "bytes=2-5" } });
+      expect(ranged.status).toBe(206);
+      expect(ranged.headers.get("Content-Range")).toBe("bytes 2-5/8");
+      expect(ranged.headers.get("Content-Length")).toBe("4");
+      expect(ranged.headers.get("Accept-Ranges")).toBe("bytes");
+      expect(new Uint8Array(await ranged.arrayBuffer())).toEqual(new Uint8Array(binary.subarray(2, 6)));
+    } finally {
+      await new Promise<void>((resolve, reject) => fixture.close((error) => error ? reject(error) : resolve()));
+    }
+  });
+  test("bundle data comes from the remote copy; layer pngs resolve to URLs", async () => {
     stageReplay();
     process.env.DATA_BASE_URL = base;
 
@@ -282,25 +338,36 @@ describe("now@2 bundle", () => {
   });
 });
 
-describe("fs-only mode (no DATA_BASE_URL)", () => {
-  test("bundles load from the bundled public/data copy", async () => {
+describe("default raw fallback branch (no DATA_BASE_URL)", () => {
+  test("remote misses use the bundled public/data last resort", async () => {
     delete process.env.DATA_BASE_URL;
+    const requested: string[] = [];
+    const remote = spyOn(globalThis, "fetch").mockImplementation(async (input: string | URL | Request) => {
+      requested.push(String(input));
+      return new Response("not found", { status: 404 });
+    });
+    try {
+      const root = await getRootManifest();
+      expect(Object.keys(root?.cases ?? {})).toEqual(
+        expect.arrayContaining(["rs_2024", "wa_2025", "now"])
+      );
 
-    const root = await getRootManifest();
-    expect(Object.keys(root?.cases ?? {})).toEqual(
-      expect.arrayContaining(["rs_2024", "wa_2025", "now"])
-    );
 
-    const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02");
-    expect(b.manifest?.event_id).toBe("rs-2024-05");
-    expect((b.metrics as MetricsV4 | undefined)?.iou).toBe(0.64);
-    expect(b.metricsView?.warned_before_pct).toBe(0.81);
-    expect(b.series?.days[0].kind).toBe("observed");
-    expect(b.fallback).toBe(false);
-    // no creds, no injected gee -> live overlay untouched
-    expect(b.dataSource).toBeUndefined();
-    expect(b.liveLayers).toBeUndefined();
-    expect(b.dataDate).toBeUndefined();
+      const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02");
+      expect(b.manifest?.event_id).toBe("rs-2024-05");
+      expect((b.metrics as MetricsV4 | undefined)?.iou).toBe(0.64);
+      expect(b.metricsView?.warned_before_pct).toBe(0.81);
+      expect(b.series?.days[0].kind).toBe("observed");
+      expect(b.fallback).toBe(true);
+      // no creds, no injected gee -> live overlay untouched
+      expect(b.dataSource).toBeUndefined();
+      expect(b.liveLayers).toBeUndefined();
+      expect(b.dataDate).toBeUndefined();
+      expect(requested[0]).toBe("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/manifest.json");
+      expect(requested.every((url) => url.startsWith("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/"))).toBe(true);
+    } finally {
+      remote.mockRestore();
+    }
   });
 });
 
@@ -347,9 +414,9 @@ describe("live GEE overlay (injected gee)", () => {
   });
 
   test("now case: numbers overlay summary.critical_km2.any + people fields, query date is the d0 layer date", async () => {
-    // fs mode: the bundled now/ copy ships summary/alerts/critical_areas and
-    // no remote miss can flag fellBack.
-    delete process.env.DATA_BASE_URL;
+    // Empty fixture: every remote read 404s so the bundled now/ copy serves —
+    // remote misses flag fellBack, but the overlay still applies.
+    process.env.DATA_BASE_URL = base;
 
     const b = await getCaseBundle(
       "now",
@@ -381,7 +448,7 @@ describe("live GEE overlay (injected gee)", () => {
     expect(b.summary?.people_exposed).toBe(999);
     expect(b.summary?.people_critical).toBe(999);
     expect(b.dataSource).toBe("gee");
-    expect(b.fallback).toBe(false);
+    expect(b.fallback).toBe(true); // bundled copy served via remote misses
   });
 
   test("numbers error + layers error -> fallback, static values preserved", async () => {

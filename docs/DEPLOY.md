@@ -1,7 +1,7 @@
 # Deploy
 
 Operator runbook for deploying `tipping-point-app` to Vercel with live data
-served from a public-read GCS bucket.
+served from Earth Engine, with a raw fallback branch and bundled last resort.
 
 **Credential rule:** credentials live in environment variables / platform
 secrets only — never in the repository. No key, token, or service-account JSON
@@ -19,33 +19,27 @@ is ever committed; `.gitignore` already blocks the usual key file patterns.
 
 | Variable | Purpose |
 | --- | --- |
-| `DATA_BASE_URL` | Base URL of the public-read GCS bucket holding the data artifacts. At runtime the app fetches manifests/JSON from this URL; when unset it falls back to the bundled `public/data`. |
+| `DATA_BASE_URL` | Optional fallback data base URL override. Defaults to `https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`; bundled `public/data` is the last resort on a remote miss. |
 | `GEE_PROJECT` | Google Cloud project registered for the Earth Engine API. |
 | `GCP_SA_KEY` | Service-account JSON key (single line) for Earth Engine access. Server-side only — never `NEXT_PUBLIC_`-prefixed. |
 | `TELEGRAM_TOKEN` | Bot token from BotFather, used to call the Telegram Bot API. |
 | `TELEGRAM_SECRET` | Shared secret Telegram sends as `X-Telegram-Bot-Api-Secret-Token`; the webhook route verifies it. |
 | `APP_URL` | Canonical public URL of the deployment (e.g. `https://<project>.vercel.app`), used to register the webhook. |
 
-## Live data bucket (GCS)
+## Data availability
 
-The app reads `DATA_BASE_URL` at request time, so updating data does not
-require a redeploy. Setup:
+GEE stays the source of truth. The fallback copy lives on the orphan branch
+`fallback` of `r2l2pj/tipping-point-data`, force-pushed each run so history
+does not grow. It preserves the `data/` tree at the branch root: EPSG:3857
+PNGs, JSON numbers, GeoJSON, and `manifest.json` written **last** in the
+commit. No COGs are published on this branch.
 
-1. Create a GCS bucket and make it public-read
-   (`allUsers` → `roles/storage.objectViewer`).
-2. Apply CORS so the deployed app (and local dev) can fetch it from the
-   browser. `docs/gcs-cors.json` allows `GET` from any origin with common
-   response headers — sufficient because every object is already public:
-
-   ```bash
-   gcloud storage buckets update gs://<bucket> --cors-file=docs/gcs-cors.json
-   ```
-
-3. The data pipeline publishes the `now/` tree and per-case directories to the
-   bucket and writes `manifest.json` **last**, so readers never observe a
-   half-updated artifact set.
-4. Point `DATA_BASE_URL` at the bucket's public base
-   (`https://storage.googleapis.com/<bucket>`).
+The app defaults `DATA_BASE_URL` to
+`https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`.
+An environment override is still supported and is read at request time, so
+updating fallback data does not require a redeploy. The copy bundled into
+`public/data` by `bun run sync:data` is the last resort when a remote read
+fails; it is not the live source of truth.
 
 ## Telegram webhook
 
@@ -61,12 +55,12 @@ curl -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/setWebhook" \
 ## Scheduled jobs (GitHub Actions)
 
 GEE-first architecture: app tiles and numbers resolve through our `/api`
-routes against Earth Engine; the static manifest + bucket export stays the
+routes against Earth Engine; the static manifest + raw branch copy stays the
 fallback contract the app degrades to. Workflows on the data repo:
 
 - `now.yml` — every 3 h: IMERG Early + SMAP L4 + GEOS-FP ingest →
   `tipping-point/now/` asset collections → TPI + D+1..D+3 in GEE → last-good
-  static export to the bucket (`manifest.json` written last).
+  static copy on the force-pushed `fallback` branch (`manifest.json` written last).
 - `nisar.yml` — daily: `asf_search` for new GCOV granules over the case AOIs
   and active alert areas.
 - `validation.yml` — daily while a case is active: OPERA DSWx + SWOT
@@ -78,15 +72,6 @@ Secrets (`EARTHDATA_TOKEN` ~60-day renewal, `GCP_SA_KEY`) live in GitHub
 secrets; a missing/expired token fails the job loudly. Jobs are idempotent,
 log their ingestions, and publish the last-good static copy the app falls
 back to.
-
-## GEE asset ingestion (staging)
-
-Pipeline rasters ingest into Earth Engine via the data bucket's staging
-prefix: upload to `gs://<bucket>/staging/...`, then
-`ee.data.startIngestion` / `ee.data.startTableIngestion` into
-`projects/<GEE_PROJECT>/assets/tipping-point/<case>/`. The ingest service
-account needs `Storage Object Admin` on the bucket plus
-`Earth Engine Resource Writer` on the project.
 
 ## Data pipeline secrets (GitHub)
 
@@ -108,4 +93,3 @@ until they exist.
 - Vercel project created with the env vars above.
 - `GEE_PROJECT` registered for the Earth Engine API with a service account.
 - Telegram bot token from BotFather (+ Firestore if persistence is enabled).
-- GCS bucket created, public-read granted, CORS applied.

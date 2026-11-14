@@ -1,6 +1,6 @@
 // Server-side loader for the v4 data contract (SCHEMA.md).
-// Files come from a public bucket when DATA_BASE_URL is set (remote mode),
-// else from the bundled public/data copy synced by `bun run sync:data`.
+// Files default to the raw fallback branch, an orphan branch force-pushed each run.
+// DATA_BASE_URL overrides it; bundled public/data synced by `bun run sync:data` is last resort.
 // Any remote miss falls back to the bundled copy and flags the bundle.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -32,10 +32,10 @@ import type {
 const DATA_DIR = path.join(process.cwd(), "public", "data");
 
 export interface LoadedCaseBundle extends CaseBundle {
-  // True when DATA_BASE_URL was set but at least one file came from disk —
-  // the bundle is a mix of bucket data and the bundled fallback. Also true
-  // when GEE creds exist but the live overlay degraded (every call failed,
-  // or the layer probe answered with nothing published).
+  // True when a remote read failed and at least one file came from disk —
+  // the bundle is a mix of raw fallback branch data and the bundled copy.
+  // Also true when GEE creds exist but the live overlay degraded (every call
+  // failed, or the layer probe answered with nothing published).
   fallback?: boolean;
   // now/ critical-area polygons (products.critical_areas or fixed name).
   criticalAreas?: GeoJSON.FeatureCollection;
@@ -71,7 +71,8 @@ interface ReadCtx {
 }
 
 const remoteBase = () =>
-  process.env.DATA_BASE_URL?.replace(/\/+$/, "") || undefined;
+  (process.env.DATA_BASE_URL ||
+    "https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data").replace(/\/+$/, "");
 
 const newCtx = (): ReadCtx => ({ base: remoteBase(), fellBack: false });
 
@@ -81,7 +82,7 @@ const isRecord = (v: unknown): v is Record<string, unknown> =>
 const num = (v: unknown): number | undefined =>
   typeof v === "number" && Number.isFinite(v) ? v : undefined;
 
-// Remote fetch inside `use cache` so bucket reads share the "minutes"
+// Remote fetch inside `use cache` so raw fallback branch reads share the "minutes"
 // profile; the directive is inert under `bun test`, where cacheLife has no
 // cache scope to configure.
 async function fetchJson<T>(url: string): Promise<T> {
@@ -105,8 +106,8 @@ async function readFs<T>(key: string): Promise<T | undefined> {
   }
 }
 
-// One logical file: remote first when DATA_BASE_URL is set (or the declared
-// path is an absolute URL), else the bundled copy under public/data. `p` is
+// One logical file: raw fallback branch or DATA_BASE_URL override first,
+// then the last-resort bundled copy under public/data. `p` is
 // data-root-relative ("rs_2024/geojson/...") or dir-relative ("geojson/..."),
 // per resolveAsset.
 async function readData<T>(
@@ -314,7 +315,7 @@ export async function getCaseBundle(
         }
       : perCase;
 
-  // In remote mode layer png/cog paths resolve to bucket URLs; on disk they
+  // In remote mode layer png/cog paths resolve to raw fallback branch URLs; on disk they
   // stay data-root-relative (/data/... via resolveDataUrl).
   if (ctx.base && manifest?.layers) {
     manifest.layers = manifest.layers.map((l) => ({
