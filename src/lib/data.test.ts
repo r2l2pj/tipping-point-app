@@ -267,6 +267,51 @@ describe("remote-first reads (DATA_BASE_URL)", () => {
   });
 });
 
+describe("remote returns 404 for everything", () => {
+  test("loaders degrade to bundled public/data and never throw", async () => {
+    process.env.DATA_BASE_URL = base; // files empty -> every remote read 404s
+
+    const root = await getRootManifest();
+    expect(Object.keys(root?.cases ?? {})).toEqual(
+      expect.arrayContaining(["rs_2024", "wa_2025", "now"])
+    );
+
+    const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02");
+    expect(b.fallback).toBe(true);
+    expect(b.manifest?.event_id).toBe("rs-2024-05");
+    expect((b.metrics as MetricsV4 | undefined)?.iou).toBe(0.64); // bundled
+
+    const metrics = await getMetrics("rs-2024-05");
+    expect((metrics as MetricsV4).iou).toBe(0.64);
+
+    const now = await getCaseBundle(
+      "now",
+      "Now",
+      [-58, -34, -48, -22.5],
+      "2026-11-14"
+    );
+    expect(now.mode).toBe("live");
+    expect(now.fallback).toBe(true);
+    // every now/ product + metrics + series was tried remotely, served bundled
+    expect(now.summary?.critical_km2?.any).toBe(11.4);
+    expect(now.nowAlerts?.candidates).toHaveLength(3);
+    expect(now.criticalAreas?.features.length).toBeGreaterThan(0);
+    expect(now.series?.days).toHaveLength(9);
+    expect(hits).toEqual(
+      expect.arrayContaining([
+        "manifest.json",
+        "metrics.json",
+        "now/metrics.json",
+        "now/series/imerg_smap_daily.json",
+        "now/summary.json",
+        "now/alerts.json",
+        "now/geojson/critical_areas.geojson",
+      ])
+    );
+    expect(hits.some((h) => h.startsWith("now/geojson/"))).toBe(true);
+  });
+});
+
 describe("now@2 bundle", () => {
   const stageNow = () => {
     files.set("manifest.json", remoteRoot({ now: NOW_NODE }));

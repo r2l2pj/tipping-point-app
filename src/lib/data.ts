@@ -84,17 +84,23 @@ const num = (v: unknown): number | undefined =>
 
 // Remote fetch inside `use cache` so raw fallback branch reads share the "minutes"
 // profile; the directive is inert under `bun test`, where cacheLife has no
-// cache scope to configure.
-async function fetchJson<T>(url: string): Promise<T> {
+// cache scope to configure. Never throws — any failure is a miss so readData
+// falls through to the bundled public/data copy.
+async function fetchJson<T>(url: string): Promise<T | undefined> {
   "use cache";
   try {
     cacheLife("minutes");
   } catch {
     // outside a `use cache` scope (tests) there is no cache to configure
   }
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`data fetch ${url}: HTTP ${res.status}`);
-  return (await res.json()) as T;
+  try {
+    // 4s cap: prerender/build must not stall on a dead remote host.
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return undefined;
+    return (await res.json()) as T;
+  } catch {
+    return undefined;
+  }
 }
 
 async function readFs<T>(key: string): Promise<T | undefined> {
