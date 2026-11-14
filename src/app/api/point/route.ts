@@ -12,6 +12,8 @@ import {
   TileServiceError,
 } from "@/lib/ee-point";
 
+export const maxDuration = 60;
+
 const DASHED_RE = /^\d{4}-\d{2}-\d{2}$/;
 const COMPACT_RE = /^\d{8}$/;
 

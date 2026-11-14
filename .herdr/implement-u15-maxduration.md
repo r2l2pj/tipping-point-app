@@ -5,7 +5,7 @@ Verification ran on the working-tree route changes from that base, committed wit
 
 ## Changes
 
-Added only a literal `export const maxDuration = <seconds>;` and a separating blank line after imports in each existing route. Handler logic, comments, dependencies, and runtime selection are unchanged. No route previously exported maxDuration or runtime. No point route was created or touched.
+Added only a literal `export const maxDuration = <seconds>;` and a separating blank line after imports in each existing route. Handler logic, comments, dependencies, and runtime selection are unchanged. No route previously exported maxDuration or runtime. On follow-up authorization, the newly landed point route was also configured at 60 seconds without changing handler logic.
 
 | Route file | maxDuration (seconds) |
 | --- | ---: |
@@ -18,8 +18,9 @@ Added only a literal `export const maxDuration = <seconds>;` and a separating bl
 | src/app/api/metrics/route.ts | 60 |
 | src/app/api/health/route.ts | 60 |
 | src/app/api/telegram/route.ts | 30 |
+| src/app/api/point/route.ts | 60 |
 
-All nine current API route handlers are configured; none exceeds the specified Hobby limit of 60 seconds.
+All ten current API route handlers are configured; none exceeds the specified Hobby limit of 60 seconds.
 
 ## Next.js documentation checked before editing
 
@@ -39,4 +40,14 @@ Then read the installed segment-config references under `node_modules/next/dist/
 - `git diff --check && git diff && git log -5 --oneline`: exit 0; diff contains exactly the nine requested literal exports and blank lines.
 - Read generated `.next/server/functions-config-manifest.json`: all nine route entries have exactly the values in the table above. This verifies Next.js emitted the deployment configuration, not merely accepted the source syntax.
 
-No helpers, no new dependencies, no push. Only the nine allowed route files and this report are included in the commit.
+## Follow-up: newly landed point route
+
+- `git fetch`: exit 0. Local `main` was already at `c326e70`, newer than the requested `c935fd8` point-route landing.
+- `git rebase main`: exit 0, no conflicts. The initial nine-route commit was replayed onto `c326e70`.
+- Read the entire newly landed `src/app/api/point/route.ts`; it had no maxDuration/runtime export. Added `export const maxDuration = 60;` plus a blank line after imports, matching the other GEE routes.
+- Re-ran `bun test`: exit 0; `282 pass`, `6 skip`, `0 fail`, `825 expect() calls`, `Ran 288 tests across 17 files`.
+- Re-ran `bun run build`: exit 0; compilation and TypeScript passed; 14/14 static pages generated, all ten API routes listed. Expected sync:data missing-sibling warning remains.
+- `bun run lint 'src/app/api/**/route.ts'`: exit 0, no diagnostics, covering all ten routes.
+- Read generated `.next/server/functions-config-manifest.json`: ten functions, including `/api/point` with maxDuration 60; all match the table.
+
+No helpers, no new dependencies, no push. The branch changes only the ten authorized route files and this report. Initial command results above are preserved as history; follow-up verification supersedes them.
