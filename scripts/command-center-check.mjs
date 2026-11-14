@@ -367,7 +367,8 @@ var caseBefore = await attr("data-case");
 var stepBefore = await currentStep();
 await page.getByRole("button", { name: "Public Alerts" }).click();
 await page.waitForTimeout(400);
-check("CUJ-10", page.url() === ALERTS, `the address changes to ${ALERTS}`);
+// The path names the view; the query keeps the case and step in view.
+check("CUJ-10", page.url().split("?")[0] === ALERTS, `the address changes to ${ALERTS}`);
 check("CUJ-10", (await attr("data-view")) === "public", "the right panel shows Public Alerts");
 check("CUJ-10", (await attr("data-case")) === caseBefore && (await currentStep()) === stepBefore, "case and step stay");
 if (mapLoaded) {
