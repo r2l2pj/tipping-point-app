@@ -29,6 +29,11 @@ const ALERTS = `${BASE}${PREFIX}/alerts`;
 const STUB = process.env.CC_STUB_BASEMAP === "1";
 const SHOTS = process.env.CC_SHOTS;
 
+// Case bounds of the contract (manifest "bounds"), by case id and alias.
+const WA = [-122.6, 47.0, -121.5, 48.5];
+const RS = [-52.5, -30.5, -50.5, -29.0];
+const CASE_BOUNDS = { "wa-2025-12": WA, wa_2025: WA, "rs-2024-05": RS, rs_2024: RS, now: [-58, -34, -48, -22.5] };
+
 const results = [];
 const failures = [];
 const note = (cuj, text) => results.push(`  ok   ${cuj}: ${text}`);
@@ -101,6 +106,23 @@ async function invariants(cuj) {
   check(cuj, !/confirmed (scar|landslide)/i.test(text) && !text.includes("WorldPop"), "no banned text");
 }
 
+// The map camera must be on the case: its center inside the case bounds.
+// Uses the window.__map handle that Map.tsx exposes for headless checks.
+async function mapOnCase(cuj) {
+  const got = await page.evaluate(() => {
+    const m = window.__map;
+    if (!m) return null;
+    const c = m.getCenter();
+    const b = m.getBounds();
+    return { lng: c.lng, lat: c.lat, w: b.getWest(), s: b.getSouth(), e: b.getEast(), n: b.getNorth() };
+  });
+  if (!got) return info(cuj, "no map handle: camera not checked");
+  const want = CASE_BOUNDS[await attr("data-case")];
+  if (!want) return info(cuj, "no known bounds for this case");
+  const inside = got.lng > want[0] && got.lng < want[2] && got.lat > want[1] && got.lat < want[3];
+  check(cuj, inside, `the map is on the case (center ${got.lng.toFixed(2)}, ${got.lat.toFixed(2)})`);
+}
+
 // Turn every available layer row on, one after the other.
 async function layerWalk(cuj) {
   const switches = page.locator('aside[aria-label="Map layers"] [role="switch"]');
@@ -139,6 +161,8 @@ async function replayCase(id, title) {
   const eventStep = await currentStep();
   check(`CUJ-2 ${id}`, /EVENT/.test(eventStep ?? ""), `the timeline is on the event day (${eventStep})`);
   await invariants(cuj);
+  await page.waitForTimeout(1500);
+  if (mapLoaded) await mapOnCase(`map ${id}`);
   await shot(`${id}-open`);
 
   // CUJ-3 hazard: exactly one selected.
@@ -379,6 +403,23 @@ check("CUJ-10", (await attr("data-view")) === "public" && (await attr("data-case
 }
 await invariants("public");
 await shot("public-now");
+
+// A deep link opens the map on the case too.
+await page.setViewportSize({ width: 1440, height: 900 });
+await page.goto(`${HOME}?case=wa_2025`, { waitUntil: "domcontentloaded", timeout: 180000 });
+await root.waitFor({ timeout: 180000 });
+if (await mapReady()) {
+  await page.waitForTimeout(2500);
+  await mapOnCase("map ?case=wa_2025");
+  const pins = await page.locator(".cc-pin").evaluateAll((els) => {
+    const box = document.querySelector(".maplibregl-map").getBoundingClientRect();
+    return els.filter((e) => {
+      const r = e.getBoundingClientRect();
+      return r.right > box.left && r.left < box.right && r.bottom > box.top && r.top < box.bottom;
+    }).length;
+  });
+  check("map ?case=wa_2025", pins > 0, `priority pins are in view (${pins})`);
+}
 
 // CUJ-14 narrow screen.
 await page.setViewportSize({ width: 800, height: 900 });

@@ -109,21 +109,37 @@ export default function MapStage({
     };
   }, [map]);
 
-  const fit = () =>
+  const fit = (duration = 500) =>
     map?.fitBounds(
       [[bundle.bbox[0], bundle.bbox[1]], [bundle.bbox[2], bundle.bbox[3]]],
-      { padding: 60, duration: 500 }
+      { padding: 60, duration }
     );
 
   // The camera treats the area under the cards as padding, so "fit" and
   // "center on the area" use the visible part of the map.
+  //
+  // Any camera call stops a running animation. Map.tsx fits the case bounds
+  // with an animation when the map loads and when the case changes; a
+  // padding change right after it would cancel that fit and leave the map
+  // on its start position. So: on a new map or a new case, and while that
+  // fit may still run, the padding is set first and the fit is done again
+  // here. Later padding changes only ease the padding.
+  const fitted = useRef<{ key: string; at: number }>({ key: "", at: 0 });
   useEffect(() => {
     if (!map) return;
-    map.easeTo({
-      padding: { left: insets.left, right: insets.right, bottom: insets.bottom, top: 0 },
-      duration: 300,
-    });
-  }, [map, insets.left, insets.right, insets.bottom]);
+    const padding = { left: insets.left, right: insets.right, bottom: insets.bottom, top: 0 };
+    const key = bundle.id;
+    const fresh = fitted.current.key !== key || performance.now() - fitted.current.at < 1500;
+    if (fresh) {
+      if (fitted.current.key !== key) fitted.current = { key, at: performance.now() };
+      map.setPadding(padding);
+      fit(0);
+    } else {
+      map.easeTo({ padding, duration: 300 });
+    }
+    // `fit` reads the bundle of this render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, bundle.id, insets.left, insets.right, insets.bottom]);
   const comparing = !!comparePair;
   const caption = mapCaption(bundle, steps, state.dayIndex, state.hazard, state.layers);
   const chip =
@@ -189,7 +205,7 @@ export default function MapStage({
         style={{ right: R(14) }}
         layersShown={state.layersOpen}
         onToggleLayers={onToggleLayers}
-        onRecenter={() => (comparing ? compare.current?.recenter() : fit())}
+        onRecenter={() => (comparing ? compare.current?.recenter() : fit(500))}
         onZoomIn={() => (comparing ? compare.current?.zoomIn() : map?.zoomIn())}
         onZoomOut={() => (comparing ? compare.current?.zoomOut() : map?.zoomOut())}
       />
