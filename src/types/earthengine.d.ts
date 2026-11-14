@@ -57,6 +57,7 @@ declare module "@google/earthengine" {
   interface Image {
     select(band: string): Image;
     gt(value: number): Image;
+    gte(value: number): Image;
     add(other: Image): Image;
     updateMask(mask: Image): Image;
     bandNames(): List;

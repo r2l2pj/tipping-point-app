@@ -157,10 +157,11 @@ export function createTileService(
     }
 
     // Bin TPI 0..1 into the 4 doc classes at the class mins → integer raster
-    // 0–3; mask class 0 (Low renders transparent); paint moderate→critical.
+    // 0–3; gte matches tpiClass (v >= c.min) so boundary pixels land in the
+    // upper class; mask class 0 (Low renders transparent); paint the rest.
     const tpi = img.select(date);
-    let cls = tpi.gt(CUTS[0]);
-    for (const cut of CUTS.slice(1)) cls = cls.add(tpi.gt(cut));
+    let cls = tpi.gte(CUTS[0]);
+    for (const cut of CUTS.slice(1)) cls = cls.add(tpi.gte(cut));
     const vis = cls
       .updateMask(cls.gt(0))
       .visualize({ min: 1, max: 3, palette: PALETTE });

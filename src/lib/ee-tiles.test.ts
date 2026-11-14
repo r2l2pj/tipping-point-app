@@ -38,6 +38,10 @@ function makeFakeEe(opts: { bands?: string[]; map?: Record<string, unknown> } = 
         calls.push(["gt", v]);
         return img;
       },
+      gte: (v: number) => {
+        calls.push(["gte", v]);
+        return img;
+      },
       add: () => {
         calls.push(["add"]);
         return img;
@@ -104,9 +108,10 @@ describe("createTileService", () => {
     const { ee, calls } = makeFakeEe();
     const svc = createTileService(ee, { assetRoot: "root" });
     await svc.getTiles(QUERY);
-    expect(calls).toContainEqual(["gt", 0.2]);
-    expect(calls).toContainEqual(["gt", 0.4]);
-    expect(calls).toContainEqual(["gt", 0.6]);
+    expect(calls).toContainEqual(["gte", 0.2]);
+    expect(calls).toContainEqual(["gte", 0.4]);
+    expect(calls).toContainEqual(["gte", 0.6]);
+    expect(calls).toContainEqual(["gt", 0]); // mask keeps class 0 transparent
     expect(calls).toContainEqual(["updateMask"]);
     const vis = calls.find((c) => c[0] === "visualize");
     expect(vis?.[1]).toEqual({

@@ -54,3 +54,10 @@ without credentials; no new dependencies.
   pattern that predates this change; verified identical on base via stash).
 - `bun run build` — green; `sync:data` warn-skipped (data repo not a
   sibling of the worktree, as expected). `/api/tiles` listed as dynamic.
+
+## Lead review fix (t69)
+
+- Class binning switched from `gt()` to `gte()` for the three CUTS so
+  boundary pixels match `tpiClass` (v >= c.min); mask still uses
+  `cls.gt(0)`. `gte` added to the Image typings; test assertions updated.
+  `bun test src/lib/ee-tiles.test.ts` — 11 pass.
