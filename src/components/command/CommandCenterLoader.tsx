@@ -42,7 +42,7 @@ type Search = Promise<{ case?: string; day?: string }> | undefined;
 async function Loaded({ searchParams }: { searchParams?: Search }) {
   const search = await searchParams;
   const initialCase = search?.case;
-  const initialDay = search?.day ? Number(search.day) : undefined;
+  const initialDay = search?.day || undefined;
   const [index, root] = await Promise.all([
     getEventsIndex().catch(() => null),
     getRootManifest().catch(() => undefined),
@@ -84,7 +84,7 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
   );
 }
 
-// `searchParams` carries the `?case=<id|alias>&day=<offset>` deep link (judge
+// `searchParams` carries the `?case=<id|alias>&day=<offset or date>` deep link (judge
 // and demo links): the screen opens on that case and day instead of Now.
 export default function CommandCenterLoader({ searchParams }: { searchParams?: Search }) {
   return (

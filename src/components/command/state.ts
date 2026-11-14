@@ -80,11 +80,34 @@ const hazardFor = (bundle: CcBundle | undefined, kept: Hazard): Hazard => {
   return caseHasHazard(bundle, other) ? other : current;
 };
 
-const linkedDay = (bundle: CcBundle | undefined, offset?: number): number | undefined => {
-  if (offset === undefined || !Number.isFinite(offset)) return undefined;
-  const i = stepsFor(bundle).findIndex((s) => s.offset === offset);
+// `?day=` of a link: a day offset from the event day ("-4", "3") or a
+// calendar date ("2025-12-08"). Any other value opens the default step.
+const linkedDay = (bundle: CcBundle | undefined, link?: number | string): number | undefined => {
+  if (link === undefined || link === "") return undefined;
+  const steps = stepsFor(bundle);
+  const text = String(link).trim();
+  const i = /^\d{4}-\d{2}-\d{2}$/.test(text)
+    ? steps.findIndex((s) => s.date.slice(0, 10) === text)
+    : /^[+-]?\d+$/.test(text)
+      ? steps.findIndex((s) => s.offset === Number(text))
+      : -1;
   return i >= 0 ? i : undefined;
 };
+
+// Case and step of the address. Now has no parameters; a replay names its
+// case, and its step when that is not the step the case opens on.
+export function linkParams(
+  bundle: CcBundle | undefined,
+  dayIndex: number
+): { case?: string; day?: string } {
+  if (!bundle || bundle.mode !== "replay") return {};
+  const steps = stepsFor(bundle);
+  const offset = steps[dayIndex]?.offset;
+  return {
+    case: canonicalCaseId(bundle.id),
+    day: dayIndex !== defaultStepIndex(steps) && offset !== undefined ? String(offset) : undefined,
+  };
+}
 
 // The screen opens on Now when a live case is loaded, else on the first case.
 // `initialCase` (the `?case=<id|alias>` deep link of the old screen) opens
@@ -92,7 +115,7 @@ const linkedDay = (bundle: CcBundle | undefined, offset?: number): number | unde
 export function initialState(
   cases: readonly CcBundle[],
   initialCase?: string,
-  initialDay?: number // `?day=<offset>`: day offset from the event day
+  initialDay?: number | string // `?day=<offset or date>`
 ): ScreenState {
   const want = initialCase ? canonicalCaseId(initialCase) : undefined;
   const linked = initialCase

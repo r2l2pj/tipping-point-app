@@ -28,7 +28,7 @@ import RainSoilChart from "./RainSoilChart";
 import ReplayCheck from "./ReplayCheck";
 import SituationPanel from "./SituationPanel";
 import SourceAges from "./SourceAges";
-import { initialState, PLAYBACK_MS, reduce, type Action, type ScreenState } from "./state";
+import { initialState, linkParams, PLAYBACK_MS, reduce, type Action, type ScreenState } from "./state";
 import StatusBlock from "./StatusBlock";
 import Tiles from "./Tiles";
 import TimelineBar from "./TimelineBar";
@@ -44,7 +44,7 @@ export interface CommandCenterProps {
   // `?case=<id|alias>` deep link: the case the screen opens on.
   initialCase?: string;
   // `?day=<offset>` deep link: day offset from the event day.
-  initialDay?: number;
+  initialDay?: number | string;
 }
 
 // Browser clock, minute steps. Undefined on the server and during hydration,
@@ -65,7 +65,10 @@ export default function CommandCenter(props: CommandCenterProps) {
   const nowMs = useSyncExternalStore(subscribeClock, clockNow, noClock);
   const onView = useCallback((next: View) => {
     const path = next === "public" ? "/alerts" : "/";
-    if (window.location.pathname !== path) window.history.pushState(null, "", path);
+    // The case and step of the address stay with the view.
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, "", path + window.location.search);
+    }
   }, []);
   return <CommandCenterView {...props} view={view} onView={onView} nowMs={nowMs} />;
 }
@@ -102,6 +105,24 @@ export function CommandCenterView({
     const t = setInterval(() => dispatch({ type: "tick" }), PLAYBACK_MS);
     return () => clearInterval(t);
   }, [state.playing]);
+
+  // The address names the case and step in view, so a reload or a copied
+  // link opens the same thing. Not written while playing.
+  useEffect(() => {
+    if (state.playing) return;
+    const want = linkParams(cases.find((c) => c.id === state.activeId), state.dayIndex);
+    const params = new URLSearchParams(window.location.search);
+    for (const key of ["case", "day"] as const) {
+      const v = want[key];
+      if (v === undefined) params.delete(key);
+      else params.set(key, v);
+    }
+    const query = params.toString();
+    const search = query ? `?${query}` : "";
+    if (search !== window.location.search) {
+      window.history.replaceState(null, "", window.location.pathname + search);
+    }
+  }, [cases, state.activeId, state.dayIndex, state.playing]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

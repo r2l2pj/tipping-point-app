@@ -1,7 +1,7 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
 import { bundle, frame, liveBundle, manifest, point, series, zones } from "./model/fixtures";
-import { caseHazard, initialState, reduce, type Action, type ScreenState } from "./state";
+import { caseHazard, initialState, linkParams, reduce, type Action, type ScreenState } from "./state";
 import { zone } from "./model/fixtures";
 
 const fc = (n: number) => zones(Array.from({ length: n }, () => point()));
@@ -36,6 +36,21 @@ describe("initial state", () => {
     expect(initialState(cases, "wa_2025", -1).dayIndex).toBe(1);
     expect(initialState(cases, "wa_2025", 99).dayIndex).toBe(2);
     expect(initialState(cases, "wa_2025", NaN).dayIndex).toBe(2);
+    // The link value is text: an offset, or the date of a step.
+    expect(initialState(cases, "wa_2025", "-1").dayIndex).toBe(1);
+    expect(initialState(cases, "wa_2025", wa.series!.days[3].date).dayIndex).toBe(3);
+    expect(initialState(cases, "wa_2025", "abc").dayIndex).toBe(2);
+    expect(initialState(cases, "wa_2025", "1900-01-01").dayIndex).toBe(2);
+  });
+
+  test("the address names the replay case, and the step when it is not the opening step", () => {
+    expect(linkParams(now, 0)).toEqual({});
+    expect(linkParams(undefined, 0)).toEqual({});
+    expect(linkParams(wa, 2)).toEqual({ case: "wa_2025", day: undefined });
+    expect(linkParams(wa, 1)).toEqual({ case: "wa_2025", day: "-1" });
+    expect(linkParams(wa, 3)).toEqual({ case: "wa_2025", day: "1" });
+    // A link made this way opens the same step.
+    expect(initialState(cases, "wa_2025", linkParams(wa, 3).day).dayIndex).toBe(3);
   });
 });
 
