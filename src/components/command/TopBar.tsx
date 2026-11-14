@@ -6,7 +6,7 @@ import { Icon, ICON } from "./ui";
 export type View = "command" | "public";
 
 const seg = (on: boolean) =>
-  `inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-semibold ${
+  `inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-sm font-semibold ${
     on ? "bg-cc-accent text-white" : "bg-transparent text-cc-ink hover:bg-cc-well"
   } disabled:cursor-not-allowed disabled:opacity-50`;
 
@@ -38,7 +38,7 @@ export default function TopBar({
     : "border-[#e2c48a] bg-cc-warn-soft text-cc-warn";
 
   return (
-    <header className="relative z-10 flex shrink-0 flex-wrap items-center gap-x-3.5 gap-y-2 border-b border-cc-line bg-cc-header px-5 py-2">
+    <header className="relative z-10 flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-cc-line bg-cc-header px-5 py-2">
       <svg width="38" height="24" viewBox="0 0 34 22" fill="none" stroke="var(--cc-accent)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M2 19l8-12 5 7 4-6 7 11" /><path d="M20 19l5-7 7 7" />
       </svg>
@@ -75,7 +75,7 @@ export default function TopBar({
             aria-label="Past event"
             value={bundle.id}
             onChange={(e) => onSelectCase(e.target.value)}
-            className="h-[38px] max-w-[230px] border-0 bg-cc-surface px-1 text-sm font-semibold text-cc-ink"
+            className="h-[38px] max-w-[200px] border-0 bg-cc-surface px-1 text-sm font-semibold text-cc-ink"
           >
             {replays.map((c) => (
               <option key={c.id} value={c.id}>{c.title}</option>
