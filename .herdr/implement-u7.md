@@ -44,13 +44,17 @@ guidance contains "your region", never "your home", ends with SMS 40199
 footer; alertDataDates string-only projection.
 
 ### `src/app/alerts/page.tsx`
-- Loads the live bundle via existing `getCaseBundle("now", ...)` (same args
-  as src/app/page.tsx). When `bundle.nowAlerts.candidates` is present it
+- Loads the live bundle via existing `getCaseBundle("now", ...)`. The
+  bundle reference_date is derived from the root manifest
+  (`getRootManifest()` → `cases.now.updated_at.slice(0,10)`, literal
+  "2026-11-14" only as fallback) — mirrors the u4 fix; review follow-up.
+- When `bundle.nowAlerts.candidates` is present it
   maps via `candidatesToAlerts` (places ← `bundle.places ?? bundle.municipalities`,
   `issuedAt` ← `bundle.updated_at`, data_dates ← `alertDataDates(bundle.data_dates)`).
   Absent → falls back to legacy `getAlerts()` alerts@1. (bundle.nowAlerts
   only populates after U3 lands in data.ts — owned by that unit; page is
-  defensive.)
+  defensive.) Reference_date is cosmetic for the alerts flow (issuedAt comes
+  from `bundle.updated_at`) but is no longer hardcoded.
 - Sorts cards emergency → warning → watch.
 - `held` badge in the valid-window row for hold/held candidates.
 - Footer line dedupes: rendered only when guidance doesn't already end with

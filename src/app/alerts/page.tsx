@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getAlerts, getCaseBundle } from "@/lib/data";
+import { getAlerts, getCaseBundle, getRootManifest } from "@/lib/data";
 import {
   ALERT_FOOTER,
   alertDataDates,
@@ -22,11 +22,13 @@ const LEVEL_ORDER: Record<string, number> = {
 // now/ bundle (nowAlerts populates once the U3 data seam lands); until then
 // the legacy alerts@1 file keeps the page working.
 async function AlertsList() {
+  const root = await getRootManifest();
+  const nowRef = root?.cases?.now?.updated_at?.slice(0, 10) ?? "2026-11-14";
   const now = await getCaseBundle(
     "now",
     "Now — Southern Brazil",
     [-58, -34, -48, -22.5],
-    "2026-11-14"
+    nowRef
   ).catch(() => undefined);
 
   const candidates = now?.nowAlerts?.candidates;
