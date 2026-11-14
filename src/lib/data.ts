@@ -586,7 +586,7 @@ export async function getCaseBundle(
 
   // One slow/failed call must not hang the other — the helpers carry their
   // own internal timeouts, and the whole overlay is capped at
-  // GEE_OVERLAY_TIMEOUT_MS (default 2.5 s) so a hung GEE roundtrip can never
+  // GEE_OVERLAY_TIMEOUT_MS (default 1.2 s) so a hung GEE roundtrip can never
   // stall the page stream.
   const livePending =
     gee && liveEligible
@@ -630,7 +630,7 @@ export async function getCaseBundle(
   // but EMPTY layers array means GEE is up yet nothing is published —
   // degraded, not content.
   const overlayTimeoutMs =
-    Number(process.env.GEE_OVERLAY_TIMEOUT_MS) || 2500;
+    Number(process.env.GEE_OVERLAY_TIMEOUT_MS) || 1200;
   const [numbersSettled, layersSettled] = livePending
     ? await Promise.race([
         livePending,
