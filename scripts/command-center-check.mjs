@@ -62,7 +62,7 @@ page.on("console", (m) => {
   if (m.type() === "error") consoleErrors.push(m.text().slice(0, 240));
 });
 page.on("pageerror", (e) => consoleErrors.push(`page error: ${String(e).slice(0, 240)}`));
-// Data files that the manifest lists and the data host does not serve. They
+// Data files that the screen requests and the data host does not serve. They
 // are reported on their own: a data defect, not a defect of the screen.
 const missingData = new Set();
 let pointDown = false;
@@ -405,7 +405,7 @@ await page.waitForTimeout(1500);
   results.push(`  FAIL script stopped: ${String(e).slice(0, 600)}`);
 }
 
-for (const file of missingData) results.push(`  DATA listed by the manifest, not served (404): ${file}`);
+for (const file of missingData) results.push(`  DATA requested by the screen, not served (404): ${file}`);
 if (pointDown) results.push("  info /api/point answered 503 (no Earth Engine credentials on this server): R, S, T come from the COGs");
 const errors = [...new Set(consoleErrors)].filter(
   (e) => !(missingData.size && (/status of 404/.test(e) || /AJAXError: Not Found \(404\).*\/data\//.test(e))) &&
