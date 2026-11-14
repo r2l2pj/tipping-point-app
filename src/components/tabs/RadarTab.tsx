@@ -7,6 +7,7 @@ import { fmtKm2 } from "@/lib/tpi";
 import type { CaseBundle, NisarPass } from "@/lib/types";
 import SwipeCompare from "../SwipeCompare";
 import NisarPassList from "./NisarPassList";
+import { pendingIncludes } from "./format";
 import { StatCard } from "./Stat";
 
 type BBox = [number, number, number, number];
@@ -115,7 +116,10 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
           label="Landslide scar candidates (HLS optical)"
           value={candidates == null ? "—" : String(candidates)}
           accent="amber"
-          absent={candidates == null}
+          absent={
+            candidates == null ||
+            pendingIncludes(bundle, "landslide_candidates")
+          }
         />
       </div>
       <p className="text-xs leading-snug text-zinc-500">
