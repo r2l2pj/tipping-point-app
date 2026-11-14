@@ -6,7 +6,7 @@ import { createServer } from "node:http";
 import path from "node:path";
 
 import realMetrics from "../../test/fixtures/metrics-19c56df.json";
-import { getAlerts, getCaseBundle, getMetrics, getRootManifest } from "./data";
+import { getAlerts, getCaseBundle, getEventsIndex, getMetrics, getRootManifest } from "./data";
 import type { MetricsV4 } from "./contract";
 
 // bun-types isn't installed — declare the Bun.serve surface the tests use.
@@ -325,7 +325,6 @@ describe("remote returns 404 for everything", () => {
     // every now/ product + metrics + series was tried remotely, served bundled
     expect(now.summary?.critical_km2?.any).toBe(11.4);
     expect(now.nowAlerts?.candidates).toHaveLength(3);
-    expect(now.criticalAreas?.features.length).toBeGreaterThan(0);
     expect(now.series?.days).toHaveLength(9);
     expect(hits).toEqual(
       expect.arrayContaining([
@@ -335,10 +334,12 @@ describe("remote returns 404 for everything", () => {
         "now/series/imerg_smap_daily.json",
         "now/summary.json",
         "now/alerts.json",
-        "now/geojson/critical_areas.geojson",
       ])
     );
-    expect(hits.some((h) => h.startsWith("now/geojson/"))).toBe(true);
+    // heavy geojson layers are never fetched server-side — the client
+    // lazy-loads them by URL (payload <300KB ruling)
+    expect(hits.some((h) => h.includes("critical_areas"))).toBe(false);
+    expect(hits.some((h) => h.includes("landslide_catalog"))).toBe(false);
   });
 });
 
@@ -378,11 +379,11 @@ describe("now@2 bundle", () => {
     expect(b.summary?.critical_km2?.any).toBe(11.4);
     expect(b.nowAlerts?.candidates).toHaveLength(2);
     expect(b.nowAlerts?.candidates?.[1].hold).toBe(true);
-    expect(b.criticalAreas?.features).toHaveLength(1);
     expect(b.nisarPasses?.[0].track).toBe("172D");
     expect(hits).toContain("now/summary.json");
     expect(hits).toContain("now/alerts.json");
-    expect(hits).toContain("now/geojson/critical_areas.geojson");
+    // critical_areas is a heavy layer — deferred to a client-side URL load
+    expect(hits).not.toContain("now/geojson/critical_areas.geojson");
   });
 
   test("no series file -> series undefined + pending 'series' (no fabricated days)", async () => {
@@ -456,6 +457,32 @@ describe("default remote bases (no DATA_BASE_URL)", () => {
     } finally {
       remote.mockRestore();
     }
+  });
+});
+
+// Payload budget: the serialized dashboard bundle must stay under 300 KB
+// against the real bundled copy — heavy geojson is client-loaded by URL.
+describe("payload budget (<300KB)", () => {
+  test("real public/data: every case bundle serializes under 300KB", async () => {
+    process.env.DATA_BASE_URL = "http://127.0.0.1:1"; // force bundled reads
+    delete process.env.NEON_S3_ENDPOINT;
+    process.env.DATA_FS_DIR = path.join(
+      process.cwd(),
+      "public",
+      "data"
+    );
+    const index = await getEventsIndex();
+    const ids = [...index.events.map((e) => e.id), "now"];
+    for (const id of ids) {
+      const b = await getCaseBundle(id, id, undefined, undefined).catch(
+        () => undefined
+      );
+      if (!b) continue;
+      const bytes = Buffer.byteLength(JSON.stringify(b), "utf-8");
+      expect(bytes).toBeLessThan(300 * 1024);
+    }
+    // at least the real cases must have loaded
+    expect(ids.length).toBeGreaterThan(1);
   });
 });
 

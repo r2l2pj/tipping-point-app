@@ -47,7 +47,11 @@ export interface LoadedCaseBundle extends CaseBundle {
   // Also true when GEE creds exist but the live overlay degraded (every call
   // failed, or the layer probe answered with nothing published).
   fallback?: boolean;
-  // now/ critical-area polygons (products.critical_areas or fixed name).
+  // First remote base — the client builds lazy layer URLs from
+  // products[key] + this (bundled copy falls back to /data/<key>).
+  assetBase?: string;
+  // DEPRECATED: heavy geojson is never inlined — client lazy-loads the
+  // critical_areas URL. Always undefined now.
   criticalAreas?: GeoJSON.FeatureCollection;
   // Upcoming NISAR passes for the live bundle (hoisted by toNowView).
   nisarPasses?: NisarPass[];
@@ -83,6 +87,46 @@ export interface CaseBundleOpts {
 
 // products map values are strictly string | null; null = absent.
 type Products = Record<string, string | null | undefined>;
+
+// Priority zones inline-trimmed for the <300KB payload budget: top-20 by
+// properties.rank, polygon geometry replaced with the label-centroid Point
+// (label_lon/label_lat properties, first ring coordinate as fallback). The
+// client lazy-loads the full polygons from the layer URL.
+const trimZones = (
+  fc: GeoJSON.FeatureCollection | undefined,
+  n = 20
+): GeoJSON.FeatureCollection | undefined => {
+  if (!fc?.features?.length) return fc;
+  const ranked = [...fc.features]
+    .sort(
+      (a, b) =>
+        (num(a.properties?.rank) ?? Number.MAX_SAFE_INTEGER) -
+        (num(b.properties?.rank) ?? Number.MAX_SAFE_INTEGER)
+    )
+    .slice(0, n);
+  const firstCoord = (g: GeoJSON.Geometry | null): [number, number] => {
+    const c = (
+      g as GeoJSON.Polygon | GeoJSON.MultiPolygon | null
+    )?.coordinates?.[0]?.[0]?.[0] ?? (g as GeoJSON.Point | null)?.coordinates;
+    return Array.isArray(c) && c.length >= 2
+      ? [c[0] as number, c[1] as number]
+      : [0, 0];
+  };
+  return {
+    ...fc,
+    features: ranked.map((f) => ({
+      ...f,
+      geometry: {
+        type: "Point",
+        coordinates:
+          num(f.properties?.label_lon) !== undefined &&
+          num(f.properties?.label_lat) !== undefined
+            ? [f.properties!.label_lon as number, f.properties!.label_lat as number]
+            : firstCoord(f.geometry),
+      } as GeoJSON.Point,
+    })),
+  };
+};
 
 interface ReadCtx {
   bases: string[];
@@ -124,6 +168,21 @@ const newCtx = (): ReadCtx => ({
   fellBack: false,
   remoteTries: 0,
 });
+
+// Data reads must run at request time, never inside the static prerender
+// shell — a build-time capture is what left production stuck on the PPR
+// fallback. `connection()` returns a pending promise during prerender (the
+// hole defers to request time, so the await stalls there by design), resolves
+// during a real request, and throws synchronously when no Next store exists
+// (bun test / scripts) — that throw is the only case the catch swallows.
+const requestTime = async () => {
+  try {
+    const { connection } = await import("next/server");
+    await connection();
+  } catch {
+    // no request store — tests and scripts run data reads eagerly
+  }
+};
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null;
@@ -257,21 +316,28 @@ async function loadMetrics(
   return firstOf<EventMetrics>(ctx, dirs, "metrics.json");
 }
 
-export const getEventsIndex = () =>
-  must(readData<EventsIndex>(newCtx(), "", "events.json"), "events.json");
+export const getEventsIndex = async () => {
+  await requestTime();
+  return must(readData<EventsIndex>(newCtx(), "", "events.json"), "events.json");
+};
 
 // v4 contract: a single root manifest.json maps every case (incl. `now`) to
 // { event_id, mode, bounds, layers[], metrics, products, data_dates }.
-export const getRootManifest = () =>
-  readData<RootManifest>(newCtx(), "", "manifest.json");
+export const getRootManifest = async () => {
+  await requestTime();
+  return readData<RootManifest>(newCtx(), "", "manifest.json");
+};
 
-export const getManifest = (id: string) =>
-  must(
+export const getManifest = async (id: string) => {
+  await requestTime();
+  return must(
     firstOf<EventManifest>(newCtx(), dirsFor(id), "manifest.json"),
     `${id}/manifest.json`
   );
+};
 
 export const getMetrics = async (id: string) => {
+  await requestTime();
   const ctx = newCtx();
   const dirs = dirsFor(id);
   const root = await readData<RootManifest>(ctx, "", "manifest.json");
@@ -280,12 +346,16 @@ export const getMetrics = async (id: string) => {
   return loadMetrics(ctx, entry?.metrics ?? `metrics.json#${dirs[0]}`, dirs);
 };
 
-export const getSeries = (id: string) =>
-  firstOf<SeriesDaily>(newCtx(), dirsFor(id), "series/imerg_smap_daily.json");
+export const getSeries = async (id: string) => {
+  await requestTime();
+  return firstOf<SeriesDaily>(newCtx(), dirsFor(id), "series/imerg_smap_daily.json");
+};
 
 // L14: absent alerts.json -> undefined; the /alerts page renders pending.
-export const getAlerts = () =>
-  readData<AlertsFile>(newCtx(), "", "alerts.json");
+export const getAlerts = async () => {
+  await requestTime();
+  return readData<AlertsFile>(newCtx(), "", "alerts.json");
+};
 
 // One case = one entry in the root manifest's `cases` map (canonical
 // underscore keys; caseAlias maps the hyphen event ids used by events.json),
@@ -299,6 +369,7 @@ export async function getCaseBundle(
   reference_date?: string,
   opts?: CaseBundleOpts
 ): Promise<LoadedCaseBundle> {
+  await requestTime();
   const ctx = newCtx();
   const dirs = dirsFor(id);
   const canonical = dirs[0];
@@ -405,16 +476,10 @@ export async function getCaseBundle(
     metrics,
     series,
     swot,
-    zones,
-    water,
-    flood,
-    scars,
+    zonesRaw,
     places,
-    catalog,
-    municipalities,
     summary,
     nowAlerts,
-    criticalAreas,
   ] = await Promise.all([
     loadMetrics(ctx, entry?.metrics ?? `metrics.json#${canonical}`, dirs),
     loadProduct<SeriesDaily>(
@@ -426,19 +491,13 @@ export async function getCaseBundle(
     ),
     loadProduct<unknown>(ctx, canonical, rawProducts, "swot", "series/swot.json"),
     geo("priority_zones", "geojson/priority_zones.geojson"),
-    geo("permanent_water", "geojson/permanent_water.geojson"),
-    geo("flood_confirmed", "geojson/flood_confirmed.geojson"),
-    geo("landslide_candidates", "geojson/landslide_candidates.geojson"),
     geo("places", "geojson/places.geojson"),
-    geo("landslide_catalog", "geojson/landslide_catalog.geojson"),
-    geo("municipal_boundaries", "geojson/municipal_boundaries.geojson"),
     now
       ? loadProduct<NowSummary>(ctx, canonical, rawProducts, "summary", "summary.json")
       : undefined,
     now
       ? loadProduct<NowAlertsFile>(ctx, canonical, rawProducts, "alerts", "alerts.json")
       : undefined,
-    now ? geo("critical_areas", "geojson/critical_areas.geojson") : undefined,
   ]);
 
   // A10: bbox and reference_date come from the contract, not caller literals.
@@ -487,6 +546,14 @@ export async function getCaseBundle(
   // mean "absent by contract" — not pending. L14: no fabricated timeline —
   // an absent series file stays undefined for every case, `now` included.
   const effectiveSeries = series;
+  // Priority zones ship inline but trimmed: top-20 by properties.rank,
+  // polygon geometry swapped for the label-centroid Point (the client
+  // lazy-loads the full polygons via products[] + assetBase). Every other
+  // heavy geojson (permanent_water, flood_confirmed, landslide_candidates,
+  // landslide_catalog, municipal_boundaries, critical_areas) is NOT loaded
+  // server-side — the client fetches its URL lazily, and it is not pending:
+  // pending stays for products-map null / a file that is truly missing.
+  const zones = trimZones(zonesRaw);
   const pending = new Set<string>();
   if (metrics === undefined) pending.add("metrics");
   if (effectiveSeries === undefined) pending.add("series");
@@ -494,15 +561,8 @@ export async function getCaseBundle(
     imerg_smap_daily: series,
     swot,
     priority_zones: zones,
-    permanent_water: water,
-    flood_confirmed: flood,
-    landslide_candidates: scars,
     places,
-    landslide_catalog: catalog,
-    municipal_boundaries: municipalities,
-    ...(now
-      ? { summary, alerts: nowAlerts, critical_areas: criticalAreas }
-      : {}),
+    ...(now ? { summary, alerts: nowAlerts } : {}),
   };
   for (const [key, value] of Object.entries(declaredMissing)) {
     if (typeof rawProducts?.[key] === "string" && value === undefined)
@@ -542,20 +602,15 @@ export async function getCaseBundle(
     metricsView: flattenLandslideHit(toMetricsView(metrics), referenceDate),
     summary,
     nowAlerts,
-    criticalAreas,
     nisarPasses: now?.nisar_passes,
     swot,
-    catalog,
-    municipalities,
     products: manifest?.products,
     series: effectiveSeries,
     pending: [...pending].sort(),
     tpiCuts: manifest?.tpi_cuts ?? TPI_CUTS,
     zones,
-    water,
-    flood,
-    scars,
     places,
+    assetBase: ctx.bases[0],
     fallback: ctx.fellBack,
   };
 
