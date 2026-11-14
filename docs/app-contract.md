@@ -89,9 +89,11 @@ absent it falls back to fixed filenames under the case dir.
 `data_dates` on legacy syncs), `products`, per-layer resolved `forecast`,
 `forecast_source`. Written last by the pipeline — the app never reads a
 half-updated set, and treats `updated_at: null` as "mid-run" (no fresh
-update). `now/` ships without a series file: timeline days derive from
-manifest layer dates + forecast flag. `events.json` remains the case index;
-its entries use the hyphen `event_id` forms.
+update). `now/` ships without a series file: `bundle.series` stays
+`undefined` and `'series'` lands in `bundle.pending` — the app never
+synthesizes timeline days from layer dates (L14: no fabricated values).
+`events.json` remains the case index; its entries use the hyphen
+`event_id` forms.
 
 ## Pending outputs (L14)
 
@@ -101,9 +103,8 @@ marker list components read:
 
 - `'metrics'` — `metrics.json` absent, or present without the case key
   (`bundle.metrics`/`metricsView` are `undefined`).
-- `'series'` — no series file resolved (`bundle.series` is `undefined`;
-  `now` still derives its timeline from layer dates, so `'series'` only
-  appears there when even that yields nothing).
+- `'series'` — no series file resolved (`bundle.series` is `undefined`),
+  `now` included — the loader does not fabricate timeline days.
 - `<product-id>` — a product **declared** (non-null path) in the products
   map but missing from storage; `null`-declared keys are absent by
   contract, not pending.

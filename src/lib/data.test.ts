@@ -365,25 +365,16 @@ describe("now@2 bundle", () => {
     expect(hits).toContain("now/geojson/critical_areas.geojson");
   });
 
-  test("timeline days derive from layer dates + forecast flags (no series)", async () => {
+  test("no series file -> series undefined + pending 'series' (no fabricated days)", async () => {
     stageNow();
     process.env.DATA_BASE_URL = base;
 
     const b = await getCaseBundle("now", "Now", [-58, -34, -48, -22.5], "2026-11-14");
 
-    expect(b.series?.days.map((d) => d.date)).toEqual([
-      "2026-11-14",
-      "2026-11-15",
-      "2026-11-16",
-    ]);
-    expect(b.series?.days.map((d) => d.kind)).toEqual([
-      "observed",
-      "forecast",
-      "forecast",
-    ]);
-    expect(b.series?.days[0].offset).toBe(0);
-    expect(b.series?.days[2].offset).toBe(2);
-    expect(b.series?.reference_date).toBe("2026-11-14");
+    // L14: the loader never fabricates imerg/smap/tpi zeros for an absent
+    // series — the timeline is pending, not synthesized from layer dates.
+    expect(b.series).toBeUndefined();
+    expect(b.pending).toContain("series");
     // forecast flag is on the manifest layers via toNowView
     expect(b.manifest?.layers.map((l) => l.id)).toEqual([
       "tpi_slide_d0",
