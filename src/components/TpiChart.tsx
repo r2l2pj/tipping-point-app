@@ -27,38 +27,39 @@ export default function TpiChart({ series, dayIndex }: { series: SeriesDaily; da
 
   return (
     <div>
-      <p className="mb-1 text-[11px] font-medium text-zinc-300">
+      <p className="mb-1 text-xs font-medium text-zinc-300">
         Rain, Soil Moisture and TPI (region average)
       </p>
       <div className="h-44">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: 0, bottom: 0, left: -18 }}>
+          <ComposedChart data={data} margin={{ top: 8, right: -6, bottom: 0, left: -26 }}>
             <CartesianGrid stroke="#27272a" vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: "#a1a1aa" }}
+              tick={{ fontSize: 12, fill: "#a1a1aa" }}
               tickLine={false}
               axisLine={{ stroke: "#3f3f46" }}
+              minTickGap={14}
             />
             <YAxis
               yAxisId="rain"
               domain={[0, 100]}
-              tick={{ fontSize: 9, fill: "#71717a" }}
+              tick={{ fontSize: 12, fill: "#71717a" }}
               tickLine={false}
               axisLine={false}
-              label={{ value: "Rain (mm)", angle: -90, position: "insideLeft", fontSize: 9, fill: "#71717a" }}
+              label={{ value: "Rain (mm)", angle: -90, position: "insideLeft", fontSize: 12, fill: "#71717a" }}
             />
             <YAxis
               yAxisId="idx"
               orientation="right"
               domain={[0, 1]}
-              tick={{ fontSize: 9, fill: "#71717a" }}
+              tick={{ fontSize: 12, fill: "#71717a" }}
               tickLine={false}
               axisLine={false}
-              label={{ value: "SMAP / TPI", angle: 90, position: "insideRight", fontSize: 9, fill: "#71717a" }}
+              label={{ value: "SMAP / TPI", angle: 90, position: "insideRight", fontSize: 12, fill: "#71717a" }}
             />
             <Tooltip
-              contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", fontSize: 11 }}
+              contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", fontSize: 12 }}
               labelStyle={{ color: "#e4e4e7" }}
               formatter={(v, name) =>
                 typeof v !== "number"
@@ -85,7 +86,7 @@ export default function TpiChart({ series, dayIndex }: { series: SeriesDaily; da
               y={series.tpi_threshold ?? 0.6}
               stroke="#BD0026"
               strokeDasharray="5 4"
-              label={{ value: `TPI Threshold (${(series.tpi_threshold ?? 0.6).toFixed(2)})`, position: "insideTopLeft", fontSize: 9, fill: "#fca5a5" }}
+              label={{ value: `TPI Threshold (${(series.tpi_threshold ?? 0.6).toFixed(2)})`, position: "insideTopLeft", fontSize: 12, fill: "#fca5a5" }}
             />
             {series.rain_p95_mm != null && (
               <ReferenceLine yAxisId="rain" y={series.rain_p95_mm} stroke="#BD0026" strokeDasharray="3 3" />
@@ -97,7 +98,7 @@ export default function TpiChart({ series, dayIndex }: { series: SeriesDaily; da
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-zinc-400">
+      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-zinc-400">
         <Swatch color="#2166AC" label="Rain (IMERG)" />
         <Swatch color="#8C510A" label="Soil Moisture (SMAP)" />
         <Swatch color="#BD0026" label="TPI (risk index)" />
