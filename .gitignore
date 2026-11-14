@@ -45,3 +45,9 @@ public/data/**/*.tif
 public/data/**/*.tiff
 public/data/**/*.h5
 public/data/**/*.nc
+
+# never commit credential keys
+*-service-account*.json
+hermes-*.json
+gcp-*.json
+service-account*.json
