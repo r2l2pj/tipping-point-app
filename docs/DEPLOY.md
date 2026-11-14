@@ -22,6 +22,8 @@ is ever committed; `.gitignore` already blocks the usual key file patterns.
 | `DATA_BASE_URL` | Optional fallback data base URL override. Defaults to `https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`; bundled `public/data` is the last resort on a remote miss. |
 | `GEE_PROJECT` | Google Cloud project registered for the Earth Engine API. |
 | `GCP_SA_KEY` | Service-account JSON key (single line) for Earth Engine access. Server-side only — never `NEXT_PUBLIC_`-prefixed. |
+| `SUPABASE_URL` | Supabase project URL for the Telegram subscriber store, accessed via REST/PostgREST with plain fetch/requests and no SDK dependency. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret service role key for server-side subscriber access only. Never expose to browser code or commit it. |
 | `TELEGRAM_TOKEN` | Bot token from BotFather, used to call the Telegram Bot API. |
 | `TELEGRAM_SECRET` | Shared secret Telegram sends as `X-Telegram-Bot-Api-Secret-Token`; the webhook route verifies it. |
 | `APP_URL` | Canonical public URL of the deployment (e.g. `https://<project>.vercel.app`), used to register the webhook. |
@@ -40,6 +42,48 @@ An environment override is still supported and is read at request time, so
 updating fallback data does not require a redeploy. The copy bundled into
 `public/data` by `bun run sync:data` is the last resort when a remote read
 fails; it is not the live source of truth.
+
+## Telegram subscriber store (Supabase)
+
+Only the Telegram subscriber store needs a database. Create a free Supabase
+project and run `supabase/schema.sql` in its SQL editor. The `subscribers`
+table has this schema:
+
+```sql
+create table subscribers (
+  chat_id text primary key,
+  lat numeric(5,2),
+  lon numeric(6,2),
+  consent bool,
+  last_class int,
+  last_alert_ts timestamptz,
+  current_label text,
+  data_date text,
+  created_at timestamptz default now()
+);
+```
+
+Enable RLS; only the service role key may write subscribers. Access is through
+REST/PostgREST with plain fetch/requests, not a new SDK dependency. Copy
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` into both the Vercel environment
+and the data repo's GitHub Actions secrets. The service role key is secret,
+server-side only, never browser-exposed or committed.
+
+LGPD rules are unchanged: round coordinates to two decimal places, record
+the consent flag, and delete the subscriber row on `/parar`.
+
+## Free-tier limits
+
+All runtime services must stay on free tiers; no paid plan is required.
+
+- GEE: non-commercial access.
+- GitHub Actions: public-repo workflows.
+- `raw.githubusercontent.com`: fallback small files only; no large COGs.
+- Vercel Hobby: set API routes' `maxDuration` within the plan's function
+  duration limit.
+- Supabase free: projects pause after seven idle days; the three-hourly
+  alert job touching the subscriber table keeps it active.
+- Earthdata and Telegram Bot API: use their free access.
 
 ## Telegram webhook
 
@@ -92,4 +136,6 @@ until they exist.
 
 - Vercel project created with the env vars above.
 - `GEE_PROJECT` registered for the Earth Engine API with a service account.
-- Telegram bot token from BotFather (+ Firestore if persistence is enabled).
+- Telegram bot token from BotFather.
+- Free Supabase project with `supabase/schema.sql` applied, RLS enabled, and
+  URL + service role key configured in Vercel and GitHub Actions secrets.
