@@ -95,6 +95,10 @@
   unit (IBGE / UFRGS) — `sync:data` pulled them in and they committed with
   the rest (real contract data beats mocks; landslide_catalog is ~3.5 MB).
   `rs_2024` products map was updated to point at them instead of null.
+- L8 SCHEMA amend (second commit c00aeb0): `ManifestLayer.asset?: string|null`
+  added to types.ts; app-contract.md layers intro documents it (full GEE
+  asset id → live path via `/api/tiles`, png/cog static fallback);
+  `asset: null` exercised on now/ layers + first layer of each replay node.
 
 ## Deviations to flag
 - `src/lib/contract.test.ts`: one-line edit — the swot product path
