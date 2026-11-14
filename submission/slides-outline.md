@@ -33,8 +33,9 @@
 
 ## Slide 5 — Did it work?
 - WA Dec 2025 replay vs NISAR GCOV reference: **IoU 0.71, F1 0.83** over **41.6 km²** confirmed flooded
-- Early warning: **X h median lead time (placeholder — real figure lands with validation), 87% of zones warned before the event**
-- RS replay (no radar — event predates NISAR; flood metrics vs OPERA/optical reference): IoU 0.64, F1 0.78, X h lead (placeholder), 81% warned
+- Early warning: "In replay, using only data available at the time, the index crossed Critical a median of X h (IQR A-B h) before mapped landslides (n = N)" — P% of zones warned before the event
+- and **D h before the first official warning** (placeholder — sourced timestamp pending)
+- RS replay (no radar — event predates NISAR; flood metrics vs OPERA/optical reference): IoU 0.64, F1 0.78, median X h (IQR A-B h, n = N), P% warned
 - **Optical saw only 3–6% of the scene in both events (94–97% cloud) — that is why radar**
 - *Visual:* Did we get it right? tab screenshot next to a small metrics table for both cases
 
