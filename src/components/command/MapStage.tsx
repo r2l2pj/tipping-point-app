@@ -16,6 +16,7 @@ import { layerStateFor, overlaysFor } from "./model/layerRegistry";
 import type { ComparePair } from "./model/radar";
 import { assetUrl } from "@/lib/layers";
 import { caseDirOf } from "./model/lazy";
+import { preloadFrames } from "./model/preload";
 import { frameFor, mapCaption, type Step } from "./model/steps";
 import type { CcBundle } from "./model/types";
 import type { Action, ScreenState } from "./state";
@@ -77,15 +78,7 @@ export default function MapStage({
       const url = assetUrl(caseDirOf(bundle), png);
       if (url) urls.add(url);
     }
-    const images = [...urls].map((url) => {
-      const img = new Image();
-      img.decoding = "async";
-      img.src = url;
-      return img;
-    });
-    return () => {
-      for (const img of images) img.src = "";
-    };
+    return preloadFrames(urls);
   }, [bundle, steps, state.hazard]);
 
   const pins = useMemo(() => pinAreas(areas), [areas]);
