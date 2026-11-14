@@ -1,5 +1,7 @@
 // "Replay check" rows and the evidence sections (validation and impact
 // content of the old tabs). Every metric read goes through metricsView.
+import { count } from "@/lib/contract";
+import type { DayPoint } from "@/lib/types";
 import { availability, missingText, nullReason } from "./availability";
 import { finite, fmtKm2, fmtPct, fmtPeople, fmtScore } from "./format";
 import { floodLabels, swathLine } from "./radar";
@@ -175,8 +177,11 @@ function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
   };
 }
 
-export function evidence(bundle: CcBundle): Evidence {
+// `day`: the selected timeline day. People in critical areas follow it when
+// the series carries a per-day count (same rule as the tile).
+export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
   const m = (bundle.metricsView ?? {}) as M;
+  const peopleOfDay = bundle.metricsView ? count(day?.people_critical) : undefined;
   const cloud = m.cloud_pct;
   return {
     hasMetrics: !!bundle.metricsView,
@@ -201,7 +206,9 @@ export function evidence(bundle: CcBundle): Evidence {
       m.feature_importance && typeof m.feature_importance === "object"
         ? (m.feature_importance as Record<string, number>) : undefined,
     impactStats: [
-      stat(bundle, "People in critical areas", "people_critical", fmtPeople),
+      peopleOfDay !== undefined
+        ? { label: "People in critical areas", value: fmtPeople(peopleOfDay), missing: false }
+        : stat(bundle, "People in critical areas", "people_critical", fmtPeople),
       stat(bundle, "People flooded", "people_flooded", fmtPeople),
       stat(bundle, "Flooded area", "flooded_km2", fmtKm2),
       stat(bundle, "Night-light drop", "night_light_drop_pct", fmtPct),

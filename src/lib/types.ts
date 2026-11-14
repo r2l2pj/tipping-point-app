@@ -112,6 +112,12 @@ export interface DayPoint {
   smap: number; // 0–1
   tpi: number; // 0–1
   river_m?: number | null;
+  // Per-day AOI totals above the TPI critical cut (pipeline join; may
+  // carry raster fill values — read through contract.count()).
+  critical_km2?: number;
+  critical_slide_km2?: number;
+  critical_flood_km2?: number;
+  people_critical?: number;
 }
 
 export interface SeriesDaily {
@@ -129,7 +135,11 @@ export interface PriorityZone {
   class: "Low" | "Moderate" | "High" | "Critical";
   hazard: string;
   area_km2: number;
-  people: number;
+  // null when the GPW population join is absent from the pipeline output.
+  people: number | null;
+  // Label anchor derived client-side (zoneLabelPoint) — the list uses it
+  // for click-to-zoom; absent when the feature has no finite anchor.
+  at?: [number, number];
 }
 
 export type AlertLevel = "watch" | "warning" | "emergency";

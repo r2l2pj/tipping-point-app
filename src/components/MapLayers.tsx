@@ -27,6 +27,7 @@ import {
   overlayPlan,
   pointInPolygons,
   rankedZonePoints,
+  zoneLabelPoint,
   resolvePixelValues,
   safeImageUpdate,
   type PixelValues,
@@ -74,6 +75,7 @@ const SRC = {
   catalog: "tp-catalog",
   places: "tp-places",
   zones: "tp-zones",
+  zonePins: "tp-zone-pins",
 };
 
 // Doc layer order (bottom -> top): basemap > hillshade > TPI/forecast >
@@ -101,6 +103,8 @@ const LYR = {
   zonesLine: "tp-zones-line",
   muni: "tp-muni-line",
   catalog: "tp-catalog-circle",
+  zoneDot: "tp-zone-dot",
+  zoneNum: "tp-zone-num",
   cityLabel: "tp-city-label",
   riverLabel: "tp-river-label",
 };
@@ -134,7 +138,6 @@ export function useMapLayers(
   // Additive (Command Center): without it the hook behaves as before.
   options?: MapLayerOptions
 ) {
-  const markers = useRef<Marker[]>([]);
   const fcastMarker = useRef<Marker | null>(null);
   const clickSeq = useRef(0);
   const state = useRef<{
@@ -204,6 +207,7 @@ export function useMapLayers(
     map.addSource(SRC.muni, { type: "geojson", data: EMPTY });
     map.addSource(SRC.catalog, { type: "geojson", data: EMPTY });
     map.addSource(SRC.places, { type: "geojson", data: bundle?.places ?? EMPTY });
+    map.addSource(SRC.zonePins, { type: "geojson", data: EMPTY });
 
     const layers = [
       { id: LYR.hillshade, type: "hillshade", source: SRC.dem,
@@ -257,6 +261,29 @@ export function useMapLayers(
           "circle-stroke-width": 1,
         },
         layout: { visibility: "none" } },
+      // Priority-zone pins: compact numbered dots — rank only; the side
+      // list carries details and a click opens the full card as a popup.
+      // Text collision hides crowded numbers (pins stay clickable).
+      { id: LYR.zoneDot, type: "circle", source: SRC.zonePins,
+        paint: {
+          // Bright pins — the dark red class color reads as invisible
+          // against the near-black basemap.
+          "circle-radius": 9,
+          "circle-color": ["match", ["get", "class"],
+            "Critical", "#EF4444", "#FB923C"],
+          "circle-stroke-color": "#FFFFFF",
+          "circle-stroke-width": 1.5,
+        },
+        layout: {} },
+      { id: LYR.zoneNum, type: "symbol", source: SRC.zonePins,
+        paint: { "text-color": "#FFFFFF" },
+        layout: {
+          "text-field": ["to-string", ["get", "rank"]],
+          "text-size": 9,
+          "text-font": ["Open Sans Bold"],
+          "text-allow-overlap": false,
+          "text-ignore-placement": false,
+        } },
       { id: LYR.cityLabel, type: "symbol", source: SRC.places,
         paint: { "text-color": "#E8EAED", "text-halo-color": "#000000", "text-halo-width": 1.2 },
         layout: {
@@ -573,33 +600,33 @@ export function useMapLayers(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey]);
 
-  // Priority-zone HTML markers — top 10 by rank, anchored at the polygon
-  // label point (real files are Polygons, not Points). The full set paints
-  // via the tp-zones fill/line layers above.
+  // Priority-zone pins — top 20 by rank (matches the side list), anchored
+  // at the polygon label point (real files are Polygons, not Points).
+  // Compact numbered dots render as native layers so collisions declutter
+  // instead of piling up; click opens the zone card as a popup.
   useEffect(() => {
-    if (!map || !zoneMarkers) return;
-    markers.current = rankedZonePoints(bundle?.zones?.features).map(
-      ({ zone: p, at }) => {
-        const el = document.createElement("div");
-        el.className = "tp-zone-marker";
-        el.innerHTML = `
-        <div class="tp-zone-card">
-          <div class="tp-zone-head">
-            <span class="tp-zone-name">${p.name}</span>
-            <span class="tp-zone-badge">${p.class.toUpperCase()}</span>
-          </div>
-          <div class="tp-zone-sub">${p.hazard}</div>
-          <div class="tp-zone-sub">TPI ${p.tpi.toFixed(2)}</div>
-        </div>`;
-        return new Marker({ element: el, anchor: "bottom" })
-          .setLngLat(at)
-          .addTo(map);
-      }
-    );
-    return () => {
-      markers.current.forEach((m) => m.remove());
-      markers.current = [];
-    };
+    if (!map) return;
+    const src = map.getSource(SRC.zonePins) as
+      | { setData?: (d: GeoJSON.FeatureCollection) => void }
+      | undefined;
+    src?.setData?.({
+      type: "FeatureCollection",
+      // options.zoneMarkers === false: the caller draws its own pins.
+      features: (zoneMarkers ? rankedZonePoints(bundle?.zones?.features, 20) : []).map(
+        ({ zone: p, at }) => ({
+          type: "Feature" as const,
+          geometry: { type: "Point" as const, coordinates: at },
+          properties: {
+            rank: p.rank,
+            name: p.name,
+            class: p.class,
+            hazard: p.hazard,
+            tpi: p.tpi,
+            area_km2: p.area_km2,
+          },
+        })
+      ),
+    });
   }, [map, bundle, zoneMarkers]);
 
   // Click on a TPI frame -> popup with place name, TPI class, R/S/T values
@@ -612,6 +639,29 @@ export function useMapLayers(
       map.getLayer(id) &&
       map.getLayoutProperty(id, "visibility") === "visible";
     const onClick = (e: MapMouseEvent) => {
+      // Zone pins win over the raster read — the pin is the click target.
+      const pinHits = map.queryRenderedFeatures(e.point, {
+        layers: [LYR.zoneDot, LYR.zoneNum].filter((l) => map.getLayer(l)),
+      });
+      const zp = pinHits[0]?.properties as Record<string, unknown> | undefined;
+      if (zp) {
+        popup
+          .setLngLat(e.lngLat)
+          .setHTML(
+            `<div class="tp-popup-body">` +
+            `<strong>#${zp.rank} ${zp.name}</strong> ` +
+            `<span>${String(zp.class ?? "").toUpperCase()}</span><br/>` +
+            `${zp.hazard ?? ""} · TPI ${
+              typeof zp.tpi === "number" ? zp.tpi.toFixed(2) : "—"
+            }` +
+            (typeof zp.area_km2 === "number"
+              ? ` · ${zp.area_km2.toFixed(1)} km²`
+              : "") +
+            `</div>`
+          )
+          .addTo(map);
+        return;
+      }
       const {
         bundle: b,
         day: d,
@@ -688,8 +738,14 @@ export function useMapLayers(
 }
 
 function zoneProps(bundle: CaseBundle): PriorityZone[] {
+  // One anchor derivation for both the pins and the side list (click-to-
+  // zoom targets the same point). Zones without a finite anchor still
+  // list — they just can't be zoomed to.
   return (bundle?.zones?.features ?? [])
-    .map((f) => f.properties as PriorityZone)
+    .map((f) => ({
+      ...(f.properties as PriorityZone),
+      at: zoneLabelPoint(f) ?? undefined,
+    }))
     .sort((a, b) => a.rank - b.rank);
 }
 

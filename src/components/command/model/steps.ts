@@ -95,7 +95,9 @@ export interface StepMark {
 export function stepMarks(bundle: CcBundle, steps: Step[]): StepMark[] {
   const marks: StepMark[] = [];
   const threshold = thresholdFor(bundle);
-  const firstCritical = steps.findIndex((s) => s.day && reaches(s.day.tpi, threshold));
+  const firstCritical = steps.findIndex(
+    (s) => s.day && typeof s.day.tpi === "number" && reaches(s.day.tpi, threshold)
+  );
   if (firstCritical >= 0) marks.push({ index: firstCritical, label: "first Critical", color: "amber" });
   const m = bundle.metricsView as Record<string, unknown> | undefined;
   const anchor = m?.damage_anchor;

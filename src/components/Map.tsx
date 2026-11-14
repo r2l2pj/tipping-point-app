@@ -59,6 +59,8 @@ export default function Map({
     map.addControl(new ScaleControl({ unit: "metric" }), "bottom-left");
     map.on("load", () => {
       mapRef.current = map;
+      // Debug/introspection handle — lets headless QA inspect layer state.
+      (window as unknown as { __map?: MapInstance }).__map = map;
       if (bounds) fit(map, bounds);
       ready.current?.(map);
     });

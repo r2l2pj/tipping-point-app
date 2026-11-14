@@ -31,6 +31,10 @@ describe("initial state", () => {
     expect(initialState(cases, "rs_2024")).toMatchObject({ activeId: "rs_2024", lastReplayId: "rs_2024", dayIndex: 1 });
     expect(initialState(cases, "wa-2025-12").activeId).toBe("wa_2025");
     expect(initialState(cases, "unknown").activeId).toBe("now");
+    // ?day=<offset> picks the step with that offset; unknown falls back.
+    expect(initialState(cases, "wa_2025", -1).dayIndex).toBe(1);
+    expect(initialState(cases, "wa_2025", 99).dayIndex).toBe(2);
+    expect(initialState(cases, "wa_2025", NaN).dayIndex).toBe(2);
   });
 });
 

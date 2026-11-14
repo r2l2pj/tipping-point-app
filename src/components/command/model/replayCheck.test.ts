@@ -76,6 +76,13 @@ describe("evidence", () => {
     expect(lt.note).toContain("IMERG Early ~4 h");
   });
 
+  test("people in critical areas follow the selected day", () => {
+    const day = { date: "2025-12-12", offset: 2, kind: "observed" as const, imerg_mm: 1, smap: 0.5, tpi: 0.9, people_critical: 5300 };
+    const b = bundle({ metricsView: mv({ people_critical: 8400 }) });
+    expect(evidence(b, day).impactStats[0].value).toBe("5,300");
+    expect(evidence(b).impactStats[0].value).toBe("8,400");
+  });
+
   test("missing impact values read 'not published yet'", () => {
     const e = evidence(bundle({ metricsView: mv({ flooded_km2: 41.6 }) }));
     expect(e.impactStats.map((s) => s.value)).toEqual([

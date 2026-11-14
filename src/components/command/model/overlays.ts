@@ -12,7 +12,7 @@ export interface MapOverlays {
 }
 
 export interface MapLayerOptions {
-  // false: do not create the old HTML zone markers.
+  // false: do not draw the hook's own zone pins (and their popup).
   zoneMarkers?: boolean;
   // When given, the TPI frame is chosen by this date and not by
   // bundle.series.days[dayIndex] (cases without a series).

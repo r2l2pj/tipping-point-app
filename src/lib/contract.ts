@@ -83,6 +83,11 @@ export interface MetricsV4 {
   hand_best_radius_m?: number;
   people_critical?: number;
   people_flooded?: number;
+  // Total AOI area above the TPI critical cut, and the day it refers to
+  // (per-day series may replace the scalar — components must label the
+  // date when it differs from the selected day).
+  critical_km2?: number;
+  critical_km2_date?: string;
   flooded_km2?: number;
   flood_source?: FloodSource;
   night_light_drop_pct?: number;
@@ -134,6 +139,14 @@ const pct = (v: unknown): number | undefined => {
   return n === undefined ? undefined : n >= 1 ? n / 100 : n;
 };
 
+// Head counts: a raster join can leak fill values (~-2.3e38) or negatives;
+// anything below zero or beyond a plausible world population is not data —
+// undefined -> the card renders pending instead of a garbage number.
+export const count = (v: unknown): number | undefined => {
+  const n = num(v);
+  return n === undefined || n < 0 || n > 8e9 ? undefined : n;
+};
+
 const LEGACY_SECTIONS = ["flood", "model", "alert", "cloud", "impact"] as const;
 
 const section = (raw: Record<string, unknown>, key: string) =>
@@ -173,6 +186,8 @@ export function toMetricsView(
   }
 
   for (const k of PCT_KEYS) view[k] = pct(view[k]);
+  view.people_critical = count(view.people_critical);
+  view.people_flooded = count(view.people_flooded);
   return view;
 }
 

@@ -75,6 +75,14 @@ export function statusChip(
       sentence: "No daily series is published for this event.",
     };
   }
+  // A day without a TPI value is a gap, never a zero.
+  if (!finite(day.tpi)) {
+    return {
+      kind: "no-data",
+      label: "No data for this day",
+      sentence: `The series has no TPI value for ${fmtDate(day.date)}.`,
+    };
+  }
   const threshold = thresholdFor(bundle);
   const line = valueLine(day.tpi, threshold, day.date);
   if (reaches(day.tpi, threshold)) {
@@ -85,7 +93,7 @@ export function statusChip(
   // The next day that reaches the threshold. Only a forecast day makes a
   // forecast; an observed day ahead in a replay is not a forecast.
   const later = steps.find(
-    (s) => s.index > dayIndex && s.day && reaches(s.day.tpi, threshold)
+    (s) => s.index > dayIndex && s.day && finite(s.day.tpi) && reaches(s.day.tpi, threshold)
   );
   if (later?.forecast) {
     return {

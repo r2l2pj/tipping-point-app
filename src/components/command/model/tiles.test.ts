@@ -71,6 +71,22 @@ describe("tiles", () => {
     expect(off).toMatchObject({ dimmed: true, value: "10.0 km²" });
   });
 
+  test("the value of the selected day wins, then the metrics scalar with its date", () => {
+    const b = bundle({ zones: zones([zone(1)]), metricsView: { critical_km2: 900, critical_km2_date: "2025-12-10", people_critical: 8400 } });
+    const day = { date: "2025-12-12", offset: 2, kind: "observed" as const, imerg_mm: 1, smap: 0.5, tpi: 0.9,
+      critical_km2: 120.04, critical_slide_km2: 100, critical_flood_km2: 0.02, people_critical: 5300 };
+    expect(criticalAreaTile(b, "flood", "2025-12-12", day)).toMatchObject({
+      value: "120.0 km²", note: "flood <0.1 km² · landslide 100.0 km²", asOf: "Dec 12, 2025", dimmed: false,
+    });
+    expect(peopleTile(b, "2025-12-12", day)).toMatchObject({ value: "5,300", asOf: "Dec 12, 2025" });
+    const bare = { ...day, critical_km2: undefined, people_critical: -2.3e38 };
+    expect(criticalAreaTile(b, "slide", "2025-12-12", bare)).toMatchObject({
+      value: "900.0 km²", asOf: "Dec 10, 2025", dimmed: true,
+    });
+    // A raster fill value is not a head count.
+    expect(peopleTile(b, "2025-12-12", bare).value).toBe("8,400");
+  });
+
   test("now: values of the summary for the chosen hazard", () => {
     const now = liveBundle({
       updated_at: "2026-11-14T15:00:00Z",

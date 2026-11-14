@@ -62,6 +62,14 @@ describe("status chip (replay)", () => {
   });
 });
 
+describe("a day without a value", () => {
+  test("a null TPI is a gap: no chip result, no mark", () => {
+    const b = bundle({ series: series([null as never, 0.9]) });
+    expect(chip(b, 0).label).toBe("No data for this day");
+    expect(stepMarks(b, stepsFor(b))[0]).toMatchObject({ index: 1, label: "first Critical" });
+  });
+});
+
 describe("pending tokens", () => {
   test("a pending series or pending zones never read as a result", () => {
     const b = bundle({ series: series([0.9]) });

@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Public alerts — Tipping Point" };
 export default function AlertsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ case?: string }>;
+  searchParams: Promise<{ case?: string; day?: string }>;
 }) {
   return <CommandCenterLoader searchParams={searchParams} />;
 }

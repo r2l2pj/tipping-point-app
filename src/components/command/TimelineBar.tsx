@@ -70,7 +70,7 @@ export default function TimelineBar({
                   onClick={() => onSeek(s.index)}
                   aria-pressed={on}
                   aria-label={`${s.top}${s.sub ? `, ${s.sub}` : ""}${s.forecast ? `, ${forecastTag}` : ""}`}
-                  title={`${s.date}${s.day ? ` — TPI ${s.day.tpi.toFixed(2)}` : ""}`}
+                  title={`${s.date}${s.day && typeof s.day.tpi === "number" ? ` — TPI ${s.day.tpi.toFixed(2)}` : ""}`}
                   className="relative flex min-h-[60px] min-w-0 flex-1 flex-col items-center"
                 >
                   {/* Track: solid for observed steps, dashed for forecast. */}

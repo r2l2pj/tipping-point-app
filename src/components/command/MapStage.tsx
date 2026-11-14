@@ -62,7 +62,7 @@ export default function MapStage({
   // Center on the selected area.
   useEffect(() => {
     if (map && selected?.at) {
-      map.flyTo({ center: selected.at, zoom: Math.max(map.getZoom(), 9), duration: 600 });
+      map.flyTo({ center: selected.at, zoom: Math.max(map.getZoom(), 11.5), duration: 1200 });
     }
     // Only a new selection moves the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -216,10 +216,13 @@ export function nearestPlace(
 }
 
 export function fmtKm2(v?: number) {
-  return v == null ? "—" : `${v.toFixed(1)} km²`;
+  if (v == null) return "—";
+  // A sub-0.05 area must not render as "0.0" — the zone exists.
+  if (v > 0 && v < 0.05) return "<0.1 km²";
+  return `${v.toFixed(1)} km²`;
 }
 
-export function fmtPeople(v?: number) {
+export function fmtPeople(v?: number | null) {
   return v == null ? "—" : `${(Math.round(v / 100) * 100).toLocaleString("en-US")}`;
 }
 

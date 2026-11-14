@@ -8,6 +8,10 @@ import { thresholdFor } from "./model/status";
 import type { Step } from "./model/steps";
 import { NOT_PUBLISHED, type CcBundle } from "./model/types";
 
+// A day without a value shows "no data", never 0.
+const cell = (v: unknown, digits: number): string =>
+  typeof v === "number" && Number.isFinite(v) ? v.toFixed(digits) : "no data";
+
 const RAIN = "#2166AC";
 const RAIN_FC = "#9ECAE1";
 const SOIL = "#8C510A";
@@ -91,9 +95,9 @@ export default function RainSoilChart({
                     </button>
                     {s.sub === "EVENT" ? " (event)" : ""}
                   </th>
-                  <td className="px-1 py-px">{s.day!.imerg_mm.toFixed(1)}</td>
-                  <td className="px-1 py-px">{s.day!.smap.toFixed(2)}</td>
-                  <td className="px-1 py-px">{s.day!.tpi.toFixed(2)}</td>
+                  <td className="px-1 py-px">{cell(s.day!.imerg_mm, 1)}</td>
+                  <td className="px-1 py-px">{cell(s.day!.smap, 2)}</td>
+                  <td className="px-1 py-px">{cell(s.day!.tpi, 2)}</td>
                   <td className="px-1 py-px text-left">{s.kind === "observed" ? "observed" : `${s.kind} (${forecastLabel})`}</td>
                 </tr>
               ))}
@@ -138,7 +142,8 @@ export default function RainSoilChart({
                 </Bar>
                 <Line yAxisId="idx" type="monotone" dataKey="smapObs" name="Soil moisture (SMAP)" stroke={SOIL} strokeWidth={2} dot={false} connectNulls={false} />
                 <Line yAxisId="idx" type="monotone" dataKey="smapFc" name="Soil moisture (forecast days)" stroke={SOIL} strokeWidth={2} strokeDasharray="6 5" dot={false} connectNulls={false} legendType="none" />
-                <Line yAxisId="idx" type="monotone" dataKey="tpi" name="TPI (risk index)" stroke={TPI} strokeWidth={2} dot={false} />
+                {/* null is a gap, never a zero. */}
+                <Line yAxisId="idx" type="monotone" dataKey="tpi" name="TPI (risk index)" stroke={TPI} strokeWidth={2} dot={false} connectNulls={false} />
                 <ReferenceLine yAxisId="idx" y={threshold} stroke={TPI} strokeDasharray="5 4" />
                 {typeof series.rain_p95_mm === "number" && (
                   <ReferenceLine yAxisId="rain" y={series.rain_p95_mm} stroke={RAIN} strokeDasharray="3 3" />

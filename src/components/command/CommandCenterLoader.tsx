@@ -37,10 +37,12 @@ function liveRunTime(root: unknown): string | undefined {
 // Loads the case bundles and builds the alert list once, on the server, for
 // both routes (/ and /alerts). The alert list is built here because
 // candidatesToAlerts reads the clock when no issue time is given.
-type Search = Promise<{ case?: string }> | undefined;
+type Search = Promise<{ case?: string; day?: string }> | undefined;
 
 async function Loaded({ searchParams }: { searchParams?: Search }) {
-  const initialCase = (await searchParams)?.case;
+  const search = await searchParams;
+  const initialCase = search?.case;
+  const initialDay = search?.day ? Number(search.day) : undefined;
   const [index, root] = await Promise.all([
     getEventsIndex().catch(() => null),
     getRootManifest().catch(() => undefined),
@@ -77,12 +79,13 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
       botUrl={process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || undefined}
       fontClass={fontClass}
       initialCase={initialCase}
+      initialDay={initialDay}
     />
   );
 }
 
-// `searchParams` carries the `?case=<id|alias>` deep link (judge and demo
-// links): the screen opens on that case instead of Now.
+// `searchParams` carries the `?case=<id|alias>&day=<offset>` deep link (judge
+// and demo links): the screen opens on that case and day instead of Now.
 export default function CommandCenterLoader({ searchParams }: { searchParams?: Search }) {
   return (
     <Suspense

@@ -42,8 +42,9 @@ export const fmtDayShort = (iso: string): string => {
 export const fmtHours = (v: unknown): string =>
   finite(v) ? `${Math.round(v)} h` : NOT_PUBLISHED;
 
+// A sub-0.05 area must not render as "0.0": the zone exists.
 export const fmtKm2 = (v: unknown): string =>
-  finite(v) ? `${v.toFixed(1)} km²` : NOT_PUBLISHED;
+  !finite(v) ? NOT_PUBLISHED : v > 0 && v < 0.05 ? "<0.1 km²" : `${v.toFixed(1)} km²`;
 
 // People are rounded to hundreds, as the app did before.
 export const fmtPeople = (v: unknown): string =>

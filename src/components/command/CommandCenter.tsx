@@ -42,6 +42,8 @@ export interface CommandCenterProps {
   fontClass?: string;
   // `?case=<id|alias>` deep link: the case the screen opens on.
   initialCase?: string;
+  // `?day=<offset>` deep link: day offset from the event day.
+  initialDay?: number;
 }
 
 // Browser clock, minute steps. Undefined on the server and during hydration,
@@ -73,6 +75,7 @@ export function CommandCenterView({
   botUrl,
   fontClass = "",
   initialCase,
+  initialDay,
   view,
   onView,
   nowMs,
@@ -88,7 +91,7 @@ export function CommandCenterView({
     [cases]
   );
   const [state, dispatch] = useReducer(reducer, undefined, () => ({
-    ...initialState(cases, initialCase),
+    ...initialState(cases, initialCase, initialDay),
     ...initial,
   }));
   const [drawer, setDrawer] = useState(false); // Layers drawer, narrow screens
@@ -235,8 +238,8 @@ export function CommandCenterView({
               </StatusBlock>
 
               <Tiles
-                area={criticalAreaTile(bundle, state.hazard, step?.date)}
-                people={peopleTile(bundle, step?.date)}
+                area={criticalAreaTile(bundle, state.hazard, step?.date, step?.day)}
+                people={peopleTile(bundle, step?.date, step?.day)}
               />
               {classesKm2.length > 0 && (
                 <dl className="grid grid-cols-2 gap-x-4 text-xs text-cc-muted" aria-label="Area by class">
@@ -286,7 +289,7 @@ export function CommandCenterView({
                   onToggleDetails={() => dispatch({ type: "toggleDetails" })}
                 >
                   <EvidenceDetails
-                    evidence={evidence(bundle)}
+                    evidence={evidence(bundle, step?.day)}
                     swot={bundle.swot}
                     evidenceRows={rows.filter((r) => r.group === "Replay evidence")}
                     nightLights={nightLights}

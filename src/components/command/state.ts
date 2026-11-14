@@ -63,10 +63,20 @@ const hazardFor = (bundle: CcBundle | undefined, current: Hazard): Hazard => {
   return caseHasHazard(bundle, other) ? other : current;
 };
 
+const linkedDay = (bundle: CcBundle | undefined, offset?: number): number | undefined => {
+  if (offset === undefined || !Number.isFinite(offset)) return undefined;
+  const i = stepsFor(bundle).findIndex((s) => s.offset === offset);
+  return i >= 0 ? i : undefined;
+};
+
 // The screen opens on Now when a live case is loaded, else on the first case.
 // `initialCase` (the `?case=<id|alias>` deep link of the old screen) opens
 // that case when it is loaded.
-export function initialState(cases: readonly CcBundle[], initialCase?: string): ScreenState {
+export function initialState(
+  cases: readonly CcBundle[],
+  initialCase?: string,
+  initialDay?: number // `?day=<offset>`: day offset from the event day
+): ScreenState {
   const want = initialCase ? canonicalCaseId(initialCase) : undefined;
   const linked = initialCase
     ? cases.find((c) =>
@@ -78,7 +88,7 @@ export function initialState(cases: readonly CcBundle[], initialCase?: string): 
   return {
     activeId: first?.id ?? "",
     lastReplayId: first?.mode === "replay" ? first.id : null,
-    dayIndex: defaultStepIndex(stepsFor(first)),
+    dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first)),
     playing: false,
     hazard,
     layers: first ? keepAvailable(first, DEFAULT_LAYERS, hazard) : [],
