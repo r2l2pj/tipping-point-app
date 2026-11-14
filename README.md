@@ -24,6 +24,8 @@ bun run dev          # predev syncs ../tipping-point-data/data -> public/data
 | `src/lib/tpi.ts` | TPI classes/palette + `mockTpiGrid` synthetic raster stand-in |
 | `src/components/Dashboard.tsx` | `/` ops dashboard (replay cases + `now/` live mode) |
 | `src/components/Map.tsx` + `MapLayers.tsx` | MapLibre dark basemap + v3 layer stack (hillshade → TPI → water → flood → landslide candidates → labels) |
+| `src/components/tabs/` | side-panel tabs ALERT · RADAR · Did we get it right? · IMPACT (metrics read via `metricsView`) |
+| `src/lib/layers.ts` | layer stack per tab and day, in doc order |
 | `src/app/alerts` | public alert feed — same message format as the Telegram bot |
 | `src/app/api/events` | events index + per-event manifest |
 | `src/app/api/ee/status` | live-GEE health check (service account) |

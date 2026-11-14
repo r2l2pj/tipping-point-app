@@ -26,20 +26,20 @@
 ## Slide 4 — The demo
 - Ops dashboard `/`: **EVENT REPLAY · DEMO** button, timeline D-5 → EVENT, Play control
 - **TIPPING POINT REACHED** banner + ranked priority zones (TPI ≥ 0.60)
-- Side tabs ALERT / RADAR / VALIDATION / IMPACT; "Confirm with NISAR radar →"
+- Side tabs ALERT / RADAR / Did we get it right? / IMPACT; "Confirm with NISAR radar →"
 - Public feed `/alerts`: Civil-Defense-style alert cards
-- Replay runs on a declared **perfect forecast** (observed IMERG as D+1..D+3), labeled FORECAST on every frame
-- *Visual:* 2–3 real screenshots — banner over the heated Taquari valley map, RADAR before/after swipe, /alerts card
+- Replay runs on a declared **perfect forecast** (observed IMERG as D+1..D+3); forecast frames carry a source label
+- *Visual:* 2–3 real screenshots — banner over the heated Taquari valley map, RADAR before/after swipe (needs U5), /alerts card
 
 ## Slide 5 — Did it work?
 - WA Dec 2025 replay vs NISAR GCOV reference: **IoU 0.71, F1 0.83** over **41.6 km²** confirmed flooded
 - Early warning: **X h median lead time (placeholder — real figure lands with validation), 87% of zones warned before the event**
 - RS replay (no radar — event predates NISAR; flood metrics vs OPERA/optical reference): IoU 0.64, F1 0.78, X h lead (placeholder), 81% warned
-- **94–97% cloud cover** during both events — that's why radar
-- *Visual:* VALIDATION tab screenshot next to a small metrics table for both cases
+- **Optical saw only 3–6% of the scene in both events (94–97% cloud) — that is why radar**
+- *Visual:* Did we get it right? tab screenshot next to a small metrics table for both cases
 
 ## Slide 6 — Impact + honest limitations
-- Impact numbers the demo reports: 8,400 people exposed + 18% lights-out (WA); 41,200 exposed + 31% lights-out (RS)
+- Impact numbers the demo reports: 8,400 people in critical areas + night-light drop 18% (WA); 41,200 + 31% (RS)
 - Limitations: thresholds calibrated on a single event; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days
 - Demo is a replay, not live ops; forecast in replay is a declared "perfect forecast"
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event
