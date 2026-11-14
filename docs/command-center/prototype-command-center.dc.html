@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tipping Point command center</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+button:focus-visible,select:focus-visible{outline:3px solid #2f8fdd;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; background: #f4f5f1; color: #16242b; font-family: Inter, system-ui, sans-serif; font-size: 14px; line-height: 1.4">
+
+  <header style="position: relative; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 9px 20px; background: #fbfbf9; border-bottom: 1px solid #dfe3dc">
+    <svg width="38" height="24" viewBox="0 0 34 22" fill="none" stroke="#17473f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 19l8-12 5 7 4-6 7 11"></path><path d="M20 19l5-7 7 7"></path></svg>
+    <span style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 0.04em">TIPPING POINT</span>
+    <span style="color: #44535a; font-size: 15px; border-left: 1px solid #cfd6cf; padding-left: 14px">Rain warns. Radar confirms.</span>
+    <div style="flex-grow: 1"></div>
+
+    <div role="group" aria-label="View" style="display: inline-flex; padding: 3px; background: #ffffff; border: 1px solid #cfd6cf; border-radius: 999px">
+      <sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+        <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.on}}" style="display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; background: {{m.bg}}; color: {{m.fg}}; border: 0; border-radius: 999px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{m.icon}}"></path></svg>
+          {{m.label}}
+        </button>
+      </sc-for>
+    </div>
+
+    <div role="group" aria-label="Time" style="display: inline-flex; padding: 3px; background: #ffffff; border: 1px solid #cfd6cf; border-radius: 999px">
+      <sc-for list="{{times}}" as="m" hint-placeholder-count="2">
+        <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.on}}" style="display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 18px; background: {{m.bg}}; color: {{m.fg}}; border: 0; border-radius: 999px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: {{m.iconDisplay}}"><path d="M7 5v14l12-7z"></path></svg>
+          {{m.label}}
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 6px; height: 42px; box-sizing: border-box; padding: 0 6px 0 12px; background: #ffffff; border: 1px solid #cfd6cf; border-radius: 10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#16242b" stroke="#16242b" stroke-width="1" stroke-linejoin="round" aria-hidden="true"><path fill-rule="evenodd" d="M12 21s6.500-6 6.500-11a6.500 6.500 0 10-13 0c0 5 6.500 11 6.500 11zM12 12.300a2.300 2.300 0 100-4.600 2.300 2.300 0 000 4.600z"></path></svg>
+      <sc-if value="{{isNow}}" hint-placeholder-val="{{true}}">
+        <select id="region" aria-label="Region" value="sb" onChange="{{onRegion}}" style="height: 38px; padding: 0 4px; background: #ffffff; color: #16242b; border: 0; font-family: inherit; font-size: 14px; font-weight: 600">
+          <option value="sb">Southern Brazil</option>
+          <option value="x1" disabled>More regions soon</option>
+        </select>
+      </sc-if>
+      <sc-if value="{{isReplay}}" hint-placeholder-val="{{false}}">
+        <select id="event" aria-label="Past event" value="{{ev}}" onChange="{{onEvent}}" style="height: 38px; padding: 0 4px; background: #ffffff; color: #16242b; border: 0; font-family: inherit; font-size: 14px; font-weight: 600">
+          <option value="wa">Washington floods · Dec 2025</option>
+          <option value="rs">Rio Grande do Sul · May 2024</option>
+        </select>
+      </sc-if>
+    </div>
+
+    <div style="position: relative">
+      <button type="button" onClick="{{toggleBell}}" aria-expanded="{{bellOpen}}" aria-label="{{bellAria}}" style="position: relative; width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: #16242b; border: 0; border-radius: 10px; cursor: pointer">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16.500V11a6 6 0 0112 0v5.500l1.500 2h-15zM10 20.500a2.200 2.200 0 004 0"></path></svg>
+        <span aria-hidden="true" style="position: absolute; right: 7px; top: 6px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: #e8590c; border: 2px solid #fbfbf9; display: {{bellDot}}"></span>
+      </button>
+      <sc-if value="{{bellOpen}}" hint-placeholder-val="{{false}}">
+        <div style="position: absolute; right: 0; top: 48px; width: 320px; padding: 12px 14px; background: #ffffff; border: 1px solid #cfd6cf; border-radius: 12px; box-shadow: 0 10px 28px rgba(22,36,43,0.18)">
+          <div style="font-weight: 600; margin-bottom: 6px">Notifications <span style="font-weight: 400; color: #5f6d73">(sample)</span></div>
+          <sc-for list="{{notes}}" as="n" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid #e9ece6; font-size: 13px">
+              <span style="flex: 0 0 auto; min-width: 62px; text-align: center; padding: 2px 8px; border-radius: 5px; font-size: 12px; font-weight: 600; background: {{n.chipBg}}; color: {{n.chipFg}}; border: {{n.chipBd}}">{{n.cls}}</span>
+              <span>{{n.text}}</span>
+            </div>
+          </sc-for>
+          <div style="padding-top: 7px; border-top: 1px solid #e9ece6; font-size: 12px; color: #5f6d73">{{notesEmpty}}</div>
+        </div>
+      </sc-if>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; padding: 12px 16px 0; flex-grow: 1">
+
+    <sc-if value="{{panelOpen}}" hint-placeholder-val="{{true}}">
+      <aside aria-label="Map layers" style="flex: 1 0 212px; max-width: max(212px, calc((644px - 100%) * 999)); box-sizing: border-box; display: flex; flex-direction: column; padding: 10px 14px; background: #ffffff; border: 1px solid #dfe3dc; border-radius: 12px">
+        <button type="button" onClick="{{toggleLayers}}" aria-expanded="{{layersOpen}}" style="display: flex; align-items: center; gap: 12px; width: 100%; padding: 6px 0 10px; background: transparent; color: #16242b; border: 0; font-family: inherit; font-size: 17px; font-weight: 600; text-align: left; cursor: pointer">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.500l8.500 4.500-8.500 4.500L3.500 8zM3.500 12l8.500 4.500 8.500-4.500M3.500 16l8.500 4.500 8.500-4.500"></path></svg>
+          <span style="flex-grow: 1">Layers</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: {{chevTf}}"><path d="M6 15l6-6 6 6"></path></svg>
+        </button>
+        <sc-if value="{{layersOpen}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column">
+            <sc-for list="{{layerRows}}" as="l" hint-placeholder-count="6">
+              <div style="display: {{l.headDisplay}}; margin-top: 4px; padding: 12px 0 6px; border-top: 1px solid #e9ece6; font-size: 14px; font-weight: 600">{{l.head}}</div>
+              <div style="display: flex; align-items: center; gap: 10px; min-height: 40px; opacity: {{l.op}}">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16242b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="{{l.icon}}"></path></svg>
+                <span style="flex: 1 1 auto; min-width: 0; font-size: 13px; line-height: 1.25">{{l.label}}<span style="display: {{l.subDisplay}}; font-size: 12px; color: #5f6d73">{{l.sub}}</span></span>
+                <button type="button" role="switch" aria-checked="{{l.on}}" aria-disabled="{{l.off}}" aria-label="{{l.aria}}" onClick="{{l.toggle}}" style="flex: 0 0 auto; position: relative; width: 38px; height: 22px; padding: 0; background: {{l.trackBg}}; border: 1.5px solid {{l.trackBd}}; border-radius: 999px; cursor: {{l.cursor}}">
+                  <span aria-hidden="true" style="position: absolute; top: 2px; left: {{l.knobL}}; width: 15px; height: 15px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 0 1px rgba(22,36,43,0.25); transition: left 0.15s ease"></span>
+                </button>
+              </div>
+            </sc-for>
+            <div style="display: {{layerNoteDisplay}}; padding-top: 4px; font-size: 12px; color: #5f6d73">At most two analysis or observation layers at once.</div>
+          </div>
+        </sc-if>
+
+        <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #e9ece6">
+          <div title="Class cuts are strict: above 0.20, 0.40 and 0.60. Low is painted on the map only in the detail zoom." style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; margin-bottom: 8px">TPI - Risk class
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#44535a" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5.500M12 7.500v.3"></path></svg>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 9px; font-size: 13px">
+            <span style="display: inline-flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 22px; height: 16px; box-sizing: border-box; border-radius: 3px; background: #ffffb2; border: 1px solid #cfcf7a"></span>Low (0.00 - 0.20)</span>
+            <span style="display: inline-flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 22px; height: 16px; border-radius: 3px; background: #fecc5c"></span>Moderate (0.20 - 0.40)</span>
+            <span style="display: inline-flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 22px; height: 16px; border-radius: 3px; background: #fd8d3c"></span>High (0.40 - 0.60)</span>
+            <span style="display: inline-flex; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 22px; height: 16px; border-radius: 3px; background: #bd0026"></span>Critical (&gt; 0.60)</span>
+            <span style="display: {{fcLegendDisplay}}; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 22px; height: 16px; border-radius: 3px; background: repeating-linear-gradient(45deg, #fd8d3c 0 3px, #ffe3cc 3px 6px)"></span>Hatched: forecast</span>
+            <span style="display: {{rainLegendDisplay}}; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 22px; height: 16px; box-sizing: border-box; border: 1px solid #9aa7a0; border-radius: 3px; background: linear-gradient(90deg, #e6f1fb, #2f8fdd)"></span>3-day rain, low to P99</span>
+            <span style="display: {{soilLegendDisplay}}; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 22px; height: 16px; box-sizing: border-box; border: 1px solid #9aa7a0; border-radius: 3px; background: linear-gradient(90deg, #e3f7f2, #1fa88f)"></span>Soil moisture, 0 to 1</span>
+            <span style="display: {{radarLegendDisplay}}; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 22px; height: 16px; border-radius: 3px; background: #2166ac"></span>Flood seen by radar</span>
+            <span style="display: {{radarLegendDisplay}}; align-items: center; gap: 10px"><span aria-hidden="true" style="width: 22px; height: 16px; border-radius: 3px; background: #7b3294"></span>Landslide scar (radar)</span>
+          </div>
+        </div>
+      </aside>
+    </sc-if>
+
+    <main style="flex: 3 1 420px; min-width: 0; display: flex">
+      <div style="position: relative; flex: 1 1 auto; min-width: 0; min-height: 400px; border-radius: 12px; overflow: hidden; background: #0d1f26; border: 1px solid #cfd6cf">
+        <div aria-hidden="true" style="aspect-ratio: {{stageAR}}"></div>
+
+        <div style="position: absolute; left: 50%; top: 50%; height: {{stageH}}; aspect-ratio: {{stageAR}}; transform: translate({{stageTx}}, {{stageTy}}); transition: height 0.35s ease, transform 0.35s ease">
+          <div role="img" aria-label="{{mapAria}}" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%">
+            <sc-if value="{{isSb}}" hint-placeholder-val="{{true}}">
+              <img src="/_blob/9d7d4b4e5239808a4487fdda2b57c803" alt="" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover">
+            </sc-if>
+            <sc-if value="{{isWa}}" hint-placeholder-val="{{false}}">
+              <img src="/_blob/deb3191503fe80e8976b4d2943ed2367" alt="" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover">
+            </sc-if>
+            <sc-if value="{{showSwipe}}" hint-placeholder-val="{{false}}">
+              <img src="/_blob/1a613a1bdd64937a458efa41d222370d" alt="" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover">
+            </sc-if>
+            <sc-if value="{{isRs}}" hint-placeholder-val="{{false}}">
+              <img src="/_blob/9d330a25cff112d2d8a005a70da643e5" alt="" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover">
+            </sc-if>
+            <sc-for list="{{blocks}}" as="b" hint-placeholder-count="0">
+              <div style="position: absolute; left: {{b.l}}; top: {{b.t}}; width: {{b.w}}; height: {{b.h}}; background: {{b.bg}}"></div>
+            </sc-for>
+            <div style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; filter: {{cellFilter}}">
+              <sc-for list="{{cells}}" as="c" hint-placeholder-count="0">
+                <div style="position: absolute; left: {{c.l}}; top: {{c.t}}; width: {{c.w}}; height: {{cellH}}; background: {{c.bg}}; background-size: {{c.bs}}; box-shadow: {{c.sh}}"></div>
+              </sc-for>
+            </div>
+          </div>
+
+          <sc-for list="{{states}}" as="p" hint-placeholder-count="3">
+            <span aria-hidden="true" style="position: absolute; left: {{p.left}}; top: {{p.top}}; transform: translate(-50%, -50%); font-family: 'Space Grotesk', Inter, sans-serif; font-size: 24px; font-weight: 600; color: rgba(255,255,255,0.62); text-shadow: 0 1px 3px rgba(0,0,0,0.7); pointer-events: none">{{p.name}}</span>
+          </sc-for>
+          <sc-for list="{{places}}" as="p" hint-placeholder-count="3">
+            <span style="position: absolute; left: {{p.left}}; top: {{p.top}}; display: inline-flex; flex-direction: {{p.dir}}; align-items: center; gap: 7px; transform: {{p.tf}}; font-size: 15px; font-weight: 600; color: #ffffff; text-shadow: 0 1px 3px #000000, 0 0 6px rgba(0,0,0,0.8); white-space: nowrap; pointer-events: none">
+              <span aria-hidden="true" style="width: 9px; height: 9px; box-sizing: border-box; border-radius: 50%; background: #ffffff; border: 2px solid #16242b"></span>{{p.name}}
+            </span>
+          </sc-for>
+          <span style="position: absolute; left: {{riverLeft}}; top: {{riverTop}}; transform: translate(-50%, -50%); font-size: 13px; font-style: italic; color: #bfe3ff; text-shadow: 0 1px 3px #000000; white-space: nowrap; pointer-events: none; display: {{riverDisplay}}">{{riverName}}</span>
+
+          <sc-if value="{{showSwipe}}" hint-placeholder-val="{{false}}">
+            <div aria-hidden="true" style="position: absolute; left: {{splitLeft}}; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: #ffffff; box-shadow: 0 0 0 1px rgba(0,0,0,0.45); pointer-events: none; z-index: 3">
+              <span style="position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; box-sizing: border-box; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #16242b; border-radius: 50%">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16242b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7l-5 5 5 5M15 7l5 5-5 5"></path></svg>
+              </span>
+            </div>
+          </sc-if>
+
+          <sc-for list="{{pins}}" as="z" hint-placeholder-count="3">
+            <button type="button" onClick="{{z.pick}}" aria-pressed="{{z.on}}" aria-label="{{z.aria}}" style="position: absolute; left: {{z.left}}; top: {{z.top}}; z-index: {{z.zi}}; transform: translate(-50%, -50%); width: {{z.size}}; height: {{z.size}}; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: {{z.bg}}; color: {{z.fg}}; border: 2.5px solid #ffffff; border-radius: 50%; box-shadow: {{z.shadow}}; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer">{{z.num}}</button>
+          </sc-for>
+
+          <sc-if value="{{showCallout}}" hint-placeholder-val="{{true}}">
+            <div style="position: absolute; left: {{co.left}}; top: {{co.top}}; width: 0; height: 0; z-index: 4">
+              <div aria-hidden="true" style="position: absolute; left: 0; top: -1px; width: {{co.len}}; height: 2px; background: #ffffff; box-shadow: 0 0 2px rgba(0,0,0,0.6); transform-origin: 0 50%; transform: rotate({{co.rot}})"></div>
+            </div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{showCallout}}" hint-placeholder-val="{{true}}">
+          <div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; container-type: size; pointer-events: none">
+            <div style="position: absolute; left: {{co.cardL}}; top: 8px; bottom: 8px; width: 272px; max-width: calc(100cqw - 16px); display: flex; flex-direction: column; pointer-events: none">
+            <span aria-hidden="true" style="flex: {{co.sp1}}"></span>
+            <div style="flex: 0 1 auto; min-height: 0; overflow-y: auto; pointer-events: auto; box-sizing: border-box; padding: 10px 12px; background: rgba(15,24,26,0.94); color: #ffffff; border: 1.5px solid #ffffff; border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.45)">
+              <div style="display: flex; align-items: flex-start; gap: 10px">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="{{co.iconFg}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto; margin-top: 1px"><path d="M12 3.500l9.500 16.500h-19zM12 10v4.500M12 17.300v.2"></path></svg>
+                <div style="flex: 1 1 auto; min-width: 0">
+                  <div style="display: flex; align-items: flex-start; gap: 8px">
+                    <div style="flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 3px 8px">
+                      <strong style="font-size: 15px">{{co.name}}</strong>
+                      <span style="padding: 1px 8px; border-radius: 5px; font-size: 12px; font-weight: 600; background: {{co.chipBg}}; color: {{co.chipFg}}; border: {{co.chipBd}}">{{co.cls}}</span>
+                    </div>
+                    <button type="button" onClick="{{toggleWhy}}" aria-expanded="{{whyOpen}}" aria-label="{{whyLabel}}" style="flex: 0 0 auto; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: transparent; color: #ffffff; border: 1px solid rgba(255,255,255,0.45); border-radius: 8px; cursor: pointer">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: {{whyTf}}"><path d="M9 6l6 6-6 6"></path></svg>
+                    </button>
+                  </div>
+                  <div style="font-size: 13px; color: #e7ecea; margin-top: 2px">{{co.line}}</div>
+                  <div style="font-size: 13px; color: #c9d3d0">{{co.basin}}</div>
+                </div>
+              </div>
+              <sc-if value="{{whyOpen}}" hint-placeholder-val="{{false}}">
+                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.3); font-size: 13px; color: #e7ecea; display: flex; flex-direction: column; gap: 3px">
+                  <span>{{co.scores}}</span>
+                  <span>{{co.formula}}</span>
+                  <span>{{co.inputs}}</span>
+                  <span style="color: #c9d3d0">{{co.dates}}</span>
+                </div>
+              </sc-if>
+            </div>
+            <span aria-hidden="true" style="flex: {{co.sp2}}"></span>
+            </div>
+          </div>
+        </sc-if>
+
+        <div aria-hidden="true" style="position: absolute; left: 14px; top: 12px; height: {{stageH}}; aspect-ratio: {{stageAR}}; pointer-events: none">
+          <div style="position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; color: #ffffff; font-size: 13px; font-weight: 700; text-shadow: 0 1px 3px #000000">
+            N
+            <svg width="20" height="24" viewBox="0 0 20 24" fill="#ffffff" stroke="#16242b" stroke-width="1" stroke-linejoin="round"><path d="M10 1l7 21-7-5-7 5z"></path></svg>
+          </div>
+          <div style="position: absolute; left: 44px; top: 4px; width: {{scaleW}}; color: #ffffff; font-size: 12px; font-weight: 600; text-shadow: 0 1px 3px #000000">
+            <div style="position: relative; height: 16px">
+              <span style="position: absolute; left: 0; transform: translateX(-30%)">0</span>
+              <span style="position: absolute; left: 25%; transform: translateX(-50%)">{{scaleA}}</span>
+              <span style="position: absolute; left: 50%; transform: translateX(-50%)">{{scaleB}}</span>
+              <span style="position: absolute; left: 100%; transform: translateX(-50%); white-space: nowrap">{{scaleC}}</span>
+            </div>
+            <div style="position: relative; height: 8px; box-sizing: border-box; border: 1.5px solid #ffffff; border-top: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.6)">
+              <span style="position: absolute; left: 25%; bottom: 0; width: 1.5px; height: 6px; background: #ffffff"></span>
+              <span style="position: absolute; left: 50%; bottom: 0; width: 1.5px; height: 6px; background: #ffffff"></span>
+            </div>
+          </div>
+        </div>
+
+        <span title="All values on this screen are sample data for the prototype, not results." style="position: absolute; right: 14px; top: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px 5px 12px; background: #ffffff; color: #16242b; border-radius: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.03em; box-shadow: 0 2px 8px rgba(0,0,0,0.35)">DEMO · SAMPLE DATA
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16242b" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5.500M12 7.500v.3"></path></svg>
+        </span>
+
+        <span style="position: absolute; left: 14px; bottom: 12px; display: {{capDisplay}}; max-width: 62%; padding: 5px 11px; background: rgba(255,255,255,0.95); color: #16242b; border: {{capBd}}; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.3)">{{mapCaption}}</span>
+
+        <sc-if value="{{showSwipe}}" hint-placeholder-val="{{false}}">
+          <div style="position: absolute; left: 14px; right: 14px; bottom: 12px; display: flex; align-items: center; gap: 10px; padding: 0 12px; background: rgba(255,255,255,0.96); color: #16242b; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 12px; font-weight: 600">
+            <span style="white-space: nowrap">{{beforeTag}}</span>
+            <input id="swipe" type="range" min="12" max="68" step="1" value="{{split}}" onChange="{{onSplit}}" aria-label="Divider between the radar pass before the event and the pass after it" style="flex: 1 1 auto; min-width: 70px; height: 44px; accent-color: #17473f">
+            <span style="white-space: nowrap">{{afterTag}}</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isSb}}" hint-placeholder-val="{{true}}">
+          <div role="img" aria-label="Locator: the map area inside Brazil" style="position: absolute; right: 66px; bottom: 12px; width: 104px; height: 112px; box-sizing: border-box; padding: 6px; background: rgba(15,24,26,0.82); border: 1.5px solid rgba(255,255,255,0.75); border-radius: 10px; display: {{insetDisplay}}">
+            <svg width="100%" height="100%" viewBox="0 0 100 100" fill="rgba(255,255,255,0.16)" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="{{insetPath}}"></path><rect x="{{insetX}}" y="{{insetY}}" width="{{insetW}}" height="{{insetH}}" fill="rgba(255,255,255,0.35)" stroke="#ffffff" stroke-width="2.4"></rect></svg>
+          </div>
+        </sc-if>
+
+        <div style="position: absolute; right: 14px; top: {{ctlTop}}; bottom: {{ctlBottom}}; display: flex; flex-direction: column; gap: 8px">
+          <button type="button" onClick="{{togglePanel}}" aria-pressed="{{panelOpen}}" aria-label="{{panelLabel}}" title="{{panelLabel}}" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: #ffffff; color: #16242b; border: 0; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.35); cursor: pointer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.500l8.500 4.500-8.500 4.500L3.500 8zM3.500 12l8.500 4.500 8.500-4.500M3.500 16l8.500 4.500 8.500-4.500"></path></svg>
+          </button>
+          <button type="button" onClick="{{zoomReset}}" aria-label="Fit the map to the whole area" title="Fit the map to the whole area" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: #ffffff; color: #16242b; border: 0; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.35); cursor: pointer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="1.2" fill="currentColor"></circle><path d="M12 3v3M12 18v3M3 12h3M18 12h3"></path></svg>
+          </button>
+          <div style="display: flex; flex-direction: column; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.35)">
+            <button type="button" onClick="{{zoomIn}}" aria-label="Zoom in" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: #ffffff; color: {{zoomInFg}}; border: 0; border-bottom: 1px solid #dfe3dc; cursor: pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            </button>
+            <button type="button" onClick="{{zoomOut}}" aria-label="Zoom out" style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: #ffffff; color: {{zoomOutFg}}; border: 0; cursor: pointer">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <aside style="flex: 1 1 440px; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 10px 16px 12px; background: #ffffff; border: 1px solid #dfe3dc; border-radius: 12px">
+
+      <sc-if value="{{isCc}}" hint-placeholder-val="{{true}}">
+        <div>
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px">
+            <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 21px; font-weight: 600; line-height: 1.2">Situation overview</h1>
+            <span title="{{tpTitle}}" style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; background: {{tpBg}}; color: {{tpFg}}; border: 1px solid {{tpBd}}; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: {{tpIconDisplay}}"><path d="M12 3.500L2.500 20h19zM12 10v4.500M12 17.300v.2"></path></svg>{{tpLabel}}
+            </span>
+          </div>
+          <p style="margin: 3px 0 0; font-size: 13px; color: #44535a">{{situation}}</p>
+        </div>
+
+        <div style="display: flex; gap: 10px">
+          <div style="flex: 1 1 0; display: flex; align-items: center; gap: 12px; padding: 5px 12px; border: 1px solid #dfe3dc; border-radius: 10px">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16242b" stroke-width="1.8" stroke-dasharray="3.2 2.6" aria-hidden="true" style="flex: 0 0 auto"><rect x="4" y="4" width="16" height="16" rx="1.5"></rect></svg>
+            <div><div style="font-size: 12px; color: #44535a">Critical area</div><div style="font-size: 21px; font-weight: 600; line-height: 1.15">{{critKm}} km²</div></div>
+          </div>
+          <div style="flex: 1.15 1 0; display: flex; align-items: center; gap: 12px; padding: 5px 12px; border: 1px solid #dfe3dc; border-radius: 10px">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16242b" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="M9 11a3.200 3.200 0 100-6.400A3.200 3.200 0 009 11zM3 19c0-3 2.700-5 6-5s6 2 6 5M16 5.200a3 3 0 010 5.600M17.500 14.300c2.200.6 3.500 2.300 3.500 4.700"></path></svg>
+            <div><div style="font-size: 12px; color: #44535a">People potentially exposed</div><div style="font-size: 21px; font-weight: 600; line-height: 1.15">{{critPeople}}</div></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 2px">
+            <h2 style="margin: 0; flex-grow: 1; font-size: 16px; font-weight: 600">Priority areas</h2>
+            <button type="button" onClick="{{toggleAll}}" aria-expanded="{{allOpen}}" style="display: {{allDisplay}}; align-items: center; gap: 6px; padding: 4px 2px; background: transparent; color: #17473f; border: 0; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer">{{allLabel}}
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+            </button>
+          </div>
+          <sc-for list="{{rows}}" as="z" hint-placeholder-count="3">
+            <button type="button" onClick="{{z.pick}}" aria-pressed="{{z.on}}" aria-label="{{z.aria}}" style="display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; row-gap: 2px; width: 100%; min-height: {{rowH}}; padding: 2px 6px; box-sizing: border-box; background: {{z.rowBg}}; color: #16242b; border: 0; border-top: 1px solid #e9ece6; border-radius: 0; font-family: inherit; font-size: 14px; text-align: left; cursor: {{z.cursor}}">
+              <span style="width: 24px; height: {{numH}}; display: inline-flex; align-items: center; justify-content: center; border-radius: 5px; background: {{z.numBg}}; color: {{z.numFg}}; border: {{z.numBd}}; box-sizing: border-box; font-size: 13px; font-weight: 700">{{z.num}}</span>
+              <span style="flex: 1 1 110px; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{z.name}}</span>
+              <span style="flex: 0 0 auto; margin-left: auto; display: grid; grid-template-columns: 76px 70px 76px; align-items: center; column-gap: 10px">
+              <span style="text-align: center; padding: 2px 0; border-radius: 5px; font-size: 13px; font-weight: 600; background: {{z.chipBg}}; color: {{z.chipFg}}; border: {{z.chipBd}}; box-sizing: border-box">{{z.cls}}</span>
+              <span style="white-space: nowrap">TPI {{z.tpi}}</span>
+              <span style="display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; white-space: nowrap">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#44535a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11a3.200 3.200 0 100-6.400A3.200 3.200 0 009 11zM3 19c0-3 2.700-5 6-5s6 2 6 5M16 5.200a3 3 0 010 5.600M17.500 14.300c2.200.6 3.500 2.300 3.500 4.700"></path></svg>{{z.people}}
+              </span>
+              </span>
+            </button>
+          </sc-for>
+          <div style="display: {{rowsNoteDisplay}}; padding-top: 4px; border-top: 1px solid #e9ece6; font-size: 12px; color: #5f6d73">{{rowsNote}}</div>
+        </div>
+
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <h2 title="{{chartInfo}}" style="margin: 0; flex-grow: 1; font-size: 15px; font-weight: 600">Rainfall and antecedent soil moisture <span style="font-weight: 400; color: #44535a">({{chartScope}})</span></h2>
+            <button type="button" onClick="{{toggleTable}}" aria-pressed="{{tableOn}}" style="padding: 2px 9px; background: #ffffff; color: #16242b; border: 1px solid #cfd6cf; border-radius: 6px; font-family: inherit; font-size: 12px; cursor: pointer">{{tableLabel}}</button>
+          </div>
+          <sc-if value="{{chartOn}}" hint-placeholder-val="{{true}}">
+            <div style="container-type: inline-size">
+            <div role="img" aria-label="{{chartAria}}" style="display: flex; align-items: stretch; gap: 4px; margin-top: 9px">
+              <span aria-hidden="true" style="writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; font-size: 12px; color: #44535a">Rainfall (mm)</span>
+              <div aria-hidden="true" style="position: relative; width: 24px; height: {{plotH}}; font-size: 12px; color: #44535a">
+                <sc-for list="{{yTicks}}" as="y" hint-placeholder-count="6"><span style="position: absolute; right: 2px; top: {{y.top}}; transform: translateY(-50%)">{{y.l}}</span></sc-for>
+              </div>
+              <div style="position: relative; flex: 1 1 auto; min-width: 0">
+                <div style="position: relative; height: {{plotH}}; border-left: 1px solid #9aa7a0; border-right: 1px solid #9aa7a0; border-bottom: 1px solid #9aa7a0">
+                  <sc-for list="{{yTicks}}" as="y" hint-placeholder-count="6"><span aria-hidden="true" style="position: absolute; left: 0; right: 0; top: {{y.top}}; height: 1px; background: #edf0ea"></span></sc-for>
+                  <span aria-hidden="true" style="position: absolute; top: 0; bottom: 0; left: {{curL}}; width: {{colW}}; background: rgba(23,71,63,0.08)"></span>
+                  <sc-for list="{{bars}}" as="b" hint-placeholder-count="9">
+                    <span style="position: absolute; bottom: 0; left: {{b.l}}; width: {{b.w}}; height: {{b.h}}; background: {{b.bg}}; border-radius: 3px 3px 0 0"></span>
+                  </sc-for>
+                  <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible">
+                    <polyline points="{{soilObs}}" fill="none" stroke="#d9482b" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+                    <polyline points="{{soilFc}}" fill="none" stroke="#d9482b" stroke-width="2.2" stroke-dasharray="6 5" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
+                  </svg>
+                  <span aria-hidden="true" style="position: absolute; left: {{curX}}; top: {{curSoilTop}}; width: 9px; height: 9px; box-sizing: border-box; transform: translate(-50%, -50%); border-radius: 50%; background: #d9482b; border: 2px solid #ffffff"></span>
+                  <span style="position: absolute; left: {{curX}}; top: {{curSoilTop}}; transform: {{soilLblTf}}; padding: 0 4px; background: rgba(255,255,255,0.9); border-radius: 3px; font-size: 12px; font-weight: 600; white-space: nowrap">{{curSoil}}</span>
+                  <span style="position: absolute; left: {{curX}}; bottom: {{curRainBottom}}; transform: translate(-50%, -2px); padding: 0 3px; background: rgba(255,255,255,0.9); border-radius: 3px; font-size: 12px; font-weight: 600; white-space: nowrap">{{curRain}}</span>
+                  <sc-for list="{{chartHits}}" as="h" hint-placeholder-count="9">
+                    <button type="button" onClick="{{h.pick}}" aria-label="{{h.aria}}" style="position: absolute; top: 0; bottom: 0; left: {{h.l}}; width: {{colW}}; padding: 0; background: transparent; border: 0; cursor: pointer"></button>
+                  </sc-for>
+                </div>
+                <div aria-hidden="true" style="display: flex; padding-top: 2px; font-size: 12px; color: #44535a">
+                  <sc-for list="{{xLabels}}" as="x" hint-placeholder-count="9"><span style="flex: 1 1 0; min-width: 0; display: flex; justify-content: center; white-space: nowrap; font-weight: {{x.fw}}; color: {{x.fg}}"><span style="flex: 0 0 auto; max-width: {{x.mw}}; overflow: hidden">{{x.l}}</span></span></sc-for>
+                </div>
+              </div>
+              <div aria-hidden="true" style="position: relative; width: 22px; height: {{plotH}}; font-size: 12px; color: #44535a">
+                <sc-for list="{{yTicks}}" as="y" hint-placeholder-count="6"><span style="position: absolute; left: 3px; top: {{y.top}}; transform: translateY(-50%)">{{y.r}}</span></sc-for>
+              </div>
+              <span aria-hidden="true" style="writing-mode: vertical-rl; text-align: center; font-size: 12px; color: #44535a">Soil moisture (0-1)</span>
+            </div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 2px 18px; padding: 3px 0 0 52px; font-size: 12px; color: #16242b">
+              <span style="display: inline-flex; align-items: center; gap: 7px"><span aria-hidden="true" style="width: 16px; height: 10px; border-radius: 2px; background: #2f8fdd"></span>Rainfall - observed</span>
+              <span style="display: {{fcLegendDisplay}}; align-items: center; gap: 7px"><span aria-hidden="true" style="width: 16px; height: 10px; border-radius: 2px; background: #a9d5f2"></span>Rainfall - forecast (GEOS-FP)</span>
+              <span style="display: inline-flex; align-items: center; gap: 7px"><span aria-hidden="true" style="width: 22px; height: 0; border-top: 2.5px solid #d9482b"></span>Soil moisture (SMAP)</span>
+              <span style="display: {{fcLegendDisplay}}; align-items: center; gap: 7px"><span aria-hidden="true" style="width: 22px; height: 0; border-top: 2.5px dashed #d9482b"></span>Soil held at the last value</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{tableOn}}" hint-placeholder-val="{{false}}">
+            <table style="width: 100%; margin-top: 6px; border-collapse: collapse; font-size: 13px">
+              <thead><tr style="text-align: right; color: #44535a"><th scope="col" style="text-align: left; font-weight: 600; padding: 1px 4px">Step</th><th scope="col" style="font-weight: 600; padding: 1px 4px">Rain (mm)</th><th scope="col" style="font-weight: 600; padding: 1px 4px">3-day (mm)</th><th scope="col" style="font-weight: 600; padding: 1px 4px">Soil</th><th scope="col" style="font-weight: 600; padding: 1px 4px">Top TPI</th></tr></thead>
+              <tbody>
+                <sc-for list="{{tableRows}}" as="r" hint-placeholder-count="9">
+                  <tr style="text-align: right; border-top: 1px solid #e9ece6; background: {{r.bg}}"><th scope="row" style="text-align: left; font-weight: 500; padding: 1px 4px">{{r.l}}</th><td style="padding: 1px 4px">{{r.rain}}</td><td style="padding: 1px 4px">{{r.p3}}</td><td style="padding: 1px 4px">{{r.soil}}</td><td style="padding: 1px 4px">{{r.tpi}}</td></tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </sc-if>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 7px 12px; border: 1px solid #dfe3dc; border-radius: 10px">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16242b" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="flex: 0 0 auto"><path d="M10.500 12a1.500 1.500 0 103 0 1.500 1.500 0 10-3 0M8.500 8.500a5 5 0 000 7M15.500 8.500a5 5 0 010 7M5.800 5.800a8.800 8.800 0 000 12.400M18.200 5.800a8.800 8.800 0 010 12.400"></path></svg>
+          <div style="flex: 0 0 auto"><div style="font-size: 15px; font-weight: 600; line-height: 1.2">NISAR radar</div><div style="font-size: 12px; color: #44535a">Post-event confirmation</div></div>
+          <div style="flex: 1 1 150px; min-width: 0; padding-left: 10px; border-left: 1px solid #dfe3dc">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600"><span aria-hidden="true" style="flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%; background: {{nisarDot}}"></span>{{nisarHead}}</div>
+            <div style="font-size: 12px; color: #44535a">{{nisarSub}}</div>
+          </div>
+          <div style="display: {{nisarBtnDisplay}}; flex: 1 1 100%; gap: 8px">
+            <button type="button" onClick="{{toggleRadar}}" aria-pressed="{{radarOn}}" style="display: inline-flex; flex: 0 0 auto; padding: 6px 9px; background: #17473f; color: #ffffff; border: 0; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer">{{nisarBtn}}</button>
+          <button type="button" onClick="{{toggleSwipe}}" aria-pressed="{{swipeOn}}" style="display: inline-flex; flex: 0 0 auto; padding: 6px 9px; background: #ffffff; color: #16242b; border: 1px solid #cfd6cf; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer">{{swipeBtn}}</button>
+          </div>
+          <button type="button" onClick="{{nisarGo}}" style="display: {{nisarGoDisplay}}; align-items: center; gap: 6px; flex: 0 0 auto; padding: 6px 10px; background: #17473f; color: #ffffff; border: 0; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Confirm with NISAR radar<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isPub}}" hint-placeholder-val="{{false}}">
+        <div>
+          <h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 21px; font-weight: 600; line-height: 1.2">Public alerts</h1>
+          <p style="margin: 3px 0 0; font-size: 13px; color: #44535a">What residents receive: plain words, by region. An alert names a region, never an address.</p>
+        </div>
+        <div style="padding: 12px 14px; background: {{pubBg}}; border: 1px solid {{pubBd}}; border-radius: 10px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px">
+            <strong style="font-size: 17px">{{pubName}}</strong>
+            <span style="padding: 2px 10px; border-radius: 5px; font-size: 13px; font-weight: 600; background: {{pubChipBg}}; color: {{pubChipFg}}; border: {{pubChipBd}}">{{pubCls}}</span>
+          </div>
+          <div style="margin-top: 4px; font-size: 15px; font-weight: 600">{{pubHead}}</div>
+          <div style="margin-top: 2px; font-size: 14px; color: #16242b">{{pubAdvice}}</div>
+          <div style="margin-top: 6px; font-size: 12px; color: #44535a">{{pubMeta}}</div>
+        </div>
+        <div>
+          <h2 style="margin: 0 0 2px; font-size: 16px; font-weight: 600">Alerts by region</h2>
+          <sc-for list="{{pubRows}}" as="z" hint-placeholder-count="3">
+            <button type="button" onClick="{{z.pick}}" aria-pressed="{{z.on}}" style="display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 5px 6px; background: {{z.rowBg}}; color: #16242b; border: 0; border-top: 1px solid #e9ece6; font-family: inherit; font-size: 14px; text-align: left; cursor: pointer">
+              <span style="flex: 0 0 74px; text-align: center; padding: 2px 0; border-radius: 5px; font-size: 13px; font-weight: 600; background: {{z.chipBg}}; color: {{z.chipFg}}; border: {{z.chipBd}}; box-sizing: border-box">{{z.cls}}</span>
+              <span style="flex: 1 1 auto; min-width: 0"><strong style="font-weight: 600">{{z.name}}</strong><br><span style="font-size: 13px; color: #44535a">{{z.short}}</span></span>
+            </button>
+          </sc-for>
+          <div style="padding-top: 5px; border-top: 1px solid #e9ece6; font-size: 12px; color: #5f6d73">{{pubNote}}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{showCta}}" hint-placeholder-val="{{true}}">
+        <div style="margin-top: auto; padding: 8px 14px; background: #e8f1ee; border: 1px solid #b9d2ca; border-radius: 10px">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="#17473f" stroke="#17473f" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true" style="flex: 0 0 auto"><path d="M21 3.500L3 10.500l7 3 3 7z"></path></svg>
+            <div style="flex: 1 1 150px; min-width: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 17px; font-weight: 600; line-height: 1.2">Get area risk alerts</div>
+            <button type="button" onClick="{{share}}" aria-disabled="{{shareOff}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 13px; background: {{shareBg}}; color: {{shareFg}}; border: 0; border-radius: 999px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: {{shareCursor}}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M21 3.500L3 10.500l7 3 3 7z"></path></svg>{{shareLabel}}
+            </button>
+          </div>
+          <div style="margin-top: 4px; font-size: 13px; color: #44535a">{{ctaText}}</div>
+          <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 6px">
+            <button type="button" role="checkbox" aria-checked="{{consent}}" aria-label="I agree to receive regional alerts" onClick="{{toggleConsent}}" style="flex: 0 0 auto; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; padding: 0; background: {{consentBg}}; color: #ffffff; border: 2px solid #17473f; border-radius: 5px; cursor: pointer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity: {{consentOp}}"><path d="M5 12.500l4.500 4.500L19 7.500"></path></svg>
+            </button>
+            <span style="font-size: 12px; color: #16242b">I agree to receive regional alerts. Alerts refer to a REGION (e.g., city, basin or neighborhood) and do not replace official Civil Defense warnings.</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{showValid}}" hint-placeholder-val="{{false}}">
+        <div style="margin-top: auto; padding: 7px 14px; background: #f6f8f4; border: 1px solid #dfe3dc; border-radius: 10px">
+          <div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 10px"><span style="font-family: 'Space Grotesk', Inter, sans-serif; font-size: 15px; font-weight: 600">{{validTitle}}</span><span style="font-size: 12px; color: #5f6d73">{{validNote}}</span></div>
+          <sc-for list="{{validRows}}" as="v" hint-placeholder-count="4">
+            <div style="display: flex; gap: 10px; padding: 2px 0; border-top: 1px solid #e3e7e1; font-size: 13px; line-height: 1.35; margin-top: 2px">
+              <span style="flex: 1 1 auto; color: #44535a">{{v.name}}</span>
+              <strong style="flex: 0 0 auto; font-weight: 600; font-variant-numeric: tabular-nums">{{v.value}}</strong>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </aside>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin: 10px 16px 0; padding: 8px 16px; background: #ffffff; border: 1px solid #dfe3dc; border-radius: 12px">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <button type="button" onClick="{{play}}" aria-label="{{playLabel}}" style="width: 50px; height: 46px; display: inline-flex; align-items: center; justify-content: center; background: #17473f; color: #ffffff; border: 0; border-radius: 10px; cursor: pointer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="{{playIcon}}"></path></svg>
+      </button>
+      <button type="button" onClick="{{prev}}" aria-label="Previous step" style="width: 40px; height: 38px; display: inline-flex; align-items: center; justify-content: center; background: #ffffff; color: #16242b; border: 1px solid #cfd6cf; border-radius: 8px; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M19 5v14l-10-7z"></path><path d="M6 5v14" fill="none" stroke-linecap="round"></path></svg>
+      </button>
+      <button type="button" onClick="{{next}}" aria-label="Next step" style="width: 40px; height: 38px; display: inline-flex; align-items: center; justify-content: center; background: #ffffff; color: #16242b; border: 1px solid #cfd6cf; border-radius: 8px; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 5v14l10-7z"></path><path d="M18 5v14" fill="none" stroke-linecap="round"></path></svg>
+      </button>
+    </div>
+
+    <div style="flex: 1 1 460px; min-width: 0; overflow-x: auto">
+    <div style="position: relative; display: flex; min-width: 470px; padding-top: 20px">
+      <div aria-hidden="true" style="position: absolute; left: {{obsL}}; width: {{obsW}}; top: 32px; height: 3px; background: #17473f"></div>
+      <div aria-hidden="true" style="position: absolute; left: {{fcL}}; width: {{fcW}}; top: 32px; height: 0; border-top: 3px dashed #9aa7a0; display: {{fcTrackDisplay}}"></div>
+      <span style="position: absolute; left: {{fcTagL}}; top: 0; transform: translateX(-50%); padding: 1px 12px; background: #e6e6f5; color: #2c2a66; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; display: {{fcTrackDisplay}}">Forecast (GEOS-FP)</span>
+      <sc-for list="{{steps}}" as="d" hint-placeholder-count="9">
+        <button type="button" onClick="{{d.pick}}" aria-pressed="{{d.on}}" aria-label="{{d.aria}}" style="position: relative; flex: 1 1 0; min-width: 0; min-height: 60px; display: flex; flex-direction: column; align-items: center; padding: 0; background: transparent; border: 0; color: #16242b; font-family: inherit; cursor: pointer">
+          <span aria-hidden="true" style="height: 26px; display: flex; align-items: center"><span style="width: {{d.dot}}; height: {{d.dot}}; box-sizing: border-box; border-radius: 50%; background: {{d.dotBg}}; border: {{d.dotBd}}; box-shadow: {{d.dotSh}}"></span></span>
+          <span style="font-size: {{d.topFs}}; font-weight: {{d.topFw}}; line-height: 1.25; white-space: nowrap">{{d.top}}</span>
+          <span style="font-size: 12px; color: #44535a; line-height: 1.25; white-space: nowrap">{{d.sub}}</span>
+        </button>
+      </sc-for>
+    </div>
+    </div>
+
+    <div style="flex: 0 1 420px; min-width: 280px; padding-left: 18px; border-left: 1px solid #dfe3dc">
+      <div title="Each source shows how old its latest data is. SMAP updates every 2 to 3 days." style="display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; margin-bottom: 4px">Data sources (NASA)
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#44535a" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5.500M12 7.500v.3"></path></svg>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px 18px">
+        <sc-for list="{{sources}}" as="q" hint-placeholder-count="3">
+          <div style="flex: 1 1 110px; display: flex; align-items: center; gap: 9px">
+            <span aria-hidden="true" style="flex: 0 0 auto; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #f1f3ee; color: #16242b">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{q.icon}}"></path></svg>
+            </span>
+            <span style="min-width: 0"><span style="display: block; font-size: 13px; font-weight: 600; line-height: 1.2">{{q.name}}</span>
+              <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #44535a; white-space: nowrap"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{q.dot}}; display: {{q.dotDisplay}}"></span>{{q.status}}</span>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 5px 20px 8px; font-size: 12px; color: #5f6d73">{{footNote}}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  st() {
+    return Object.assign({
+      mode: 'cc', time: 'now', ev: 'wa', day: null, sel: null, zi: 0, playing: false, table: false, why: false, all: false,
+      layersOpen: true, panel: true, swipe: false, split: 40, consent: false, shared: false, bell: false,
+      layers: { flood: true, slide: true, tpi: true, rain: false, soil: false, radar: false },
+      order: ['tpi']
+    }, this.state || {});
+  }
+  togglePlay() {
+    if (this._t) {
+      clearInterval(this._t);
+      this._t = null;
+      this.setState({ playing: false });
+      return;
+    }
+    const last = this._last || 7;
+    const s = this.st();
+    const cur = s.day == null ? 5 : s.day;
+    this.setState({ playing: true, day: cur >= 5 ? 0 : cur });
+    this._t = setInterval(() => {
+      const d = this.st().day;
+      if (d >= last) {
+        clearInterval(this._t);
+        this._t = null;
+        this.setState({ playing: false });
+      } else {
+        this.setState({ day: d + 1 });
+      }
+    }, 900);
+  }
+  componentWillUnmount() {
+    if (this._t) clearInterval(this._t);
+  }
+  /* Real terrain on a grid, one digit (0 to 9) per cell: flood terrain score (tf), landslide terrain score (ts),
+     water share (wm). Built from open terrain tiles and OpenStreetMap water. Positions are percent of the image. */
+  mapData() {
+    if (!this._maps) this._maps = {"sb":{"tf":"000000000000000900099099000000000000090000800000000000000000000060000109000000000000009900099009700000000000090090098000000000000000000999000097000000000000089900000000300000000000090070001900000000000000009989999900000000000000999990000000900000000000000090000900000000000400003009999000000000000003999940000000009000000000009900000900000000000000000000990000000000000009999900009900000700000000000000000920000000000000000079000000000000000004999900000000000007906994000090004900000000000000000990000000000000000008999900000000000000000000000000000999000000000000007990000000000000000000990900000000000000000000000000099039000000009000999900000000000000000000999900000000000000000001900000099005980000009060999000000000000000000000999999499990990090000099900000080000050070940099990000000000000000000000999999999907909990902990000009900009999999900009900000000000000000000000909000000000090509909000000000000049007009600009000000000000000000000000880000000000009000090000000000009993000999910099000000000000000000000000900000000000009900090000000000039910799999930099000000000000000000000009900000099000000700000000001000999999991008990090000000000000000000000000910000000000000007000000000999990900019999000999000000000000000000000008900000000000000000999000000999920000000350000999000000000000000000000009900000000070000000001999000000000000000000899990000000000000000000000009000000000000000009990009900000000000000000009990000000000000000000000099000000000000000009009999990000000000000000000990000000000000000000000990000000000080000990000020390040000000000000000990000000000000000000089000000000000000009000000000000090000709000000999990000000000000000000999000000000000000070000000000000000000000000007000990000000000000000009900000000000910099790000000000000000000000990000009009000000000000080009000000000000009099000107000000000000000000698000000999000000000000999979000000000390000000009900000000000000700000009000000899000000000000900990000000089900000009009000000900001900999999600907000089900000000000000000000099990000000000904900000000090909003999990000000099900000000000000000000090000000000000900900095000005000009102999000077099000000000000000000059980000000000000950910000000000000000990009000000009000000000000000000599700000000000000980990000000000000000000009000000090000000000000000009999300000000000000990099000000000000000000000000000070000000000000000099992999900000000000090099000000000000000000000000000090000000000000000990099040999969999900000009990000000000000000000000000690000000000000009999069000019999000000000009950009000000290000009008009900000000000000099990009990000000000000000099990090000000000000000000099900000000000000099000000599990000000009003990090000000000000000000090099000000000000000990000000006909900000009999900007000000000000000900000890000000000000000940000000000006990002049950002900090000060000000900099900000000000000000000000000000000090099969900990000000000000000000000999000000000000000000000000000000000000597999900900000000000000000000000990000000000000000000000000000000000000090599000000000000000000000000099900000000000000000000999900000000000000000000000000000000000000000000099000000000000000000000999990000000000000000000000000004900000000000000099000000000000000000000900199920000000000000000000000008900099000000000790000000000000000000000000079999900000000000096000940009900090049990009900000000000000000000000000000009999999000000099900990009980099990799009900000000000000000000000000000000999990000099989900099094999499900099099000000000000000000000000000000000795000000999999999989999999999999999999000000000000000000000000000000000490000059990000399999810000099709910990000000000000000000000000000000000095000999900000002059000000099900999090000000000000000000000000000000000099009995000000000000000000029099909990000000000000000000000000000000000009909900000000000000000000009900099900000000000000000000000000000000000009909900000000000000000000009000099900000000000000000000000000000000000409980990000000000000000000090000099000000000000000000000000000000000000999900000000000000000000000090000099000000000000000000000000000000000000969900000009000099079990000990009990000000000000000000000000000000000000009900800007999990498069970900009900000000000000000000000000000000000000009999990000002100000004999900999900000000000000000000000000000","ts":"000000000000000000000122110000255521778897222322336397562236989811399994000000000200011010000122101111243551527877312223555252552259999200399995000000000000100010000113314212245452958755335276320344478999996700000900000000000000000003200012454323445522999942223284100357999999997200060000000000000000000156210112374445587622698584233224000339999999999775000000000000000000000054211011365544345431299587332122004587999999959982000000010000000000000056332111227565654321239699111112144659865579949900000000010000000000000045334342256566753422124707211010334767863999999990000000000000000000000024434684576545442110122913200000465674312999999000000000000000000000000012233564543326323200142920021101209520009939000000000000000000000000000000012333332332453000345852110201202300009221000000000000000000000000000000012322343444541334442374001221211000008990000000000000200000000000000000123333232345656101356368000011230000079997000000000000930000000000000012225223333223266028697348100001122000319954000000000000531100000000100033124324332442289999995356200002000001239910000000000000000122200000000453223573332363009999965699000000001221079600000000000000000001400000100253473586321153000896654791000000111101399090000000000000000003100000102676554693431321211157328571200000110118999000000000000000000011000000002774344896275531010121326689998024310129998000000000000000000010000001023774332899986732201100243259658636970069993000000000000000000110000000275621353997666743265210144422831773499489999600000000000000000300000000265343376654367562247421076332373699599999999900000000000000000000000001563535676664455764999323799531268397699999758630000000000000000000000097643755576897657579999864759531122299879999999470000000000000000000000782333655556854554479989876689741201499738999995990000000000000000010035135464546677865567999887577778732222399528999999936000000000000000001023135464345637775641999887777651001112484844999999999000000000000000000131165641224555564460989999887100133222420186679999992700000000000000015212254310132031123573265665875996866433100039999999997700000000000000003235554210013000001331023115873079564322232002999979995000000000000000002322254101022000000221002026953107990122238994999999999000000000000000000002322000000000000111000016522200298122232599999999990000000000000000000000410000000000000222000002100100049621213559999879990000000000000000000000000000000000000000000000210110008911166579998769910000000000000000000000000000000000000000000000001100000882197677794799900000000000000000000000000000000000000000000110342100000087988798893997100000000000000000000000000000000000000000000022863010000004599998997884000000000000000000000000000000000000000000011045373142121000222559945340000000000000000000000000000000000000000000021089444291089978620099900000000000000000000000000000000000000000000000000489892693999999995998000000000000000000000000000000000000000000000010015899998999951724576992000000000000000000000000000011000000000000000013049999989999541110221997000000000000000000000000000000110000000000002243429999999865693100009900000000000000000000000000000000122211000000018543854999999699999620019920000000000000000000000000000002236543453002599638999999599899999990399930000000000000000000000000000000430634574628999989999970019788999999999900000000000000000000000000000001000000001599959999986300124322373689999000000000000000000000000000000000000000000000000443000310000000045569990000000000000000000000000000000000000000000000000000000001000000035004960000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000032000000000001000000000001122100110000000000000000000000000000000000001135000000000100010000000021454410010000000000000000000000000000000000000031000000001113300011341454444300000000000000000000000000000000000000000110000000013116410023320345642100000000000000000000000000000000000000001000000000000023310122101634463000000000000000000000000000000000000000000000000000010112123332133133210000000000000000000000000000000000000000001000000000010111122333540132100000000000000000000000000000000000000000020006300000000012114024300100000000000000000000000000000000000000000000500000000000000001132101121100000000000000000000000000000000000000000","wm":"000000000000000200000000000000000000000000000000000000000000000000000002000000000000001300000000000000000000000000000000000000000000000000000006000000000000002300000000000000000000000000000000000000000000000000000179000000000000012410000000000000000000000000000000000000000000000000004899000000000000005200000000000000000000000000000000000000000000000000179999000000000001336200000000000000000000000000000000000000000000000002899999000000000000126100000000000000000000000000000000000000000000000029999999000000000000236100000000000000000000000000000000000000000000000049999999000000000000146200000000000000000000000000000000000000000000000499999999000000000000173000000000000000000000000000000000000000000000333999999999000000000000010000000241110010000000000000000000000000000012448999999999000000000000000000000012112131300000000000000000000000000000289999999999000000000000000000000000000024310000000000000000000000000000899999999999000000000000000000000000000000020000000000000000000000000013999999999999000000000000000000000000000000002100210000000000000000000007999999999999000000000000000000000000000000000101321000000000000000000008999999999999000000000000000000000000000000000000000000000000000000000004999999999999000000000000000000000000000000000000000000000000000000000023999999999999000000000000000000000000000000000000000000000000000000000007999999999999000000000000000000000000000000000000000000000000000000000029999999999999000000000000000000000000000000000000000000000000000000000049999999999999000000000000000000000000000000000000000000000000000000000028999999999999000000000000000000000000000000000000000000000000000000000019999999999999000000000000000000000000000000000000000000000000000000000007999999999999000000000000000000000000000000000000000000000000000000000005999999999999000000000000000000000000000000100000000000000000000000000005999999999999000000000000000000000000000000300000000000000000000000000004899999999999000000000000000000000000000000000000000000000000000000000015289999999999000000000000000000000000000000000000001200000000000000000003599999999999000000000000000000000000000000000000000010000000000000000013899999999999000000000000000000000000000000000000000210000000000000000003999999999999000000000000000000000000000000000000000031000000000000000008999999999999000000000000000000000000000000000000000002000000000000000009999999999999000000000000000000000000000000000000000001100000000000000029999999999999000000000000000000000000000000000000000000000000000000000169999999999999000000000000000000000000000000000000000000000000000000000489999999999999000000000000000000000000000012000000000000000000000000000499999999999999000000000000000000000000000000000000000000000000000000002799999999999999000000000000000000000001100000000000000000000000000000038999999999999999000000000000000000000002400000000000000000000000000000599999999999999999000000000000000000000004500000000000000000000000000006999999999999999999000000000000000000000001100000000000000000000000000059999999999999999999000000000000000000000000000000000000000000000000001499999999999999999999000000000000000000000000000000000000000000000000001999999999999999999999000000000000000000000000000000000000000000000000027999999999999999999999000000000000000000000000000000000000000000000000459999999999999999999999000000000000000000000000000000000000000000000003299999999999999999999999000000000000000000000000000000000000000000000004699999999999999999999999000000000000000000000000000000000000000000000111999999999999999999999999000000000000000000000000000000000000000000000405999999999999999999999999000000000000000000000000000000000000004000000008999999999999999999999999000000000000000000000000000000000000006200031029999999999999999999999999000000000000000000000000000000000000003842482059999999999999999999999999000000000000000000000000000000000000001678851089999999999999999999999999000000000000000000000000000000000000004999920399999999999999999999999999000000000000000000000000000000000000017999911899999999999999999999999999000000000000000000000000000000000000039999805999999999999999999999999999000000000000000000000000000000000000059996129999999999999999999999999999000000000000000000000000000000000000199991079999999999999999999999999999000000000000000000000000000000000000389640499999999999999999999999999999","km":922.1,"places":[["Curitiba",74.89,16.67],["Florianópolis",82.58,47.76],["Porto Alegre",53.95,83.32]],"states":[["PR",42.52,12.7],["SC",59.08,41.99],["RS",23.29,79.18]],"gw":72,"gh":60,"zones":[{"cx":33,"cy":43,"t":9},{"cx":50,"cy":12,"t":7},{"cx":55,"cy":22,"t":9}],"inset":{"path":"M30.5,47.2 31.9,48.2 34.1,48.3 35.2,48.9 35.8,52.1 35.0,52.1 35.8,53.0 35.9,54.9 40.4,54.9 40.3,57.1 41.8,58.1 42.3,59.7 40.9,63.4 41.6,63.9 40.8,64.4 41.6,66.3 41.2,69.1 44.0,69.6 45.1,69.1 46.5,69.6 47.5,73.6 49.3,73.3 50.3,73.9 49.5,77.3 49.9,77.8 50.6,77.5 51.3,77.9 51.8,80.9 46.7,84.1 46.9,84.5 42.2,88.8 44.5,88.9 46.0,90.3 46.1,91.0 47.1,90.4 53.0,94.9 54.3,93.6 53.8,95.5 53.1,95.2 52.3,96.3 52.4,97.5 54.0,96.4 55.6,93.6 55.3,92.7 57.0,91.1 57.6,88.5 58.1,89.3 59.4,89.0 57.7,91.9 55.7,93.6 58.7,91.3 61.4,86.7 63.5,85.0 64.7,82.2 64.1,81.8 64.1,78.6 65.8,76.3 69.0,74.0 70.9,73.2 71.9,73.3 74.1,71.4 77.1,71.4 77.7,70.6 77.7,71.3 80.1,71.2 80.3,70.3 82.7,68.7 82.8,66.9 85.8,62.3 85.9,60.0 87.2,58.4 87.8,53.7 87.7,47.5 89.2,46.7 92.3,42.0 96.4,37.8 97.6,34.9 97.3,31.1 96.6,28.7 95.8,27.7 92.1,27.3 89.0,24.6 85.2,22.3 81.6,22.4 76.9,21.0 75.0,22.0 75.2,21.3 74.8,21.3 73.9,22.7 74.5,21.0 74.2,20.5 73.7,20.8 73.8,19.6 72.1,19.2 72.2,18.5 71.7,18.9 70.5,17.8 70.2,18.2 70.0,17.4 68.9,17.6 67.4,16.9 66.2,16.8 64.6,17.5 64.5,15.8 62.2,15.7 62.2,15.1 61.5,14.9 61.8,14.3 60.3,14.5 60.6,14.0 60.2,13.6 61.0,12.8 60.9,11.2 59.7,10.9 59.1,10.1 57.8,5.2 56.7,4.3 56.7,5.4 53.6,9.9 49.9,9.9 48.6,9.0 46.3,9.1 45.8,9.8 46.1,10.8 43.5,10.3 39.0,12.3 37.1,11.0 36.4,8.7 36.7,6.6 37.5,5.7 37.0,4.5 36.0,4.3 36.4,2.9 34.7,2.5 34.8,3.4 33.9,4.3 29.7,5.4 29.1,6.5 28.5,5.7 26.7,5.9 26.2,5.2 24.6,5.1 26.2,6.8 26.7,9.3 28.2,9.5 28.1,9.9 26.5,10.6 26.5,11.2 23.1,13.6 22.7,12.8 21.0,13.5 19.6,12.3 19.1,12.4 18.4,9.8 17.0,10.8 16.5,10.4 16.5,11.1 12.4,11.1 12.4,12.7 13.6,12.6 14.1,13.7 11.9,13.9 11.8,15.7 12.9,16.5 13.4,17.7 12.1,25.7 10.1,25.4 5.0,27.9 4.1,30.3 4.4,30.9 3.1,31.8 3.0,33.1 2.3,33.7 4.8,37.4 4.2,38.2 6.3,38.4 6.7,39.6 8.6,39.6 10.6,38.3 10.5,42.1 13.4,41.9 15.1,42.4 20.2,39.4 23.1,38.8 23.3,42.4 24.1,44.5 25.6,45.6 28.8,46.1Z","rect":{"x":45.4,"y":74.4,"w":22.8,"h":16.8}},"river":["Taquari River",41.99,77.26]},"wa":{"tf":"000000000994009000000000099900008900000000000000000000000000000000000000000000000000980000999290990000009999000000010000000000000000000000000000000000000000000000909900000000900900000099990990009600000000000000000000000000000000000000000000000019990080994000000000001080000099000000000000000000000000000000000000000000000000000007901000030000000090000000090000000000000000000000000000000000000000000000000094009990000000000000009000000900000000000000000000000000000000000000000000000000000399900000000000000000000000000000000000000000000000000000000000000000000000000000098003000000000600090000000000000000000000000000000000000000800000000009000000200998000000000100109990000000000000000000000000000000000000000900000000000000000000000090000000000199910000000000100000009000000000000000000000900000000000000000900000000300000040999999799999999090000990000000000000000000000900000000000000079000000000009000089909999940000000003997000000000000000000000000090000000000000094090000009000000199999990000000000008000000000000000000000000000000000000000009974900000000000004099990000000000000000000000000000000000000000000900009009900000000000000000004099999900000000000000000000000000000000000000000009000000400000000000000000000034099999000000000000000900000000000000000000000000009000000009100000000000000006000099970000000000000009000000000000000000000000000009000000000000000000000000000900999000000002000990800000000000000000000000000000000000000000000000000000000000000990000009060000049000000000000000000000000000000000000000000000000000000000000009999519000000000000000000000000000000000000000000000000000000000000000000000000299099990000000000000000000000000000000000000000000040000990000000990000009000000001000000000000000000000000000000000000000000000000000040700000009990070000000000000000000000000000000000000000000000000000000000000000000000000999000000000000000000400590000000000000000000000000000000000000000000000000000000800000000080000000059009000000000000000000000000000000000000000000000000000000000000000002000000005990900700000000000000000000000000000000000000000000000000000000000000000090100005902099000000000000000000000000000000000000000000000000000000000000000090000000009000000000000000000000000000000000000000000000000000000000000000000000000000000009900000090000000000000000000000000000000000000000000000000000000000000000000000099900000000000000000000000000000000000000000000000000000000000000000000000000000099999999900000000000000009000000000000000000000000000000000000009000000000000000099000000000000000000000000290000000000000000000000000000000000000000000000000000090000000000000000000000000090000000000000000000000000000000000000000000000019000900000000000000000000000000000000000000000000000000000000000000000000000000002009000000000000000000000000000000000000000000000000000000000000000000000000000094099000000000000000000000000000000000000000000000000000000000000000000090060290900090000040000000000000000000000000000000000000000000000000000000000000900000130000900090000000000000000000000000000000000000000000000000000000099905040000000600009009900000000000000000000090000000000000000040000000000000019900009000009000090009009000000000000000000000000000000000000009000000000000000043090000000099000000009900000000000000000000000000000000000009900000000000000000907960000000099000000009000000000000000000000000000000000000900000000000000000000049000000000690400000000000000000000000000000000000000000006000000000000000000004000000000009999009000000000000000000000000000000000000000000000000000000000000000000000000099992490000000000000000000000000000000000000000","ts":"000210221000000000100000000000000011256567575587998878889938787643577577538652340000000210000001001000000000000001125666456567899899999789598664655774876558866400000032200000121010000000000000132225556677666989989999972995786457858986566651210000001000010011000010000000001521233556346244989998979839859876577998775556111212100011000011000001000000000113204348653651586799989967889999644889765544366221111000000001100011023102100223221123476663216878998699988989898677964353433331132100000000010100110210002002111323223455651476888868997879877788986425533332412122001000000100000000000000012101133133323315755975998899599867888855356323344310111011100000100100001021000000001232332142154648567898987889866778754333113551202131021000001100000011100000000001120000101665552888987899989666787856332223322122100200000011000000000000000000000003311102586224758888888888678768645211133211131002000000011000000000000000001013457865400203688778999999889668866463101343001221110000000100000000001000000001222225865422367676779999897776787865542112350002111000000000000001000000000000023112346654426678888899998779766765852231022400000010000000000000000000000000011101126235653147788888879989688877675541211102000000000000000000000000000000000110000022155422025888898887769868865884434431030000000000000010000000000000000000002332115853330438688888898998968746765345431210000000000000000000000000000000000003221112012117468788989889889959646563343311001111000111001111100001100000000000001133366104357766789887798878788555654421230000000110000011111000000000000000000021424679843367787799777779877476755666311100000000000000000000000000000000000000114155687742677678876676988975599556774122000110000000000000000000000000000000002033646967764986668656888978876795554462112212101000000000000000000000000100000002112468777857887676487787667995856542112165343121100000000000000000000001000000001012357759957886768878777766959775333142655868443211000000000000000000010000000003372248867988864688885687565857556332364667676777430000210000000000000000000000011145678889967877888856777646985366554457776757676622102120000000000000000000000002335699899678577789777666433565346443867779657666674432112000000000000000000000014468888886565778797635255346556222126855797778778778743100000000000000000000000013588898785666787675132357665570101088767977778788877853100000000000000000000000017888786754544654841151486566610012467887687677778787780010000000000000000000000046779857765674234511243276654220028888787885768767787610100000000000000000010244224987677855678552001453432113212268988667667677779975410000000000000000000011358744867566556764732113254411243132878987877578888888776100000000000000000000011378767768766678852222223364215103327888778776688879987540100000000000000000001025678952265776577644323434543230100033678786868978889865001100000000010000000001237878876557857578764224245454231000366778977787878898720000000000000000000000012347778865577767765273344357564210007767777887887779873010000000000000000000000015787888898566776776962352345654100076758687988888885210000000000000000000000000148687767778667566878713461766420000557624787887688851100011000000000000000000001578696566777675658886212623643100006513689877879885301000000000000000000112000177458777887665577888963231344310000030498876888874210100000000000000000000211121435887889853455468867732441111000000017678767757861111000000000000000000000111230387677876544765578997423441000101000453666566553310100000000000000000000000001338767755785544656657675345541001221015255517566631000000000000001000000000000014658656336675735666666544532331001221","wm":"000000220356117999999999400000000101000000000000000000000040000000000000000000000000021300562544789999995000000000110000000000000000000000400000000000000000000010000101000731611698799984021010000000000000000000000000004000000000000000000000000000450068842899997999645980143000000000000023000000000030000000000000000000000000000475784999974835997459500030000000000003200000000111000000000000000000000000000000812779369872412794698011220000000000030000000000000000000000000000000000000002019328799889402304997981010000000000000200000000000000000000000000000000000001010071364883484404397689960000000000000020000000000000000000000000000000000000001100510587810461384816785410000000000000300000010000000000000000000000000000000031011015999300354447461640000000000000102000001000000000000000000000000000000000101000149996003824399538610000001111110011000110000000000000000000000000000000000000000029997248036963025100011100000000001100000000000000000000000000000000000000000100169999674149841121011110000000000000000000000000000000000000001000000000000006523889999996799525010100000000000000000000000000000000000000000000000032002400399999999999999995051211002000000000000000000000000000000000000000000000997720019999999999999999920443010000000000000000110000000000000000000000000000009999946499999999999999996000364300100021000000001000000000000000011000000000000099999999999999999999999921556851000000000000000100000000000000000040000000000000999999999999999999999996039952100000000000000001000000000000000000300000000000009999999999999999999999953369104211000000000000000000000000000000001400000000000099999999999999999999999960082464000000000000000000000000000000000001400000000000123223869999998269999988984543950100000000000000000000000000000000002200000000000000010012555510059985039973855700000000000000000000000000000000000004000000000000231101000000000152710838635766300000000000000000000000000000000000051000000000244000000000000000403615177051779202000000000000000000000000000000000153100000000000000000000000001004102681200586371200000000000000000000000000000000015510000000000000000000000000010049982303993521001000012100000000000000000000000001420000000000000000000000000000079998018406100000100010000000000000000000000000000400000000000000000000000000000475892550052000000000000000000000000010000000000003000000000000000000000000000000714999300021000000000000000000000000000000000000062000100000000000000000000010066229991000010111111000000000000000000000000000000146300000000000000000000001403711189400000010000000100000000000000014310000000000001000000000000000000000036191000880000000010000000000000000000000000000000000001012000000000000000000000373300015920200000100000000000000000000000000000000000211000000000000000000000007460111999304000000000000000001100000000000000000000011000000000000000000000000194600342970035000010000021000000000000000000000000000020000000000000000000000004862003119311560110010000000000000000000000000000000001100000000000000000000000461002302088416201400100000000000000000000000000000000020000000000000000000000027100001142885064123001000010000011000000000000110000000300000000000000000000000610000024089701341020001000100000000000000000000010000012000000000000000000000023000000000489012500000000100010000000000000000000000000100000015000000000024000500000000013494011000000000100000000001000000001000000001000000220000000000013043000000000040850000000000000000000000000000000000000000110000000000000100000020500022000000407800002000000010000000000000000000000000000100000000000020000000024025301000014228300000100000230000010010000000000000000001110000","km":293.9,"places":[["Bellingham",36.6,7.32],["Everett",43.68,59.41],["Seattle",40.39,84.17]],"river":["Skagit River",41.3,28.2],"zones":[{"cx":39,"cy":10,"t":9},{"cx":44,"cy":19,"t":7},{"cx":40,"cy":36,"t":9}]},"rs":{"tf":"000000000000000000000000000000000000000000000000000000000000000099007900900999100000000000000000000000000000000000000000000000000000000000000000000200009000059900000000000000000000000000000000000000000000000000000000000000000081000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000090000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000080000000000000000000000000000000000600000000000000000000000000000000000000000000000600000000000000000000000000000060000000000000000000000000000000000000000000000030000000000000000000000090000008000000000000000000000000000000000000000000000000000000000000000000000000990000090000000000000000000000000000000000000000000000000000000000000000000000000930000760000000000000000000000009000000000000000000000000000000000000000000000090900030900000000000000000000000000000000000000000000000700000000000000000000000079992995000000000000000000000090000000000000000000000001400000000000000000000000000019500079004000000000000009000000000000000000000000004000000000000000000000000000088899999990000030000090970000000000000000000000000080000000000000000000400000009792969600000000000000999000000000000000000000000000000000000000000000000024000890000700000000000000809900008000000000000009000000000000000000000000000000099999689969500000000000006999000900000000000000090000000000000000000000000000000300790000000000000930000079900000000000000000000900000000000000000900000907800000398990000000000000789000098099900000000000000090000000000009000009000002999999900999900000000000000000000999599900000000000900900000000000399400090009000300179999999000000000000000099999990000000000040099009000900008000296000090099920020000079991086000000000000009990000000000000960840094009940799000990000900039949990000999900900000000000000099004509390006908969998989999999909666940699000299999990009999000000000000000009990008099600099999999999999990000099999800997000009989999999999900000000000000499900900790039999998000000899992000999999209937000000009999999999900000000000000099997017979999000000000000042999704999997099900000000007079999999500000000000000399990019999900000000000000000094800089990999000000000000499999999900000000000000999900099800000000000000000000099000099909900000000000009949999999599000000000000699300994000000000000000000000000000019999000000000000098300099999999000000000008990079990000000050000000865000400000099910000000000000000000003999990000000000009900699999500000900009969990899000000099400000000000000000000000009000000058900099909999997006909000009999000990000000099900000000001999099900000080235999999999999999900000990790000049999999900000000199907900009999999999900099989999999999999999999875096199000000499999999300000000099999949099999999999999999999989999999999999999999999990000409999998709900000000099909999999999990009992999999799999999999999999999950424999999986400099990400009999090999900000000009009799999990999999999999998994004999999994000000999999900099708990909000004100991093979999009999609999706009090009999999000000009999999909990959901099000015799935999009999999900999099980060000099990000000000099099999999909419401900069999970091199999095990999990900000000099999900000000009995034799999080099039009990000009900999910000999999909000090000999990000000000993990089999900000999996099300000490009999000000903999010000900040909700000000099909900999999000089957930690400000009909430000000999990090000000009000000000000999","ts":"003000566976978977795455582689342527999778499755293950100010000000000000000000000030013259797877779853465662695889278776663696222983852100010000000000000000000002100129899998996687544254854778777761327841791013621400001422001000000000000000041000079799987985666433797867566566876148502421023100000025986200012100000000003330000689766778777665244534376575589851000111100010000002799610000383000000000036500000279246885577633233555308665769770000110000000131519971000009500000000000371321000231255876556442207567224456484593200000000322618799401000593020000000005511550000145876389868775217894046786250210000122247458497999592909999550000000099212143010476776466774787658503464534200000002686488578999999999998119320000000960010430304666687645636656572712856762002530796865598799999999999990000000000006420239403801579667665605455509976658401566305889954699875989776741000001500000095056796596002486568656325405105734786236521567875666775999334599700007977000000612489978960468758547514110000045776444491311658753378769456546564356889986000009656799899539899975565630000000457556677932124455533347687953455433578989980000044767898995899799734546300000040101423746412544654432454579746877549676654990000012699999959888886555430000000000000006662022344504025735468694144399564897961812249989885897778665000210000000002023351214344423001366545589634310955347457998915798625656763465762000000000000000033222211432000025540354599744409842433577558599976548546532215500000000000000000113001000100000050002446655424368623343553589998765536654310000000000000000000000240000000000000000004434465477441132444544775468676364551000000000000000000000030300000000000000000010002447111003433445258600257430243010000000000000000000000000000000000000001110000033540021032224344467000055400020010000000000000000000000011000001000000000200002101000000002022443310000542000000000000000000000000000000010001000000100000002330000000000000001203000002000000000000000000000000000002000000020000000000000000000000000000000000340000000000000000000000000000010000000000000000000000000000000000010000000000312200000000000000000000000000000000000000000000000000000000000000000310002100000211000000000000001000000000000000000000000000000000000000000000000320000002130002010000000000000000000000000000000000000000000000000000000000000001000000012322100000000000000000000000000000000000000000000000000000000000000000340002000010201120000000000000000000000000000000000000000000000000000000000000312100013000000001200000000000000000000000000000000000000000000000000000000000000001000300000000000000000000000000000000000000000000000000000000000000000000000000040002000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000002000000000000000000000000","wm":"000000000000000000000000000000000000110100000000000000000000310000000000000000000000000000000000000000000000000000001000000000000000000010000000000000000000000000000000000000000000000000000001100100000000000000000000000000000000000000000000000000000000000000000000000000111001000000000000000000000000000000000000000000000000000000000000000000000000001001110000000000100000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000010000000000000000000000000000000000000000000000020000000000000000000000000000001000000000000000000000000000000000100000000001001100000000000000000000000000000010000000000000000000000000001000000000000000002220000000000000000000000000000000100000000000000000000000000000000000000000000000141000000000000000000000000000000100000000000000000000000100000000000000000000000100000000000000000000000000000111000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000001000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000001100000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000001000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000001000100000110000000000000000020000000000000000010000000000000000001100000000000000000000000011110000000000000000000000000000100010000000000000000001001000000010000000000000000010000000000000000000000000000000110000000000000000010000000010000000000000000000010000000000000000000000000000000101000000000000000001000001000000000000000000000000000000000000000000000000000001210000000000000000010000010000000000000000000000000000000000000000000000000000000020010000000000000100000200000000000000000000000000000000000000000000000000000000122120000000000001000010000000000000000000100001000000000000000000000000000000000002000000000000010001000000000000000000000000000000000001000000000000010000000000020000000020000110010000000000000000000000000000000000001100100000221322122100000200102333230000112310000000000000000000000000000000000001011100010022211112221222333321000320033421300100001000000000000000001000000000000100110100100000000010002000000000344100214100001000000001000000000013210000000111000111010000000000000000000030000000021340000000000210010000000000100101000010000000000000000000000000000100000000000464300000000000000000000000000000121100100000000000000000000000000000000000000004871000000000000000000000000000001101001001000000000000000000000000000000000000079700000000000014000000000000000000012110000000000000000000000000000000000020000692000010000000010000000000000000000000000000000000000000000000000000000000000008930000000000000000000000000000000000000000000000000000000000000000000000000000089920000000000000000000000000","km":212.6,"places":[["Porto Alegre",67.75,88.24],["Montenegro",57.3,56.5]],"river":["Taquari River",35.89,53.72],"zones":[{"cx":29,"cy":7,"t":9},{"cx":28,"cy":16,"t":7},{"cx":58,"cy":35,"t":5}]}};
+    return this._maps;
+  }
+  renderVals() {
+    const s = this.st();
+    const NOW = 5, THRESHOLD = 0.6;
+    const clamp = (v) => Math.max(0, Math.min(1, v));
+    const hash = (x, y) => { const v = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return v - Math.floor(v); };
+
+    /* One data set owns its steps and its areas. Every panel below is derived from these records.
+       "sb" is the live view (observed days plus a 72 h forecast). "wa" and "rs" are replays of past events. */
+    const DATA = {
+      sb: {
+        place: 'Southern Brazil', fx: 0.53, radar: false, date: '2026-11-14', nObs: 6, band: [0, 2, 1], core: true, sigmaKm: 105, tFloor: 0.3,
+        /* Daily rain in mm: two days before the first step, the observed days, then the forecast days. */
+        pre: [4, 6], rain: [5, 14, 18, 32, 28, 50], proj: [30, 22, 12],
+        /* 3-day rain percentiles of the pixel's own history (P90, P95, P99), in mm. Sample values. */
+        pct: [60, 90, 168],
+        /* SMAP root zone moisture, 0 to 1. */
+        theta: [0.30, 0.38, 0.47, 0.56, 0.64, 0.70],
+        /* km and crit: area and people in Critical cells. people: people in High or Critical cells. */
+        zones: [
+          { id: 'taquari', name: 'Vale do Taquari (RS)', basin: 'Taquari-Antas basin', hazards: ['flood', 'slide'], desc: 'Flood & landslide risk', w: 1, T: 1, km: 6.2, crit: 4300, people: 5600 },
+          { id: 'iguacu', name: 'Alto Iguaçu (PR)', basin: 'Upper Iguaçu basin', hazards: ['flood'], desc: 'Flood risk', w: 1, T: 5 / 9, km: 3.4, crit: 2500, people: 3800 },
+          { id: 'itajai', name: 'Vale do Itajaí (SC)', basin: 'Itajaí-Açu basin', hazards: ['flood', 'slide'], desc: 'Flood & landslide risk', w: 0.87, T: 5 / 9, km: 2.4, crit: 1600, people: 2600 }
+        ],
+        minor: [
+          { id: 'serra', name: 'Serra Gaúcha (RS)', hazards: ['slide'], desc: 'Landslide risk', w: 0.66, T: 5 / 9 },
+          { id: 'planalto', name: 'Planalto Norte (SC)', hazards: ['flood'], desc: 'Flood risk', w: 0.62, T: 5 / 9 }
+        ]
+      },
+      wa: {
+        place: 'Western Washington', radar: true, date: '2025-12-10', nObs: 8, sigma: 6.5,
+        pre: [3, 4], rain: [5, 8, 12, 30, 42, 48, 10, 4], proj: [],
+        pct: [22, 100, 156],
+        theta: [0.42, 0.50, 0.58, 0.65, 0.73, 0.78, 0.82, 0.84],
+        zones: [
+          { id: 'skagit', name: 'Skagit Valley', basin: 'Skagit River', hazards: ['flood', 'slide'], desc: 'Flood & landslide risk', w: 1, km: 5.6, people: 3900 },
+          { id: 'cascade', name: 'Cascade Foothills', basin: 'Steep slopes', hazards: ['slide'], desc: 'Landslide risk', w: 1, km: 3.8, people: 2800 },
+          { id: 'snoq', name: 'Snoqualmie Basin', basin: 'Low elevation', hazards: ['flood'], desc: 'Flood risk', w: 0.793, km: 2.6, people: 1700 }
+        ]
+      },
+      rs: {
+        place: 'Vale do Taquari and Porto Alegre region', radar: false, date: '2024-05-02', nObs: 8, sigma: 8,
+        pre: [10, 14], rain: [18, 25, 40, 62, 85, 96, 40, 22], proj: [],
+        pct: [80, 140, 220],
+        theta: [0.62, 0.66, 0.70, 0.76, 0.84, 0.88, 0.90, 0.90],
+        zones: [
+          { id: 'encantado', name: 'Encantado', basin: 'Steep valley slopes', hazards: ['slide'], desc: 'Landslide risk', w: 1, km: 4.9, people: 3400 },
+          { id: 'lajeado', name: 'Lajeado', basin: 'Taquari river plain', hazards: ['flood'], desc: 'Flood risk', w: 0.95, km: 4.2, people: 3100 },
+          { id: 'canoas', name: 'Canoas', basin: 'Low river plain', hazards: ['flood'], desc: 'Flood risk', w: 0.7, km: 3.6, people: 2600 }
+        ]
+      }
+    };
+    const key = s.time === 'now' ? 'sb' : (s.ev === 'rs' ? 'rs' : 'wa');
+    const live = key === 'sb';
+    const E = DATA[key];
+    const M = this.mapData()[key];
+    const GW = M.gw || 80, GH = M.gh || 45;
+    /* A zone sits on a real grid cell. In a replay its terrain score is the cell's score. In the regional view
+       the zone value uses the mean terrain score of the area (T), and its wettest low ground scores 1 (Tc). */
+    E.zones.forEach((z, i) => {
+      z.cx = M.zones[i].cx; z.cy = M.zones[i].cy;
+      if (z.T == null) z.T = M.zones[i].t / 9;
+      z.Tc = E.core ? 1 : z.T;
+      if (z.crit == null) z.crit = z.people;
+    });
+    const n = E.nObs + E.proj.length;
+    this._last = n - 1;
+    const day = Math.max(0, Math.min(n - 1, s.day == null ? NOW : s.day));
+    const isFc = (i) => i >= E.nObs;
+    const fc = isFc(day);
+
+    const dateAt = (i, opt) => new Date(Date.parse(E.date + 'T12:00:00Z') + (i - NOW) * 86400000)
+      .toLocaleDateString('en-US', Object.assign({ timeZone: 'UTC' }, opt));
+    const md = (i) => dateAt(i, { month: 'short', day: '2-digit' });
+    const mdy = (i) => dateAt(i, { month: 'short', day: 'numeric', year: 'numeric' });
+    const rel = (i, tight) => (i === NOW ? (live ? 'Now' : 'Event')
+      : i < NOW ? 'D-' + (NOW - i)
+      : live ? '+' + (i - NOW) * 24 + (tight ? 'h' : ' h') : 'D+' + (i - NOW));
+    const fmt = (v) => v.toLocaleString('en-US');
+
+    /* Scores from the document. R: 3-day rain against P90, P95 and P99. S: SMAP from 0.5 to 0.9.
+       TPI is the geometric mean (R x S x T)^(1/3). In a forecast step the soil is held at the last SMAP value. */
+    const rainAt = (i) => (i < 0 ? E.pre[i + 2] : i < E.nObs ? E.rain[i] : E.proj[i - E.nObs]);
+    const p3 = (i) => rainAt(i) + rainAt(i - 1) + rainAt(i - 2);
+    const rScore = (p) => {
+      const a = E.pct[0], b = E.pct[1], c = E.pct[2];
+      return p < a ? 0 : p < b ? 0.5 * (p - a) / (b - a) : p < c ? 0.5 + 0.5 * (p - b) / (c - b) : 1;
+    };
+    const thetaAt = (i) => E.theta[Math.min(i, E.nObs - 1)];
+    const sScore = (th) => clamp((th - 0.5) / 0.4);
+    const P3v = p3(day), Sv = sScore(thetaAt(day));
+    /* Class cuts are strict, as in the document: above 0.2, 0.4 and 0.6. A class follows the two decimals shown. */
+    const r2 = (t) => Math.round(t * 100) / 100;
+    const cls = (t0, t = r2(t0)) => (t > THRESHOLD
+      ? { label: 'Critical', bg: '#bd0026', fg: '#ffffff', bd: '1px solid #bd0026', rgb: '189,0,38', op: 0.84, soft: '#fdecee', softBd: '#e7a3ac' }
+      : t > 0.4 ? { label: 'High', bg: '#fd8d3c', fg: '#3b1d00', bd: '1px solid #fd8d3c', rgb: '253,141,60', op: 0.8, soft: '#fff1e3', softBd: '#f3c59d' }
+      : t > 0.2 ? { label: 'Moderate', bg: '#fecc5c', fg: '#3b2a00', bd: '1px solid #fecc5c', rgb: '254,204,92', op: 0.72, soft: '#fff8e1', softBd: '#ecd592' }
+      : { label: 'Low', bg: '#ffffb2', fg: '#3b3b00', bd: '1px solid #cfcf7a', rgb: '', op: 0, soft: '#f6f8f4', softBd: '#dfe3dc' });
+    const calc = (z, i) => {
+      const r = rScore(p3(i) * z.w), S = sScore(thetaAt(i));
+      return { r, S, tpi: Math.cbrt(r * S * z.T), core: Math.cbrt(r * S * (z.Tc == null ? z.T : z.Tc)) };
+    };
+    const rank = (list) => list.map((z) => {
+      const c = calc(z, day);
+      let first = -1;
+      for (let i = 0; i < E.nObs; i++) { if (r2(calc(z, i).tpi) > THRESHOLD) { first = i; break; } }
+      return Object.assign({}, z, c, { k: cls(c.tpi), hasCrit: r2(c.core) > THRESHOLD, exposed: r2(c.tpi) > 0.4, first });
+    }).sort((a, b) => b.tpi - a.tpi);
+    const zones = rank(E.zones);
+    const minor = s.all && E.minor ? rank(E.minor) : [];
+    const critZones = zones.filter((z) => z.hasCrit);
+    const sel = s.sel === 'none' ? null : (zones.find((z) => z.id === s.sel) || zones[0]);
+    const hazardWords = (z) => (z.hazards.length > 1 ? 'flood and landslide' : z.hazards[0] === 'flood' ? 'flood' : 'landslide');
+
+    /* Zoom. The map stage is a box with the image's aspect ratio that covers the map area; zooming makes the
+       stage larger and moves the focus to the middle. A click on an area row selects it and zooms to it. */
+    const zi = Math.max(0, Math.min(2, s.zi || 0));
+    /* Before/after radar comparison (deck: "Before/after NISAR swipe"). It needs a pass after the event,
+       and it always uses the full map, so the divider stays in view. */
+    const swipeOn = !!s.swipe && !!E.radar && !fc && day > NOW;
+    const split = Math.max(12, Math.min(GW - 12, s.split == null ? GW / 2 : s.split));
+    const zoom = swipeOn ? 1 : [1, 1.6, 2.4][zi];
+    let fx = E.fx || 0.5, fy = 0.5;
+    if (zoom > 1) {
+      const f = sel ? [sel] : zones;
+      fx = f.reduce((a, z) => a + (z.cx + 0.5) / GW, 0) / f.length;
+      fy = f.reduce((a, z) => a + (z.cy + 0.5) / GH, 0) / f.length;
+      const lo = 0.5 / zoom;
+      fx = Math.max(lo, Math.min(1 - lo, fx));
+      fy = Math.max(lo, Math.min(1 - lo, fy));
+    }
+    const pickZoom = (id) => () => this.setState(sel && sel.id === id && s.sel === id ? { sel: 'none', zi: 0, why: false } : { sel: id, zi: Math.max(zi, 1), why: false });
+    const pick = (id) => () => this.setState(sel && sel.id === id ? { sel: 'none', why: false } : { sel: id, why: false });
+
+    /* Map overlay. The base is a real map image; the cells below are drawn on top of it.
+       Static per data set: terrain scores, water, the storm footprint and the sample radar findings. */
+    const L = s.layers;
+    const radarReady = E.radar && !fc && day > NOW;
+    const pct = (v, m) => ((v + 0.5) / m * 100).toFixed(2) + '%';
+    const at = (v, m) => (v / m * 100).toFixed(3) + '%';
+    const sigma = E.sigma || E.sigmaKm / (M.km / GW);
+    this._g = this._g || {};
+    if (!this._g[key]) {
+      const g = { tf: [], ts: [], wm: [], w: [], flood: [], scar: [] };
+      const chain = (E.band || []).map((k) => E.zones[k]);
+      for (let y = 0; y < GH; y++) {
+        for (let x = 0; x < GW; x++) {
+          const i = y * GW + x;
+          let tf = Number(M.tf[i]) / 9, ts = Number(M.ts[i]) / 9;
+          const wm = Number(M.wm[i]) / 9;
+          /* A coarse cell of the regional grid always holds some low or steep ground, so its score has a floor. */
+          if (E.tFloor) { tf = E.tFloor + (1 - E.tFloor) * tf; ts = E.tFloor + (1 - E.tFloor) * ts; }
+          const h = hash(x, y);
+          let w = 0, flood = false, scar = false;
+          E.zones.forEach((z) => {
+            const d = Math.hypot(x - z.cx, y - z.cy);
+            const dd = d * (1 + 0.3 * Math.sin(x * 0.31 + z.cx) * Math.cos(y * 0.37 - z.cy)) / sigma;
+            w = Math.max(w, z.w * Math.exp(-dd * dd));
+            const fl = z.hazards.indexOf('flood') >= 0, sl = z.hazards.indexOf('slide') >= 0;
+            if (fl && d < 6 && tf >= 0.6 && h > 0.22) flood = true;
+            if (sl && d < 6.5 && ts >= 0.55 && h > 0.8) scar = true;
+          });
+          /* The rain band of a front links the areas: a weaker ridge of rain along the line between them. */
+          for (let k = 0; k + 1 < chain.length; k++) {
+            const a = chain[k], b = chain[k + 1];
+            const vx = b.cx - a.cx, vy = b.cy - a.cy;
+            const u = clamp(((x - a.cx) * vx + (y - a.cy) * vy) / (vx * vx + vy * vy));
+            const d = Math.hypot(x - (a.cx + u * vx), y - (a.cy + u * vy)) * (1 + 0.35 * Math.sin(x * 0.45) * Math.cos(y * 0.4));
+            const dd = d / (sigma * 0.6);
+            w = Math.max(w, 0.76 * Math.exp(-dd * dd));
+          }
+          g.tf.push(tf); g.ts.push(ts); g.wm.push(wm); g.w.push(w);
+          g.flood.push(flood && wm < 0.5); g.scar.push(scar && wm < 0.5);
+        }
+      }
+      this._g[key] = g;
+    }
+    const G = this._g[key];
+    const cellTpi = (i) => {
+      const T = Math.max(L.flood ? G.tf[i] : 0, L.slide ? G.ts[i] : 0);
+      return T > 0 ? Math.cbrt(rScore(P3v * G.w[i]) * Sv * T) : 0;
+    };
+    /* A diagonal stripe tile that is one cell wide, so the forecast hatch lines up across cells and rows. */
+    const tile = (a, b) => 'linear-gradient(45deg, ' + a + ' 25%, ' + b + ' 25%, ' + b + ' 50%, ' + a + ' 50%, ' + a + ' 75%, ' + b + ' 75%)';
+    const FLOOD = '#2166ac', FLOOD_SH = 'inset 0 0 0 1px #08306b';
+    const SCAR = '#7b3294', SCAR_SH = 'inset 0 0 0 1px #ffffff';
+    const showRadar = L.radar && radarReady;
+    const cells = [];
+    let run = null;
+    const flush = () => {
+      if (!run) return;
+      cells.push({ l: at(run.x, GW), t: at(run.y, GH), w: at(run.n, GW), bg: run.bg, sh: run.sh, bs: run.hatch ? (100 / run.n).toFixed(3) + '% 100%' : 'auto' });
+      run = null;
+    };
+    for (let y = 0; y < GH; y++) {
+      for (let x = 0; x < GW; x++) {
+        const i = y * GW + x;
+        let bg = '', sh = 'none', hatch = false;
+        if (G.wm[i] < 0.5) {
+          if (L.tpi && !swipeOn) {
+            const t = cellTpi(i);
+            const k = cls(t);
+            /* The document paints Low only in the detail zoom, at 40%. A forecast keeps the class color at
+               half strength, with a diagonal hatch. */
+            const rgb = k.rgb || (zoom > 1 && t > 0.005 ? '255,255,178' : '');
+            if (rgb && fc) { bg = tile('rgba(' + rgb + ',' + (k.rgb ? 0.62 : 0.3) + ')', 'rgba(' + rgb + ',0.16)'); hatch = true; }
+            else if (rgb) bg = 'rgba(' + rgb + ',' + (k.rgb ? k.op : 0.4) + ')';
+          }
+          if (swipeOn ? x >= split : showRadar) {
+            if (G.flood[i]) { bg = FLOOD; sh = FLOOD_SH; hatch = false; }
+            else if (G.scar[i]) { bg = SCAR; sh = SCAR_SH; hatch = false; }
+          }
+        }
+        const k2 = bg + '|' + sh;
+        if (!bg) flush();
+        else if (run && run.key === k2) run.n += 1;
+        else { flush(); run = { x, y, n: 1, bg, sh, hatch, key: k2 }; }
+      }
+      flush();
+    }
+    /* Rain and soil come on a coarse grid of about 10 km, so they are drawn as larger blocks under the index. */
+    const blocks = [];
+    if ((L.rain || L.soil) && !swipeOn) {
+      const bz = Math.max(live ? 3 : 2, Math.round(10 / (M.km / GW)));
+      for (let by = 0; by < GH; by += bz) {
+        for (let bx = 0; bx < GW; bx += bz) {
+          const i = Math.min(GH - 1, by + (bz >> 1)) * GW + Math.min(GW - 1, bx + (bz >> 1));
+          let bg = '';
+          if (L.soil && G.wm[i] < 0.5) {
+            const v = clamp(thetaAt(day) * (0.88 + 0.12 * Math.cos(bx / 9 - by / 7)));
+            bg = 'rgba(31,200,170,' + (0.1 + 0.5 * v).toFixed(2) + ')';
+          }
+          if (L.rain && G.wm[i] < 0.5) {
+            const v = clamp(P3v * G.w[i] / E.pct[2]);
+            if (v > 0.04) bg = 'rgba(80,160,255,' + (0.12 + 0.6 * v).toFixed(2) + ')';
+          }
+          if (bg) blocks.push({ l: at(bx, GW), t: at(by, GH), w: at(bz, GW), h: at(bz, GH), bg });
+        }
+      }
+    }
+
+    /* Area markers. The selected area shows a callout with a leader line; the others show their rank. */
+    const pins = zones.map((z, i) => {
+      const on = !!sel && sel.id === z.id;
+      return {
+        left: pct(z.cx, GW), top: pct(z.cy, GH), on, zi: on ? 3 : 2,
+        size: on ? '18px' : '26px', num: on ? '' : String(i + 1),
+        bg: z.k.bg, fg: z.k.fg,
+        shadow: on ? '0 0 0 6px rgba(255,255,255,0.28), 0 0 16px 8px rgba(' + (z.k.rgb || '255,255,178') + ',0.6)' : '0 2px 6px rgba(0,0,0,0.55)',
+        aria: (i + 1) + '. ' + z.name + ', ' + z.k.label + ', TPI ' + z.tpi.toFixed(2) + (on ? ', selected' : ''),
+        pick: pick(z.id)
+      };
+    });
+    /* Defaults, so no callout field is undefined when no area is selected. */
+    let co = { left: '50%', top: '50%', len: '0px', rot: '0deg', cardL: 'auto', sp1: '1 1 0px', sp2: '1 1 0px', scores: '',
+      name: '', cls: '', chipBg: 'transparent', chipFg: 'inherit', chipBd: 'transparent', iconFg: 'currentColor',
+      line: '', basin: '', formula: '', inputs: '', dates: '' };
+    if (sel) {
+      const vx = 0.5 + ((sel.cx + 0.5) / GW - fx) * zoom, vy = 0.5 + ((sel.cy + 0.5) / GH - fy) * zoom;
+      const leftSide = vx > 0.4, below = vy < 0.36;
+      /* The card is placed in map-area units (cqw, cqh), so CSS can keep it inside the map at any width.
+         The stage is as tall as the map area times the zoom, and the focus point sits at the centre. */
+      const AR = GW / GH;
+      const kx = (((sel.cx + 0.5) / GW - fx) * zoom * AR * 100).toFixed(2), ky = (((sel.cy + 0.5) / GH - fy) * zoom * 100).toFixed(2);
+      const xPin = '50cqw + ' + kx + 'cqh', yPin = '50cqh + ' + ky + 'cqh';
+      const dx = leftSide ? -30 : 30, dy = below ? 38 : -38;
+      co = {
+        left: pct(sel.cx, GW), top: pct(sel.cy, GH),
+        len: Math.hypot(dx, dy).toFixed(1) + 'px', rot: (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(1) + 'deg',
+        cardL: 'clamp(8px, calc(' + xPin + (leftSide ? ' - 252px' : ' - 20px') + '), calc(100cqw - 280px))',
+        sp1: below ? '0 9999 max(0px, calc(' + yPin + ' + 30px))' : '1 1 0px',
+        sp2: below ? '1 1 0px' : '0 9999 max(0px, calc(100cqh - (' + yPin + ') + 30px))',
+        name: sel.name, cls: sel.k.label, chipBg: sel.k.bg, chipFg: sel.k.fg, chipBd: sel.k.bd,
+        iconFg: sel.k.label === 'Critical' ? '#ff5a6e' : sel.k.bg,
+        line: 'TPI ' + sel.tpi.toFixed(2) + ' · ' + sel.desc,
+        basin: sel.basin || E.place,
+        scores: 'R ' + sel.r.toFixed(2) + ' · S ' + sel.S.toFixed(2) + ' · T ' + sel.T.toFixed(2),
+        formula: 'TPI = (R x S x T)^(1/3) = ' + sel.tpi.toFixed(2),
+        inputs: '3-day rain ' + Math.round(P3v * sel.w) + ' mm (P90 ' + E.pct[0] + ', P95 ' + E.pct[1] + ', P99 ' + E.pct[2] + ') · SMAP ' + thetaAt(day).toFixed(2),
+        dates: fc ? 'Forecast: GEOS-FP rain to ' + md(day) + ' · SMAP held from ' + md(E.nObs - 3)
+          : 'Data: IMERG ' + md(day) + ' · SMAP ' + md(day - 2)
+      };
+    }
+
+    /* Layers. Hazards filter the index. Analysis and observation layers are overlays: at most two at once. */
+    const ICON = {
+      flood: 'M3 8.500c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 13c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 17.500c2-2 4-2 6 0s4 2 6 0 4-2 6 0',
+      slide: 'M3 19.500L10 6l4.500 8 2-3 4.500 8.500zM10 11v3.500M10 16.800v.2',
+      tpi: 'M12 3.500l8.500 4.500-8.500 4.500L3.500 8zM3.500 12l8.500 4.500 8.500-4.500M3.500 16l8.500 4.500 8.500-4.500',
+      rain: 'M7 14a4 4 0 01.5-7.970A5.500 5.500 0 0118.300 7.500 3.300 3.300 0 0117.500 14zM9 17l-.8 2.500M13 17l-.8 2.500M17 17l-.8 2.500',
+      soil: 'M12 3.500c3 4 5.500 6.800 5.500 10a5.500 5.500 0 01-11 0c0-3.200 2.500-6 5.500-10z',
+      radar: 'M10.500 12a1.500 1.500 0 103 0 1.500 1.500 0 10-3 0M8.500 8.500a5 5 0 000 7M15.500 8.500a5 5 0 010 7M5.800 5.800a8.800 8.800 0 000 12.400M18.200 5.800a8.800 8.800 0 010 12.400',
+      wind: 'M3 9h10a2.500 2.500 0 10-2.500-2.500M3 13h15a2.500 2.500 0 11-2.500 2.500M3 17h7'
+    };
+    const OVER = ['tpi', 'rain', 'soil', 'radar'];
+    const setOverlay = (id) => {
+      let order = (s.order || []).filter((k) => k !== id && L[k]);
+      if (!L[id]) order = order.concat([id]).slice(-2);
+      const next = Object.assign({}, L);
+      OVER.forEach((k) => { next[k] = order.indexOf(k) >= 0; });
+      this.setState({ layers: next, order });
+    };
+    const radarSub = live ? 'pass in ~18 h' : E.radar ? (radarReady ? 'pass available' : 'from D+1') : 'no pass in 2024';
+    const defs = [
+      ['flood', 'Hazards', 'Flood risk', ''],
+      ['slide', '', 'Landslide risk', ''],
+      ['tpi', 'Analysis', 'TPI index', 'from R, S and T'],
+      ['rain', '', 'Rain, 3-day', 'GPM IMERG'],
+      ['soil', '', 'Soil moisture', 'SMAP'],
+      ['radar', 'Observations', 'Radar (NISAR)', radarSub]
+    ].filter((d) => s.mode === 'cc' || d[0] === 'flood' || d[0] === 'slide');
+    const layerRows = defs.map(([id, head, label, sub]) => {
+      const off = id === 'radar' && !radarReady;
+      const on = !!L[id] && !off;
+      return {
+        head, headDisplay: head ? 'block' : 'none', label, sub, subDisplay: sub ? 'block' : 'none',
+        icon: ICON[id], on, off, op: off ? '0.55' : '1', aria: label + (sub ? ', ' + sub : ''),
+        trackBg: on ? '#17473f' : '#c3cbc5', trackBd: on ? '#17473f' : '#8d9a93', knobL: on ? '18px' : '2px',
+        cursor: off ? 'not-allowed' : 'pointer',
+        toggle: off ? () => {} : OVER.indexOf(id) >= 0 ? () => setOverlay(id)
+          : () => this.setState({ layers: Object.assign({}, L, { [id]: !L[id] }) })
+      };
+    });
+
+    /* Chart: daily rain as bars, soil moisture as a line on the right axis, forecast steps lighter and dashed. */
+    const rainMax = Math.max(100, Math.ceil(Math.max.apply(null, E.rain.concat(E.proj)) / 20) * 20);
+    const colW = 100 / n;
+    const yTicks = [0, 1, 2, 3, 4, 5].map((k) => ({ top: (k * 20) + '%', l: String(Math.round(rainMax * (1 - k / 5))), r: (1 - k / 5).toFixed(1) }));
+    const bars = [];
+    const chartHits = [];
+    const xLabels = [];
+    const tableRows = [];
+    for (let i = 0; i < n; i++) {
+      bars.push({ l: ((i + 0.24) * colW).toFixed(2) + '%', w: (colW * 0.52).toFixed(2) + '%', h: (rainAt(i) / rainMax * 100).toFixed(1) + '%', bg: isFc(i) ? '#a9d5f2' : '#2f8fdd' });
+      chartHits.push({ l: (i * colW).toFixed(2) + '%', aria: rel(i) + ', rain ' + rainAt(i) + ' mm, soil moisture ' + thetaAt(i).toFixed(2) + (isFc(i) ? ', forecast' : ''), pick: () => this.setState({ day: i }) });
+      xLabels.push({ l: rel(i, true), fw: i === day ? '700' : '400', fg: i === day ? '#16242b' : '#44535a', mw: i % 2 ? 'none' : 'calc((100cqw - 380px) * 999)' });
+      const top = E.zones.reduce((a, z) => Math.max(a, calc(z, i).tpi), 0);
+      tableRows.push({ l: rel(i) + (isFc(i) ? ' (forecast)' : ''), rain: rainAt(i), p3: p3(i), soil: thetaAt(i).toFixed(2), tpi: top.toFixed(2) + ' ' + cls(top).label, bg: i === day ? '#f1f5f2' : 'transparent' });
+    }
+    const pt = (i) => ((i + 0.5) * colW).toFixed(2) + ',' + (100 - thetaAt(i) * 100).toFixed(1);
+    const soilObs = [], soilFc = [];
+    for (let i = 0; i < E.nObs; i++) soilObs.push(pt(i));
+    for (let i = E.nObs - 1; i < n && E.proj.length; i++) soilFc.push(pt(i));
+    const soilY = 100 - thetaAt(day) * 100;
+
+    /* Text of the panels. */
+    const top = zones[0];
+    const reached = top.k.label === 'Critical' || critZones.length > 0;
+    const stepName = live ? (day === NOW ? '' : fc ? 'Forecast ' + rel(day) + ': ' : md(day) + ': ') : 'Replay, ' + rel(day) + ' (' + mdy(day) + '): ';
+    const body = top.k.label === 'Critical' || critZones.length
+      ? (fc ? 'Forecast rain on saturated soil keeps the TPI at critical levels in parts of the region.'
+        : 'Recent rainfall and saturated soil keep the TPI at critical levels in parts of the region.')
+      : top.k.label === 'High' ? 'Rain on wet soil puts parts of the region at high risk. No area is past the tipping point.'
+      : top.k.label === 'Moderate' ? 'Risk is moderate in parts of the region. No area is at High or Critical.'
+      : 'No area is above Low in this step.';
+    const ADVICE = {
+      Critical: ['Leave low ground near rivers and steep slopes now. Follow Civil Defense. Call 199.', 'Leave risk areas now'],
+      High: ['Be ready to leave. Keep documents and medicine at hand. Do not cross flooded roads.', 'Be ready to leave'],
+      Moderate: ['Stay informed and check again in a few hours.', 'Stay informed'],
+      Low: ['No action needed now.', 'No alert']
+    };
+    const pz = sel || top;
+    const rowOf = (z, i, isMinor) => ({
+      num: String(i + 1), name: z.name, cls: z.k.label, tpi: z.tpi.toFixed(2),
+      people: z.exposed && z.people ? fmt(z.people) : '-',
+      chipBg: z.k.bg, chipFg: z.k.fg, chipBd: z.k.bd, numBg: z.k.bg, numFg: z.k.fg, numBd: z.k.bd,
+      on: !isMinor && !!sel && sel.id === z.id,
+      rowBg: !isMinor && sel && sel.id === z.id ? '#eef4f1' : 'transparent',
+      cursor: isMinor ? 'default' : 'pointer',
+      aria: (i + 1) + '. ' + z.name + ', ' + z.k.label + ', TPI ' + z.tpi.toFixed(2) + (isMinor ? '' : ', show on the map'),
+      pick: isMinor ? () => {} : pickZoom(z.id)
+    });
+    const notes = zones.filter((z) => z.exposed).map((z) => ({ cls: z.k.label, chipBg: z.k.bg, chipFg: z.k.fg, chipBd: z.k.bd, text: z.name + ' · TPI ' + z.tpi.toFixed(2) }));
+    const seg = (on) => ({ on, bg: on ? '#17473f' : 'transparent', fg: on ? '#ffffff' : '#16242b' });
+    const kmW = M.km;
+    const scaleKm = [100, 40, 20, 10].find((k) => k / kmW * zoom <= 0.2) || 10;
+    const inset = M.inset || null;
+    const shareOff = !s.consent && !s.shared;
+
+    return {
+      /* header */
+      modes: [
+        Object.assign({ label: 'Command Center', icon: 'M3.500 5h17v11h-17zM9 20h6M12 16v4', pick: () => this.setState({ mode: 'cc' }) }, seg(s.mode === 'cc')),
+        Object.assign({ label: 'Public Alerts', icon: 'M9 11a3.200 3.200 0 100-6.400A3.200 3.200 0 009 11zM3 19c0-3 2.700-5 6-5s6 2 6 5M16 5.200a3 3 0 010 5.600M17.500 14.300c2.200.6 3.500 2.300 3.500 4.700', pick: () => this.setState({ mode: 'public' }) }, seg(s.mode !== 'cc'))
+      ],
+      times: [
+        Object.assign({ label: 'Now', iconDisplay: 'none', pick: () => this.setState({ time: 'now', day: null, sel: null, zi: 0, why: false, all: false }) }, seg(live)),
+        Object.assign({ label: 'Replay', iconDisplay: 'block', pick: () => this.setState({ time: 'replay', day: null, sel: null, zi: 0, why: false, all: false }) }, seg(!live))
+      ],
+      isNow: live, isReplay: !live, ev: key, regionVal: key,
+      onRegion: () => {},
+      onEvent: (e) => this.setState({ ev: e.target.value, day: null, sel: null, zi: 0, why: false }),
+      bellOpen: !!s.bell, toggleBell: () => this.setState({ bell: !s.bell }),
+      bellDot: notes.length ? 'block' : 'none',
+      bellAria: 'Notifications, ' + notes.length + ' active',
+      notes, notesEmpty: notes.length ? 'Sent to subscribed regions on Telegram (sample).' : 'No High or Critical area in this step.',
+
+      /* layers panel */
+      panelOpen: s.panel !== false, togglePanel: () => this.setState({ panel: s.panel === false }),
+      panelLabel: s.panel !== false ? 'Hide the layers panel' : 'Show the layers panel',
+      layersOpen: s.layersOpen !== false, toggleLayers: () => this.setState({ layersOpen: s.layersOpen === false }),
+      chevTf: s.layersOpen !== false ? 'none' : 'rotate(180deg)',
+      layerRows, layerNoteDisplay: s.mode === 'cc' ? 'block' : 'none',
+      fcLegendDisplay: E.proj.length ? 'inline-flex' : 'none',
+      radarLegendDisplay: showRadar || swipeOn ? 'inline-flex' : 'none',
+      rainLegendDisplay: L.rain && !swipeOn ? 'inline-flex' : 'none', soilLegendDisplay: L.soil && !swipeOn ? 'inline-flex' : 'none',
+
+      /* map */
+      isSb: key === 'sb', isWa: key === 'wa', isRs: key === 'rs',
+      stageAR: GW + ' / ' + GH,
+      stageH: (zoom * 100) + '%',
+      stageTx: (-fx * 100).toFixed(2) + '%', stageTy: (-fy * 100).toFixed(2) + '%',
+      mapAria: 'Map of ' + E.place + ', ' + rel(day) + '. ' + zones.map((z) => z.name + ' ' + z.k.label + ' ' + z.tpi.toFixed(2)).join(', ') + '. Sample data.',
+      blocks, cells, cellH: (100 / GH).toFixed(3) + '%',
+      cellFilter: showRadar ? 'none' : 'blur(' + ((fc ? 1 : live ? 3 : 2.5) * zoom).toFixed(1) + 'px)',
+      states: (M.states || []).map((p) => ({ name: p[0], left: p[1] + '%', top: p[2] + '%' })),
+      places: M.places.map((p) => {
+        /* Labels on the right side go to the left of their dot; lower down they also keep clear of the map buttons. */
+        const px = 0.5 + (p[1] / 100 - fx) * zoom, py = 0.5 + (p[2] / 100 - fy) * zoom;
+        const flip = px > 0.78 || (live && px > 0.62 && py > 0.6);
+        return { name: p[0], left: p[1] + '%', top: p[2] + '%', dir: flip ? 'row-reverse' : 'row', tf: flip ? 'translate(calc(-100% + 5px), -50%)' : 'translate(-5px, -50%)' };
+      }),
+      riverName: M.river ? M.river[0] : '', riverLeft: M.river ? M.river[1] + '%' : '0', riverTop: M.river ? M.river[2] + '%' : '0',
+      riverDisplay: M.river ? 'inline' : 'none',
+      pins, showCallout: !!sel && !swipeOn, co,
+      showSwipe: swipeOn, split, splitLeft: (split / GW * 100).toFixed(2) + '%',
+      onSplit: (e) => this.setState({ split: Number(e.target.value) }),
+      toggleSwipe: () => this.setState({ swipe: !s.swipe, zi: 0, why: false }),
+      swipeOn, swipeBtn: swipeOn ? 'Close compare' : 'Before / after',
+      beforeTag: 'Before · pass of ' + md(NOW - 11), afterTag: 'After · pass of ' + md(NOW + 1),
+      capDisplay: swipeOn ? 'none' : 'inline-block',
+      /* Replay maps have areas near the lower right corner, so the map buttons sit under the sample chip there. */
+      ctlTop: live ? 'auto' : '46px', ctlBottom: live ? '12px' : 'auto',
+      /* The deck's call to action: from the event day, jump to the first pass and open the comparison. */
+      nisarGoDisplay: E.radar && !fc && !live && day <= NOW ? 'inline-flex' : 'none',
+      nisarGo: () => this.setState({ day: NOW + 1, swipe: true, zi: 0, why: false, playing: false }),
+      tpLabel: reached ? (fc ? 'Tipping point forecast' : 'Tipping point reached') : 'Below the tipping point',
+      tpBg: reached ? '#fdecee' : '#eef1ec', tpFg: reached ? '#8a0019' : '#44535a', tpBd: reached ? '#e7a3ad' : '#dfe3dc',
+      tpIconDisplay: reached ? 'block' : 'none',
+      tpTitle: 'The index crosses 0.60 (Critical) in at least one area.',
+      whyOpen: !!s.why, toggleWhy: () => this.setState({ why: !s.why }),
+      whyLabel: s.why ? 'Hide how the index was computed' : 'Show how the index was computed',
+      whyTf: s.why ? 'rotate(90deg)' : 'none',
+      scaleW: (scaleKm / kmW * zoom * 100).toFixed(2) + '%',
+      scaleA: String(scaleKm / 4), scaleB: String(scaleKm / 2), scaleC: scaleKm + ' km',
+      mapCaption: fc ? 'TPI forecast · ' + rel(day) + ' · ' + mdy(day) + ' · hatched'
+        : 'TPI · ' + rel(day) + ' · ' + mdy(day),
+      capBd: fc ? '2px dashed #5f6d73' : '0',
+      insetDisplay: inset && zoom === 1 ? 'block' : 'none',
+      insetPath: inset ? inset.path : '', insetX: inset ? inset.rect.x : 0, insetY: inset ? inset.rect.y : 0,
+      insetW: inset ? inset.rect.w : 0, insetH: inset ? inset.rect.h : 0,
+      zoomIn: () => this.setState({ zi: Math.min(2, zi + 1) }),
+      zoomOut: () => this.setState({ zi: Math.max(0, zi - 1) }),
+      zoomReset: () => this.setState({ zi: 0 }),
+      zoomInFg: zi >= 2 ? '#9aa7a0' : '#16242b', zoomOutFg: zi <= 0 ? '#9aa7a0' : '#16242b',
+
+      /* command center panel */
+      isCc: s.mode === 'cc', isPub: s.mode !== 'cc',
+      situation: stepName + (live ? body : reached ? 'the TPI is at critical levels in parts of the region.' : body),
+      rowsNoteDisplay: live && !s.all && !s.table ? 'block' : 'none',
+      rowH: s.all ? '25px' : '30px', numH: s.all ? '21px' : '24px', plotH: s.all ? '82px' : '96px',
+      critKm: critZones.reduce((a, z) => a + z.km, 0).toFixed(1),
+      critPeople: fmt(critZones.reduce((a, z) => a + z.crit, 0)),
+      rows: zones.map((z, i) => rowOf(z, i, false)).concat(minor.map((z, i) => rowOf(z, zones.length + i, true))),
+      rowsNote: 'People: High or Critical cells per area. Tiles: Critical cells only.',
+      allDisplay: E.minor ? 'inline-flex' : 'none', allOpen: !!s.all, allLabel: s.all ? 'Show less' : 'View all',
+      toggleAll: () => this.setState({ all: !s.all }),
+      chartScope: 'regional average',
+      chartInfo: 'Bars: daily rain (GPM IMERG). Line: SMAP root zone soil moisture, 0 to 1. Forecast steps use GEOS-FP rain; soil is held at the last SMAP value.',
+      chartAria: 'Chart of daily rain and soil moisture, ' + rel(0) + ' to ' + rel(n - 1) + '. In view: ' + rel(day) + ', rain ' + rainAt(day) + ' mm, soil moisture ' + thetaAt(day).toFixed(2) + '. Use the Table button for all values.',
+      chartOn: !s.table, tableOn: !!s.table, tableLabel: s.table ? 'Chart' : 'Table',
+      toggleTable: () => this.setState({ table: !s.table }),
+      yTicks, bars, chartHits, xLabels, tableRows,
+      colW: colW.toFixed(2) + '%', curL: (day * colW).toFixed(2) + '%', curX: ((day + 0.5) * colW).toFixed(2) + '%',
+      soilObs: soilObs.join(' '), soilFc: soilFc.join(' '),
+      curSoilTop: soilY.toFixed(1) + '%', curSoil: thetaAt(day).toFixed(2),
+      soilLblTf: soilY < 16 ? 'translate(-50%, 55%)' : 'translate(-50%, -140%)',
+      curRain: rainAt(day) + ' mm', curRainBottom: (rainAt(day) / rainMax * 100).toFixed(1) + '%',
+      nisarDot: radarReady ? '#1a7f4b' : '#9aa7a0',
+      nisarHead: live ? 'Awaiting next radar observation' : !E.radar ? 'No NISAR pass for this event' : radarReady ? 'Flood and scars seen by radar' : 'No pass yet in this step',
+      nisarSub: live ? 'Next acquisition (estimate): in ~18 h' : !E.radar ? 'NISAR launched in July 2025. Optical data only.'
+        : radarReady ? '[X] km² flooded · [X] scars (BETA)' : 'First pass after the event: D+1 (' + md(NOW + 1) + ')',
+      nisarBtnDisplay: radarReady ? 'flex' : 'none', nisarBtn: L.radar ? 'Hide on map' : 'Show on map', radarOn: !!L.radar,
+      toggleRadar: () => setOverlay('radar'),
+
+      /* public alerts panel */
+      pubName: pz.name, pubCls: pz.k.label, pubChipBg: pz.k.bg, pubChipFg: pz.k.fg, pubChipBd: pz.k.bd,
+      pubBg: pz.k.soft, pubBd: pz.k.softBd,
+      pubHead: pz.k.label === 'Low' ? 'No alert for this region.' : (fc ? 'Forecast ' + rel(day) + ': ' : '') + pz.k.label + ' risk of ' + hazardWords(pz) + (fc ? '.' : ' now.'),
+      pubAdvice: ADVICE[pz.k.label][0],
+      pubMeta: 'Sent by Telegram when the class rises to High or Critical · ' + (pz.basin || E.place),
+      pubRows: zones.map((z) => ({
+        name: z.name, cls: z.k.label, chipBg: z.k.bg, chipFg: z.k.fg, chipBd: z.k.bd,
+        short: ADVICE[z.k.label][1] + ' · ' + hazardWords(z), on: !!sel && sel.id === z.id,
+        rowBg: sel && sel.id === z.id ? '#eef4f1' : 'transparent', pick: pickZoom(z.id)
+      })),
+      pubNote: 'Sample messages. Alerts refer to a region and do not replace official Civil Defense warnings.',
+
+      /* subscribe card and replay check */
+      showCta: live, showValid: !live && s.mode === 'cc',
+      ctaText: s.shared ? 'Demo: subscribed for ' + pz.name + '. No location was read.' : 'Receive flood and landslide risk alerts for your region on Telegram.',
+      consent: !!s.consent, toggleConsent: () => this.setState({ consent: !s.consent }),
+      consentBg: s.consent ? '#17473f' : '#ffffff', consentOp: s.consent ? '1' : '0',
+      shareOff, shareLabel: s.shared ? 'Subscribed (undo)' : 'Share approximate location',
+      shareBg: shareOff ? '#c9d3cf' : '#17473f', shareFg: shareOff ? '#44535a' : '#ffffff', shareCursor: shareOff ? 'not-allowed' : 'pointer',
+      share: shareOff ? () => {} : () => this.setState({ shared: !s.shared }),
+      validTitle: key === 'rs' ? 'Replay check: would it have warned in time?' : 'Replay check: radar saw through the storm',
+      validRows: (key === 'rs'
+        ? [['Warning lead time before the first landslides', '[X] h'], ['Catalog landslides inside High or Critical areas', '[X]%'],
+          ['Random Forest AUC against the hand-made rule', '[X] vs [X]'], ['Power loss in night lights (Black Marble)', '[X]%']]
+        : [['Flooded area confirmed by NISAR', '[X] km²'], ['Agreement with NASA OPERA water maps', 'IoU [X] · F1 [X]'],
+          ['Hidden by cloud for optical sensors at peak', '[X]%'], ['Power loss in night lights (Black Marble)', '[X]%']]
+      ).map((m) => ({ name: m[0], value: m[1] })),
+      validNote: '[X] = from the final runs',
+
+      /* timeline */
+      steps: Array.from({ length: n }, (_, i) => {
+        const on = i === day, f = isFc(i);
+        return {
+          on, top: live && i < NOW ? md(i) : rel(i), sub: live && i < NOW ? '' : md(i),
+          topFs: on ? '15px' : '13px', topFw: on ? '700' : '500',
+          dot: on ? '20px' : '12px',
+          dotBg: f ? '#ffffff' : '#17473f',
+          dotBd: f ? (on ? '3px solid #17473f' : '2.5px solid #9aa7a0') : '0',
+          dotSh: on ? '0 0 0 4px rgba(23,71,63,0.22)' : 'none',
+          aria: rel(i) + ', ' + mdy(i) + (f ? ', forecast' : ''),
+          pick: () => this.setState({ day: i })
+        };
+      }),
+      obsL: (0.5 * colW).toFixed(2) + '%', obsW: ((E.nObs - 1) * colW).toFixed(2) + '%',
+      fcL: ((E.nObs - 0.5) * colW).toFixed(2) + '%', fcW: ((n - E.nObs) * colW).toFixed(2) + '%',
+      fcTagL: ((E.nObs + (n - E.nObs) / 2) * colW).toFixed(2) + '%',
+      fcTrackDisplay: E.proj.length ? 'block' : 'none',
+      playIcon: s.playing ? 'M8 5v14M16 5v14' : 'M7 5v14l12-7z',
+      playLabel: s.playing ? 'Pause' : 'Play the timeline from the first step',
+      play: () => this.togglePlay(),
+      prev: () => this.setState({ day: Math.max(0, day - 1) }),
+      next: () => this.setState({ day: Math.min(n - 1, day + 1) }),
+      sources: live ? [
+        { name: 'GPM', status: '~30 min ago', dot: '#1a9d55', dotDisplay: 'inline-block', icon: ICON.rain },
+        { name: 'SMAP', status: '2 days old', dot: '#e0a100', dotDisplay: 'inline-block', icon: ICON.tpi },
+        { name: 'GEOS-FP', status: 'Forecast (72 h)', dot: '', dotDisplay: 'none', icon: ICON.wind }
+      ] : [
+        { name: 'GPM IMERG', status: 'through ' + md(day), dot: '', dotDisplay: 'none', icon: ICON.rain },
+        { name: 'SMAP', status: 'of ' + md(day - 2), dot: '', dotDisplay: 'none', icon: ICON.tpi },
+        { name: 'NISAR', status: E.radar ? 'pass on ' + md(NOW + 1) : 'no pass', dot: '', dotDisplay: 'none', icon: ICON.radar }
+      ],
+      footNote: 'TPI = (R x S x T)^(1/3) · Low is painted only in the detail zoom · Sample data, not results · Base map: OpenStreetMap contributors'
+        + (live ? ', IBGE borders' : '') + ' · Relief: AWS Terrain Tiles, in place of NASADEM'
+    };
+  }
+}
+</script>
+</body>
+</html>
