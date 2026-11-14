@@ -14,7 +14,7 @@ async function DashboardLoader() {
       cases.push(await getCaseBundle(e.id, e.title, e.bbox, e.reference_date));
     }
   }
-  // Live mode ("Agora") — southern Brazil, refreshed by the 3-hourly pipeline.
+  // Live mode ("Agora") — southern Brazil, refreshed by the 6-hourly pipeline.
   // Reference day comes from the pipeline-stamped manifest.updated_at, not a
   // hardcoded date.
   const now = await getCaseBundle("now", "Now — Southern Brazil", [-58, -34, -48, -22.5], "2026-11-14");
