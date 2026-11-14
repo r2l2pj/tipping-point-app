@@ -21,3 +21,26 @@ Branch: unit/u20-dbands. Base tested: 2746e35 (working-tree changes committed wi
 - `git diff --stat`, `git diff -- src/lib/ee-tiles.ts src/lib/ee-point.ts src/lib/ee-numbers.ts`, `git log -5 --oneline`, `git status --short --branch`: inspected scope, implementation, commit conventions, and branch state.
 
 No live GEE claim is made: behavioral proof uses the requested fake-EE suites.
+
+## Follow-up: bound computed reductions
+
+Base: 331add9; follow-up working tree committed with this report update.
+
+Lead reported a real-EE failure aggregating an unbounded image without geometry. Updated only ee-numbers.ts and its test file (plus this evidence report):
+
+- Retain the complete case entry from the root manifest lookup, including bounds, using the existing canonical/event/alias resolution.
+- Construct ee.Geometry.Rectangle from case bounds [west, south, east, north] once and pass the same geometry to every TPI/flood area/population reduceRegion call.
+- Add the minimal Geometry.Rectangle seam and a bounds override for injected test services. Reject missing/nonfinite/unordered bounds instead of issuing unbounded reductions. The properties fast path does not require geometry.
+- Add a fake-EE test exercising the default root-manifest lookup with the hyphenated case query. It asserts the rs_2024 bounds [-52.5, -30.5, -50.5, -29] reach Rectangle and all four reduceRegion calls.
+
+Follow-up verification:
+
+- `bun install --frozen-lockfile`: exit 0; checked 836 installs across 874 packages, no changes.
+- `bun test src/lib/ee-numbers.test.ts --test-name-pattern 'manifest case rectangle'` before the fix: exit 1, 0 pass / 1 fail; recorded reduceRegion params lacked geometry and no Rectangle call occurred.
+- `bun test src/lib/ee-numbers.test.ts` after fix: exit 0; 21 pass, 0 fail, 57 expect calls.
+- `bun test`: exit 0; 377 pass, 7 environment-gated skips, 0 fail, 1197 expect calls; 384 tests across 20 files.
+- `bun run build`: exit 0; compiled successfully, TypeScript passed, 14/14 pages generated. Missing sibling-data sync skipped as designed.
+- `bun run lint src/lib/ee-numbers.ts src/lib/ee-numbers.test.ts`: exit 0; clean.
+- `git diff --check`: exit 0. `git diff --stat` and `git status --short --branch` confirmed the scoped source/test changes on unit/u20-dbands.
+
+No live-EE rerun was performed in this worker; the lead owns the real-project verification.

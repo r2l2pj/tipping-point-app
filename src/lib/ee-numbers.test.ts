@@ -87,6 +87,9 @@ function makeFakeEe(o: FakeOpts = {}) {
       return col;
     },
     Reducer: { sum: () => (calls.push(["Reducer.sum"]), "sum") },
+    Geometry: {
+      Rectangle: (bounds: number[]) => (calls.push(["Rectangle", bounds]), { bounds }),
+    },
   } as unknown as EeLike;
 
   return { ee, calls };
@@ -125,6 +128,7 @@ describe("createNumbersService", () => {
     });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: () => [
         { id: "tpi_slide", date: "2024-05-01", asset: "custom/tpi" },
         { id: "flood_confirmed", asset: "custom/flood" },
@@ -138,6 +142,7 @@ describe("createNumbersService", () => {
     const { ee, calls } = makeFakeEe({ props: { km2_critical: 1 } });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
     });
     await svc.getNumbers(QUERY);
@@ -156,6 +161,7 @@ describe("createNumbersService", () => {
     });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
     });
     const res = await svc.getNumbers(QUERY);
@@ -179,6 +185,7 @@ describe("createNumbersService", () => {
     });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
     });
     const res = await svc.getNumbers(QUERY);
@@ -195,6 +202,7 @@ describe("createNumbersService", () => {
     });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
     });
     const res = await withoutEnv(["GEE_POP_IMAGE"], () =>
@@ -235,6 +243,7 @@ describe("createNumbersService", () => {
     });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
       popImage: "pop/img",
     });
@@ -253,6 +262,23 @@ describe("createNumbersService", () => {
     });
   });
 
+  test("computed reductions all receive the manifest case rectangle", async () => {
+    const { ee, calls } = makeFakeEe({
+      floodBands: ["20240501"],
+      sums: [2_000_000, 5_000, 400_000, 300],
+    });
+    await withoutEnv(["DATA_BASE_URL"], () => createNumbersService(ee, {
+      assetRoot: "root",
+      popImage: "pop/img",
+    }).getNumbers(QUERY));
+    expect(calls).toContainEqual(["Rectangle", [-52.5, -30.5, -50.5, -29]]);
+    const reductions = calls.filter((c) => c[0] === "reduceRegion");
+    expect(reductions).toHaveLength(4);
+    for (const call of reductions) {
+      expect(call[1]).toMatchObject({ geometry: { bounds: [-52.5, -30.5, -50.5, -29] } });
+    }
+  });
+
   test("GEE_POP_IMAGE override uses an Image instead of the collection", async () => {
     const { ee, calls } = makeFakeEe({
       sums: [1_000_000, 10],
@@ -260,6 +286,7 @@ describe("createNumbersService", () => {
     });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
       popImage: "users/test/pop_2024",
     });
@@ -275,6 +302,7 @@ describe("createNumbersService", () => {
     });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
       popImage: "pop/img",
     });
@@ -292,6 +320,7 @@ describe("createNumbersService", () => {
     const { ee } = makeFakeEe({ bands: ["20240502"] });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
     });
     const err = await svc.getNumbers(QUERY).then(
@@ -309,6 +338,7 @@ describe("createNumbersService", () => {
     });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
     });
     const res = await svc.getNumbers(QUERY);
@@ -320,6 +350,7 @@ describe("createNumbersService", () => {
     const { ee } = makeFakeEe({ tpiError: "Image not found" });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
     });
     const err = await svc.getNumbers(QUERY).then(
@@ -334,6 +365,7 @@ describe("createNumbersService", () => {
     const { ee: ee2 } = makeFakeEe({ tpiError: "quota exceeded" });
     const svc2 = createNumbersService(ee2, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
     });
     const err2 = await svc2.getNumbers(QUERY).then(
@@ -347,6 +379,7 @@ describe("createNumbersService", () => {
     const { ee, calls } = makeFakeEe({ props: { km2_critical: 1 } });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
     });
     await svc.getNumbers(QUERY);
@@ -360,6 +393,7 @@ describe("createNumbersService", () => {
     const { ee, calls } = makeFakeEe({ bands: ["20240502"] });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
     });
     await svc.getNumbers(QUERY).catch(() => {});
@@ -376,6 +410,7 @@ describe("createNumbersService", () => {
     const { ee } = makeFakeEe({ hang: true });
     const svc = createNumbersService(ee, {
       assetRoot: "root",
+      bounds: [-58, -34, -49, -27],
       manifestLayers: NO_LAYERS,
       timeoutMs: 5,
     });
