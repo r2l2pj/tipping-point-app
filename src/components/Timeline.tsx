@@ -8,8 +8,10 @@ export default function Timeline({
   playing,
   onSeek,
   onPlayToggle,
+  markers,
 }: {
   series?: SeriesDaily;
+  markers?: { dayIndex: number; label: string; color: "red" | "amber" }[];
   dayIndex: number;
   playing: boolean;
   onSeek: (i: number) => void;
@@ -72,6 +74,12 @@ export default function Timeline({
                   }`}
                 >
                   {label(d.offset)}
+                </span>
+                <span className="absolute top-3 flex gap-1">
+                  {markers?.filter((marker) => marker.dayIndex === i).map((marker) => (
+                    <span key={marker.label} title={marker.label} aria-label={marker.label}
+                      className={`h-2 w-1 rounded-full ${marker.color === "red" ? "bg-red-500" : "bg-amber-400"}`} />
+                  ))}
                 </span>
               </button>
             );

@@ -4,7 +4,8 @@ import { fmtPct } from "@/lib/tpi";
 import type { CaseBundle } from "@/lib/types";
 import FeatureImportanceChart from "../charts/FeatureImportanceChart";
 import SwotChart from "../charts/SwotChart";
-import { fmtHours, isMockDerived } from "./format";
+import { isMockDerived } from "./format";
+import LeadTimeCard from "./LeadTimeCard";
 import { StatCard } from "./Stat";
 
 // "Acertamos?" — did the pipeline get it right: flood scores vs reference,
@@ -63,24 +64,7 @@ export default function ValidationTab({ bundle }: { bundle: CaseBundle }) {
         />
       </div>
 
-      <p className="text-xs font-medium text-zinc-300">Early warning</p>
-      <div className="grid grid-cols-2 gap-2">
-        <StatCard
-          label="Mean lead time"
-          value={fmtHours(m.lead_time_mean_h)}
-          accent="green"
-        />
-        <StatCard
-          label="Median lead time"
-          value={fmtHours(m.lead_time_median_h)}
-          accent="green"
-        />
-        <StatCard
-          label="Zones warned before event"
-          value={fmtPct(m.warned_before_pct)}
-          accent="green"
-        />
-      </div>
+      <LeadTimeCard bundle={bundle} />
 
       <div className="rounded-md border border-zinc-800 p-3">
         <p className="text-xs font-medium text-zinc-300">Why radar</p>

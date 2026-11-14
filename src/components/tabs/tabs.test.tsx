@@ -5,6 +5,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import type { CaseBundle } from "../../lib/types";
 import SidePanel, { type TabKey } from "../SidePanel";
+import { normalizeLeadTimeHist } from "../charts/LeadTimeHistogram";
+import Timeline from "../Timeline";
 
 const noop = () => {};
 
@@ -65,9 +67,64 @@ describe("validation tab on metricsView", () => {
     expect(html).toContain("learned vs manual slope rule");
     expect(html).toContain("0.91");
     expect(html).toContain("0.74");
-    expect(html).toContain("48 h");
+    expect(html).toContain("IQR");
     expect(html).toContain("52 h");
     expect(html).toContain("no cloud pixels");
+  });
+});
+
+describe("lead-time replay context", () => {
+  const metrics = (extra: Record<string, unknown> = {}) => ({
+    lead_time_median_h: 30, lead_time_iqr_h: [18, 42], n_points: 12,
+    warned_before_pct: 0.8, warned_24h_pct: 0.6, never_critical_pct: 0.2,
+    ...extra,
+  }) as CaseBundle["metricsView"];
+
+  test("median is contextualized with IQR, sample size and English replay copy", () => {
+    const html = render("validation", bundle({ metricsView: metrics({
+      official_warning_delta_h: 6, event_lead_h: 24,
+      critical_area_with_damage_pct: 0.25, critical_area_km2: 40,
+      anchor_precision: "mixed", lead_time_assumptions: { quality: "placeholder" },
+    }) }));
+    for (const text of ["How early? (in replay)", "Median 30 h before mapped landslides",
+      "IQR 18–42 h · n = 12", "mixed-precision anchors", "Flagged before damage",
+      "Warned &gt;= 24 h early", "Never crossed Critical", "80%", "60%", "20%",
+      "vs first official warning: +6 h", "Event-level anchor lead: 24 h",
+      "Critical area that had damage: 25%", "40 km²", "Illustrative numbers"]) {
+      expect(html).toContain(text);
+    }
+    expect(html).not.toMatch(/Mediana|antecedência|deslizamentos|Avisados|Crítico/);
+    expect(html).not.toContain(">30<");
+  });
+
+  test("absent metrics or median hide the card; absent optional data stays safe", () => {
+    for (const m of [undefined, {}, { lead_time_median_h: null }]) {
+      expect(render("validation", bundle({ metricsView: m as CaseBundle["metricsView"] }))).not.toContain("How early?");
+    }
+    const html = render("validation", bundle({ metricsView: { lead_time_median_h: 0 } }));
+    expect(html).toContain("IQR not reported–not reported h · n = not reported");
+    expect(html).toContain("IMERG Early ~4 h");
+    expect(html).not.toContain("vs first official warning");
+    expect(html).not.toContain("Lead time histogram");
+  });
+
+  test("both histogram shapes render and canonical bins preserve negative origins", () => {
+    for (const hist of [[{ h_from: -6, n: 2 }, { h_from: 0, n: 5 }],
+      { bin_h: 6, from_h: -6, counts: [2, 5] }]) {
+      expect(normalizeLeadTimeHist(hist)).toEqual([{ h_from: -6, n: 2 }, { h_from: 0, n: 5 }]);
+      expect(render("validation", bundle({ metricsView: metrics({ lead_time_hist: hist }) }))).toContain("Lead time histogram");
+    }
+    expect(normalizeLeadTimeHist({ bin_h: 6, counts: [1, 2] })).toEqual([{ h_from: 0, n: 1 }, { h_from: 6, n: 2 }]);
+    expect(normalizeLeadTimeHist(null)).toEqual([]);
+    expect(normalizeLeadTimeHist([{}, { h_from: 0, n: -1 }])).toEqual([]);
+  });
+
+  test("timeline places both marker tooltips on the matching tick", () => {
+    const html = renderToStaticMarkup(<Timeline dayIndex={0} playing={false} onSeek={noop} onPlayToggle={noop}
+      series={{ event: "wa_2025", reference_date: "2025-12-10", days: [{ date: "2025-12-10", offset: 0, kind: "observed", tpi: 0.8, imerg_mm: 10, smap: 0.9 }] }}
+      markers={[{ dayIndex: 0, label: "first Critical", color: "amber" }, { dayIndex: 0, label: "first damage", color: "red" }]} />);
+    expect(html).toContain('title="first Critical"');
+    expect(html).toContain('title="first damage"');
   });
 });
 

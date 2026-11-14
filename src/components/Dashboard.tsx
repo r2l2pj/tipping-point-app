@@ -26,6 +26,18 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
     [cases, activeId]
   );
   const days = bundle?.series?.days ?? [];
+  const threshold = bundle?.series?.tpi_threshold;
+  const firstCriticalIdx = days.findIndex((day) => day.tpi >=
+    (typeof threshold === "number" && Number.isFinite(threshold) ? threshold : 0.6));
+  const metrics = bundle?.metricsView as Record<string, unknown> | undefined;
+  const anchor = metrics?.damage_anchor;
+  const damageAt = anchor && typeof anchor === "object"
+    ? (anchor as Record<string, unknown>).at : metrics?.first_damage_at;
+  const firstDamageIdx = typeof damageAt === "string"
+    ? days.findIndex((day) => day.date.slice(0, 10) === damageAt.slice(0, 10)) : -1;
+  const markers: { dayIndex: number; label: string; color: "red" | "amber" }[] = [];
+  if (firstCriticalIdx >= 0) markers.push({ dayIndex: firstCriticalIdx, label: "first Critical", color: "amber" });
+  if (firstDamageIdx >= 0) markers.push({ dayIndex: firstDamageIdx, label: "first damage", color: "red" });
 
   const [dayIndex, setDayIndex] = useState(() =>
     Math.max(0, days.findIndex((d) => d.offset === 0))
@@ -136,6 +148,7 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
 
       <Timeline
         series={bundle.series}
+        markers={markers.length ? markers : undefined}
         dayIndex={dayIndex}
         playing={playing}
         onSeek={setDayIndex}
