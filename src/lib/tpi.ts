@@ -1,7 +1,11 @@
 // TPI classes, palette and the synthetic grid used while no real COG exists.
 // Palette per project doc v3 (ColorBrewer YlOrRd, colorblind-safe).
+// Class cuts live in contract.TPI_CUTS (A10) — the literal exists only there;
+// a manifest case node may override via `tpi_cuts` (LoadedCaseBundle.tpiCuts).
 
-const DEFAULT_CUTS: [number, number, number] = [0.2, 0.4, 0.6];
+import { TPI_CUTS } from "./contract";
+
+const DEFAULT_CUTS: [number, number, number] = [...TPI_CUTS];
 
 export function cutsFor(bundle?: unknown): [number, number, number] {
   const b = bundle && typeof bundle === "object" ? bundle as Record<string, unknown> : {};

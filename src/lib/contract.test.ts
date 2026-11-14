@@ -76,7 +76,38 @@ describe("toMetricsView", () => {
   test("percent fields already on a 0-1 scale pass through", () => {
     expect(flat.landslide_hit_pct).toBe(0.62);
     expect(flat.hand_validation).toBe(0.78);
-    expect(toMetricsView({ cloud_pct: 1 })!.cloud_pct).toBe(1);
+    expect(toMetricsView({ cloud_pct: 0.5 })!.cloud_pct).toBe(0.5);
+  });
+
+  // N3 regression: *_pct is authored 0-100, so exactly 1 means 1%, not 100%.
+  test("percent edge: values >= 1 read as the 0-100 scale", () => {
+    for (const [input, expected] of [
+      [0, 0],
+      [0.99, 0.99],
+      [1, 0.01],
+      [50, 0.5],
+      [100, 1],
+    ] as const) {
+      expect(toMetricsView({ cloud_pct: input })!.cloud_pct).toBe(expected);
+    }
+  });
+
+  test("analysis keys pass through; swath_coverage_pct normalizes like other percents", () => {
+    const clusters = [{ area_km2: 4.2, lat: -29.1, lon: -51.6, where: "Caxias do Sul" }];
+    const radii = { "500": 0.41, "1000": 0.52 };
+    const view = toMetricsView({
+      swath_coverage_pct: 73,
+      flooded_km2_scope: "within NISAR swath",
+      flood_top_clusters: clusters,
+      hand_validation_radii: radii,
+      hand_best_radius_m: 1000,
+    })!;
+    expect(view.swath_coverage_pct).toBe(0.73);
+    expect(view.flooded_km2_scope).toBe("within NISAR swath");
+    expect(view.flood_top_clusters).toBe(clusters);
+    expect(view.hand_validation_radii).toBe(radii);
+    expect(view.hand_best_radius_m).toBe(1000);
+    expect(toMetricsView({})!.swath_coverage_pct).toBeUndefined();
   });
 
   test("legacy nested mock maps onto the flat view", () => {
