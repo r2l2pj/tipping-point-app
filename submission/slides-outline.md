@@ -33,8 +33,8 @@
 
 ## Slide 5 — Did it work?
 - WA Dec 2025 replay vs NISAR GCOV reference: **IoU 0.71, F1 0.83** over **41.6 km²** confirmed flooded
-- Early warning: **52 h median lead time, 87% of zones warned before the event**
-- RS replay (no radar — event predates NISAR): IoU 0.64, F1 0.78, 46 h lead, 81% warned
+- Early warning: **X h median lead time (placeholder — real figure lands with validation), 87% of zones warned before the event**
+- RS replay (no radar — event predates NISAR): IoU 0.64, F1 0.78, X h lead (placeholder), 81% warned
 - **94–97% cloud cover** during both events — that's why radar
 - *Visual:* VALIDATION tab screenshot next to a small metrics table for both cases
 
