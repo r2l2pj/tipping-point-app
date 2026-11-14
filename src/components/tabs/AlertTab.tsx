@@ -55,6 +55,14 @@ export default function AlertTab({
   const source = forecastSourceLabel(
     bundle.manifest?.forecast_source ?? bundle.summary?.forecast_source
   );
+  // Rule 2: the forecast chip only appears on forecast days — observed
+  // days (incl. EVENT) are labeled observed, never "perfect forecast".
+  const dayChip =
+    day?.kind === "forecast"
+      ? `forecast${source ? ` (${source})` : ""}`
+      : day?.kind === "observed" || day?.kind === "hindcast"
+        ? day.kind
+        : undefined;
 
   return (
     <div className="space-y-3">
@@ -77,9 +85,9 @@ export default function AlertTab({
                 {monitoring ? "MONITORING PENDING"
                   : reached ? "TIPPING POINT REACHED" : "TIPPING POINT WATCH"}
               </p>
-              {source && (
+              {dayChip && (
                 <span className="rounded border border-zinc-700 bg-zinc-900/70 px-1.5 py-0.5 text-xs text-zinc-400">
-                  {source}
+                  {dayChip}
                 </span>
               )}
             </div>

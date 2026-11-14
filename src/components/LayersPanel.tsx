@@ -35,12 +35,14 @@ export default function LayersPanel({
   bundle,
   budget,
   frameDate,
+  frameBasis,
 }: {
   layers: LayerState;
   onToggle: (key: keyof LayerState) => void;
   bundle: CaseBundle;
   budget: number;
   frameDate?: string;
+  frameBasis?: string;
 }) {
   const dd = bundle.data_dates ?? {};
   // A row only exists when the manifest ships a real raster for the layer —
@@ -90,6 +92,11 @@ export default function LayersPanel({
                   {date && (
                     <span className="block text-xs text-zinc-500">
                       data {date}
+                    </span>
+                  )}
+                  {isTpi && frameBasis && (
+                    <span className="block text-xs italic text-zinc-600">
+                      {frameBasis}
                     </span>
                   )}
                 </span>

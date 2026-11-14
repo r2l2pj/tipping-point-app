@@ -29,6 +29,9 @@ export interface ManifestLayer {
   // Forecast-day flag (now/ and replay forecast overlays); when absent a
   // `<id>_d[1-3]` suffix marks the forecast day — see FORECAST_DAY_RE.
   forecast?: boolean;
+  // Pipeline provenance for the frame ("final data, hindcast", …) —
+  // shown under the layer's date chip when published.
+  data_basis?: string;
 }
 
 export interface NisarPass {
@@ -91,6 +94,9 @@ export interface EventManifest {
   products?: ProductMap;
   forecast_source?: string;
   tpi_cuts?: number[];
+  // Case-level frame provenance ("final data, hindcast") — a layer's own
+  // data_basis wins when both are present.
+  data_basis?: string;
 }
 
 export interface EventMetrics {

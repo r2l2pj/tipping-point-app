@@ -188,7 +188,25 @@ export default function Dashboard({ cases, initialCase, initialDay }: { cases: C
       <main className="flex min-h-0 flex-1">
         <div className="relative min-w-0 flex-1">
           <Map bounds={bundle.bbox} onReady={setMap} />
-          <LayersPanel layers={layers} onToggle={toggleLayer} bundle={bundle} budget={budget} frameDate={days[dayIndex]?.date} />
+          <LayersPanel
+            layers={layers}
+            onToggle={toggleLayer}
+            bundle={bundle}
+            budget={budget}
+            frameDate={days[dayIndex]?.date}
+            frameBasis={(() => {
+              // Frame provenance for the selected day: the active TPI
+              // layer's own data_basis wins over the case-level field.
+              const want = layers.tpiSlide ? "tpi_slide" : "tpi_flood";
+              const date = days[dayIndex]?.date;
+              const frame = bundle.manifest?.layers?.find(
+                (l) =>
+                  l.date === date &&
+                  (l.id === want || l.id.startsWith(`${want}_d`))
+              );
+              return frame?.data_basis ?? bundle.manifest?.data_basis;
+            })()}
+          />
         </div>
         <SidePanel
           tab={tab}

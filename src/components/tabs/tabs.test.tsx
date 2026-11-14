@@ -373,8 +373,10 @@ describe("alert tab 'Data pending' marker", () => {
     expect(html).not.toContain("Illustrative");
   });
 
-  test("forecast_source badge renders the contract label", () => {
-    const replay = render(
+  test("forecast_source badge renders the contract label on forecast days only", () => {
+    // Observed day: no forecast chip, even when the manifest declares a
+    // forecast_source (rule 2 — EVENT day must not read "perfect forecast").
+    const observed = render(
       "alert",
       bundle({
         metricsView: FULL_METRICS,
@@ -385,13 +387,39 @@ describe("alert tab 'Data pending' marker", () => {
         },
       })
     );
-    expect(replay).toContain("perfect forecast");
+    expect(observed).not.toContain("perfect forecast");
+
+    const fcast = bundle({
+      metricsView: FULL_METRICS,
+      manifest: {
+        event: "wa_2025",
+        layers: [],
+        forecast_source: "perfect-forecast",
+      },
+      series: {
+        event: "wa_2025",
+        reference_date: "2025-12-10",
+        days: [
+          { date: "2025-12-10", offset: 0, kind: "observed", tpi: 0.5, imerg_mm: 1, smap: 0.5 },
+          { date: "2025-12-11", offset: 1, kind: "forecast", tpi: 0.5, imerg_mm: 1, smap: 0.5 },
+        ],
+      },
+    });
+    // dayIndex defaults to the first day (observed); render with the
+    // forecast day selected via the timeline prop.
+    const forecast = render("alert", fcast, 1);
+    expect(forecast).toContain("forecast (perfect forecast)");
 
     const live = render(
       "alert",
-      bundle({ mode: "live", summary: { forecast_source: "geos-fp" } })
+      bundle({
+        mode: "live",
+        summary: { forecast_source: "geos-fp" },
+        series: fcast.series,
+      }),
+      1
     );
-    expect(live).toContain("GEOS-FP");
+    expect(live).toContain("forecast (GEOS-FP)");
   });
 });
 
