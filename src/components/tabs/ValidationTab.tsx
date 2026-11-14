@@ -54,7 +54,7 @@ export default function ValidationTab({ bundle }: { bundle: CaseBundle }) {
       </p>
       <div className="grid grid-cols-2 gap-2">
         <StatCard
-          label="Learned (RF) AUC"
+          label="ML model AUC (XGBoost)"
           value={m.rf_auc != null ? m.rf_auc.toFixed(2) : "—"}
           accent="green"
         />

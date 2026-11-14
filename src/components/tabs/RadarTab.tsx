@@ -108,18 +108,20 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
           ) : bundle.mode === "live" ? (
             "Awaiting a NISAR pair over the AOI."
           ) : (
-            "No radar for this event (before NISAR launch). The optical/observed reference is shown where available."
+            "No radar for this event (before NISAR launch)."
           )}
         </p>
       </div>
 
-      <div className="rounded-md border border-zinc-800 p-3">
-        <p className="text-xs leading-snug text-zinc-400">
-          NISAR radar confirms floods only in this case; scar candidates come
-          from post-event HLS optical — the GUNW pair spanning the event is a
-          declared limitation.
-        </p>
-      </div>
+      {hasNisarPair && (
+        <div className="rounded-md border border-zinc-800 p-3">
+          <p className="text-xs leading-snug text-zinc-400">
+            NISAR radar confirms floods only in this case; scar candidates come
+            from post-event HLS optical — the GUNW pair spanning the event is a
+            declared limitation.
+          </p>
+        </div>
+      )}
 
       {passes && <NisarPassList passes={passes} />}
 

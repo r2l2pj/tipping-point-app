@@ -1,5 +1,6 @@
 // Private panel helpers — small enough that they stay in tabs/ (src/lib is
 // owned by parallel units).
+import { fmtDate } from "@/lib/layers";
 import type { CaseBundle } from "@/lib/types";
 
 // BRT wall time for live timestamps (America/Sao_Paulo, UTC-3). Date-only
@@ -9,12 +10,9 @@ export const fmtBrt = (iso?: string | null): string => {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   if (!/T|\d:\d/.test(iso)) {
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "America/Sao_Paulo",
-    });
+    // Date-only values are calendar dates — delegate to layers.fmtDate, which
+    // anchors them at noon UTC so BRT doesn't shift them back a day.
+    return fmtDate(iso);
   }
   return (
     d.toLocaleString("en-US", {

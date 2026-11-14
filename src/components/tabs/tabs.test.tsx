@@ -7,6 +7,7 @@ import type { CaseBundle } from "../../lib/types";
 import SidePanel, { type TabKey } from "../SidePanel";
 import { normalizeLeadTimeHist } from "../charts/LeadTimeHistogram";
 import Timeline from "../Timeline";
+import { fmtBrt } from "./format";
 
 const noop = () => {};
 
@@ -65,6 +66,7 @@ describe("validation tab on metricsView", () => {
   test("learned vs manual slope rule and integer lead hours", () => {
     const html = render("validation", bundle({ metricsView: FULL_METRICS }));
     expect(html).toContain("learned vs manual slope rule");
+    expect(html).toContain("ML model AUC (XGBoost)");
     expect(html).toContain("0.91");
     expect(html).toContain("0.74");
     expect(html).toContain("IQR");
@@ -95,6 +97,14 @@ describe("lead-time replay context", () => {
     }
     expect(html).not.toMatch(/Mediana|antecedência|deslizamentos|Avisados|Crítico/);
     expect(html).not.toContain(">30<");
+  });
+
+  test("hours render whole — 47.5 rounds to '48 h', never '47.5'", () => {
+    const html = render("validation", bundle({ metricsView: metrics({
+      lead_time_median_h: 47.5,
+    }) }));
+    expect(html).toContain("Median 48 h before mapped landslides");
+    expect(html).not.toContain("47.5");
   });
 
   test("absent metrics or median hide the card; absent optional data stays safe", () => {
@@ -157,6 +167,13 @@ describe("radar tab", () => {
   });
 });
 
+describe("fmtBrt date-only handling", () => {
+  test("date-only '2026-11-11' renders the same day, not shifted back", () => {
+    expect(fmtBrt("2026-11-11")).toContain("Nov 11");
+    expect(fmtBrt("2026-11-11")).not.toContain("Nov 10");
+  });
+});
+
 describe("radar tab NISAR gating", () => {
   test("replay without a pair: observed reference card, no NISAR label", () => {
     const html = render(
@@ -167,9 +184,31 @@ describe("radar tab NISAR gating", () => {
       })
     );
     expect(html).not.toContain("Flooded area (NISAR)");
-    expect(html).toContain("No radar for this event (before NISAR launch)");
+    expect(html).toContain("No radar for this event (before NISAR launch).");
+    expect(html).not.toContain("optical/observed reference is shown");
     expect(html).toContain("Flooded area (observed reference)");
     expect(html).toContain("118.3 km");
+  });
+
+  test("the GUNW-limitation paragraph only renders when a NISAR pair exists", () => {
+    const withoutPair = render(
+      "radar",
+      bundle({
+        metricsView: { flooded_km2: 118.3 },
+        data_dates: { nisar_pre: null, nisar_post: null },
+      })
+    );
+    expect(withoutPair).not.toContain("declared limitation");
+    expect(withoutPair).not.toContain("GUNW pair spanning");
+
+    const withPair = render(
+      "radar",
+      bundle({
+        metricsView: { flooded_km2: 41.6 },
+        data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" },
+      })
+    );
+    expect(withPair).toContain("declared limitation");
   });
 
   test("flood_source 'opera' labels the card optical/OPERA", () => {

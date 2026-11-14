@@ -5,7 +5,7 @@ import { fmtPct } from "@/lib/tpi";
 import LeadTimeHistogram from "../charts/LeadTimeHistogram";
 
 const finite = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
-const numberText = (v: unknown) => finite(v) ? String(Math.round(v * 10) / 10) : "not reported";
+const numberText = (v: unknown) => finite(v) ? String(Math.round(v)) : "not reported";
 
 export default function LeadTimeCard({ bundle }: { bundle: CaseBundle }) {
   const m = bundle.metricsView as Record<string, unknown> | undefined;
