@@ -74,12 +74,15 @@ interface EeImageInfo {
   properties?: Record<string, unknown>;
 }
 
-// Series bands are named YYYYMMDD; normalize to the contract's YYYY-MM-DD.
-// Band ids already in YYYY-MM-DD form (or anything else) pass through.
-const normalizeBandDate = (id: string): string =>
-  /^\d{8}$/.test(id)
-    ? `${id.slice(0, 4)}-${id.slice(4, 6)}-${id.slice(6, 8)}`
+// Series bands are named YYYYMMDD (or dYYYYMMDD on forecast-day assets);
+// normalize both to the contract's YYYY-MM-DD. Band ids already in
+// YYYY-MM-DD form (or anything else) pass through.
+const normalizeBandDate = (id: string): string => {
+  const digits = /^d?\d{8}$/.test(id) ? id.slice(-8) : null;
+  return digits
+    ? `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
     : id;
+};
 
 function getInfo(ee: EeLike, assetId: string): Promise<unknown> {
   return new Promise<unknown>((resolve, reject) => {

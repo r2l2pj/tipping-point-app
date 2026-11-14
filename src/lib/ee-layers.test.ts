@@ -94,6 +94,17 @@ describe("createLayerService.probe", () => {
     expect(imerg.data_date).toBe("2024-05-03T00:00:00Z");
   });
 
+  test("dYYYYMMDD band ids normalize to sorted YYYY-MM-DD", async () => {
+    const ee = fakeEe({
+      [series("tpi_slide")]: {
+        bands: [{ id: "d20251201" }, { id: "d20251130" }],
+      },
+    });
+    const svc = createLayerService(ee, { assetRoot: ROOT, manifest: null });
+    const layers = await svc.probe("now", ["tpi_slide"]);
+    expect(layers[0].dates).toEqual(["2025-11-30", "2025-12-01"]);
+  });
+
   test("falls back to the bare asset when <id>_series is absent", async () => {
     const requested: string[] = [];
     const ee = fakeEe(
