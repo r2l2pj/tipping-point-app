@@ -121,13 +121,14 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
     <div className="flex h-full flex-col bg-[#0b0e14] text-zinc-100">
       <Header cases={cases} activeId={activeId} onSelect={selectCase} onReplay={replay} />
 
-      {(bundle as CaseBundle & { fallback?: boolean }).fallback === true && (
+      {(bundle as CaseBundle & { fallback?: boolean; dataDate?: string }).fallback === true && (
         <div className="flex shrink-0 items-center gap-2 border-b border-amber-800/50 bg-amber-950/60 px-4 py-1 text-xs text-amber-200">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M6 1.5 11 9.7H1z" />
             <path d="M6 4.3v2.4M6 8.4v.01" />
           </svg>
-          Showing last saved data from {fmtDate(bundle.updated_at)}
+          Showing last saved data from{" "}
+          {fmtDate(bundle.updated_at ?? (bundle as CaseBundle & { dataDate?: string }).dataDate)}
         </div>
       )}
 
