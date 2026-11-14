@@ -1,8 +1,21 @@
 # L14 — real data only: loader pending semantics + test fixtures
 
 Commit 8522fcf (merged as fb65f4e) delivered the pending semantics; review
-fix-forward landed as `1247608` on `unit/l14fix` — "data: no fabricated
-series for absent now/ output (L14)". Not pushed.
+fix-forward landed on `unit/l14fix`: `253afe4` "data: no fabricated series
+for absent now/ output (L14)" + `c2c9dd0` "test: pin manifest-fallback
+metrics tests to unreachable remote". Not pushed.
+
+## Test determinism fix (c2c9dd0)
+
+`src/lib/ee-metrics.test.ts`: the four tests exercising the real
+`getMetrics` entry with the default manifest reader
+(`no-credential/dead gee init still serves manifest data`, and the two
+`nope-9999` absent-manifest cases) now set
+`DATA_BASE_URL=https://example.invalid/` via `withEnv` — the remote read
+always misses so the fs fixture serves deterministically. Root cause was
+remote-first nondeterminism: a reachable fallback branch answers the real
+wa-only metrics.json, making `rs_2024` manifest metrics absent. All other
+tests in the file inject `readManifest`/fake ee, so no remote hazard.
 
 ## Fix-forward (1247608)
 
@@ -38,18 +51,8 @@ value under L14.
 
 ## Commands run / results
 
-- `bun install` (fresh worktree), `bun test` — **344 pass / 2 fail**.
-  The 2 failures (`createMetricsService > no-credential/dead gee init
-  still serves manifest data`) are **pre-existing on base 4a7549b** —
-  verified via `git stash`: the live fallback branch now answers 200 with
-  real data (`metrics.json` has only `wa_2025`), so remote reads win over
-  any local copy and `rs_2024` manifest metrics are absent. Files are
-  outside this unit's scope — flagging for the conductor (either
-  ee-metrics.test.ts needs staging, or the remote fixture needs an
-  rs_2024 entry).
-- `bun test src/lib/data.test.ts src/lib/contract.test.ts` — 54 pass /
-  0 fail.
-- `bunx tsc --noEmit -p tsconfig.json` — clean (base TS2304 codegen noise
-  absent on this worktree; no new errors).
+- `bun install` (fresh worktree), `bun test` twice back-to-back —
+  **346 pass / 0 fail** both runs (6 gee-smoke skips).
+- `bunx tsc --noEmit -p tsconfig.json` — clean, no new errors.
 - `bun run lint --quiet` — exit 0.
 - No `bun run build`; no `public/data` edits; not pushed.
