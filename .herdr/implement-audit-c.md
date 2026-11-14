@@ -21,6 +21,15 @@ Base SHA: 50882d5 (branch unit/u-c). Verification ran against this base plus the
 6. `bun run build`: exit 0; `Compiled successfully in 17.1s`, TypeScript finished, all 14 static pages generated. Prebuild sync reported absent sibling data repo and skipped as designed; build used existing bundled data. Routes / and /alerts generated successfully.
 7. `git diff --check`: exit 0, no whitespace errors.
 
+## Canonical contract follow-up
+
+On base 56e2e7e, lead-integration pinned bundle.tpiCuts as the normalized field. cutsFor now prefers tpiCuts > classCuts > manifest.tpi_cuts > manifest.classes > defaults. Added regression assertions for normalized-field precedence and malformed normalized-field fallback.
+
+- Before the one-line fix: `bun test src/components/tabs/tabs.test.tsx` failed at line 91: expected [0.15, 0.45, 0.85], received [0.1, 0.3, 0.8] (20 pass, 1 fail).
+- After fix: `bun test src/components/tabs/tabs.test.tsx` passed (21 pass, 0 fail, 95 assertions).
+- `bunx eslint src/lib/tpi.ts src/components/tabs/tabs.test.tsx` and `git diff --check` exited 0 without diagnostics.
+- Full suite/build evidence above is from the initial implementation; the follow-up only adds the normalized candidate and precedence assertions.
+
 ## Integration note
 
 The scoped branch currently has no declared classCuts/tpi_cuts fields in CaseBundle/EventManifest and no loader normalization for them. cutsFor accepts unknown input defensively to remain compatible with the parallel integration contract work without changing out-of-scope types/data files. Lead t68 was notified of supported input shapes. Other class consumers (Dashboard footer, map legends/styles) were deliberately not widened into this unit.

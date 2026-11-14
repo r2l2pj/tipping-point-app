@@ -7,7 +7,7 @@ export function cutsFor(bundle?: unknown): [number, number, number] {
   const b = bundle && typeof bundle === "object" ? bundle as Record<string, unknown> : {};
   const manifest = b.manifest && typeof b.manifest === "object"
     ? b.manifest as Record<string, unknown> : {};
-  for (const candidate of [b.classCuts, manifest.tpi_cuts, manifest.classes]) {
+  for (const candidate of [b.tpiCuts, b.classCuts, manifest.tpi_cuts, manifest.classes]) {
     const cuts = Array.isArray(candidate) && candidate.length === 4 &&
       candidate.every((c) => c && typeof c === "object" && "min" in c)
       ? candidate.slice(1).map((c) => c.min) : candidate;

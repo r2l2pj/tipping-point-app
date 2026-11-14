@@ -89,6 +89,8 @@ describe("alert playback and contract values", () => {
     }
     const b = { classCuts: [0.1, 0.3, 0.8], manifest: { tpi_cuts: [0.2, 0.5, 0.9] } };
     expect(cutsFor(b)).toEqual([0.1, 0.3, 0.8]);
+    expect(cutsFor({ ...b, tpiCuts: [0.15, 0.45, 0.85] })).toEqual([0.15, 0.45, 0.85]);
+    expect(cutsFor({ ...b, tpiCuts: [0.8, 0.4, 0.2] })).toEqual([0.1, 0.3, 0.8]);
     expect(cutsFor({ manifest: b.manifest })).toEqual([0.2, 0.5, 0.9]);
     expect(cutsFor({ classCuts: null, manifest: b.manifest })).toEqual([0.2, 0.5, 0.9]);
     expect(cutsFor({ manifest: { classes: [0.1, 0.3, 0.8] } })).toEqual([0.1, 0.3, 0.8]);
