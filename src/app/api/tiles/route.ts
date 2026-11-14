@@ -3,6 +3,7 @@
 // when no service-account key is configured or an EE roundtrip times out;
 // 404 when the case asset or date band doesn't exist.
 import { credentialEnv } from "@/lib/ee";
+import { cachedJson, noStoreJson } from "@/lib/http-cache";
 import {
   CredsError,
   getTiles,
@@ -18,7 +19,7 @@ const LAYERS = new Set<string>(TILE_LAYERS);
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const bad = (message: string) =>
-  Response.json({ error: message }, { status: 400 });
+  noStoreJson({ error: message }, { status: 400 });
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
     return bad("param date must match YYYY-MM-DD");
   }
   if (!credentialEnv()) {
-    return Response.json(
+    return noStoreJson(
       {
         error: "gee unavailable",
         reason: "no service-account key (set GCP_SA_KEY)",
@@ -46,26 +47,27 @@ export async function GET(request: Request) {
   }
 
   try {
-    return Response.json(
-      await getTiles({ layer: layer as TileLayer, caseId, date })
+    return cachedJson(
+      await getTiles({ layer: layer as TileLayer, caseId, date }),
+      caseId
     );
   } catch (err) {
     if (err instanceof CredsError) {
-      return Response.json(
+      return noStoreJson(
         { error: "gee unavailable", reason: err.message },
         { status: 503 }
       );
     }
     if (err instanceof TileServiceError && err.message.startsWith("timeout")) {
-      return Response.json(
+      return noStoreJson(
         { error: "gee unavailable", reason: err.message },
         { status: 503 }
       );
     }
     if (err instanceof TileNotFoundError) {
-      return Response.json({ error: err.message }, { status: 404 });
+      return noStoreJson({ error: err.message }, { status: 404 });
     }
-    return Response.json(
+    return noStoreJson(
       {
         error: "gee tiles failed",
         reason: err instanceof Error ? err.message : String(err),

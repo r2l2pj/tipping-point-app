@@ -410,4 +410,34 @@ describe("GET /api/point", () => {
     expect(res.status).toBe(200);
     expect((seen as { date: string }).date).toBe("2024-05-01");
   });
+
+  test("replay case -> 7d edge cache; now -> 5m; errors -> no-store", async () => {
+    const replay = await withService(
+      () => Promise.resolve(BODY),
+      () => GET(req("case=rs-2024-05&date=2024-05-01&lat=-29.7&lon=-51.1"))
+    );
+    expect(replay.headers.get("cache-control")).toBe(
+      "public, s-maxage=604800, stale-while-revalidate=86400"
+    );
+
+    const now = await withService(
+      () => Promise.resolve({ ...BODY, case: "now", canonical: "now" }),
+      () => GET(req("case=now&date=2026-11-14&lat=0&lon=0"))
+    );
+    expect(now.status).toBe(200);
+    expect(now.headers.get("cache-control")).toBe(
+      "public, s-maxage=300, stale-while-revalidate=60"
+    );
+
+    const badReq = await GET(req("case=rs_2024&date=2024-05-01&lat=91&lon=0"));
+    expect(badReq.status).toBe(400);
+    expect(badReq.headers.get("cache-control")).toBe("no-store");
+
+    const notFound = await withService(
+      () => Promise.reject(new TileNotFoundError("no point asset")),
+      () => GET(req("case=rs_2024&date=2024-05-01&lat=0&lon=0"))
+    );
+    expect(notFound.status).toBe(404);
+    expect(notFound.headers.get("cache-control")).toBe("no-store");
+  });
 });

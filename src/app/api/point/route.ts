@@ -5,6 +5,7 @@
 // configured or an EE roundtrip times out; 404 when no point asset answers
 // for the case; 502 on other EE failures.
 import { credentialEnv } from "@/lib/ee";
+import { cachedJson, noStoreJson } from "@/lib/http-cache";
 import {
   CredsError,
   getPoint,
@@ -18,7 +19,7 @@ const DASHED_RE = /^\d{4}-\d{2}-\d{2}$/;
 const COMPACT_RE = /^\d{8}$/;
 
 const bad = (message: string) =>
-  Response.json({ error: message }, { status: 400 });
+  noStoreJson({ error: message }, { status: 400 });
 
 // Accepts YYYY-MM-DD or YYYYMMDD; returns the normalized dashed form or null.
 function normalizeDate(raw: string | null): string | null {
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
     return bad("param lon must be a finite number within [-180, 180]");
   }
   if (!credentialEnv()) {
-    return Response.json(
+    return noStoreJson(
       {
         error: "gee unavailable",
         reason: "no service-account key (set GCP_SA_KEY)",
@@ -68,24 +69,24 @@ export async function GET(request: Request) {
   }
 
   try {
-    return Response.json(await getPoint({ caseId, date, lat, lon }));
+    return cachedJson(await getPoint({ caseId, date, lat, lon }), caseId);
   } catch (err) {
     if (err instanceof CredsError) {
-      return Response.json(
+      return noStoreJson(
         { error: "gee unavailable", reason: err.message },
         { status: 503 }
       );
     }
     if (err instanceof TileServiceError && err.message.startsWith("timeout")) {
-      return Response.json(
+      return noStoreJson(
         { error: "gee unavailable", reason: err.message },
         { status: 503 }
       );
     }
     if (err instanceof TileNotFoundError) {
-      return Response.json({ error: err.message }, { status: 404 });
+      return noStoreJson({ error: err.message }, { status: 404 });
     }
-    return Response.json(
+    return noStoreJson(
       {
         error: "gee point failed",
         reason: err instanceof Error ? err.message : String(err),

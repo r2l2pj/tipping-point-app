@@ -3,6 +3,7 @@
 //     data_date?, source }. 503 when no service-account key is configured or
 // an EE roundtrip times out; 404 when the case asset or date band is absent.
 import { credentialEnv } from "@/lib/ee";
+import { cachedJson, noStoreJson } from "@/lib/http-cache";
 import {
   CredsError,
   getNumbers,
@@ -15,7 +16,7 @@ export const maxDuration = 60;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const bad = (message: string) =>
-  Response.json({ error: message }, { status: 400 });
+  noStoreJson({ error: message }, { status: 400 });
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
     return bad("param date must match YYYY-MM-DD");
   }
   if (!credentialEnv()) {
-    return Response.json(
+    return noStoreJson(
       {
         error: "gee unavailable",
         reason: "no service-account key (set GCP_SA_KEY)",
@@ -39,24 +40,24 @@ export async function GET(request: Request) {
   }
 
   try {
-    return Response.json(await getNumbers({ caseId, date }));
+    return cachedJson(await getNumbers({ caseId, date }), caseId);
   } catch (err) {
     if (err instanceof CredsError) {
-      return Response.json(
+      return noStoreJson(
         { error: "gee unavailable", reason: err.message },
         { status: 503 }
       );
     }
     if (err instanceof NumbersNotFoundError) {
-      return Response.json({ error: err.message }, { status: 404 });
+      return noStoreJson({ error: err.message }, { status: 404 });
     }
     if (err instanceof NumbersTimeoutError) {
-      return Response.json(
+      return noStoreJson(
         { error: "gee numbers timeout", reason: err.message },
         { status: 503 }
       );
     }
-    return Response.json(
+    return noStoreJson(
       {
         error: "gee numbers failed",
         reason: err instanceof Error ? err.message : String(err),

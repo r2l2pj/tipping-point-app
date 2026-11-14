@@ -600,4 +600,51 @@ describe("GET /api/tiles", () => {
       else process.env.GEE_TIMEOUT_MS = saved;
     }
   });
+
+  test("replay case -> 7d edge cache; now -> 5m; errors -> no-store", async () => {
+    const { ee } = makeFakeEe();
+    installFakeEe(ee);
+    const replay = await withCreds(() =>
+      GET(req("layer=tpi_slide&case=rs-2024-05&date=2024-05-01"))
+    );
+    expect(replay.status).toBe(200);
+    expect(replay.headers.get("cache-control")).toBe(
+      "public, s-maxage=604800, stale-while-revalidate=86400"
+    );
+
+    const badReq = await GET(req("layer=nope&case=rs_2024&date=2024-05-01"));
+    expect(badReq.headers.get("cache-control")).toBe("no-store");
+
+    const unavail = await withoutCreds(() =>
+      GET(req("layer=tpi_slide&case=rs_2024&date=2024-05-01"))
+    );
+    expect(unavail.status).toBe(503);
+    expect(unavail.headers.get("cache-control")).toBe("no-store");
+
+    // `now` success needs a manifest asset the fixtures lack, so stub
+    // getTiles at the module seam (same pattern as the layers suite).
+    const real = await import("./ee-tiles");
+    mock.module("@/lib/ee-tiles", () => ({
+      ...real,
+      getTiles: async () => ({
+        tiles: ["https://earthengine.example/{z}/{x}/{y}"],
+        expires_at: new Date(0).toISOString(),
+        data_date: "2026-11-14",
+        layer: "tpi_slide",
+        case: "now",
+        date: "2026-11-14",
+      }),
+    }));
+    try {
+      const now = await withCreds(() =>
+        GET(req("layer=tpi_slide&case=now&date=2026-11-14"))
+      );
+      expect(now.status).toBe(200);
+      expect(now.headers.get("cache-control")).toBe(
+        "public, s-maxage=300, stale-while-revalidate=60"
+      );
+    } finally {
+      mock.restore();
+    }
+  });
 });

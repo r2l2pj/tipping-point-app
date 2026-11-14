@@ -342,4 +342,43 @@ describe("GET /api/layers", () => {
     expect(res.status).toBe(503);
     expect(await res.json()).toMatchObject({ error: "gee unavailable" });
   });
+
+  test("replay case -> 7d edge cache; now -> 5m; errors -> no-store", async () => {
+    process.env.GCP_SA_KEY = "{}";
+    const real = await import("./ee-layers");
+    const meta = { case: "now", layers: [] };
+    mock.module("@/lib/ee-layers", () => ({
+      ...real,
+      getLayerMeta: async (caseId: string) => ({
+        case: caseId,
+        layers: meta.layers,
+      }),
+    }));
+
+    const replay = await get("http://localhost/api/layers?case=rs-2024-05");
+    expect(replay.status).toBe(200);
+    expect(replay.headers.get("cache-control")).toBe(
+      "public, s-maxage=604800, stale-while-revalidate=86400"
+    );
+
+    const now = await get("http://localhost/api/layers?case=now");
+    expect(now.status).toBe(200);
+    expect(now.headers.get("cache-control")).toBe(
+      "public, s-maxage=300, stale-while-revalidate=60"
+    );
+
+    const badReq = await get("http://localhost/api/layers");
+    expect(badReq.status).toBe(400);
+    expect(badReq.headers.get("cache-control")).toBe("no-store");
+
+    mock.module("@/lib/ee-layers", () => ({
+      ...real,
+      getLayerMeta: async () => {
+        throw new LayersUnavailableError();
+      },
+    }));
+    const unavail = await get("http://localhost/api/layers?case=rs_2024");
+    expect(unavail.status).toBe(503);
+    expect(unavail.headers.get("cache-control")).toBe("no-store");
+  });
 });
