@@ -8,7 +8,7 @@
       "status": "ingesting",
       "ingested_at": "2026-11-14T20:13:43.725745Z",
       "features": 260,
-      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data/data/wa_2025/geojson/municipal_boundaries.geojson",
+      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data/intermediate/wa_2025/municipal_boundaries.geojson",
       "parts": [
         {
           "gee_id": "projects/jovial-idiom-514715-j8/assets/tipping-point/wa_2025/municipal_boundaries/part00",
@@ -37,7 +37,7 @@
       "status": "ingesting",
       "ingested_at": "2026-11-14T20:13:51.394839Z",
       "features": 15,
-      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data/data/wa_2025/geojson/landslide_catalog.geojson",
+      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data/intermediate/wa_2025/landslide_catalog.geojson",
       "operation": "TUHJTPIZKHUFTUGKHWB65LUE"
     },
     {
@@ -45,7 +45,7 @@
       "gee_id": "projects/jovial-idiom-514715-j8/assets/tipping-point/wa_2025/flood_nisar_polygons",
       "kind": "table",
       "features": 125,
-      "source": "data/wa_2025/geojson/wa_2025_flood_nisar_20251210.geojson",
+      "source": "intermediate/wa_2025/wa_2025_flood_nisar_20251210.geojson",
       "status": "ingesting",
       "ingested_at": "2026-11-14T20:15:36.710318Z",
       "operation": "JODLVZLQBISIAGAAA5MHJPI2"
@@ -55,7 +55,7 @@
       "gee_id": "projects/jovial-idiom-514715-j8/assets/tipping-point/wa_2025/water_nisar_polygons",
       "kind": "table",
       "features": 30999,
-      "source": "data/wa_2025/geojson/wa_2025_water_nisar_20251210.geojson",
+      "source": "intermediate/wa_2025/wa_2025_water_nisar_20251210.geojson",
       "status": "ingesting",
       "ingested_at": "2026-11-14T20:21:30.755791Z",
       "parts": [

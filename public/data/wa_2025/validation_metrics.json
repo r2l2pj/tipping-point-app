@@ -1,0 +1,47 @@
+{
+  "case": "wa_2025",
+  "collections": {
+    "HAND_proxy": "NASA/NASADEM_HGT/001 elev - focalMin(radius) < 5m",
+    "nisar_flood": "projects/jovial-idiom-514715-j8/assets/tipping-point/wa_2025/flood_nisar_polygons",
+    "opera_dswx_hls": "catalog:OPERA/DSWX/L3_V1/HLS @ 2025-12-15,2025-12-17 (no 2025-12-16 granule exists)",
+    "opera_dswx_s1": "catalog:OPERA/DSWX/L3_V1/S1 @ 2025-12-15,2025-12-17 (no 2025-12-16 granule exists)"
+  },
+  "computed_at": "2026-11-14T22:13:22.091620+00:00",
+  "event_date": "2025-12-10",
+  "metrics": {
+    "cloud_pct": 92.89292282546754,
+    "confusion": {
+      "fn": 1186683.7058823535,
+      "fp": 37576,
+      "observed_px": 16253323.654901965,
+      "tp": 9287
+    },
+    "f1": 0.014944879521764607,
+    "hand_best_radius_m": 1000,
+    "hand_validation": 0.9751807438686789,
+    "hand_validation_radii": {
+      "1000": 0.00975180743868679,
+      "1500": 0.00938195579408305,
+      "3000": 0.0075653966720609705
+    },
+    "hls_confusion": {
+      "fn": 603407.9843137254,
+      "fp": 34,
+      "observed_px": 1523069.0509803928,
+      "tp": 8137
+    },
+    "hls_f1": 0.02626041672625543,
+    "hls_iou": 0.013304904531882858,
+    "hls_opera_dates": [
+      "2025-12-15",
+      "2025-12-17"
+    ],
+    "hls_opera_scenes": 6,
+    "iou": 0.007528697499424659,
+    "opera_dates": [
+      "2025-12-15",
+      "2025-12-17"
+    ],
+    "opera_scenes": 5
+  }
+}

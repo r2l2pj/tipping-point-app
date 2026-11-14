@@ -18,7 +18,7 @@ import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
 import { sourceRows } from "./model/sources";
 import { statusChip } from "./model/status";
-import { forecastSource, forecastTag, stepMarks, stepsFor } from "./model/steps";
+import { forecastSource, forecastTag, stepLabel, stepMarks, stepsFor } from "./model/steps";
 import { criticalAreaTile, peopleTile, zoneSnapshot } from "./model/tiles";
 import type { CcBundle } from "./model/types";
 import PriorityAreas from "./PriorityAreas";
@@ -249,8 +249,7 @@ export function CommandCenterView({
               <StatusBlock
                 chip={chip}
                 status={status}
-                stepLabel={step ? `${step.top}${step.sub ? ` (${step.sub})` : ""}${step.forecast ? " · forecast day" : ""}` : undefined}
-                forecastSource={forecastSource(bundle)}
+                stepLabel={step ? stepLabel(bundle, step) : undefined}
               >
                 {live && chip.kind === "no-data" && cases.some((c) => c.mode === "replay") && (
                   <p className="mt-1.5 text-[13px]">

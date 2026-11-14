@@ -92,10 +92,20 @@ describe("status chip and contract values (S1, L9)", () => {
       manifest: manifest([], { forecast_source: "perfect-forecast" }),
     }));
     expect(replayHtml).toContain("Forecast (perfect forecast)");
-    expect(replayHtml).toContain("Forecast source: perfect forecast");
     expect(replayHtml).not.toContain("GEOS-FP)");
-    const live = render(liveBundle({ summary: { forecast_source: "geos-fp" } }));
-    expect(live).toContain("Forecast source: GEOS-FP");
+    // Rule 2: an observed day (the event day too) reads "observed"; the
+    // forecast source is named on forecast days only.
+    expect(replayHtml).toContain("Step: Dec 10 (EVENT) · observed");
+    const forecastDay = render(bundle({
+      series: series([0.2, 0.9], ["observed", "forecast"]),
+      manifest: manifest([], { forecast_source: "perfect-forecast" }),
+    }), { dayIndex: 1 });
+    expect(forecastDay).toContain("Step: Dec 11 (D+1) · forecast · perfect forecast");
+    const live = render(liveBundle({
+      summary: { forecast_source: "geos-fp" },
+      series: series([0.2, 0.9], ["observed", "forecast"]),
+    }), { dayIndex: 1 });
+    expect(live).toContain("forecast · GEOS-FP");
   });
 });
 

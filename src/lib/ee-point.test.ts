@@ -195,6 +195,16 @@ describe("createPointService", () => {
     expect(calls).toContainEqual(["select", "root/rs_2024/tpi_slide_series", "20240501"]);
   });
 
+  test("dYYYYMMDD window-end band is selected and sampled", async () => {
+    const { ee, calls } = makeFakeEe({
+      specs: { tpi_slide: { bands: ["d20240421", "d20240422"], value: 0.42 } },
+    });
+    const res = await makeService(ee).getPoint({ ...QUERY, date: "2024-04-22" });
+    expect(res.values.tpi_slide).toBe(0.42);
+    expect(calls).toContainEqual(["select", "root/rs_2024/tpi_slide_series", "d20240422"]);
+    expect(calls.filter((c) => c[0] === "reduceRegion" && c[1] === "root/rs_2024/tpi_slide_series")).toHaveLength(1);
+  });
+
   test("single-band static t_slide is used as-is (no select)", async () => {
     const { ee, calls } = makeFakeEe();
     const res = await makeService(ee).getPoint(QUERY);

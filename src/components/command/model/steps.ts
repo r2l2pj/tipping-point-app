@@ -166,3 +166,18 @@ export function mapCaption(
     forecast,
   };
 }
+
+// Step line of the panel. Rule 2: observed and forecast are never confused.
+// The forecast source is named on forecast days only; an observed day
+// (the event day included) reads "observed", never "perfect forecast".
+export function stepLabel(bundle: CcBundle, step: Step): string {
+  const source = forecastSource(bundle);
+  const kind = step.kind === "observed" ? "observed"
+    : `${step.kind}${source ? ` · ${source}` : ""}`;
+  return `${step.top}${step.sub ? ` (${step.sub})` : ""} · ${kind}`;
+}
+
+// Provenance of the frame of a step ("final data, hindcast", ...): the
+// frame's own data_basis wins over the case-level field.
+export const frameBasis = (bundle: CcBundle, date: string | undefined, hazard: Hazard): string | undefined =>
+  frameFor(bundle, date, hazard)?.layer.data_basis ?? bundle.manifest?.data_basis;

@@ -1,0 +1,32 @@
+{
+  "case": "rs_2024",
+  "issue_date": "2024-05-05",
+  "creation_time": "2024-05-05T00:00:00Z",
+  "days": {
+    "d1": [
+      "2024-05-05",
+      "2024-05-06"
+    ],
+    "d2": [
+      "2024-05-06",
+      "2024-05-07"
+    ],
+    "d3": [
+      "2024-05-07",
+      "2024-05-08"
+    ]
+  },
+  "bands": [
+    "d1",
+    "d2",
+    "d3"
+  ],
+  "label": "forecast: NOAA GFS (issued 2024-05-05)",
+  "source": "NOAA GFS via GEE",
+  "collection": "NOAA/GFS0P25",
+  "band": "total_precipitation_surface",
+  "scale_m": 25000,
+  "grid": "native GFS 0.25 deg grid (crsTransform from source projection, no resampling)",
+  "native_resolution": "~25 km (0.25 deg); day bucket = sum of trailing 1-6h accumulations valid in the day",
+  "cog": "/home/lucascoelho/code/r2l2pj/tipping-point-data/data/rs_2024/forecast_rain/rs_2024_gfs_20240505.tif"
+}

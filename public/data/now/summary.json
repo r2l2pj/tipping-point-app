@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-11-14T22:08:33.081306Z",
+  "critical_km2": {
+    "slide": 0.0,
+    "flood": 5206.732428988282,
+    "any": 5206.732428988282
+  },
+  "nodata_km2": {
+    "slide": 202008.33517458642,
+    "flood": 202008.33517458642
+  },
+  "people_exposed": null,
+  "people_critical": null,
+  "forecast_source": "geos-fp",
+  "imerg_source": "gesdisc-early",
+  "classes_km2": {
+    "Baixo": 1048426.7907741815,
+    "Moderado": 0.0,
+    "Alto": 0.0,
+    "Crítico": 0.0
+  },
+  "data_dates": {
+    "imerg": "2026-11-14T00Z",
+    "smap": "SMAP_L4_SM_gph_20261110T223000_Vv8013_001.h5_u9loH5HD",
+    "geos_fp_issued": "2026-11-14T12:00:00Z"
+  }
+}

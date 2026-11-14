@@ -415,6 +415,108 @@
         -28.999504
       ],
       "forecast": false
+    },
+    {
+      "id": "tpi_slide_d1",
+      "date": "2024-05-03",
+      "png": "rs_2024/png/tpi_slide_d1_20240503.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_forecast_d1_20240502.tif",
+      "bounds": [
+        -52.50051,
+        -30.503845,
+        -50.499253,
+        -28.999504
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d1",
+      "date": "2024-05-03",
+      "png": "rs_2024/png/tpi_flood_d1_20240503.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_forecast_d1_20240502.tif",
+      "bounds": [
+        -52.50051,
+        -30.503845,
+        -50.499253,
+        -28.999504
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_slide_d2",
+      "date": "2024-05-04",
+      "png": "rs_2024/png/tpi_slide_d2_20240504.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_forecast_d2_20240502.tif",
+      "bounds": [
+        -52.50051,
+        -30.503845,
+        -50.499253,
+        -28.999504
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d2",
+      "date": "2024-05-04",
+      "png": "rs_2024/png/tpi_flood_d2_20240504.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_forecast_d2_20240502.tif",
+      "bounds": [
+        -52.50051,
+        -30.503845,
+        -50.499253,
+        -28.999504
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_slide_d3",
+      "date": "2024-05-05",
+      "png": "rs_2024/png/tpi_slide_d3_20240505.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_forecast_d3_20240502.tif",
+      "bounds": [
+        -52.50051,
+        -30.503845,
+        -50.499253,
+        -28.999504
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d3",
+      "date": "2024-05-05",
+      "png": "rs_2024/png/tpi_flood_d3_20240505.png",
+      "cog": "rs_2024/cog/rs_2024_tpi_forecast_d3_20240502.tif",
+      "bounds": [
+        -52.50051,
+        -30.503845,
+        -50.499253,
+        -28.999504
+      ],
+      "forecast": true
+    },
+    {
+      "id": "night_lights_pre",
+      "date": "2024-05-02",
+      "png": "rs_2024/png/night_lights_pre_20240502.png",
+      "cog": null,
+      "bounds": [
+        -52.502037,
+        -30.506849,
+        -50.497572,
+        -28.997617
+      ]
+    },
+    {
+      "id": "night_lights_post",
+      "date": "2024-05-02",
+      "png": "rs_2024/png/night_lights_post_20240502.png",
+      "cog": null,
+      "bounds": [
+        -52.502037,
+        -30.506849,
+        -50.497572,
+        -28.997617
+      ]
     }
   ]
 }

@@ -1,0 +1,8 @@
+{
+  "case": "wa_2025",
+  "landslide_candidates": null,
+  "reason": "No local HLS pre/post reflectance composites, hls_scar raster, or landslide_candidates raster exists. Existing NISAR products are flood/water masks, not optical landslide candidates. A mask cannot be derived without the optical inputs; no synthetic or all-zero substitute was generated.",
+  "producers": ["gee/hls_scar.py", "pipeline/tp/hls_scar.py", "pipeline/scripts/09_hls_scar.py"],
+  "scope": "local availability only; remote GEE HLS computation/export not attempted",
+  "classification": "candidates, never confirmed"
+}

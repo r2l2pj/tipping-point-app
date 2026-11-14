@@ -138,6 +138,13 @@ the app uses it for layer hints).
 - `forecast_source`: `"perfect-forecast"` for replay cases (D+1..D+3 =
   observed IMERG as forecast), `"geos-fp"` for the live bundle. The app must
   render forecast days differently (never like observed).
+- `data_basis`: provenance/latency honesty label. Replay cases carry
+  `"hindcast — IMERG_V07 + SMAP SPL4SMGP as archived in GEE (no real-time
+  latency modelled); not as-available"` — the frames answer "what TPI would
+  have said on day D with the archive we have now", NOT "what was visible at
+  D". The lead-time series (live-acceptance A5) is the only as-available
+  view: IMERG Early ~4 h latency + SMAP at its real L4 latency, no D+k
+  data.
 - The `now` node is copied from `data/now/manifest.json` by
   `tools/build_manifest.py` (schema `tipping-point/now@2`).
 - Per-case `data/<case>/manifest.json` files are not part of the contract —

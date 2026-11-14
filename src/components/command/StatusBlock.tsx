@@ -15,13 +15,11 @@ export default function StatusBlock({
   chip,
   status,
   stepLabel,
-  forecastSource,
   children,
 }: {
   chip: StatusChip;
   status: DataStatus;
   stepLabel: string | undefined;
-  forecastSource?: string; // label of the contract, for example "GEOS-FP"
   children?: React.ReactNode; // for example the Replay offer in an empty Now
 }) {
   return (
@@ -34,12 +32,7 @@ export default function StatusBlock({
           {chip.source && <span className="font-semibold">· {chip.source}</span>}
         </span>
       </div>
-      {(stepLabel || forecastSource) && (
-        <p className="mt-0.5 text-xs text-cc-faint">
-          {[stepLabel ? `Step: ${stepLabel}` : undefined, forecastSource ? `Forecast source: ${forecastSource}` : undefined]
-            .filter(Boolean).join(" · ")}
-        </p>
-      )}
+      {stepLabel && <p className="mt-0.5 text-xs text-cc-faint">Step: {stepLabel}</p>}
       <p className="mt-1 text-[13px] text-cc-muted">{chip.sentence}</p>
       {(status.kind === "last-saved" || status.kind === "stale") && (
         <p data-notice={status.kind} className="mt-1.5 flex items-center gap-1.5 rounded-md bg-cc-warn-soft px-2 py-1 text-xs font-semibold text-cc-warn">

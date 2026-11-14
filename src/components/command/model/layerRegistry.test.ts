@@ -27,6 +27,14 @@ describe("layer rows", () => {
     expect(row("tpi")).toMatchObject({ on: true, label: "TPI index (Landslide)", sub: "data Dec 10, 2025" });
   });
 
+  test("the TPI row shows the provenance of the frame when published", () => {
+    const b = bundle({ manifest: manifest(
+      [{ ...frame("tpi_slide", "2025-12-10"), data_basis: "final data, hindcast" }, frame("tpi_slide", "2025-12-11")],
+      { data_basis: "case basis" }) });
+    expect(layerRows(b, ["tpi"], "slide", "2025-12-10")[0].sub).toBe("data Dec 10, 2025 · final data, hindcast");
+    expect(layerRows(b, ["tpi"], "slide", "2025-12-11")[0].sub).toBe("data Dec 11, 2025 · case basis");
+  });
+
   test("a row without data is greyed with its reason", () => {
     expect(row("imerg")).toMatchObject({ available: false, sub: "no map layer for this case" });
     expect(row("candidates").sub).toBe("not published yet (no landslide candidate product yet)");

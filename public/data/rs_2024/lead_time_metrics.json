@@ -1,0 +1,50 @@
+{
+  "case": "rs_2024",
+  "metrics": {
+    "lead_time_median_h": -57.0,
+    "lead_time_iqr_h": [
+      -57.0,
+      -57.0
+    ],
+    "lead_time_n": 5678,
+    "warned_before_pct": 0.0,
+    "warned_24h_pct": 0.0,
+    "lead_time_hist": [
+      31,
+      0,
+      0,
+      0,
+      1070,
+      0,
+      0,
+      0,
+      4530,
+      0,
+      0,
+      0,
+      26,
+      0,
+      0,
+      0,
+      21
+    ],
+    "lead_time_hist_bin_h": 6,
+    "lead_time_hist_from_h": -108.0,
+    "never_critical_pct": null,
+    "mode": "cluster_lead_vs_damage_anchor",
+    "n_clusters": 5678,
+    "threshold_tpi": 0.6,
+    "first_critical_time": "2024-04-28 00:00:00+00:00",
+    "event_lead_h": -9.0,
+    "official_warning_delta_h": -51.327777777777776,
+    "damage_anchor": {
+      "at": "2024-04-27",
+      "source": "MetSul meteorological report commissioned by Canoas city government"
+    },
+    "n_landslide_points": 0
+  },
+  "_null_reasons": {
+    "never_critical_pct": "Cluster mode has no never-crossing denominator: clusters are defined by ever crossing Critical; the landslide catalog stub is empty (0 dated points)",
+    "point_lead_times": "data/rs_2024/geojson/landslide_catalog.geojson is an empty stub (1 feature, 0 coordinates): no dated inventory points available; fell back to cluster-lead vs damage_anchor"
+  }
+}

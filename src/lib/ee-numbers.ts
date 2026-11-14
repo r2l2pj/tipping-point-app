@@ -9,11 +9,11 @@ import { canonicalCaseId, caseAlias } from "./contract";
 import { getRootManifest } from "./data";
 import { TPI_THRESHOLD } from "./tpi";
 import { eeAssetRoot } from "./ee-shared";
-import type { ManifestLayer } from "./types";
+import type { ManifestCase, ManifestLayer } from "./types";
 
 export interface NumbersQuery {
   caseId: string;
-  date: string; // YYYY-MM-DD — band on the TPI asset is YYYYMMDD
+  date: string; // YYYY-MM-DD — TPI bands: YYYY-MM-DD, YYYYMMDD, or dYYYYMMDD = window end date
 }
 
 export interface NumbersResult {
@@ -76,6 +76,7 @@ interface EeImageLike {
   updateMask(mask: EeImageLike): EeImageLike;
   reduceRegion(params: {
     reducer?: unknown;
+    geometry: unknown;
     scale?: number;
     bestEffort?: boolean;
     maxPixels?: number;
@@ -97,6 +98,7 @@ export interface EeLike {
   Image: EeImageCtor;
   ImageCollection(id: string): EeCollectionLike;
   Reducer: { sum(): unknown };
+  Geometry: { Rectangle(bounds: [number, number, number, number]): unknown };
 }
 
 // ---------------------------------------------------------------------------
@@ -198,11 +200,13 @@ async function reduceSum(
   ee: EeLike,
   img: EeImageLike,
   label: string,
-  timeoutMs: number
+  timeoutMs: number,
+  geometry: unknown
 ): Promise<number> {
   const dict = await getInfo(
     img.reduceRegion({
       reducer: ee.Reducer.sum(),
+      geometry,
       scale: 1000,
       bestEffort: true,
       maxPixels: 1e9,
@@ -231,7 +235,7 @@ function bandIds(info: Record<string, unknown>): string[] {
     .filter((s): s is string => Boolean(s));
 }
 
-// Band name is YYYYMMDD per the data pipeline; accept the dashed form too.
+// Band names: YYYY-MM-DD, YYYYMMDD, or dYYYYMMDD = window end date.
 function matchBand(
   info: Record<string, unknown>,
   date: string,
@@ -241,6 +245,7 @@ function matchBand(
   const ids = bandIds(info);
   if (ids.includes(compact)) return compact;
   if (ids.includes(date)) return date;
+  if (ids.includes(`d${compact}`)) return `d${compact}`;
   throw new NumbersNotFoundError(`no band ${compact} on ${asset}`);
 }
 
@@ -269,17 +274,17 @@ type LayerAsset = ManifestLayer & { asset?: string };
 
 // Layers declared for the case in the root manifest (canonical, hyphen event
 // id, or the registered alias — synced manifests have used both key forms).
-async function defaultManifestLayers(
+async function defaultManifestCase(
   canonical: string,
   caseId: string
-): Promise<LayerAsset[] | undefined> {
+): Promise<ManifestCase | undefined> {
   const root = await getRootManifest();
   const alias = caseAlias(canonical);
   const entry =
     root?.cases?.[canonical] ??
     root?.cases?.[caseId] ??
     (alias ? root?.cases?.[alias] : undefined);
-  return entry?.layers as LayerAsset[] | undefined;
+  return entry;
 }
 
 function populationImage(ee: EeLike, popImage?: string): EeImageLike {
@@ -291,6 +296,7 @@ function populationImage(ee: EeLike, popImage?: string): EeImageLike {
 }
 
 export interface NumbersServiceOptions {
+  bounds?: [number, number, number, number];
   assetRoot?: string; // defaults to GEE_ASSET_ROOT / projects/$GEE_PROJECT/assets/tipping-point
   popImage?: string; // defaults to GEE_POP_IMAGE / latest of GPW v4 collection
   timeoutMs?: number; // defaults to GEE_NUMBERS_TIMEOUT_MS / 15000
@@ -352,9 +358,12 @@ export function createNumbersService(
     const compact = date.replace(/-/g, "");
     const assetRoot = opts.assetRoot ?? eeAssetRoot();
 
+    const manifestCase = opts.manifestLayers
+      ? undefined
+      : await defaultManifestCase(canonical, caseId);
     const layers = opts.manifestLayers
       ? await opts.manifestLayers(canonical, caseId)
-      : await defaultManifestLayers(canonical, caseId);
+      : manifestCase?.layers as LayerAsset[] | undefined;
     const tpiEntry = layers?.find(
       (l) => l.id === "tpi_slide" && (l.date === date || l.date === compact)
     );
@@ -380,6 +389,13 @@ export function createNumbersService(
     }
 
     // Computed path: critical = TPI >= threshold on the date band.
+    const bounds = opts.bounds ??
+      (manifestCase ?? await defaultManifestCase(canonical, caseId))?.bounds;
+    if (!bounds || bounds.length !== 4 || !bounds.every(Number.isFinite) ||
+        bounds[0] >= bounds[2] || bounds[1] >= bounds[3]) {
+      throw new NumbersServiceError(`no valid bounds for case ${canonical}`);
+    }
+    const geometry = ee.Geometry.Rectangle(bounds);
     const critical = tpi.select(band).gte(TPI_THRESHOLD);
     const pop = populationImage(ee, opts.popImage);
     const [areaM2, people] = await Promise.all([
@@ -387,13 +403,15 @@ export function createNumbersService(
         ee,
         ee.Image.pixelArea().updateMask(critical),
         `reduceRegion area on ${tpiAsset}`,
-        timeout
+        timeout,
+        geometry
       ),
       reduceSum(
         ee,
         pop.updateMask(critical),
         `reduceRegion population on ${tpiAsset}`,
-        timeout
+        timeout,
+        geometry
       ),
     ]);
 
@@ -428,20 +446,24 @@ export function createNumbersService(
         ? compact
         : fids.includes(date)
           ? date
-          : undefined;
+          : fids.includes(`d${compact}`)
+            ? `d${compact}`
+            : undefined;
       const floodMask = (fband ? flood.select(fband) : flood).neq(0);
       const [fAreaM2, fPeople] = await Promise.all([
         reduceSum(
           ee,
           ee.Image.pixelArea().updateMask(floodMask),
           `reduceRegion area on ${floodAsset}`,
-          timeout
+          timeout,
+          geometry
         ),
         reduceSum(
           ee,
           pop.updateMask(floodMask),
           `reduceRegion population on ${floodAsset}`,
-          timeout
+          timeout,
+          geometry
         ),
       ]);
       result.flooded_km2 = fAreaM2 / 1e6;

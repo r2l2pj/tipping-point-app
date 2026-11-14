@@ -1,6 +1,6 @@
 // Live Earth Engine map tiles: one asset per (case, layer) under
 // `${GEE_ASSET_ROOT}/<canonical_case>/<layer>` — multiband daily series
-// (`<layer>_series`, one band per day, band = YYYY-MM-DD or YYYYMMDD) or
+// (`<layer>_series`, one band per day, band = YYYY-MM-DD, YYYYMMDD, or dYYYYMMDD = window end date) or
 // single-band images (`now/<layer>_dN`, masks). A manifest layer entry may
 // pin an explicit `asset`, which always wins — it is the only way `now`
 // resolves (its date→_dN mapping lives in the manifest). Styled server-side
@@ -77,7 +77,7 @@ export const TILE_LAYERS = Object.keys(LAYER_VIS) as TileLayer[];
 export interface TileQuery {
   layer: TileLayer;
   caseId: string;
-  date: string; // band name on the *_series asset: YYYY-MM-DD or YYYYMMDD
+  date: string; // band name on the *_series asset: YYYY-MM-DD, YYYYMMDD, or dYYYYMMDD = window end date
 }
 
 export interface TileResult {
@@ -132,7 +132,7 @@ async function manifestAssetFromRoot(
 function getMapId(img: EeImage, asset: string): Promise<EeMapId> {
   return new Promise((resolve, reject) => {
     try {
-      img.getMapId((id, err) => {
+      img.getMapId({}, (id, err) => {
         if (err || !id)
           return reject(
             mapComputeError(err ?? "empty map id", `getMapId on ${asset}`)
@@ -269,13 +269,13 @@ export function createTileService(
     );
 
     // One getInfo per call, before selecting: the date band must exist
-    // (dashed or compact form) — except single-band daily assets, which are
+    // (YYYY-MM-DD, YYYYMMDD, or dYYYYMMDD = window end date) — except single-band daily assets, which are
     // used as-is.
     const bands = (info.bands ?? [])
       .map((b) => b?.id)
       .filter((b): b is string => typeof b === "string");
     const compact = date.replace(/-/g, "");
-    const band = bands.find((b) => b === date || b === compact);
+    const band = bands.find((b) => b === date || b === compact || b === `d${compact}`);
     let selected: EeImage;
     if (band !== undefined) {
       selected = img.select(band);

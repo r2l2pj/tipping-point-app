@@ -545,6 +545,134 @@
         48.501749
       ],
       "forecast": false
+    },
+    {
+      "id": "tpi_slide_d1",
+      "date": "2025-12-11",
+      "png": "wa_2025/png/tpi_slide_d1_20251211.png",
+      "cog": "wa_2025/cog/wa_2025_tpi_forecast_d1_20251210.tif",
+      "bounds": [
+        -122.600094,
+        46.999727,
+        -121.499223,
+        48.501749
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d1",
+      "date": "2025-12-11",
+      "png": "wa_2025/png/tpi_flood_d1_20251211.png",
+      "cog": "wa_2025/cog/wa_2025_tpi_forecast_d1_20251210.tif",
+      "bounds": [
+        -122.600094,
+        46.999727,
+        -121.499223,
+        48.501749
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_slide_d2",
+      "date": "2025-12-12",
+      "png": "wa_2025/png/tpi_slide_d2_20251212.png",
+      "cog": "wa_2025/cog/wa_2025_tpi_forecast_d2_20251210.tif",
+      "bounds": [
+        -122.600094,
+        46.999727,
+        -121.499223,
+        48.501749
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d2",
+      "date": "2025-12-12",
+      "png": "wa_2025/png/tpi_flood_d2_20251212.png",
+      "cog": "wa_2025/cog/wa_2025_tpi_forecast_d2_20251210.tif",
+      "bounds": [
+        -122.600094,
+        46.999727,
+        -121.499223,
+        48.501749
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_slide_d3",
+      "date": "2025-12-13",
+      "png": "wa_2025/png/tpi_slide_d3_20251213.png",
+      "cog": "wa_2025/cog/wa_2025_tpi_forecast_d3_20251210.tif",
+      "bounds": [
+        -122.600094,
+        46.999727,
+        -121.499223,
+        48.501749
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d3",
+      "date": "2025-12-13",
+      "png": "wa_2025/png/tpi_flood_d3_20251213.png",
+      "cog": "wa_2025/cog/wa_2025_tpi_forecast_d3_20251210.tif",
+      "bounds": [
+        -122.600094,
+        46.999727,
+        -121.499223,
+        48.501749
+      ],
+      "forecast": true
+    },
+    {
+      "id": "night_lights_pre",
+      "date": "2025-12-10",
+      "png": "wa_2025/png/night_lights_pre_20251210.png",
+      "cog": null,
+      "bounds": [
+        -122.60207,
+        46.998783,
+        -121.49758,
+        48.500042
+      ]
+    },
+    {
+      "id": "night_lights_post",
+      "date": "2025-12-10",
+      "png": "wa_2025/png/night_lights_post_20251210.png",
+      "cog": null,
+      "bounds": [
+        -122.60207,
+        46.998783,
+        -121.49758,
+        48.500042
+      ]
+    },
+    {
+      "id": "nisar_pre",
+      "date": "2025-12-04",
+      "png": "wa_2025/png/nisar_pre_20251204.png",
+      "cog": "wa_2025/cog/wa_2025_nisar_pre_20251204_60m.tif",
+      "bounds": [
+        -122.612107,
+        46.990446,
+        -121.455602,
+        48.509603
+      ],
+      "kind": "observed"
+    },
+    {
+      "id": "nisar_post",
+      "date": "2025-12-16",
+      "png": "wa_2025/png/nisar_post_20251216.png",
+      "cog": "wa_2025/cog/wa_2025_nisar_post_20251216_60m.tif",
+      "bounds": [
+        -122.612107,
+        46.990446,
+        -121.455602,
+        48.509603
+      ],
+      "kind": "observed"
     }
   ]
 }
