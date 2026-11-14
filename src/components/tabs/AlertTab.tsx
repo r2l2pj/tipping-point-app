@@ -59,7 +59,7 @@ export default function AlertTab({
   // days (incl. EVENT) are labeled observed, never "perfect forecast".
   const dayChip =
     day?.kind === "forecast"
-      ? `forecast${source ? ` (${source})` : ""}`
+      ? `forecast · ${source === "perfect forecast" ? "perfect" : (source ?? "day")}`
       : day?.kind === "observed" || day?.kind === "hindcast"
         ? day.kind
         : undefined;

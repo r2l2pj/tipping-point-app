@@ -408,7 +408,7 @@ describe("alert tab 'Data pending' marker", () => {
     // dayIndex defaults to the first day (observed); render with the
     // forecast day selected via the timeline prop.
     const forecast = render("alert", fcast, 1);
-    expect(forecast).toContain("forecast (perfect forecast)");
+    expect(forecast).toContain("forecast · perfect");
 
     const live = render(
       "alert",
@@ -419,7 +419,7 @@ describe("alert tab 'Data pending' marker", () => {
       }),
       1
     );
-    expect(live).toContain("forecast (GEOS-FP)");
+    expect(live).toContain("forecast · GEOS-FP");
   });
 });
 
