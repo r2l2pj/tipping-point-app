@@ -112,6 +112,10 @@ export interface DayPoint {
   smap: number; // 0–1
   tpi: number; // 0–1
   river_m?: number | null;
+  // Per-day AOI totals above the TPI critical cut (pipeline join; may
+  // carry raster fill values — read through contract.count()).
+  critical_km2?: number;
+  people_critical?: number;
 }
 
 export interface SeriesDaily {

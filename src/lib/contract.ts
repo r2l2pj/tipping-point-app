@@ -142,7 +142,7 @@ const pct = (v: unknown): number | undefined => {
 // Head counts: a raster join can leak fill values (~-2.3e38) or negatives;
 // anything below zero or beyond a plausible world population is not data —
 // undefined -> the card renders pending instead of a garbage number.
-const count = (v: unknown): number | undefined => {
+export const count = (v: unknown): number | undefined => {
   const n = num(v);
   return n === undefined || n < 0 || n > 8e9 ? undefined : n;
 };

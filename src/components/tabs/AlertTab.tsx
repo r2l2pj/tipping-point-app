@@ -1,6 +1,6 @@
 "use client";
 
-import { forecastSourceLabel } from "@/lib/contract";
+import { count, forecastSourceLabel } from "@/lib/contract";
 import { cutsFor, fmtKm2, fmtPeople } from "@/lib/tpi";
 import type { CaseBundle, PriorityZone } from "@/lib/types";
 import TpiChart from "../TpiChart";
@@ -30,12 +30,20 @@ export default function AlertTab({
     pendingIncludes(bundle, "priority_zones");
   const reached = !monitoring &&
     (bundle.series?.days[dayIndex]?.tpi ?? -Infinity) >= threshold;
-  // Card totals come from metrics: the zone list is a trimmed top-20, so
-  // summing it would understate the AOI total (L14: absent metric -> pending,
-  // not a partial approximation).
-  const areaKm2 = bundle.metricsView?.critical_km2;
-  const areaDate = bundle.metricsView?.critical_km2_date;
-  const people = bundle.metricsView?.people_critical;
+  // Card totals: the zone list is a trimmed top-20, so summing it would
+  // understate the AOI total. Prefer the selected day's per-day value;
+  // fall back to the metrics scalar (tagged with its date). Absent ->
+  // pending, not a partial approximation (L14).
+  const day = bundle.series?.days[dayIndex];
+  const areaKm2 =
+    day?.critical_km2 != null && Number.isFinite(day.critical_km2)
+      ? day.critical_km2
+      : bundle.metricsView?.critical_km2;
+  const areaDate =
+    day?.critical_km2 == null || !Number.isFinite(day.critical_km2)
+      ? bundle.metricsView?.critical_km2_date
+      : undefined;
+  const people = count(day?.people_critical) ?? bundle.metricsView?.people_critical;
   const mock = isMockDerived(bundle);
   const source = forecastSourceLabel(
     bundle.manifest?.forecast_source ?? bundle.summary?.forecast_source
