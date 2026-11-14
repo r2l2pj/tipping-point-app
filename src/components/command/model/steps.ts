@@ -1,0 +1,136 @@
+// Timeline steps: from the daily series, or from the dates of the manifest
+// TPI frames when the case has no series (the live case has none).
+import { forecastSourceLabel } from "@/lib/contract";
+import { isForecastLayer } from "@/lib/layers";
+import type { DayPoint, ManifestLayer } from "@/lib/types";
+import { fmtDayShort } from "./format";
+import { reaches, thresholdFor } from "./status";
+import type { CcBundle, Hazard } from "./types";
+
+export interface Step {
+  index: number;
+  date: string;
+  // A hindcast is drawn as forecast: it is not an observation (design part 9).
+  forecast: boolean;
+  kind: DayPoint["kind"];
+  offset?: number;
+  top: string; // "Dec 10"
+  sub: string; // "EVENT", "D-3", "D+2", "NOW" or ""
+  day?: DayPoint; // present only when the step comes from the series
+}
+
+const tpiFrames = (bundle: CcBundle): ManifestLayer[] =>
+  (bundle.manifest?.layers ?? []).filter(
+    (l) => l.id.startsWith("tpi_") && l.png && typeof l.date === "string"
+  );
+
+const offsetLabel = (offset: number, live: boolean): string =>
+  offset === 0 ? (live ? "NOW" : "EVENT") : offset < 0 ? `D${offset}` : `D+${offset}`;
+
+export function stepsFor(bundle: CcBundle | undefined): Step[] {
+  if (!bundle) return [];
+  const live = bundle.mode === "live";
+  const days = bundle.series?.days;
+  if (days?.length) {
+    return days.map((day, index) => ({
+      index,
+      date: day.date,
+      forecast: day.kind !== "observed",
+      kind: day.kind,
+      offset: day.offset,
+      top: fmtDayShort(day.date),
+      sub: offsetLabel(day.offset, live),
+      day,
+    }));
+  }
+  const frames = tpiFrames(bundle);
+  const dates = [...new Set(frames.map((l) => l.date as string))].sort();
+  return dates.map((date, index) => {
+    const forecast = frames.some((l) => l.date === date && isForecastLayer(l));
+    return {
+      index,
+      date,
+      forecast,
+      kind: forecast ? "forecast" : "observed",
+      top: fmtDayShort(date),
+      sub: "",
+    };
+  });
+}
+
+// Step shown when a case opens: the event day (offset 0), else the last
+// observed step, else the first step.
+export function defaultStepIndex(steps: Step[]): number {
+  const event = steps.findIndex((s) => s.offset === 0);
+  if (event >= 0) return event;
+  for (let i = steps.length - 1; i >= 0; i--) if (!steps[i].forecast) return i;
+  return 0;
+}
+
+export const NO_STEPS_TEXT = "No frames published yet";
+
+// Forecast tag of the timeline: always the source named by the data.
+export function forecastTag(bundle: CcBundle): string {
+  const label = forecastSourceLabel(
+    bundle.manifest?.forecast_source ?? bundle.summary?.forecast_source ??
+      bundle.metricsView?.forecast_source
+  );
+  return label ? `Forecast (${label})` : "Forecast";
+}
+
+export interface StepMark {
+  index: number;
+  label: "first Critical" | "first damage";
+  color: "amber" | "red";
+}
+
+// Marks of the old timeline: first day at or above the threshold, and the
+// day of the first reported damage.
+export function stepMarks(bundle: CcBundle, steps: Step[]): StepMark[] {
+  const marks: StepMark[] = [];
+  const threshold = thresholdFor(bundle);
+  const firstCritical = steps.findIndex((s) => s.day && reaches(s.day.tpi, threshold));
+  if (firstCritical >= 0) marks.push({ index: firstCritical, label: "first Critical", color: "amber" });
+  const m = bundle.metricsView as Record<string, unknown> | undefined;
+  const anchor = m?.damage_anchor;
+  const at = anchor && typeof anchor === "object"
+    ? (anchor as Record<string, unknown>).at : m?.first_damage_at;
+  if (typeof at === "string") {
+    const i = steps.findIndex((s) => s.date.slice(0, 10) === at.slice(0, 10));
+    if (i >= 0) marks.push({ index: i, label: "first damage", color: "red" });
+  }
+  return marks;
+}
+
+export interface Frame {
+  layer: ManifestLayer;
+  hazard: Hazard;
+  forecast: boolean;
+}
+
+// The TPI frame the map hook draws for a date and a hazard choice. Mirrors
+// the pick in useMapLayers: frames of that date, the wanted hazard first,
+// else the first frame of the date. `hazard` is the hazard of the frame that
+// is really drawn, so the caption never names the wrong one.
+export function frameFor(
+  bundle: CcBundle,
+  date: string | undefined,
+  wanted: Hazard
+): Frame | undefined {
+  if (!date) return undefined;
+  const candidates = (bundle.manifest?.layers ?? []).filter(
+    (l) => l.png && l.date === date
+  );
+  const layer = candidates.find((l) => l.id.includes(wanted)) ?? candidates[0];
+  if (!layer || !layer.id.startsWith("tpi_")) return undefined;
+  return {
+    layer,
+    hazard: layer.id.includes("flood") ? "flood" : "slide",
+    forecast: isForecastLayer(layer),
+  };
+}
+
+export const caseHasHazard = (bundle: CcBundle, hazard: Hazard): boolean =>
+  (bundle.manifest?.layers ?? []).some(
+    (l) => l.id.startsWith(`tpi_${hazard}`) && (l.png || l.cog)
+  );
