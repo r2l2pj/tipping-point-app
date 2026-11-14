@@ -102,13 +102,9 @@ function makeFakeEe(opts: FakeOpts = {}) {
         calls.push(["visualize", params]);
         return img;
       },
-      getMapId: (...args: unknown[]) => {
-        calls.push(["getMapId"]);
-        if (opts.hang === "getMapId") return;
-        const cb = args.find((a) => typeof a === "function") as (
-          id?: unknown,
-          err?: string
-        ) => void;
+      getMapId: (params: unknown, cb?: (id?: unknown, err?: string) => void) => {
+        calls.push(["getMapId", params]);
+        if (opts.hang === "getMapId" || !cb) return;
         if (opts.mapErr) cb(undefined, opts.mapErr);
         else cb(map);
       },
@@ -275,7 +271,7 @@ describe("createTileService", () => {
     const { ee, calls } = makeFakeEe({ bands: ["d20240421", "d20240422"] });
     const res = await svc(ee).getTiles({ ...QUERY, date: "2024-04-22" });
     expect(calls).toContainEqual(["select", "d20240422"]);
-    expect(calls).toContainEqual(["getMapId"]);
+    expect(calls).toContainEqual(["getMapId", {}]);
     expect(res.tiles).toHaveLength(1);
   });
 
@@ -447,6 +443,13 @@ describe("createTileService", () => {
         (e) => e as Error
       );
     expect(e2).toBeInstanceOf(TileServiceError);
+  });
+
+  test("getMapId receives explicit params before its callback", async () => {
+    const { ee, calls } = makeFakeEe();
+    const res = await svc(ee, { timeoutMs: 20 }).getTiles(QUERY);
+    expect(calls).toContainEqual(["getMapId", {}]);
+    expect(res.tiles).toEqual(["https://earthengine.example/{z}/{x}/{y}"]);
   });
 
   test("getMapId failure -> TileServiceError", async () => {

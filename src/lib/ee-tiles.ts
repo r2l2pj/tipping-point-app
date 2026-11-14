@@ -132,7 +132,7 @@ async function manifestAssetFromRoot(
 function getMapId(img: EeImage, asset: string): Promise<EeMapId> {
   return new Promise((resolve, reject) => {
     try {
-      img.getMapId((id, err) => {
+      img.getMapId({}, (id, err) => {
         if (err || !id)
           return reject(
             mapComputeError(err ?? "empty map id", `getMapId on ${asset}`)
