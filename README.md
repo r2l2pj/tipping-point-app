@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# tipping-point-app
 
-## Getting Started
+Fullstack app for **Tipping Point** — NASA Space Apps Challenge 2026,
+"Dancing with the SARs". Rain warns. Radar confirms.
 
-First, run the development server:
+Next.js 16 (App Router) + MapLibre + `@google/earthengine`. Serves the artifacts
+produced by [`r2l2pj/tipping-point-data`](https://github.com/r2l2pj/tipping-point-data)
+and (stretch) live Earth Engine layers through server-side API routes.
+
+## Run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+bun run dev          # predev syncs ../tipping-point-data/data -> public/data
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`DATA_REPO=/path/to/tipping-point-data` overrides the sibling-repo default.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Seams
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Path | Role |
+| --- | --- |
+| `src/lib/data.ts` + `src/lib/types.ts` | reader for the data contract (`public/data`, see SCHEMA.md) |
+| `src/app/api/events` | events index + per-event manifest |
+| `src/app/api/ee/status` | live-GEE health check (service account) |
+| `src/lib/ee.ts` | server-only Earth Engine client (`GEE_PROJECT` + `GEE_SERVICE_ACCOUNT_KEY` in `.env`) |
+| `src/components/Map.tsx` | MapLibre dark basemap — layers get added here |
+| `docs/`, `submission/` | method notes; ≤30s demo script + submission materials |
 
-## Learn More
+## Deploy
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vercel (repo is public — Hobby plan can deploy public org repos). `prebuild`
+runs the data sync, so committed `public/data` JSON is the deploy fallback.

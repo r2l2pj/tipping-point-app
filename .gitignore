@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Synced data artifacts — JSON/index files may be committed; large rasters not
+public/data/**/*.tif
+public/data/**/*.tiff
+public/data/**/*.h5
+public/data/**/*.nc
