@@ -14,12 +14,14 @@ export default function AlertTab({
   dayIndex,
   onConfirmRadar,
   onZoneClick,
+  hazard,
 }: {
   bundle: CaseBundle;
   zones: PriorityZone[];
   dayIndex: number;
   onConfirmRadar: () => void;
   onZoneClick?: (z: PriorityZone) => void;
+  hazard?: "flood" | "slide";
 }) {
   const seriesThreshold = bundle.series?.tpi_threshold;
   const threshold = typeof seriesThreshold === "number" && Number.isFinite(seriesThreshold)
@@ -44,6 +46,11 @@ export default function AlertTab({
       ? bundle.metricsView?.critical_km2_date
       : undefined;
   const people = count(day?.people_critical) ?? bundle.metricsView?.people_critical;
+  const slideKm2 = day?.critical_slide_km2;
+  const floodKm2 = day?.critical_flood_km2;
+  const hasSplit =
+    (typeof slideKm2 === "number" && Number.isFinite(slideKm2)) ||
+    (typeof floodKm2 === "number" && Number.isFinite(floodKm2));
   const mock = isMockDerived(bundle);
   const source = forecastSourceLabel(
     bundle.manifest?.forecast_source ?? bundle.summary?.forecast_source
@@ -91,9 +98,9 @@ export default function AlertTab({
               big
               value={fmtKm2(areaKm2)}
               label={
-                areaDate && areaDate !== bundle.series?.days[dayIndex]?.date
+                areaDate && areaDate !== day?.date
                   ? `critical (${areaDate})`
-                  : "critical"
+                  : "critical (landslide or flood)"
               }
               absent={areaKm2 == null}
             />
@@ -106,6 +113,17 @@ export default function AlertTab({
               </span>
             )}
           </div>
+        )}
+        {!monitoring && hasSplit && (
+          <p className="mt-1.5 text-xs text-zinc-500">
+            <span className={hazard === "slide" ? "font-semibold text-red-300" : ""}>
+              landslide {fmtKm2(slideKm2)}
+            </span>
+            {" · "}
+            <span className={hazard === "flood" ? "font-semibold text-sky-300" : ""}>
+              flood {fmtKm2(floodKm2)}
+            </span>
+          </p>
         )}
       </div>
 

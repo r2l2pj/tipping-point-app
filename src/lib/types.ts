@@ -115,6 +115,8 @@ export interface DayPoint {
   // Per-day AOI totals above the TPI critical cut (pipeline join; may
   // carry raster fill values — read through contract.count()).
   critical_km2?: number;
+  critical_slide_km2?: number;
+  critical_flood_km2?: number;
   people_critical?: number;
 }
 

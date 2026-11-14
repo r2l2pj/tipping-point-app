@@ -201,6 +201,7 @@ export default function Dashboard({ cases, initialCase, initialDay }: { cases: C
             // Doc layout: a zone row click zooms the map to its label point.
             if (z.at) map?.flyTo({ center: z.at, zoom: 11.5, duration: 1200 });
           }}
+          hazard={layers.tpiFlood ? "flood" : layers.tpiSlide ? "slide" : undefined}
         />
       </main>
 
