@@ -23,8 +23,11 @@ import { canonicalCaseId } from "./contract";
 // Live GEE smoke: skipped (and reported as skipped) unless real creds exist.
 // Never print env values or key content — only names.
 const HAS_CREDS =
-  Boolean(process.env.GCP_SA_KEY || process.env.GEE_SERVICE_ACCOUNT_KEY) &&
-  Boolean(process.env.GEE_PROJECT);
+  Boolean(
+    process.env.GCP_SA_KEY ||
+      process.env.GEE_SERVICE_ACCOUNT_KEY ||
+      process.env.GOOGLE_APPLICATION_CREDENTIALS
+  ) && Boolean(process.env.GEE_PROJECT);
 const itLive = test.skipIf(!HAS_CREDS);
 
 const INIT_TIMEOUT_MS = 30_000;
@@ -63,7 +66,7 @@ async function tolerant<T>(
 describe("gee smoke (live)", () => {
   if (!HAS_CREDS)
     console.log(
-      "gee smoke: skipped — set GCP_SA_KEY (or GEE_SERVICE_ACCOUNT_KEY) and GEE_PROJECT"
+      "gee smoke: skipped — set GCP_SA_KEY, GEE_SERVICE_ACCOUNT_KEY, or GOOGLE_APPLICATION_CREDENTIALS plus GEE_PROJECT"
     );
 
   for (const probe of [
@@ -203,5 +206,8 @@ describe("gee smoke (live)", () => {
 // # how to run:
 //   GCP_SA_KEY='<full SA key JSON, one line>' GEE_PROJECT=hermes-fesolucoes \
 //     bun test src/lib/ee.smoke.test.ts
+//   GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json GEE_PROJECT=hermes-fesolucoes \
+//     bun test src/lib/ee.smoke.test.ts
 // GEE_SERVICE_ACCOUNT_KEY is accepted in place of GCP_SA_KEY. The key is JSON
 // content, not a file path: GCP_SA_KEY="$(cat key.json)" works.
+// GOOGLE_APPLICATION_CREDENTIALS holds a path to the key file instead.
