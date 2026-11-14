@@ -13,7 +13,7 @@
 - May 2024, Rio Grande do Sul: worst floods in state history — 446 of 497 municipalities hit
 - 185 dead, 581,000+ displaced, ~R$88.9 billion in damage
 - Alerts cover whole municipalities — they say where it *could* happen, not where it *did*
-- Optical satellites were blind: ~97% cloud cover during the event
+- Optical satellites were blind: ~X% cloud cover during the event
 - *Visual:* RS-2024 flood photo or dark map of the Taquari valley with the cloud-cover stat
 
 ## Slide 3 — The solution
@@ -32,15 +32,15 @@
 - *Visual:* 2–3 real screenshots — banner over the heated Taquari valley map, RADAR before/after swipe (needs U5), /alerts card
 
 ## Slide 5 — Did it work?
-- WA Dec 2025 replay vs NISAR GCOV reference: **IoU 0.71, F1 0.83** over **41.6 km²** confirmed flooded
+- WA Dec 2025 replay vs NISAR GCOV reference: **IoU X, F1 X** over **X km²** confirmed flooded
 - Early warning: "In replay, using only data available at the time, the index crossed Critical a median of X h (IQR A-B h) before mapped landslides (n = N)" — P% of zones warned before the event
 - and **D h before the first official warning** (placeholder — sourced timestamp pending)
-- RS replay (no radar — event predates NISAR; flood metrics vs OPERA/optical reference): IoU 0.64, F1 0.78, median X h (IQR A-B h, n = N), P% warned
-- **Optical saw only 3–6% of the scene in both events (94–97% cloud) — that is why radar**
+- RS replay (no radar — event predates NISAR; flood metrics vs OPERA/optical reference): IoU X, F1 X, median X h (IQR A-B h, n = N), P% warned
+- **Optical saw only X% of the scene in both events (X% cloud) — that is why radar**
 - *Visual:* Did we get it right? tab screenshot next to a small metrics table for both cases
 
 ## Slide 6 — Impact + honest limitations
-- Impact numbers the demo reports: 8,400 people in critical areas + night-light drop 18% (WA); 41,200 + 31% (RS)
+- Impact numbers the demo reports: X people in critical areas + night-light drop P% (WA); X + P% (RS)
 - Limitations: thresholds calibrated on a single event; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days
 - Demo is a replay, not live ops; forecast in replay is a declared "perfect forecast"
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event
@@ -52,3 +52,5 @@
 - MERIT Hydro used as a validation reference only, not a NASA input
 - Repo + live app links; built with AI assistants under human review
 - *Visual:* mission-logo strip / data-source grid + QR code to the repo
+
+*Note: all metric numbers shown as X/A/B/N/P/D placeholders are mock-derived figures pending the real pipeline — they are not validated results.*

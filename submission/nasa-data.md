@@ -9,7 +9,6 @@ Every model input is a NASA mission dataset.
 - **GPM IMERG V07** — 3-day accumulated rain vs per-pixel P90/P95/P99 climatology (Rain score)
 - **SMAP L4 SPL4SMGP/008** — root-zone soil moisture (`sm_rootzone_wetness`, Soil score)
 - **NASADEM** — slope + HAND proxy (Terrain score)
-- **MODIS MCD12Q1** — land cover
 
 ## Confirmation (radar + optical)
 
