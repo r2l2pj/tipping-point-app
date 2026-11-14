@@ -1,0 +1,152 @@
+{
+  "event": "rs-2024-05",
+  "reference_date": "2024-05-02",
+  "rain_p95_mm": null,
+  "tpi_threshold": 0.6,
+  "days": [
+    {
+      "date": "2024-04-22",
+      "offset": -10,
+      "kind": "observed",
+      "imerg_mm": 0.0025562065331057432,
+      "smap": 0.6615775407220947,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-04-23",
+      "offset": -9,
+      "kind": "observed",
+      "imerg_mm": 3.2620601983801314,
+      "smap": 0.6595786132697913,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-04-24",
+      "offset": -8,
+      "kind": "observed",
+      "imerg_mm": 4.051479318643736,
+      "smap": 0.663080226280251,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-04-25",
+      "offset": -7,
+      "kind": "observed",
+      "imerg_mm": 6.11944759319865,
+      "smap": 0.6630623202127133,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-04-26",
+      "offset": -6,
+      "kind": "observed",
+      "imerg_mm": 3.307597215378913,
+      "smap": 0.6609137820882585,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-04-27",
+      "offset": -5,
+      "kind": "observed",
+      "imerg_mm": 11.572347816082484,
+      "smap": 0.6663611111143711,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-04-28",
+      "offset": -4,
+      "kind": "observed",
+      "imerg_mm": 36.23333697065197,
+      "smap": 0.6719727966594043,
+      "tpi": 0.7162624597549438,
+      "river_m": null
+    },
+    {
+      "date": "2024-04-29",
+      "offset": -3,
+      "kind": "observed",
+      "imerg_mm": 37.438706247779635,
+      "smap": 0.6995078787950938,
+      "tpi": 0.7423886656761169,
+      "river_m": null
+    },
+    {
+      "date": "2024-04-30",
+      "offset": -2,
+      "kind": "observed",
+      "imerg_mm": 86.60890582508387,
+      "smap": 0.7306392457610154,
+      "tpi": 0.9870860576629639,
+      "river_m": null
+    },
+    {
+      "date": "2024-05-01",
+      "offset": -1,
+      "kind": "observed",
+      "imerg_mm": 190.08888524539694,
+      "smap": 0.8177198976854319,
+      "tpi": 1.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-05-02",
+      "offset": 0,
+      "kind": "observed",
+      "imerg_mm": 290.37774451555634,
+      "smap": 0.8846363761536712,
+      "tpi": 1.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-05-03",
+      "offset": 1,
+      "kind": "forecast",
+      "imerg_mm": 342.2909231894946,
+      "smap": 0.9306371109707028,
+      "tpi": 1.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-05-04",
+      "offset": 2,
+      "kind": "forecast",
+      "imerg_mm": 215.8182441830184,
+      "smap": 0.910766526336483,
+      "tpi": 1.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-05-05",
+      "offset": 3,
+      "kind": "forecast",
+      "imerg_mm": 151.64132177154266,
+      "smap": 0.9045611263761433,
+      "tpi": 1.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-05-06",
+      "offset": 4,
+      "kind": "forecast",
+      "imerg_mm": 57.648699232764876,
+      "smap": 0.9079566525266968,
+      "tpi": 1.0,
+      "river_m": null
+    },
+    {
+      "date": "2024-05-07",
+      "offset": 5,
+      "kind": "forecast",
+      "imerg_mm": 53.99586553246583,
+      "smap": 0.8968450342707162,
+      "tpi": 1.0,
+      "river_m": null
+    }
+  ]
+}

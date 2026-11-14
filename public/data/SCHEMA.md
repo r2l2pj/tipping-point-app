@@ -183,6 +183,13 @@ terrain-score rasters). Files `<caso>_r_series_<AAAAMMDD>.tif` etc. under
 `cog/`. `tpi_slide`/`tpi_flood` remain the CLASS renders — different layers
 from the score series.
 
+**Date-label convention:** a band/layer named `YYYYMMDD` is labeled by the
+**end** of its accumulation window — the 3-day rain sum filtered
+`[end − 3 days, end)`. A layer labeled `20240503` therefore covers rain
+from Apr 30 through May 2 and a TPI peak on that label is *before or on*
+the event date (2024-05-02). The series reads correctly when interpreted
+as "conditions at the end of day D".
+
 ### products map
 
 Non-raster discovery, per case node (D3). Every value is a repo-relative

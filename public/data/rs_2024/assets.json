@@ -3,49 +3,49 @@
   "assets": [
     {
       "name": "municipal_boundaries",
-      "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/municipal_boundaries",
+      "gee_id": "projects/jovial-idiom-514715-j8/assets/tipping-point/rs_2024/municipal_boundaries",
       "kind": "table",
       "status": "ingesting",
-      "ingested_at": "2026-11-14T19:12:10.349473Z",
+      "ingested_at": "2026-11-14T20:11:46.192387Z",
       "features": 138,
-      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data-wt/realrun/data/rs_2024/geojson/municipal_boundaries.geojson",
-      "operation": "UZKAQGYMPIYTWO2AVI4KQHUT"
+      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data/data/rs_2024/geojson/municipal_boundaries.geojson",
+      "operation": "DIV6MR6DPMY2UIDRCG5R6S7F"
     },
     {
       "name": "landslide_catalog",
-      "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/landslide_catalog",
+      "gee_id": "projects/jovial-idiom-514715-j8/assets/tipping-point/rs_2024/landslide_catalog",
       "kind": "table",
       "status": "ingesting",
-      "ingested_at": "2026-11-14T19:16:58.385557Z",
+      "ingested_at": "2026-11-14T20:12:18.952267Z",
       "features": 16027,
-      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data-wt/realrun/data/rs_2024/geojson/landslide_catalog.geojson",
+      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data/data/rs_2024/geojson/landslide_catalog.geojson",
       "parts": [
         {
-          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/landslide_catalog/part00",
+          "gee_id": "projects/jovial-idiom-514715-j8/assets/tipping-point/rs_2024/landslide_catalog/part00",
           "features": 5000,
           "status": "ingesting",
-          "operation": "DRLLV6M6GS3LSIGGJPWWJIXY"
+          "operation": "JKUGQX3Z7XOIOAITFPYLYJSF"
         },
         {
-          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/landslide_catalog/part01",
+          "gee_id": "projects/jovial-idiom-514715-j8/assets/tipping-point/rs_2024/landslide_catalog/part01",
           "features": 5000,
           "status": "ingesting",
-          "operation": "L42O7N75FUFA32MYYL3N4ZMJ"
+          "operation": "YUDMDMZQFR5XZ42WOB6KWYIW"
         },
         {
-          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/landslide_catalog/part02",
+          "gee_id": "projects/jovial-idiom-514715-j8/assets/tipping-point/rs_2024/landslide_catalog/part02",
           "features": 5000,
           "status": "ingesting",
-          "operation": "BJWLUADOBZOJRQBJ7QJ3KECI"
+          "operation": "BU3DCOJN2DCP53CHUHASQTAX"
         },
         {
-          "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/rs_2024/landslide_catalog/part03",
+          "gee_id": "projects/jovial-idiom-514715-j8/assets/tipping-point/rs_2024/landslide_catalog/part03",
           "features": 1027,
           "status": "ingesting",
-          "operation": "5WJ2MMP2M6ZIFLY5SMZNIHCW"
+          "operation": "PS2KRD5UTWE3BQB76FVRUYGE"
         }
       ]
     }
   ],
-  "updated_at": "2026-11-14T19:16:58.393650Z"
+  "updated_at": "2026-11-14T20:12:18.959633Z"
 }

@@ -1,0 +1,197 @@
+{
+  "event": "wa-2025-12",
+  "reference_date": "2025-12-10",
+  "rain_p95_mm": null,
+  "tpi_threshold": 0.6,
+  "days": [
+    {
+      "date": "2025-11-30",
+      "offset": -10,
+      "kind": "observed",
+      "imerg_mm": 26.639725248057726,
+      "smap": 0.6385696590030138,
+      "tpi": 0.5742376446723938,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-01",
+      "offset": -9,
+      "kind": "observed",
+      "imerg_mm": 14.313149383910236,
+      "smap": 0.6333041483067504,
+      "tpi": 0.41890811920166016,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-02",
+      "offset": -8,
+      "kind": "observed",
+      "imerg_mm": 5.412426347035696,
+      "smap": 0.6303424634515332,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-03",
+      "offset": -7,
+      "kind": "observed",
+      "imerg_mm": 5.4140066190651375,
+      "smap": 0.6336650750941285,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-04",
+      "offset": -6,
+      "kind": "observed",
+      "imerg_mm": 6.804431562542141,
+      "smap": 0.6338585028431368,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-05",
+      "offset": -5,
+      "kind": "observed",
+      "imerg_mm": 16.49868244414232,
+      "smap": 0.6383459092948293,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-06",
+      "offset": -4,
+      "kind": "observed",
+      "imerg_mm": 20.65904032325342,
+      "smap": 0.6573950363959149,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-07",
+      "offset": -3,
+      "kind": "observed",
+      "imerg_mm": 24.372422934623522,
+      "smap": 0.6692677784438736,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-08",
+      "offset": -2,
+      "kind": "observed",
+      "imerg_mm": 18.60506258189457,
+      "smap": 0.6730777973057205,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-09",
+      "offset": -1,
+      "kind": "observed",
+      "imerg_mm": 43.18598104630097,
+      "smap": 0.6831992059106435,
+      "tpi": 0.9724833965301514,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-10",
+      "offset": 0,
+      "kind": "observed",
+      "imerg_mm": 87.95405514606931,
+      "smap": 0.7332764353049467,
+      "tpi": 1.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-11",
+      "offset": 1,
+      "kind": "forecast",
+      "imerg_mm": 144.5334261516383,
+      "smap": 0.7519042744414258,
+      "tpi": 1.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-12",
+      "offset": 2,
+      "kind": "forecast",
+      "imerg_mm": 137.46117312809824,
+      "smap": 0.8007433350255911,
+      "tpi": 1.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-13",
+      "offset": 3,
+      "kind": "forecast",
+      "imerg_mm": 88.66183842160108,
+      "smap": 0.7944290809805041,
+      "tpi": 1.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-14",
+      "offset": 4,
+      "kind": "forecast",
+      "imerg_mm": 23.939993026540453,
+      "smap": 0.7771236470606164,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-15",
+      "offset": 5,
+      "kind": "forecast",
+      "imerg_mm": 10.58040128683096,
+      "smap": 0.7667508357840493,
+      "tpi": 0.0,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-16",
+      "offset": 6,
+      "kind": "forecast",
+      "imerg_mm": 25.2592239414525,
+      "smap": 0.7718889770801232,
+      "tpi": 0.7936263680458069,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-17",
+      "offset": 7,
+      "kind": "forecast",
+      "imerg_mm": 30.566556394849002,
+      "smap": 0.7868362579693637,
+      "tpi": 0.8415110111236572,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-18",
+      "offset": 8,
+      "kind": "forecast",
+      "imerg_mm": 37.42505067349661,
+      "smap": 0.8095359258870668,
+      "tpi": 0.7946183085441589,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-19",
+      "offset": 9,
+      "kind": "forecast",
+      "imerg_mm": 35.28641727057259,
+      "smap": 0.805043406155029,
+      "tpi": 0.6811320185661316,
+      "river_m": null
+    },
+    {
+      "date": "2025-12-20",
+      "offset": 10,
+      "kind": "forecast",
+      "imerg_mm": 32.51973018132035,
+      "smap": 0.8074735331953363,
+      "tpi": 0.797904372215271,
+      "river_m": null
+    }
+  ]
+}

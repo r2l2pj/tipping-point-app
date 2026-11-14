@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-14T19:02:15Z",
+  "updated_at": "2026-11-14T20:23:50Z",
   "cases": {
     "rs_2024": {
       "event_id": "rs-2024-05",
@@ -14,8 +14,8 @@
       "layers": [
         {
           "id": "tpi_slide",
-          "date": "2024-05-02",
-          "png": "rs_2024/png/tpi_slide_20240502.png",
+          "date": "2024-05-07",
+          "png": "rs_2024/png/tpi_slide_20240507.png",
           "cog": "rs_2024/cog/rs_2024_tpi_slide_20240502.tif",
           "legend": [
             "Baixo",
@@ -23,7 +23,13 @@
             "Alto",
             "Crítico"
           ],
-          "bounds": null
+          "bounds": [
+            -52.50051,
+            -30.503845,
+            -50.499253,
+            -28.999504
+          ],
+          "forecast": false
         },
         {
           "id": "tpi_slide_d1",
@@ -69,8 +75,8 @@
         },
         {
           "id": "tpi_flood",
-          "date": "2024-05-02",
-          "png": "rs_2024/png/tpi_flood_20240502.png",
+          "date": "2024-05-07",
+          "png": "rs_2024/png/tpi_flood_20240507.png",
           "cog": "rs_2024/cog/rs_2024_tpi_flood_20240502.tif",
           "legend": [
             "Baixo",
@@ -78,7 +84,13 @@
             "Alto",
             "Crítico"
           ],
-          "bounds": null
+          "bounds": [
+            -52.50051,
+            -30.503845,
+            -50.499253,
+            -28.999504
+          ],
+          "forecast": false
         },
         {
           "id": "tpi_flood_d1",
@@ -121,29 +133,50 @@
           ],
           "bounds": null,
           "forecast": true
+        },
+        {
+          "id": "r_series",
+          "date": "2024-05-02",
+          "png": null,
+          "cog": "rs_2024/cog/rs_2024_r_series_20240502.tif"
+        },
+        {
+          "id": "s_series",
+          "date": "2024-05-02",
+          "png": null,
+          "cog": "rs_2024/cog/rs_2024_s_series_20240502.tif"
+        },
+        {
+          "id": "t_slide",
+          "date": "2024-05-02",
+          "png": null,
+          "cog": "rs_2024/cog/rs_2024_t_slide_20240502.tif"
+        },
+        {
+          "id": "t_flood",
+          "date": "2024-05-02",
+          "png": null,
+          "cog": "rs_2024/cog/rs_2024_t_flood_20240502.tif"
         }
       ],
-      "metrics": null,
-      "data_dates": {},
+      "metrics": "metrics.json#rs_2024",
+      "data_dates": {
+        "imerg": "2024-05-07",
+        "smap": "2024-05-07"
+      },
       "products": {
         "municipal_boundaries": "rs_2024/geojson/municipal_boundaries.geojson",
         "landslide_catalog": "rs_2024/geojson/landslide_catalog.geojson",
         "places": "rs_2024/geojson/places.geojson",
-        "priority_zones": null,
+        "priority_zones": "rs_2024/geojson/priority_zones.geojson",
         "permanent_water": null,
         "flood_confirmed": null,
         "landslide_candidates": null
       },
       "_null_reasons": {
-        "r_series": "rs_2024_r_series COG not yet produced",
-        "s_series": "rs_2024_s_series COG not yet produced",
-        "t_slide": "rs_2024_t_slide COG not yet produced",
-        "t_flood": "rs_2024_t_flood COG not yet produced",
-        "priority_zones": "not yet produced",
         "permanent_water": "not yet produced",
         "flood_confirmed": "No NISAR coverage — event predates launch (Jul 2025)",
-        "landslide_candidates": "no landslide candidate product yet",
-        "metrics": "metrics.json not yet written"
+        "landslide_candidates": "no landslide candidate product yet"
       }
     },
     "wa_2025": {
@@ -159,8 +192,8 @@
       "layers": [
         {
           "id": "tpi_slide",
-          "date": "2025-12-10",
-          "png": "wa_2025/png/tpi_slide_20251210.png",
+          "date": "2025-12-20",
+          "png": "wa_2025/png/tpi_slide_20251220.png",
           "cog": "wa_2025/cog/wa_2025_tpi_slide_20251210.tif",
           "legend": [
             "Baixo",
@@ -168,7 +201,13 @@
             "Alto",
             "Crítico"
           ],
-          "bounds": null
+          "bounds": [
+            -122.600094,
+            46.999727,
+            -121.499223,
+            48.501749
+          ],
+          "forecast": false
         },
         {
           "id": "tpi_slide_d1",
@@ -214,8 +253,8 @@
         },
         {
           "id": "tpi_flood",
-          "date": "2025-12-10",
-          "png": "wa_2025/png/tpi_flood_20251210.png",
+          "date": "2025-12-20",
+          "png": "wa_2025/png/tpi_flood_20251220.png",
           "cog": "wa_2025/cog/wa_2025_tpi_flood_20251210.tif",
           "legend": [
             "Baixo",
@@ -223,7 +262,13 @@
             "Alto",
             "Crítico"
           ],
-          "bounds": null
+          "bounds": [
+            -122.600094,
+            46.999727,
+            -121.499223,
+            48.501749
+          ],
+          "forecast": false
         },
         {
           "id": "tpi_flood_d1",
@@ -266,10 +311,36 @@
           ],
           "bounds": null,
           "forecast": true
+        },
+        {
+          "id": "r_series",
+          "date": "2025-12-10",
+          "png": null,
+          "cog": "wa_2025/cog/wa_2025_r_series_20251210.tif"
+        },
+        {
+          "id": "s_series",
+          "date": "2025-12-10",
+          "png": null,
+          "cog": "wa_2025/cog/wa_2025_s_series_20251210.tif"
+        },
+        {
+          "id": "t_slide",
+          "date": "2025-12-10",
+          "png": null,
+          "cog": "wa_2025/cog/wa_2025_t_slide_20251210.tif"
+        },
+        {
+          "id": "t_flood",
+          "date": "2025-12-10",
+          "png": null,
+          "cog": "wa_2025/cog/wa_2025_t_flood_20251210.tif"
         }
       ],
-      "metrics": null,
+      "metrics": "metrics.json#wa_2025",
       "data_dates": {
+        "imerg": "2025-12-20",
+        "smap": "2025-12-20",
         "nisar_pre": "2025-12-04",
         "nisar_post": "2025-12-16"
       },
@@ -277,21 +348,13 @@
         "municipal_boundaries": "wa_2025/geojson/municipal_boundaries.geojson",
         "landslide_catalog": "wa_2025/geojson/landslide_catalog.geojson",
         "places": "wa_2025/geojson/places.geojson",
-        "priority_zones": null,
-        "permanent_water": null,
-        "flood_confirmed": null,
+        "priority_zones": "wa_2025/geojson/priority_zones.geojson",
+        "permanent_water": "wa_2025/geojson/permanent_water.geojson",
+        "flood_confirmed": "wa_2025/geojson/flood_confirmed.geojson",
         "landslide_candidates": null
       },
       "_null_reasons": {
-        "r_series": "wa_2025_r_series COG not yet produced",
-        "s_series": "wa_2025_s_series COG not yet produced",
-        "t_slide": "wa_2025_t_slide COG not yet produced",
-        "t_flood": "wa_2025_t_flood COG not yet produced",
-        "priority_zones": "not yet produced",
-        "permanent_water": "not yet produced",
-        "flood_confirmed": "no validated NISAR flood mask yet",
-        "landslide_candidates": "no landslide candidate product yet",
-        "metrics": "metrics.json not yet written"
+        "landslide_candidates": "no landslide candidate product yet"
       }
     },
     "now": {
