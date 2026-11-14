@@ -48,6 +48,7 @@
 
 ## Slide 7 — Roadmap + credits
 - Roadmap: auto-pipeline on each IMERG update → NISAR confirmation trigger per pass → threshold calibration on the landslide catalog → WhatsApp/e-mail alerts → OPERA water integration
+- Global coverage at release — one config edit
 - NASA inputs only: GPM IMERG · SMAP L4 · NASADEM · NISAR GCOV · HLS · MODIS · VIIRS Black Marble · GPW · GEOS-FP · OPERA DSWx
 - MERIT Hydro used as a validation reference only, not a NASA input
 - Repo + live app links; built with AI assistants under human review
