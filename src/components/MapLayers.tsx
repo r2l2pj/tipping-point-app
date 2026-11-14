@@ -15,6 +15,7 @@ import type {
 } from "@/lib/types";
 import type { CogRSTUrls } from "@/lib/cog";
 import { canonicalCaseId, forecastSourceLabel } from "@/lib/contract";
+import { isPermanentFrameFailure } from "./mapFrameErrors";
 import {
   assetUrl,
   dropSource,
@@ -158,7 +159,8 @@ export function useMapLayers(
   const loading = useRef<Map<string, string>>(new Map());
   const chip = useRef<HTMLDivElement | null>(null);
   // PNG frames that 404'd — skipped on later days and noted via the chip
-  // ("frame unavailable") instead of crashing the map.
+  // ("frame unavailable") instead of crashing the map. A network or CORS
+  // failure is not kept here (see isPermanentFrameFailure).
   const frameFailed = useRef<Set<string>>(new Set());
   const frameNote = useRef<string | null>(null);
   const imgUrls = useRef<Record<string, string>>({});
@@ -307,14 +309,16 @@ export function useMapLayers(
 
     // A dynamic image source whose PNG 404s fires 'error' asynchronously —
     // drop it so it never paints a broken frame or crashes a later update.
-    const onMapError = (e: { sourceId?: string }) => {
+    const onMapError = (e: { sourceId?: string; error?: unknown }) => {
       const sid = e?.sourceId;
       if (!sid) return;
       const pair = DYNAMIC_IMG.find(([, s]) => s === sid);
       if (!pair) return;
       const [lyr] = pair;
       const u = imgUrls.current[sid];
-      if (u) frameFailed.current.add(u);
+      // Only a missing file is remembered. A network or CORS failure is
+      // tried again the next time the frame is wanted.
+      if (u && isPermanentFrameFailure(e.error)) frameFailed.current.add(u);
       dropSource(map, sid, lyr);
       if (sid === SRC.tpiImg) {
         const d = state.current.day;
@@ -492,7 +496,8 @@ export function useMapLayers(
           isForecast ? 0.5 : 0.9
         );
       } catch {
-        frameFailed.current.add(tpiUrl);
+        // A throw here says nothing about the file: drop the source and try
+        // again the next time the frame is wanted.
         dropSource(map, SRC.tpiImg, LYR.tpiRaster);
       }
     }
