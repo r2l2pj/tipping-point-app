@@ -90,10 +90,12 @@ export async function collectHealth(deps: HealthDeps = {}): Promise<HealthReport
     if (manifest) {
       data.manifest = true;
       for (const [id, entry] of Object.entries(manifest.cases ?? {})) {
-        const u = entry?.updated_at;
+        // Case nodes may omit updated_at — fall back to the root stamp so
+        // freshness is visible instead of null.
+        const u = entry?.updated_at ?? manifest.updated_at;
         data.cases[id] = { updated_at: typeof u === "string" ? u : null };
       }
-      const u = manifest.cases?.now?.updated_at;
+      const u = manifest.cases?.now?.updated_at ?? manifest.updated_at;
       data.now = { updated_at: typeof u === "string" ? u : null };
     }
   } catch {

@@ -141,7 +141,8 @@ describe("collectHealth", () => {
     );
     expect(report.data.manifest).toBe(true);
     expect(report.data.cases.rs_2024.updated_at).toBe("2024-06-01T00:00:00Z");
-    expect(report.data.cases.wa_2025.updated_at).toBeNull();
+    // missing per-case stamp falls back to the root updated_at
+    expect(report.data.cases.wa_2025.updated_at).toBe("2026-11-01T00:00:00Z");
     expect(report.data.now.updated_at).toBe("2026-11-14T00:00:00Z");
   });
 

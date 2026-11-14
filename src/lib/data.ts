@@ -574,18 +574,29 @@ export async function getCaseBundle(
       ? (d0Date ?? observedDate ?? referenceDate)
       : referenceDate;
 
+  // Skip the overlay where it can never add content: an empty `now` node
+  // (no layers, no products, no data_dates) has no live assets to overlay.
+  const liveEligible =
+    canonical !== "now" ||
+    Boolean(
+      now?.layers.length ||
+        Object.keys(now?.products ?? {}).length ||
+        (now?.data_dates && Object.values(now.data_dates).some(Boolean))
+    );
+
   // One slow/failed call must not hang the other — the helpers carry their
   // own internal timeouts, and the whole overlay is capped at
-  // GEE_OVERLAY_TIMEOUT_MS (default 6 s) so a hung GEE roundtrip can never
+  // GEE_OVERLAY_TIMEOUT_MS (default 2.5 s) so a hung GEE roundtrip can never
   // stall the page stream.
-  const livePending = gee
-    ? Promise.allSettled([
-        numbersDate !== undefined
-          ? gee.numbers?.({ caseId: canonical, date: numbersDate })
-          : undefined,
-        gee.layers?.(canonical),
-      ])
-    : undefined;
+  const livePending =
+    gee && liveEligible
+      ? Promise.allSettled([
+          numbersDate !== undefined
+            ? gee.numbers?.({ caseId: canonical, date: numbersDate })
+            : undefined,
+          gee.layers?.(canonical),
+        ])
+      : undefined;
 
   const bundle: LoadedCaseBundle = {
     id,
@@ -619,7 +630,7 @@ export async function getCaseBundle(
   // but EMPTY layers array means GEE is up yet nothing is published —
   // degraded, not content.
   const overlayTimeoutMs =
-    Number(process.env.GEE_OVERLAY_TIMEOUT_MS) || 6000;
+    Number(process.env.GEE_OVERLAY_TIMEOUT_MS) || 2500;
   const [numbersSettled, layersSettled] = livePending
     ? await Promise.race([
         livePending,

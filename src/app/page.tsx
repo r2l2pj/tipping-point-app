@@ -9,17 +9,18 @@ async function DashboardLoader() {
   const index = await getEventsIndex().catch(() => null);
   const cases: CaseBundle[] = [];
 
-  if (index) {
-    // A single bad case must not blank the whole dashboard — skip it.
-    for (const e of index.events) {
-      const bundle = await getCaseBundle(e.id, e.title, e.bbox, e.reference_date).catch(() => null);
-      if (bundle) cases.push(bundle);
-    }
-  }
+  // All bundles load in parallel — a slow case (or its GEE overlay timeout)
+  // must not serialize the whole page stream. A failing case is skipped.
   // Live mode ("Agora") — southern Brazil, refreshed by the 3-hourly pipeline.
-  // Reference day comes from the pipeline-stamped manifest.updated_at, not a
-  // hardcoded date.
-  const now = await getCaseBundle("now", "Now — Southern Brazil", [-58, -34, -48, -22.5], "2026-11-14").catch(() => null);
+  const [eventBundles, now] = await Promise.all([
+    Promise.all(
+      (index?.events ?? []).map((e) =>
+        getCaseBundle(e.id, e.title, e.bbox, e.reference_date).catch(() => null)
+      )
+    ),
+    getCaseBundle("now", "Now — Southern Brazil", [-58, -34, -48, -22.5], "2026-11-14").catch(() => null),
+  ]);
+  for (const b of eventBundles) if (b) cases.push(b);
   if (now?.manifest) {
     now.bbox = now.manifest.bounds ?? now.bbox;
     now.reference_date = now.manifest.updated_at?.slice(0, 10) ?? now.reference_date;
