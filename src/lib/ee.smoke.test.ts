@@ -32,6 +32,14 @@ const TEST_TIMEOUT_MS = 45_000;
 const CASE = "rs_2024";
 const DATE = "2024-05-01";
 
+// Structural typing for the ImageCollection chain used by the IMERG probe;
+// src/types/earthengine.d.ts only declares ee.Image.
+type EeImageCollectionFactory = (id: string) => {
+  limit(n: number): {
+    first(): { getInfo(cb: (d: unknown, e?: string) => void): void };
+  };
+};
+
 // Memoized so a hung/failed init costs one 30 s wait, not one per test.
 let init: ReturnType<typeof earthEngine> | undefined;
 const client = () =>
@@ -58,19 +66,29 @@ describe("gee smoke (live)", () => {
       "gee smoke: skipped — set GCP_SA_KEY (or GEE_SERVICE_ACCOUNT_KEY) and GEE_PROJECT"
     );
 
-  for (const asset of ["NASA/NASADEM_HGT/001", "NASA/GPM_L3/IMERG_V07"]) {
+  for (const probe of [
+    { asset: "NASA/NASADEM_HGT/001", kind: "image" as const },
+    { asset: "NASA/GPM_L3/IMERG_V07", kind: "collection" as const },
+  ]) {
     itLive(
-      `reachability: ${asset} getInfo resolves`,
+      `reachability: ${probe.asset} getInfo resolves`,
       async () => {
         const ee = await client();
         const info = await withTimeout(
-          imageInfo(ee.Image(asset), `getInfo on ${asset}`),
+          imageInfo(
+            probe.kind === "image"
+              ? ee.Image(probe.asset)
+              : (ee.ImageCollection as EeImageCollectionFactory)(probe.asset)
+                  .limit(1)
+                  .first(),
+            `getInfo on ${probe.asset}`
+          ),
           INIT_TIMEOUT_MS,
-          `getInfo on ${asset}`
+          `getInfo on ${probe.asset}`
         );
         expect(typeof info).toBe("object");
         console.log(
-          `gee smoke reachability ${asset}: ok (bands=${info.bands?.length ?? 0})`
+          `gee smoke reachability ${probe.asset}: ok (bands=${info.bands?.length ?? 0})`
         );
       },
       TEST_TIMEOUT_MS
@@ -166,10 +184,16 @@ describe("gee smoke (live)", () => {
       );
       if (r.branch === "result") {
         expect(typeof r.value.metrics).toBe("object");
-        expect(typeof r.value.data_date).toBe("string");
+        expect(Array.isArray(r.value.sources)).toBe(true);
+        expect(r.value.sources.length).toBeGreaterThan(0);
+        if (r.value.sources.includes("gee")) {
+          expect(typeof r.value.data_date).toBe("string");
+        } else {
+          expect(r.value.data_date === null || typeof r.value.data_date === "string").toBe(true);
+        }
       }
       console.log(
-        `gee smoke metrics: ${r.branch}${r.branch === "result" ? ` (keys=${Object.keys(r.value.metrics).length})` : ""}`
+        `gee smoke metrics: ${r.branch}${r.branch === "result" ? ` (keys=${Object.keys(r.value.metrics).length}, sources=${r.value.sources.join(",")})` : ""}`
       );
     },
     TEST_TIMEOUT_MS
