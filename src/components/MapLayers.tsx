@@ -488,7 +488,7 @@ export function useMapLayers(
           value === null || !Number.isFinite(value) ? "no data" : value.toFixed(2);
         return `<div class="tp-popup-body">` +
           (place ? `<strong>${place}</strong><br/>` : "") +
-          `<strong>${pv.tpi === null ? "no data" : `${tpiClass(pv.tpi).label} risk`}</strong> · TPI ${fmt(pv.tpi)}<br/>` +
+          `<strong>${pv.tpi === null ? "no data" : `${tpiClass(pv.tpi, b).label} risk`}</strong> · TPI ${fmt(pv.tpi)}<br/>` +
           `R ${fmt(pv.r)} · S ${fmt(pv.s)} · T ${fmt(pv.t)}<br/>` +
           `<span>data ${d ? fmtDataDate(d.date) : "—"} · IMERG ${fmtDataDate(String(dd.imerg ?? ""))} · SMAP ${fmtDataDate(String(dd.smap ?? ""))} · ${provenance}</span>` +
           (cogUrl

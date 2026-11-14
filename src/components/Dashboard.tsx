@@ -11,7 +11,7 @@ import {
   type TabKey,
   type ToggleLayerKey,
 } from "@/lib/layers";
-import { TPI_CLASSES } from "@/lib/tpi";
+import { cutsFor, TPI_CLASSES } from "@/lib/tpi";
 import type { CaseBundle } from "@/lib/types";
 import Header from "./Header";
 import LayersPanel from "./LayersPanel";
@@ -149,6 +149,9 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
     );
   }
 
+  const edges = [0, ...cutsFor(bundle), 1];
+  const classes = TPI_CLASSES.map((c, i) => ({ ...c, min: edges[i], max: edges[i + 1] }));
+
   return (
     <div className="flex h-full flex-col bg-[#0b0e14] text-zinc-100">
       <Header cases={cases} activeId={activeId} onSelect={selectCase} onReplay={replay} />
@@ -190,7 +193,7 @@ export default function Dashboard({ cases }: { cases: CaseBundle[] }) {
 
       <footer className="flex min-h-9 shrink-0 flex-wrap items-center gap-x-4 gap-y-0.5 border-t border-zinc-800 bg-[#0b0e14] px-4 py-1 text-xs text-zinc-500">
         <span className="font-semibold text-zinc-400">TPI index (0–1) — Risk class</span>
-        {TPI_CLASSES.map((c) => (
+        {classes.map((c) => (
           <span key={c.key} className="flex items-center gap-1.5">
             <span className="inline-block h-3 w-5 rounded-sm" style={{ background: c.color }} />
             {c.label}{" "}
