@@ -48,7 +48,7 @@ export class NeonStore implements SubscriberStore {
 
   async get(chatId: number | string): Promise<Subscriber | null> {
     const [row] = await this.query(
-      "SELECT lat,lon,consent,last_class,EXTRACT(EPOCH FROM last_alert_ts)::float*1000 AS last_alert_ts,current_label,data_date FROM subscribers WHERE chat_id = $1",
+      "SELECT lat,lon,consent,last_class,last_alert_ts,current_label,data_date FROM subscribers WHERE chat_id = $1",
       [String(chatId)]
     );
     if (!row) return null;
@@ -57,7 +57,7 @@ export class NeonStore implements SubscriberStore {
       lon: Number(row.lon ?? 0),
       consent: row.consent === true || row.consent === "true" || row.consent === "t",
       last_class: Number(row.last_class ?? 0),
-      last_alert_ts: Number(row.last_alert_ts ?? 0),
+      last_alert_ts: row.last_alert_ts == null ? 0 : Date.parse(String(row.last_alert_ts)),
       ...(row.current_label == null ? {} : { current_label: String(row.current_label) }),
       ...(row.data_date == null ? {} : { data_date: String(row.data_date) }),
     };
@@ -65,8 +65,8 @@ export class NeonStore implements SubscriberStore {
 
   async set(chatId: number | string, sub: Subscriber): Promise<void> {
     await this.query(
-      "INSERT INTO subscribers (chat_id,lat,lon,consent,last_class,last_alert_ts,current_label,data_date) VALUES ($1,$2,$3,$4,$5,to_timestamp($6/1000.0),$7,$8) ON CONFLICT (chat_id) DO UPDATE SET lat=EXCLUDED.lat,lon=EXCLUDED.lon,consent=EXCLUDED.consent,last_class=EXCLUDED.last_class,last_alert_ts=EXCLUDED.last_alert_ts,current_label=EXCLUDED.current_label,data_date=EXCLUDED.data_date",
-      [String(chatId), sub.lat, sub.lon, sub.consent, sub.last_class, sub.last_alert_ts, sub.current_label ?? null, sub.data_date ?? null]
+      "INSERT INTO subscribers (chat_id,lat,lon,consent,last_class,last_alert_ts,current_label,data_date) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (chat_id) DO UPDATE SET lat=EXCLUDED.lat,lon=EXCLUDED.lon,consent=EXCLUDED.consent,last_class=EXCLUDED.last_class,last_alert_ts=EXCLUDED.last_alert_ts,current_label=EXCLUDED.current_label,data_date=EXCLUDED.data_date",
+      [String(chatId), sub.lat, sub.lon, sub.consent, sub.last_class, new Date(sub.last_alert_ts).toISOString(), sub.current_label ?? null, sub.data_date ?? null]
     );
   }
 

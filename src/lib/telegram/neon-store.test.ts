@@ -28,17 +28,17 @@ function body(call: { init?: RequestInit }): { query: string; params: unknown[] 
 }
 
 describe("NeonStore", () => {
-  test("maps object rows, numeric strings and SQL epoch milliseconds", async () => {
+  test("maps object rows, numeric strings and ISO timestamps", async () => {
     const { impl, calls } = fakeFetch(Response.json({ rows: [{
       ...subscriber,
       lat: "-29.241",
       lon: "-51.879",
       last_class: "2",
-      last_alert_ts: "1735689600123",
+      last_alert_ts: "2025-01-01T00:00:00.123Z",
     }] }));
     expect(await new NeonStore(databaseUrl, impl).get(42)).toEqual(subscriber);
     expect(body(calls[0])).toEqual({
-      query: "SELECT lat,lon,consent,last_class,EXTRACT(EPOCH FROM last_alert_ts)::float*1000 AS last_alert_ts,current_label,data_date FROM subscribers WHERE chat_id = $1",
+      query: "SELECT lat,lon,consent,last_class,last_alert_ts,current_label,data_date FROM subscribers WHERE chat_id = $1",
       params: ["42"],
     });
     expect(calls[0].url).toBe("https://ep-example.neon.tech/sql");
@@ -72,11 +72,11 @@ describe("NeonStore", () => {
     const { query, params } = body(calls[0]);
     expect(query).toStartWith("INSERT INTO subscribers");
     expect(query).toContain("ON CONFLICT (chat_id) DO UPDATE SET");
-    expect(query).toContain("to_timestamp($6/1000.0)");
+    expect(query).toContain("VALUES ($1,$2,$3,$4,$5,$6,$7,$8)");
     for (const field of ["lat", "lon", "consent", "last_class", "last_alert_ts", "current_label", "data_date"]) {
       expect(query).toContain(`${field}=EXCLUDED.${field}`);
     }
-    expect(params).toEqual(["chat' OR true --", -29.241, -51.879, true, 2, 1735689600123, subscriber.current_label, "2025-01-01"]);
+    expect(params).toEqual(["chat' OR true --", -29.241, -51.879, true, 2, "2025-01-01T00:00:00.123Z", subscriber.current_label, "2025-01-01"]);
     for (const value of [params[0], params[1], params[2], params[5], params[6], params[7]]) {
       expect(query).not.toContain(String(value));
     }
@@ -87,7 +87,7 @@ describe("NeonStore", () => {
     await new NeonStore(databaseUrl, impl).set(42, {
       lat: 0, lon: 0, consent: false, last_class: 0, last_alert_ts: 0,
     });
-    expect(body(calls[0]).params).toEqual(["42", 0, 0, false, 0, 0, null, null]);
+    expect(body(calls[0]).params).toEqual(["42", 0, 0, false, 0, "1970-01-01T00:00:00.000Z", null, null]);
   });
 
   test("deletes by parameterized chat id, including missing records", async () => {
@@ -141,6 +141,7 @@ describe("NeonStore", () => {
         const modulePath = `./deps.ts?neon-test=${label}`;
         const { depsFromEnv } = await import(modulePath);
         if (url === databaseUrl) expect(depsFromEnv().store).toBeInstanceOf(NeonStore);
+        else if (url === undefined) expect(depsFromEnv().store).not.toBe(memoryStore);
         else expect(depsFromEnv().store).toBe(memoryStore);
         expect(depsFromEnv()).toBe(depsFromEnv());
       } finally {

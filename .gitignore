@@ -51,3 +51,4 @@ public/data/**/*.nc
 hermes-*.json
 gcp-*.json
 service-account*.json
+.data/

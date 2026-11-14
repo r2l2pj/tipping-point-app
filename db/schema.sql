@@ -7,8 +7,8 @@ CREATE TABLE IF NOT EXISTS subscribers (
   last_alert_ts timestamptz,
   current_label text,
   data_date text,
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- RLS on; the app connects as the table owner (owner bypasses RLS); no policies = no other role gets access.
-ALTER TABLE subscribers ENABLE ROW LEVEL SECURITY;
+-- Neon-only provisioning: enable RLS; the app connects as the table owner (owner bypasses RLS); no policies = no other role gets access.
+-- ALTER TABLE subscribers ENABLE ROW LEVEL SECURITY;

@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { BotDeps, Simular } from "./bot";
 import { NeonStore } from "./neon-store";
+import { SqliteStore } from "./sqlite-store";
 import memoryStore from "./store";
 
 const send: BotDeps["send"] = async (chatId, text, replyMarkup) => {
@@ -48,7 +49,22 @@ export function depsFromEnv(): BotDeps {
   if (!deps) {
     let store: BotDeps["store"] = memoryStore;
     try {
-      if (process.env.DATABASE_URL) store = new NeonStore(process.env.DATABASE_URL);
+      const url = process.env.DATABASE_URL;
+      if (!url || url.startsWith("sqlite:")) {
+        const sqlite = new SqliteStore(url ? url.slice(7) : ".data/tipping-point.sqlite");
+        let selected: Promise<BotDeps["store"]> | undefined;
+        const select = () => selected ??= sqlite.open().then(() => sqlite).catch(() => {
+          console.warn("telegram store: SQLite open failed; using process-local memory");
+          return memoryStore;
+        });
+        store = {
+          get: async (chatId) => (await select()).get(chatId),
+          set: async (chatId, sub) => (await select()).set(chatId, sub),
+          delete: async (chatId) => (await select()).delete(chatId),
+        };
+      } else {
+        store = new NeonStore(url);
+      }
     } catch {
       store = memoryStore;
     }
