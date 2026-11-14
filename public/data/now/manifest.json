@@ -1,222 +1,187 @@
 {
-  "event": "now",
+  "schema": "tipping-point/now@2",
   "mode": "live",
+  "updated_at": "2026-11-14T12:00:00Z",
   "bounds": [
     -58.0,
     -34.0,
     -48.0,
     -22.5
   ],
-  "updated_at": "2026-11-14T12:00:00Z",
+  "forecast_source": "geos-fp",
   "data_dates": {
     "imerg": "2026-11-14T08:00:00Z",
     "smap": "2026-11-11",
-    "geos_fp_issued": "2026-11-14T00:00:00Z",
-    "nisar_passes": [
-      {
-        "date": "2026-11-09",
-        "track": "172D",
-        "note": "post-event coverage pending"
-      },
-      {
-        "date": "2026-11-02",
-        "track": "172D"
-      }
-    ]
+    "geos_fp_issued": "2026-11-14T00:00:00Z"
   },
   "layers": [
     {
-      "id": "tpi",
-      "date": "2026-11-09",
-      "png": "now/png/tpi_20261109.png",
-      "cog": "now/cog/tpi_series.tif",
-      "bounds": [
-        -58.0,
-        -34.0,
-        -48.0,
-        -22.5
-      ],
-      "legend": [
-        "Low",
-        "Moderate",
-        "High",
-        "Critical"
-      ]
-    },
-    {
-      "id": "tpi",
-      "date": "2026-11-10",
-      "png": "now/png/tpi_20261110.png",
-      "cog": "now/cog/tpi_series.tif",
-      "bounds": [
-        -58.0,
-        -34.0,
-        -48.0,
-        -22.5
-      ],
-      "legend": [
-        "Low",
-        "Moderate",
-        "High",
-        "Critical"
-      ]
-    },
-    {
-      "id": "tpi",
-      "date": "2026-11-11",
-      "png": "now/png/tpi_20261111.png",
-      "cog": "now/cog/tpi_series.tif",
-      "bounds": [
-        -58.0,
-        -34.0,
-        -48.0,
-        -22.5
-      ],
-      "legend": [
-        "Low",
-        "Moderate",
-        "High",
-        "Critical"
-      ]
-    },
-    {
-      "id": "tpi",
-      "date": "2026-11-12",
-      "png": "now/png/tpi_20261112.png",
-      "cog": "now/cog/tpi_series.tif",
-      "bounds": [
-        -58.0,
-        -34.0,
-        -48.0,
-        -22.5
-      ],
-      "legend": [
-        "Low",
-        "Moderate",
-        "High",
-        "Critical"
-      ]
-    },
-    {
-      "id": "tpi",
-      "date": "2026-11-13",
-      "png": "now/png/tpi_20261113.png",
-      "cog": "now/cog/tpi_series.tif",
-      "bounds": [
-        -58.0,
-        -34.0,
-        -48.0,
-        -22.5
-      ],
-      "legend": [
-        "Low",
-        "Moderate",
-        "High",
-        "Critical"
-      ]
-    },
-    {
-      "id": "tpi",
+      "id": "tpi_slide_d0",
       "date": "2026-11-14",
-      "png": "now/png/tpi_20261114.png",
-      "cog": "now/cog/tpi_series.tif",
+      "png": "png/tpi_slide_d0.png",
+      "cog": "cog/tpi_slide_d0.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
       "bounds": [
         -58.0,
         -34.0,
         -48.0,
         -22.5
       ],
-      "legend": [
-        "Low",
-        "Moderate",
-        "High",
-        "Critical"
-      ]
+      "forecast": false
     },
     {
-      "id": "tpi_forecast",
+      "id": "tpi_slide_d1",
       "date": "2026-11-15",
-      "png": "now/png/tpi_forecast_20261115.png",
-      "cog": "now/cog/tpi_forecast_series.tif",
+      "png": "png/tpi_slide_d1.png",
+      "cog": "cog/tpi_slide_d1_forecast.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
       "bounds": [
         -58.0,
         -34.0,
         -48.0,
         -22.5
       ],
-      "legend": [
-        "Low",
-        "Moderate",
-        "High",
-        "Critical"
-      ]
+      "forecast": true
     },
     {
-      "id": "tpi_forecast",
+      "id": "tpi_slide_d2",
       "date": "2026-11-16",
-      "png": "now/png/tpi_forecast_20261116.png",
-      "cog": "now/cog/tpi_forecast_series.tif",
+      "png": "png/tpi_slide_d2.png",
+      "cog": "cog/tpi_slide_d2_forecast.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
       "bounds": [
         -58.0,
         -34.0,
         -48.0,
         -22.5
       ],
-      "legend": [
-        "Low",
-        "Moderate",
-        "High",
-        "Critical"
-      ]
+      "forecast": true
     },
     {
-      "id": "tpi_forecast",
+      "id": "tpi_slide_d3",
       "date": "2026-11-17",
-      "png": "now/png/tpi_forecast_20261117.png",
-      "cog": "now/cog/tpi_forecast_series.tif",
+      "png": "png/tpi_slide_d3.png",
+      "cog": "cog/tpi_slide_d3_forecast.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
       "bounds": [
         -58.0,
         -34.0,
         -48.0,
         -22.5
       ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d0",
+      "date": "2026-11-14",
+      "png": "png/tpi_flood_d0.png",
+      "cog": "cog/tpi_flood_d0.tif",
       "legend": [
-        "Low",
-        "Moderate",
-        "High",
-        "Critical"
-      ]
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "forecast": false
     },
     {
-      "id": "hillshade",
-      "type": "cog",
-      "path": "cog/hillshade_nasadem.tif",
-      "legend": "tpi",
-      "source": "NASADEM",
-      "date": "static"
+      "id": "tpi_flood_d1",
+      "date": "2026-11-15",
+      "png": "png/tpi_flood_d1.png",
+      "cog": "cog/tpi_flood_d1_forecast.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "forecast": true
     },
     {
-      "id": "permanent_water",
-      "type": "geojson",
-      "path": "geojson/permanent_water.geojson",
-      "legend": "water",
-      "source": "JRC Global Surface Water",
-      "date": "2024"
+      "id": "tpi_flood_d2",
+      "date": "2026-11-16",
+      "png": "png/tpi_flood_d2.png",
+      "cog": "cog/tpi_flood_d2_forecast.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "forecast": true
     },
     {
-      "id": "imerg_smap_daily",
-      "type": "series",
-      "path": "series/imerg_smap_daily.json",
-      "source": "GPM IMERG Early \u00b7 SMAP L4 \u00b7 GEOS-FP",
-      "date": "2026-11-14"
+      "id": "tpi_flood_d3",
+      "date": "2026-11-17",
+      "png": "png/tpi_flood_d3.png",
+      "cog": "cog/tpi_flood_d3_forecast.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -34.0,
+        -48.0,
+        -22.5
+      ],
+      "forecast": true
+    }
+  ],
+  "products": {
+    "critical_areas": "geojson/critical_areas.geojson",
+    "summary": "summary.json",
+    "alerts": "alerts.json"
+  },
+  "nisar_passes": [
+    {
+      "date": "2026-11-09",
+      "track": "172D",
+      "note": "post-event coverage pending"
     },
     {
-      "id": "priority_zones",
-      "type": "geojson",
-      "path": "geojson/priority_zones.geojson",
-      "legend": "tpi",
-      "source": "TPI model output",
-      "date": "2026-11-14"
+      "date": "2026-11-02",
+      "track": "172D"
     }
   ]
 }

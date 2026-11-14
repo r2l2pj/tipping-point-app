@@ -158,7 +158,7 @@ describe("caseAlias / canonicalCaseId", () => {
     expect(caseAlias(cases.rs_2024.event_id)).toBe("rs_2024");
     expect(caseAlias(cases.wa_2025.event_id)).toBe("wa_2025");
     expect(cases.rs_2024.forecast_source).toBe("perfect-forecast");
-    expect(cases.rs_2024.products?.swot).toBe("rs-2024-05/series/swot.json");
+    expect(cases.rs_2024.products?.swot).toBe("rs_2024/series/swot.json");
   });
 });
 

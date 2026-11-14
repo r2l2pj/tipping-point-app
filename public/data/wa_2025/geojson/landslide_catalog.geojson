@@ -1,0 +1,6 @@
+{
+  "type": "FeatureCollection",
+  "source": "NASA COOLR Global Landslide Catalog",
+  "url": "https://gis.earthdata.nasa.gov/portal/rest/services/Landslides/COOLR_Reports_Points/FeatureServer",
+  "features": []
+}

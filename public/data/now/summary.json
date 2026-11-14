@@ -1,0 +1,22 @@
+{
+  "generated_at": "2026-11-14T12:00:00Z",
+  "critical_km2": {
+    "slide": 3.1,
+    "flood": 9.7,
+    "any": 11.4
+  },
+  "people_critical": 5200,
+  "people_exposed": 5200,
+  "forecast_source": "geos-fp",
+  "classes_km2": {
+    "Baixo": 612.0,
+    "Moderado": 184.3,
+    "Alto": 41.2,
+    "Crítico": 11.4
+  },
+  "data_dates": {
+    "imerg": "2026-11-14T08:00:00Z",
+    "smap": "2026-11-11",
+    "geos_fp_issued": "2026-11-14T00:00:00Z"
+  }
+}

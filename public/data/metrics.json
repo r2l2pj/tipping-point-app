@@ -1,0 +1,68 @@
+{
+  "cases": {
+    "rs_2024": {
+      "event": "rs-2024-05",
+      "iou": 0.64,
+      "f1": 0.78,
+      "cloud_pct": 97,
+      "landslide_hit_pct": null,
+      "hand_validation": null,
+      "people_critical": 41200,
+      "people_flooded": 18500,
+      "flooded_km2": 118.3,
+      "night_light_drop_pct": 31,
+      "lead_time_mean_h": 41.0,
+      "lead_time_median_h": 46,
+      "warned_before_pct": 81,
+      "rf_auc": 0.88,
+      "rule_auc": 0.71,
+      "feature_importance": {
+        "imerg_p95_mm": 0.46,
+        "smap_l4": 0.31,
+        "nasadem_slope": 0.23
+      },
+      "forecast_source": "perfect-forecast",
+      "collections": {
+        "IMERG": "GPM_3IMERGHHE V07",
+        "SMAP": "SPL4SMGP L4",
+        "NASADEM": "NASADEM",
+        "population": "GPW v4.11 (NASA SEDAC)"
+      },
+      "_null_reasons": {
+        "landslide_hit_pct": "no landslide catalog for the RS event",
+        "hand_validation": "HAND vs Merit validation not run for this case"
+      }
+    },
+    "wa_2025": {
+      "event": "wa-2025-12",
+      "iou": 0.71,
+      "f1": 0.83,
+      "cloud_pct": 94,
+      "landslide_hit_pct": 0.62,
+      "hand_validation": 0.78,
+      "people_critical": 8400,
+      "people_flooded": 2100,
+      "flooded_km2": 41.6,
+      "night_light_drop_pct": 18,
+      "lead_time_mean_h": 47.5,
+      "lead_time_median_h": 52,
+      "warned_before_pct": 87,
+      "rf_auc": 0.91,
+      "rule_auc": 0.74,
+      "feature_importance": {
+        "imerg_p95_mm": 0.41,
+        "smap_l4": 0.33,
+        "nasadem_slope": 0.26
+      },
+      "forecast_source": "perfect-forecast",
+      "collections": {
+        "IMERG": "GPM_3IMERGHHE V07",
+        "SMAP": "SPL4SMGP L4",
+        "NASADEM": "NASADEM",
+        "population": "GPW v4.11 (NASA SEDAC)",
+        "NISAR": "NISAR_L2_GCOV_BETA_V1",
+        "OPERA_DSWX": "OPERA_L3_DSWX-HLS_V1"
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "event": "wa-2025-12",
+  "reach": "Snoqualmie River",
+  "unit": "m",
+  "source": "SWOT River Database (mock)",
+  "reference_date": "2025-12-12",
+  "points": [
+    {
+      "date": "2025-12-07",
+      "level_m": 5.8
+    },
+    {
+      "date": "2025-12-08",
+      "level_m": 6.1
+    },
+    {
+      "date": "2025-12-09",
+      "level_m": 6.8
+    },
+    {
+      "date": "2025-12-10",
+      "level_m": 7.9
+    },
+    {
+      "date": "2025-12-11",
+      "level_m": 9.4
+    },
+    {
+      "date": "2025-12-12",
+      "level_m": 10.6
+    },
+    {
+      "date": "2025-12-13",
+      "level_m": 11.2
+    },
+    {
+      "date": "2025-12-14",
+      "level_m": 10.9
+    }
+  ]
+}

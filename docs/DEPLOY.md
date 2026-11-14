@@ -58,6 +58,48 @@ curl -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/setWebhook" \
   -d secret_token="$TELEGRAM_SECRET"
 ```
 
+## Scheduled jobs (GitHub Actions)
+
+GEE-first architecture: app tiles and numbers resolve through our `/api`
+routes against Earth Engine; the static manifest + bucket export stays the
+fallback contract the app degrades to. Workflows on the data repo:
+
+- `now.yml` — every 3 h: IMERG Early + SMAP L4 + GEOS-FP ingest →
+  `tipping-point/now/` asset collections → TPI + D+1..D+3 in GEE → last-good
+  static export to the bucket (`manifest.json` written last).
+- `nisar.yml` — daily: `asf_search` for new GCOV granules over the case AOIs
+  and active alert areas.
+- `validation.yml` — daily while a case is active: OPERA DSWx + SWOT
+  Hydrocron table asset.
+- `reference.yml` — weekly/manual: landslide catalogs + municipal
+  boundaries.
+
+Secrets (`EARTHDATA_TOKEN` ~60-day renewal, `GCP_SA_KEY`) live in GitHub
+secrets; a missing/expired token fails the job loudly. Jobs are idempotent,
+log their ingestions, and publish the last-good static copy the app falls
+back to.
+
+## GEE asset ingestion (staging)
+
+Pipeline rasters ingest into Earth Engine via the data bucket's staging
+prefix: upload to `gs://<bucket>/staging/...`, then
+`ee.data.startIngestion` / `ee.data.startTableIngestion` into
+`projects/<GEE_PROJECT>/assets/tipping-point/<case>/`. The ingest service
+account needs `Storage Object Admin` on the bucket plus
+`Earth Engine Resource Writer` on the project.
+
+## Data pipeline secrets (GitHub)
+
+These live as GitHub Actions secrets on the data repo — they are NOT app
+runtime vars, so keep them out of the Vercel env table.
+
+- `EARTHDATA_TOKEN` — NASA Earthdata bearer token used by the data pipeline
+  (earthaccess env strategy / asf_search `auth_with_token` /
+  `GDAL_HTTP_HEADERS` `Authorization: Bearer`). Expires after ~60 days, so
+  renewal is a recurring ops task.
+- `EDL_USER` / `EDL_PASS` — Earthdata login pair, kept only as a local
+  fallback for pipeline runs outside CI.
+
 ## Prerequisites owned by humans
 
 These are setup steps, not code: the app runs against local fixtures/mocks

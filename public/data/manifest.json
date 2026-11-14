@@ -1,315 +1,8 @@
 {
   "updated_at": "2026-11-14T12:00:00Z",
   "cases": {
-    "wa-2025-12": {
-      "mode": "replay",
-      "bounds": [
-        -122.6,
-        47.0,
-        -121.5,
-        48.5
-      ],
-      "updated_at": "2025-12-16T18:00:00Z",
-      "data_dates": {
-        "imerg": "2025-12-12",
-        "smap": "2025-12-10",
-        "nasadem": "static",
-        "nisar_pre": "2025-12-04",
-        "nisar_post": "2025-12-16"
-      },
-      "layers": [
-        {
-          "id": "tpi_slide",
-          "date": "2025-12-07",
-          "png": "wa-2025-12/png/tpi_slide_20251207.png",
-          "cog": "wa-2025-12/cog/tpi_slide_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_flood",
-          "date": "2025-12-07",
-          "png": "wa-2025-12/png/tpi_flood_20251207.png",
-          "cog": "wa-2025-12/cog/tpi_flood_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_slide",
-          "date": "2025-12-08",
-          "png": "wa-2025-12/png/tpi_slide_20251208.png",
-          "cog": "wa-2025-12/cog/tpi_slide_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_flood",
-          "date": "2025-12-08",
-          "png": "wa-2025-12/png/tpi_flood_20251208.png",
-          "cog": "wa-2025-12/cog/tpi_flood_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_slide",
-          "date": "2025-12-09",
-          "png": "wa-2025-12/png/tpi_slide_20251209.png",
-          "cog": "wa-2025-12/cog/tpi_slide_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_flood",
-          "date": "2025-12-09",
-          "png": "wa-2025-12/png/tpi_flood_20251209.png",
-          "cog": "wa-2025-12/cog/tpi_flood_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_slide",
-          "date": "2025-12-10",
-          "png": "wa-2025-12/png/tpi_slide_20251210.png",
-          "cog": "wa-2025-12/cog/tpi_slide_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_flood",
-          "date": "2025-12-10",
-          "png": "wa-2025-12/png/tpi_flood_20251210.png",
-          "cog": "wa-2025-12/cog/tpi_flood_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_slide",
-          "date": "2025-12-11",
-          "png": "wa-2025-12/png/tpi_slide_20251211.png",
-          "cog": "wa-2025-12/cog/tpi_slide_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_flood",
-          "date": "2025-12-11",
-          "png": "wa-2025-12/png/tpi_flood_20251211.png",
-          "cog": "wa-2025-12/cog/tpi_flood_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_slide",
-          "date": "2025-12-12",
-          "png": "wa-2025-12/png/tpi_slide_20251212.png",
-          "cog": "wa-2025-12/cog/tpi_slide_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_flood",
-          "date": "2025-12-12",
-          "png": "wa-2025-12/png/tpi_flood_20251212.png",
-          "cog": "wa-2025-12/cog/tpi_flood_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_slide",
-          "date": "2025-12-13",
-          "png": "wa-2025-12/png/tpi_slide_20251213.png",
-          "cog": "wa-2025-12/cog/tpi_slide_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_flood",
-          "date": "2025-12-13",
-          "png": "wa-2025-12/png/tpi_flood_20251213.png",
-          "cog": "wa-2025-12/cog/tpi_flood_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_slide",
-          "date": "2025-12-14",
-          "png": "wa-2025-12/png/tpi_slide_20251214.png",
-          "cog": "wa-2025-12/cog/tpi_slide_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi_flood",
-          "date": "2025-12-14",
-          "png": "wa-2025-12/png/tpi_flood_20251214.png",
-          "cog": "wa-2025-12/cog/tpi_flood_series.tif",
-          "bounds": [
-            -122.6,
-            47.0,
-            -121.5,
-            48.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        }
-      ],
-      "metrics": "wa-2025-12/metrics.json"
-    },
-    "rs-2024-05": {
+    "rs_2024": {
+      "event_id": "rs-2024-05",
       "mode": "replay",
       "bounds": [
         -52.5,
@@ -318,6 +11,7 @@
         -29.0
       ],
       "updated_at": "2024-05-10T12:00:00Z",
+      "forecast_source": "perfect-forecast",
       "data_dates": {
         "imerg": "2024-05-02",
         "smap": "2024-04-30",
@@ -329,340 +23,813 @@
         {
           "id": "tpi_slide",
           "date": "2024-04-27",
-          "png": "rs-2024-05/png/tpi_slide_20240427.png",
-          "cog": "rs-2024-05/cog/tpi_slide_series.tif",
+          "png": "rs_2024/png/tpi_slide_20240427.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_slide_20240427.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -52.5,
             -30.5,
             -50.5,
             -29.0
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
           ]
         },
         {
           "id": "tpi_slide",
           "date": "2024-04-28",
-          "png": "rs-2024-05/png/tpi_slide_20240428.png",
-          "cog": "rs-2024-05/cog/tpi_slide_series.tif",
+          "png": "rs_2024/png/tpi_slide_20240428.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_slide_20240428.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -52.5,
             -30.5,
             -50.5,
             -29.0
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
           ]
         },
         {
           "id": "tpi_slide",
           "date": "2024-04-29",
-          "png": "rs-2024-05/png/tpi_slide_20240429.png",
-          "cog": "rs-2024-05/cog/tpi_slide_series.tif",
+          "png": "rs_2024/png/tpi_slide_20240429.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_slide_20240429.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -52.5,
             -30.5,
             -50.5,
             -29.0
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
           ]
         },
         {
           "id": "tpi_slide",
           "date": "2024-04-30",
-          "png": "rs-2024-05/png/tpi_slide_20240430.png",
-          "cog": "rs-2024-05/cog/tpi_slide_series.tif",
+          "png": "rs_2024/png/tpi_slide_20240430.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_slide_20240430.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -52.5,
             -30.5,
             -50.5,
             -29.0
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
           ]
         },
         {
           "id": "tpi_slide",
           "date": "2024-05-01",
-          "png": "rs-2024-05/png/tpi_slide_20240501.png",
-          "cog": "rs-2024-05/cog/tpi_slide_series.tif",
+          "png": "rs_2024/png/tpi_slide_20240501.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_slide_20240501.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -52.5,
             -30.5,
             -50.5,
             -29.0
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
           ]
         },
         {
           "id": "tpi_slide",
           "date": "2024-05-02",
-          "png": "rs-2024-05/png/tpi_slide_20240502.png",
-          "cog": "rs-2024-05/cog/tpi_slide_series.tif",
+          "png": "rs_2024/png/tpi_slide_20240502.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_slide_20240502.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -52.5,
             -30.5,
             -50.5,
             -29.0
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
           ]
         },
         {
           "id": "tpi_slide",
           "date": "2024-05-03",
-          "png": "rs-2024-05/png/tpi_slide_20240503.png",
-          "cog": "rs-2024-05/cog/tpi_slide_series.tif",
+          "png": "rs_2024/png/tpi_slide_20240503.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_slide_20240503.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -52.5,
             -30.5,
             -50.5,
             -29.0
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
           ]
         },
         {
           "id": "tpi_slide",
           "date": "2024-05-04",
-          "png": "rs-2024-05/png/tpi_slide_20240504.png",
-          "cog": "rs-2024-05/cog/tpi_slide_series.tif",
+          "png": "rs_2024/png/tpi_slide_20240504.png",
+          "cog": "rs_2024/cog/rs_2024_tpi_slide_20240504.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -52.5,
+            -30.5,
+            -50.5,
+            -29.0
+          ]
+        },
+        {
+          "id": "r_series",
+          "png": null,
+          "cog": "rs_2024/cog/rs_2024_r_series_20240502.tif",
           "bounds": [
             -52.5,
             -30.5,
             -50.5,
             -29.0
           ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
+          "bands": "one band per day, named YYYYMMDD"
+        },
+        {
+          "id": "s_series",
+          "png": null,
+          "cog": "rs_2024/cog/rs_2024_s_series_20240502.tif",
+          "bounds": [
+            -52.5,
+            -30.5,
+            -50.5,
+            -29.0
+          ],
+          "bands": "one band per day, named YYYYMMDD"
+        },
+        {
+          "id": "t_slide",
+          "png": null,
+          "cog": "rs_2024/cog/rs_2024_t_slide_20240502.tif",
+          "bounds": [
+            -52.5,
+            -30.5,
+            -50.5,
+            -29.0
+          ]
+        },
+        {
+          "id": "t_flood",
+          "png": null,
+          "cog": "rs_2024/cog/rs_2024_t_flood_20240502.tif",
+          "bounds": [
+            -52.5,
+            -30.5,
+            -50.5,
+            -29.0
           ]
         }
       ],
-      "metrics": "rs-2024-05/metrics.json"
+      "metrics": "metrics.json#rs_2024",
+      "products": {
+        "municipal_boundaries": "rs_2024/geojson/municipal_boundaries.geojson",
+        "landslide_catalog": "rs_2024/geojson/landslide_catalog.geojson",
+        "places": "rs_2024/geojson/places.geojson",
+        "priority_zones": "rs_2024/geojson/priority_zones.geojson",
+        "permanent_water": "rs_2024/geojson/permanent_water.geojson",
+        "flood_confirmed": null,
+        "landslide_candidates": null,
+        "imerg_smap_daily": "rs_2024/series/imerg_smap_daily.json",
+        "swot": null
+      },
+      "_null_reasons": {
+        "flood_confirmed": "no NISAR coverage — event predates launch (Jul 2025)",
+        "landslide_candidates": "no coherence product — event predates NISAR launch",
+        "swot": "no SWOT reach over the AOI"
+      }
+    },
+    "wa_2025": {
+      "event_id": "wa-2025-12",
+      "mode": "replay",
+      "bounds": [
+        -122.6,
+        47.0,
+        -121.5,
+        48.5
+      ],
+      "updated_at": "2025-12-16T18:00:00Z",
+      "forecast_source": "perfect-forecast",
+      "data_dates": {
+        "imerg": "2025-12-12",
+        "smap": "2025-12-10",
+        "nasadem": "static",
+        "nisar_pre": "2025-12-04",
+        "nisar_post": "2025-12-16"
+      },
+      "layers": [
+        {
+          "id": "tpi_slide",
+          "date": "2025-12-07",
+          "png": "wa_2025/png/tpi_slide_20251207.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_slide_20251207.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_flood",
+          "date": "2025-12-07",
+          "png": "wa_2025/png/tpi_flood_20251207.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_flood_20251207.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_slide",
+          "date": "2025-12-08",
+          "png": "wa_2025/png/tpi_slide_20251208.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_slide_20251208.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_flood",
+          "date": "2025-12-08",
+          "png": "wa_2025/png/tpi_flood_20251208.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_flood_20251208.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_slide",
+          "date": "2025-12-09",
+          "png": "wa_2025/png/tpi_slide_20251209.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_slide_20251209.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_flood",
+          "date": "2025-12-09",
+          "png": "wa_2025/png/tpi_flood_20251209.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_flood_20251209.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_slide",
+          "date": "2025-12-10",
+          "png": "wa_2025/png/tpi_slide_20251210.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_slide_20251210.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_flood",
+          "date": "2025-12-10",
+          "png": "wa_2025/png/tpi_flood_20251210.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_flood_20251210.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_slide",
+          "date": "2025-12-11",
+          "png": "wa_2025/png/tpi_slide_20251211.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_slide_20251211.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_flood",
+          "date": "2025-12-11",
+          "png": "wa_2025/png/tpi_flood_20251211.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_flood_20251211.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_slide",
+          "date": "2025-12-12",
+          "png": "wa_2025/png/tpi_slide_20251212.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_slide_20251212.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_flood",
+          "date": "2025-12-12",
+          "png": "wa_2025/png/tpi_flood_20251212.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_flood_20251212.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_slide",
+          "date": "2025-12-13",
+          "png": "wa_2025/png/tpi_slide_20251213.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_slide_20251213.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_flood",
+          "date": "2025-12-13",
+          "png": "wa_2025/png/tpi_flood_20251213.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_flood_20251213.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_slide",
+          "date": "2025-12-14",
+          "png": "wa_2025/png/tpi_slide_20251214.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_slide_20251214.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "tpi_flood",
+          "date": "2025-12-14",
+          "png": "wa_2025/png/tpi_flood_20251214.png",
+          "cog": "wa_2025/cog/wa_2025_tpi_flood_20251214.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "nisar_pre",
+          "date": "2025-12-04",
+          "png": "wa_2025/png/nisar_pre_20251204.png",
+          "cog": "wa_2025/cog/wa_2025_nisar_pre_20251204.tif",
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "nisar_post",
+          "date": "2025-12-16",
+          "png": "wa_2025/png/nisar_post_20251216.png",
+          "cog": "wa_2025/cog/wa_2025_nisar_post_20251216.tif",
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "night_lights_pre",
+          "date": "2025-12-01",
+          "png": "wa_2025/png/night_lights_pre_20251201.png",
+          "cog": "wa_2025/cog/wa_2025_night_lights_pre_20251201.tif",
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "night_lights_post",
+          "date": "2025-12-18",
+          "png": "wa_2025/png/night_lights_post_20251218.png",
+          "cog": "wa_2025/cog/wa_2025_night_lights_post_20251218.tif",
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "r_series",
+          "png": null,
+          "cog": "wa_2025/cog/wa_2025_r_series_20251212.tif",
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ],
+          "bands": "one band per day, named YYYYMMDD"
+        },
+        {
+          "id": "s_series",
+          "png": null,
+          "cog": "wa_2025/cog/wa_2025_s_series_20251212.tif",
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ],
+          "bands": "one band per day, named YYYYMMDD"
+        },
+        {
+          "id": "t_slide",
+          "png": null,
+          "cog": "wa_2025/cog/wa_2025_t_slide_20251212.tif",
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        },
+        {
+          "id": "t_flood",
+          "png": null,
+          "cog": "wa_2025/cog/wa_2025_t_flood_20251212.tif",
+          "bounds": [
+            -122.6,
+            47.0,
+            -121.5,
+            48.5
+          ]
+        }
+      ],
+      "metrics": "metrics.json#wa_2025",
+      "products": {
+        "municipal_boundaries": "wa_2025/geojson/municipal_boundaries.geojson",
+        "landslide_catalog": "wa_2025/geojson/landslide_catalog.geojson",
+        "places": "wa_2025/geojson/places.geojson",
+        "priority_zones": "wa_2025/geojson/priority_zones.geojson",
+        "permanent_water": "wa_2025/geojson/permanent_water.geojson",
+        "flood_confirmed": "wa_2025/geojson/flood_confirmed.geojson",
+        "landslide_candidates": "wa_2025/geojson/landslide_candidates.geojson",
+        "imerg_smap_daily": "wa_2025/series/imerg_smap_daily.json",
+        "swot": "wa_2025/series/swot.json"
+      }
     },
     "now": {
+      "schema": "tipping-point/now@2",
       "mode": "live",
+      "updated_at": "2026-11-14T12:00:00Z",
       "bounds": [
         -58.0,
         -34.0,
         -48.0,
         -22.5
       ],
-      "updated_at": "2026-11-14T12:00:00Z",
+      "forecast_source": "geos-fp",
       "data_dates": {
         "imerg": "2026-11-14T08:00:00Z",
         "smap": "2026-11-11",
-        "geos_fp_issued": "2026-11-14T00:00:00Z",
-        "nisar_passes": [
-          {
-            "date": "2026-11-09",
-            "track": "172D",
-            "note": "post-event coverage pending"
-          },
-          {
-            "date": "2026-11-02",
-            "track": "172D"
-          }
-        ]
+        "geos_fp_issued": "2026-11-14T00:00:00Z"
       },
       "layers": [
         {
-          "id": "tpi",
-          "date": "2026-11-09",
-          "png": "now/png/tpi_20261109.png",
-          "cog": "now/cog/tpi_series.tif",
-          "bounds": [
-            -58.0,
-            -34.0,
-            -48.0,
-            -22.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi",
-          "date": "2026-11-10",
-          "png": "now/png/tpi_20261110.png",
-          "cog": "now/cog/tpi_series.tif",
-          "bounds": [
-            -58.0,
-            -34.0,
-            -48.0,
-            -22.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi",
-          "date": "2026-11-11",
-          "png": "now/png/tpi_20261111.png",
-          "cog": "now/cog/tpi_series.tif",
-          "bounds": [
-            -58.0,
-            -34.0,
-            -48.0,
-            -22.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi",
-          "date": "2026-11-12",
-          "png": "now/png/tpi_20261112.png",
-          "cog": "now/cog/tpi_series.tif",
-          "bounds": [
-            -58.0,
-            -34.0,
-            -48.0,
-            -22.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi",
-          "date": "2026-11-13",
-          "png": "now/png/tpi_20261113.png",
-          "cog": "now/cog/tpi_series.tif",
-          "bounds": [
-            -58.0,
-            -34.0,
-            -48.0,
-            -22.5
-          ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
-        },
-        {
-          "id": "tpi",
+          "id": "tpi_slide_d0",
           "date": "2026-11-14",
-          "png": "now/png/tpi_20261114.png",
-          "cog": "now/cog/tpi_series.tif",
+          "png": "png/tpi_slide_d0.png",
+          "cog": "cog/tpi_slide_d0.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -58.0,
             -34.0,
             -48.0,
             -22.5
           ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
+          "forecast": false
         },
         {
-          "id": "tpi_forecast",
+          "id": "tpi_slide_d1",
           "date": "2026-11-15",
-          "png": "now/png/tpi_forecast_20261115.png",
-          "cog": "now/cog/tpi_forecast_series.tif",
+          "png": "png/tpi_slide_d1.png",
+          "cog": "cog/tpi_slide_d1_forecast.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -58.0,
             -34.0,
             -48.0,
             -22.5
           ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
+          "forecast": true
         },
         {
-          "id": "tpi_forecast",
+          "id": "tpi_slide_d2",
           "date": "2026-11-16",
-          "png": "now/png/tpi_forecast_20261116.png",
-          "cog": "now/cog/tpi_forecast_series.tif",
+          "png": "png/tpi_slide_d2.png",
+          "cog": "cog/tpi_slide_d2_forecast.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -58.0,
             -34.0,
             -48.0,
             -22.5
           ],
-          "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
+          "forecast": true
         },
         {
-          "id": "tpi_forecast",
+          "id": "tpi_slide_d3",
           "date": "2026-11-17",
-          "png": "now/png/tpi_forecast_20261117.png",
-          "cog": "now/cog/tpi_forecast_series.tif",
+          "png": "png/tpi_slide_d3.png",
+          "cog": "cog/tpi_slide_d3_forecast.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
           "bounds": [
             -58.0,
             -34.0,
             -48.0,
             -22.5
           ],
+          "forecast": true
+        },
+        {
+          "id": "tpi_flood_d0",
+          "date": "2026-11-14",
+          "png": "png/tpi_flood_d0.png",
+          "cog": "cog/tpi_flood_d0.tif",
           "legend": [
-            "Low",
-            "Moderate",
-            "High",
-            "Critical"
-          ]
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -58.0,
+            -34.0,
+            -48.0,
+            -22.5
+          ],
+          "forecast": false
+        },
+        {
+          "id": "tpi_flood_d1",
+          "date": "2026-11-15",
+          "png": "png/tpi_flood_d1.png",
+          "cog": "cog/tpi_flood_d1_forecast.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -58.0,
+            -34.0,
+            -48.0,
+            -22.5
+          ],
+          "forecast": true
+        },
+        {
+          "id": "tpi_flood_d2",
+          "date": "2026-11-16",
+          "png": "png/tpi_flood_d2.png",
+          "cog": "cog/tpi_flood_d2_forecast.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -58.0,
+            -34.0,
+            -48.0,
+            -22.5
+          ],
+          "forecast": true
+        },
+        {
+          "id": "tpi_flood_d3",
+          "date": "2026-11-17",
+          "png": "png/tpi_flood_d3.png",
+          "cog": "cog/tpi_flood_d3_forecast.tif",
+          "legend": [
+            "Baixo",
+            "Moderado",
+            "Alto",
+            "Crítico"
+          ],
+          "bounds": [
+            -58.0,
+            -34.0,
+            -48.0,
+            -22.5
+          ],
+          "forecast": true
         }
       ],
-      "metrics": "now/metrics.json"
+      "products": {
+        "critical_areas": "geojson/critical_areas.geojson",
+        "summary": "summary.json",
+        "alerts": "alerts.json"
+      },
+      "nisar_passes": [
+        {
+          "date": "2026-11-09",
+          "track": "172D",
+          "note": "post-event coverage pending"
+        },
+        {
+          "date": "2026-11-02",
+          "track": "172D"
+        }
+      ]
     }
   }
 }
