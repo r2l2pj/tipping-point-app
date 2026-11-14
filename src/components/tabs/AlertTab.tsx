@@ -13,11 +13,13 @@ export default function AlertTab({
   zones,
   dayIndex,
   onConfirmRadar,
+  onZoneClick,
 }: {
   bundle: CaseBundle;
   zones: PriorityZone[];
   dayIndex: number;
   onConfirmRadar: () => void;
+  onZoneClick?: (z: PriorityZone) => void;
 }) {
   const seriesThreshold = bundle.series?.tpi_threshold;
   const threshold = typeof seriesThreshold === "number" && Number.isFinite(seriesThreshold)
@@ -110,7 +112,15 @@ export default function AlertTab({
             </li>
           )}
           {zones.map((z) => (
-            <li key={z.rank} className="flex items-center gap-2.5 px-2.5 py-2">
+            <li
+              key={z.rank}
+              // Doc layout: a zone row click zooms the map to the zone's
+              // label point — rows without an anchor stay inert.
+              onClick={z.at && onZoneClick ? () => onZoneClick(z) : undefined}
+              className={`flex items-center gap-2.5 px-2.5 py-2${
+                z.at && onZoneClick ? " cursor-pointer hover:bg-zinc-800/60" : ""
+              }`}
+            >
               <span className="flex h-5 w-5 items-center justify-center rounded bg-red-700 text-xs font-bold text-white">
                 {z.rank}
               </span>

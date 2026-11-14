@@ -8,9 +8,9 @@ import type { CaseBundle } from "@/lib/types";
 async function DashboardLoader({
   searchParams,
 }: {
-  searchParams: Promise<{ case?: string }>;
+  searchParams: Promise<{ case?: string; day?: string }>;
 }) {
-  const { case: initialCase } = await searchParams;
+  const { case: initialCase, day: initialDay } = await searchParams;
   const index = await getEventsIndex().catch(() => null);
   const cases: CaseBundle[] = [];
 
@@ -32,15 +32,21 @@ async function DashboardLoader({
     cases.push(now);
   }
 
-  return <Dashboard cases={cases} initialCase={initialCase} />;
+  return (
+    <Dashboard
+      cases={cases}
+      initialCase={initialCase}
+      initialDay={initialDay ? Number(initialDay) : undefined}
+    />
+  );
 }
 
-// `?case=<id|alias>` deep-links a replay case (judge/demo links); the
-// dashboard falls back to the first case when the id is unknown.
+// `?case=<id|alias>&day=<offset>` deep-links a replay case + timeline day
+// (judge/demo links); unknown values fall back to case 0 / event day.
 export default function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ case?: string }>;
+  searchParams: Promise<{ case?: string; day?: string }>;
 }) {
   return (
     <div className="flex h-screen flex-col bg-[#0b0e14] text-zinc-100">

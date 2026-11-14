@@ -129,7 +129,11 @@ export interface PriorityZone {
   class: "Low" | "Moderate" | "High" | "Critical";
   hazard: string;
   area_km2: number;
-  people: number;
+  // null when the GPW population join is absent from the pipeline output.
+  people: number | null;
+  // Label anchor derived client-side (zoneLabelPoint) — the list uses it
+  // for click-to-zoom; absent when the feature has no finite anchor.
+  at?: [number, number];
 }
 
 export type AlertLevel = "watch" | "warning" | "emergency";

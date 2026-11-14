@@ -82,8 +82,10 @@ export default function TpiChart({ series, dayIndex }: { series: SeriesDaily; da
               />
             )}
             <Bar yAxisId="rain" dataKey="imerg_mm" name="Rain (mm)" fill="#2166AC" radius={[2, 2, 0, 0]} />
-            <Line yAxisId="idx" type="monotone" dataKey="smap" name="Soil Moisture (SMAP)" stroke="#8C510A" strokeWidth={2} dot={false} />
-            <Line yAxisId="idx" type="monotone" dataKey="tpi" name="TPI (risk index)" stroke="#BD0026" strokeWidth={2} dot={false} />
+            {/* null is a gap, never a zero — a pipeline "no data" day must
+                not draw as a real 0 reading. */}
+            <Line yAxisId="idx" type="monotone" dataKey="smap" name="Soil Moisture (SMAP)" stroke="#8C510A" strokeWidth={2} dot={false} connectNulls={false} />
+            <Line yAxisId="idx" type="monotone" dataKey="tpi" name="TPI (risk index)" stroke="#BD0026" strokeWidth={2} dot={false} connectNulls={false} />
             <ReferenceLine
               yAxisId="idx"
               y={series.tpi_threshold ?? 0.6}

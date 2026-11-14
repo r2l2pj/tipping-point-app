@@ -219,7 +219,7 @@ export function fmtKm2(v?: number) {
   return v == null ? "—" : `${v.toFixed(1)} km²`;
 }
 
-export function fmtPeople(v?: number) {
+export function fmtPeople(v?: number | null) {
   return v == null ? "—" : `${(Math.round(v / 100) * 100).toLocaleString("en-US")}`;
 }
 

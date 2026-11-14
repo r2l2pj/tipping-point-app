@@ -22,6 +22,7 @@ export default function SidePanel({
   zones,
   dayIndex,
   onConfirmRadar,
+  onZoneClick,
 }: {
   tab: TabKey;
   onTab: (t: TabKey) => void;
@@ -29,6 +30,7 @@ export default function SidePanel({
   zones: PriorityZone[];
   dayIndex: number;
   onConfirmRadar: () => void;
+  onZoneClick?: (z: PriorityZone) => void;
 }) {
   return (
     <aside className="flex w-[380px] shrink-0 flex-col border-l border-zinc-800 bg-[#0d1117]">
@@ -54,6 +56,7 @@ export default function SidePanel({
             zones={zones}
             dayIndex={dayIndex}
             onConfirmRadar={onConfirmRadar}
+            onZoneClick={onZoneClick}
           />
         )}
         {tab === "radar" && <RadarTab bundle={bundle} />}

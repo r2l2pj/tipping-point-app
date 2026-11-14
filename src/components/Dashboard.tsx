@@ -26,7 +26,7 @@ const EXCLUSIVE_PARTNER: Partial<Record<keyof LayerState, keyof LayerState>> = {
   tpiSlide: "tpiFlood",
 };
 
-export default function Dashboard({ cases, initialCase }: { cases: CaseBundle[]; initialCase?: string }) {
+export default function Dashboard({ cases, initialCase, initialDay }: { cases: CaseBundle[]; initialCase?: string; initialDay?: number }) {
   const [activeId, setActiveId] = useState(() => {
     const want = initialCase ? canonicalCaseId(initialCase) : undefined;
     return (
@@ -59,7 +59,12 @@ export default function Dashboard({ cases, initialCase }: { cases: CaseBundle[];
   if (firstDamageIdx >= 0) markers.push({ dayIndex: firstDamageIdx, label: "first damage", color: "red" });
 
   const [dayIndex, setDayIndex] = useState(() =>
-    Math.max(0, days.findIndex((d) => d.offset === 0))
+    Math.max(
+      0,
+      days.findIndex(
+        (d) => d.offset === (Number.isFinite(initialDay) ? initialDay : 0)
+      )
+    )
   );
   const [playing, setPlaying] = useState(false);
   const [tab, setTab] = useState<TabKey>("alert");
@@ -192,6 +197,10 @@ export default function Dashboard({ cases, initialCase }: { cases: CaseBundle[];
           zones={zones}
           dayIndex={dayIndex}
           onConfirmRadar={() => setTab("radar")}
+          onZoneClick={(z) => {
+            // Doc layout: a zone row click zooms the map to its label point.
+            if (z.at) map?.flyTo({ center: z.at, zoom: 11.5, duration: 1200 });
+          }}
         />
       </main>
 
