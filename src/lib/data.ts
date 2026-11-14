@@ -1,6 +1,8 @@
 // Server-side loader for the v4 data contract (SCHEMA.md).
-// Files default to the raw fallback branch, an orphan branch force-pushed each run.
-// DATA_BASE_URL overrides it; bundled public/data synced by `bun run sync:data` is last resort.
+// Remote read order: explicit DATA_BASE_URL wins alone; otherwise the public
+// Neon Object Storage bucket (NEON_S3_ENDPOINT) then the raw GitHub fallback
+// branch (force-pushed each pipeline run). The bundled public/data copy synced
+// by `bun run sync:data` is always the last resort.
 // Any remote miss falls back to the bundled copy and flags the bundle.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -83,15 +85,27 @@ export interface CaseBundleOpts {
 type Products = Record<string, string | null | undefined>;
 
 interface ReadCtx {
-  base?: string;
+  bases: string[];
   fellBack: boolean;
 }
 
-const remoteBase = () =>
-  (process.env.DATA_BASE_URL ||
-    "https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data").replace(/\/+$/, "");
+const GITHUB_FALLBACK_BASE =
+  "https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data";
 
-const newCtx = (): ReadCtx => ({ base: remoteBase(), fellBack: false });
+// Remote bases in priority order (L17). An explicit DATA_BASE_URL is the sole
+// remote source (override semantics — tests pin it unreachable to force the
+// bundled copy). Unset, the default is the public Neon bucket derived from
+// NEON_S3_ENDPOINT, then the GitHub fallback branch; disk is always last.
+const remoteBases = (): string[] => {
+  const explicit = process.env.DATA_BASE_URL;
+  if (explicit) return [explicit.replace(/\/+$/, "")];
+  const neon = process.env.NEON_S3_ENDPOINT
+    ? `${process.env.NEON_S3_ENDPOINT.replace(/\/+$/, "")}/tipping-point-data/data`
+    : undefined;
+  return [...new Set([neon, GITHUB_FALLBACK_BASE].filter((b): b is string => !!b))];
+};
+
+const newCtx = (): ReadCtx => ({ bases: remoteBases(), fellBack: false });
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null;
@@ -141,12 +155,13 @@ async function readData<T>(
   dir: string,
   p: string
 ): Promise<T | undefined> {
-  const url = resolveAsset(ctx.base ?? "", dir, p);
-  if (url === undefined) return undefined;
-  if (ctx.base || /^https?:\/\//i.test(url)) {
+  // Try each remote base in order (absolute p resolves identically on every
+  // base — dedupe so it isn't fetched once per base).
+  const urls = ctx.bases.map((b) => resolveAsset(b, dir, p));
+  if (urls[0] === undefined) return undefined;
+  for (const url of new Set(urls as string[])) {
     const remote = await fetchJson<T>(url).catch(() => undefined);
     if (remote !== undefined) return remote;
-    if (!ctx.base) return undefined; // absolute URL, nothing local to try
     ctx.fellBack = true;
   }
   const key = resolveAsset("", dir, p);
@@ -310,13 +325,15 @@ export async function getCaseBundle(
         }
       : perCase;
 
-  // In remote mode layer png/cog paths resolve to raw fallback branch URLs; on disk they
+  // In remote mode layer png/cog paths resolve to the first remote base (the
+  // browser cannot fall back across bases); on disk they
   // stay data-root-relative (/data/... via resolveDataUrl).
-  if (ctx.base && manifest?.layers) {
+  if (ctx.bases.length > 0 && manifest?.layers) {
+    const assetBase = ctx.bases[0];
     manifest.layers = manifest.layers.map((l) => ({
       ...l,
-      png: resolveAsset(ctx.base!, canonical, l.png) ?? l.png,
-      cog: resolveAsset(ctx.base!, canonical, l.cog) ?? l.cog,
+      png: resolveAsset(assetBase, canonical, l.png) ?? l.png,
+      cog: resolveAsset(assetBase, canonical, l.cog) ?? l.cog,
     }));
   }
 

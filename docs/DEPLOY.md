@@ -19,7 +19,8 @@ is ever committed; `.gitignore` already blocks the usual key file patterns.
 
 | Variable | Purpose |
 | --- | --- |
-| `DATA_BASE_URL` | Optional fallback data base URL override. Defaults to `https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`; bundled `public/data` is the last resort on a remote miss. |
+| `DATA_BASE_URL` | Optional remote data base URL override — when set it is the only remote source (tests pin it unreachable to force the bundled copy). Unset, reads default to the Neon bucket then the GitHub fallback branch. |
+| `NEON_S3_ENDPOINT` | Neon Object Storage endpoint for the project (`https://...`). When set and `DATA_BASE_URL` is unset, remote reads default to `https://<endpoint>/tipping-point-data/data/` (public-read bucket). Not a secret — never a credential. |
 | `GEE_PROJECT` | Google Cloud project registered for the Earth Engine API. |
 | `GCP_SA_KEY` | Service-account JSON key (single line) for Earth Engine access. Server-side only — never `NEXT_PUBLIC_`-prefixed. |
 | `DATABASE_URL` | Subscriber backend selector, not required locally: unset or `sqlite:<path>` uses local SQLite (default `.data/tipping-point.sqlite`). Infra sets a secret `postgres://` or `postgresql://` Neon connection string in production for server-only HTTPS SQL access. Never expose or commit the production value. |
@@ -29,18 +30,41 @@ is ever committed; `.gitignore` already blocks the usual key file patterns.
 
 ## Data availability
 
-GEE stays the source of truth. The fallback copy lives on the orphan branch
-`fallback` of `r2l2pj/tipping-point-data`, force-pushed each run so history
-does not grow. It preserves the `data/` tree at the branch root: EPSG:3857
-PNGs, JSON numbers, GeoJSON, and `manifest.json` written **last** in the
-commit. No COGs are published on this branch.
+GEE stays the source of truth. The pipeline publishes the same `data/` tree
+to two mirrors plus the bundled copy:
 
-The app defaults `DATA_BASE_URL` to
-`https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`.
-An environment override is still supported and is read at request time, so
-updating fallback data does not require a redeploy. The copy bundled into
-`public/data` by `bun run sync:data` is the last resort when a remote read
-fails; it is not the live source of truth.
+1. **Neon Object Storage** — public-read bucket `tipping-point-data` on the
+   project (`neon.ts` declares it; CORS allows `GET`/`HEAD`). Served at
+   `${NEON_S3_ENDPOINT}/tipping-point-data/data/`. This is the default remote
+   base when `NEON_S3_ENDPOINT` is set and `DATA_BASE_URL` is unset.
+2. **GitHub `fallback` branch** — orphan branch of `r2l2pj/tipping-point-data`,
+   force-pushed each run so history does not grow; `manifest.json` written
+   last in the commit. Used when Neon misses, or as the sole default when
+   `NEON_S3_ENDPOINT` is unset. No COGs are published on this branch.
+3. **Bundled `public/data`** — committed copy synced by `bun run sync:data`;
+   the last resort when every remote read misses. Not the live source of
+   truth.
+
+Both mirrors preserve the `data/` tree: EPSG:3857 PNGs, JSON numbers,
+GeoJSON, and `manifest.json` written last. `DATA_BASE_URL` is still honored
+as an explicit override (sole remote source) and is read at request time, so
+updating fallback data does not require a redeploy.
+
+## Neon setup (one project, two services)
+
+Project `muddy-rice-39176958` hosts both app Neon services:
+
+- **Postgres** — the Telegram subscriber table. `DATABASE_URL` is the
+  `postgres://`/`postgresql://` connection string; secret, server-only, lives
+  in Vercel env + GitHub Actions secrets on the data repo. Never print or
+  commit it. Applied schema is `db/schema.sql` (`subscribers` + RLS).
+- **Object Storage** — bucket `tipping-point-data`, declared `public_read` in
+  the repo-root `neon.ts` (applied via `@neon/config`; `neon env pull` /
+  `neon-env run` manage local env). Anonymous `GET` returns objects; writes
+  need the `NEON_S3_ACCESS_KEY_ID` / `NEON_S3_SECRET_ACCESS_KEY` /
+  `NEON_S3_REGION` / `NEON_S3_BUCKET` credentials — those are data-repo
+  Actions secrets (uploads), **not** app runtime vars. The app only needs
+  `NEON_S3_ENDPOINT` to build the anonymous read URL.
 
 ## Telegram subscriber store (local SQLite, production Neon)
 
@@ -95,6 +119,8 @@ All runtime services must stay on free tiers; no paid plan is required.
 - GEE: non-commercial access.
 - GitHub Actions: public-repo workflows.
 - `raw.githubusercontent.com`: fallback small files only; no large COGs.
+- Neon Object Storage: free-tier object reads on the public bucket; anonymous
+  `GET` only from the app (no credentials in browser or server reads).
 - Vercel Hobby: set API routes' `maxDuration` within the plan's function
   duration limit.
 - Neon free: scales to zero and wakes on query; no keep-alive is needed.
@@ -159,3 +185,6 @@ until they exist.
   `db/schema.sql` applied and server-only `DATABASE_URL` configured in Vercel
   and GitHub Actions secrets. Local development uses automatic SQLite and
   does not wait for Neon infrastructure.
+- Neon Object Storage bucket `tipping-point-data` provisioned `public_read`
+  (`neon.ts` is the declaration; `neon deploy`/`checkout` applies it), with
+  `NEON_S3_ENDPOINT` set in Vercel so remote reads default to the bucket.

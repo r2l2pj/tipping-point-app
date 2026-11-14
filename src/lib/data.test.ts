@@ -50,11 +50,14 @@ afterAll(() => server.stop());
 
 const savedBase = process.env.DATA_BASE_URL;
 const savedFsDir = process.env.DATA_FS_DIR;
+const savedNeon = process.env.NEON_S3_ENDPOINT;
 afterEach(() => {
   if (savedBase === undefined) delete process.env.DATA_BASE_URL;
   else process.env.DATA_BASE_URL = savedBase;
   if (savedFsDir === undefined) delete process.env.DATA_FS_DIR;
   else process.env.DATA_FS_DIR = savedFsDir;
+  if (savedNeon === undefined) delete process.env.NEON_S3_ENDPOINT;
+  else process.env.NEON_S3_ENDPOINT = savedNeon;
   files.clear();
   hits.length = 0;
 });
@@ -401,9 +404,10 @@ describe("now@2 bundle", () => {
   });
 });
 
-describe("default raw fallback branch (no DATA_BASE_URL)", () => {
+describe("default remote bases (no DATA_BASE_URL)", () => {
   test("remote misses use the bundled public/data last resort", async () => {
     delete process.env.DATA_BASE_URL;
+    delete process.env.NEON_S3_ENDPOINT;
     const requested: string[] = [];
     const remote = spyOn(globalThis, "fetch").mockImplementation(async (input: string | URL | Request) => {
       requested.push(String(input));
@@ -428,6 +432,25 @@ describe("default raw fallback branch (no DATA_BASE_URL)", () => {
       expect(b.dataDate).toBeUndefined();
       expect(requested[0]).toBe("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/manifest.json");
       expect(requested.every((url) => url.startsWith("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/"))).toBe(true);
+    } finally {
+      remote.mockRestore();
+    }
+  });
+
+  // L17: with no explicit DATA_BASE_URL the public Neon bucket is tried first;
+  // a Neon miss falls through to the GitHub fallback branch, then disk.
+  test("NEON_S3_ENDPOINT default: bucket first, github next", async () => {
+    delete process.env.DATA_BASE_URL;
+    process.env.NEON_S3_ENDPOINT = "https://neon-s3.example.com";
+    const requested: string[] = [];
+    const remote = spyOn(globalThis, "fetch").mockImplementation(async (input: string | URL | Request) => {
+      requested.push(String(input));
+      return new Response("not found", { status: 404 });
+    });
+    try {
+      await getRootManifest();
+      expect(requested[0]).toBe("https://neon-s3.example.com/tipping-point-data/data/manifest.json");
+      expect(requested[1]).toBe("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/manifest.json");
     } finally {
       remote.mockRestore();
     }
