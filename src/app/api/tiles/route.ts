@@ -3,7 +3,7 @@
 // when no service-account key is configured or an EE roundtrip times out;
 // 404 when the case asset or date band doesn't exist.
 import { credentialEnv } from "@/lib/ee";
-import { cachedJson, noStoreJson } from "@/lib/http-cache";
+import { cachedTilesJson, noStoreJson } from "@/lib/http-cache";
 import {
   CredsError,
   getTiles,
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    return cachedJson(
+    return cachedTilesJson(
       await getTiles({ layer: layer as TileLayer, caseId, date }),
       caseId
     );

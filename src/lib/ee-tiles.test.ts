@@ -601,16 +601,27 @@ describe("GET /api/tiles", () => {
     }
   });
 
-  test("replay case -> 7d edge cache; now -> 5m; errors -> no-store", async () => {
+  // The embedded getMapId token expires ~2 h (TTL_MS in ee-tiles), so the
+  // edge cache must stay under it — and never serve stale tile URLs.
+  const TILE_TTL_MS = 2 * 60 * 60 * 1000;
+  const sMaxAge = (res: Response) => {
+    const cc = res.headers.get("cache-control") ?? "";
+    const m = cc.match(/s-maxage=(\d+)/);
+    expect(cc).not.toContain("stale-while-revalidate");
+    return m ? Number(m[1]) : null;
+  };
+
+  test("replay -> s-maxage < tile TTL, no SWR; errors -> no-store", async () => {
     const { ee } = makeFakeEe();
     installFakeEe(ee);
     const replay = await withCreds(() =>
       GET(req("layer=tpi_slide&case=rs-2024-05&date=2024-05-01"))
     );
     expect(replay.status).toBe(200);
-    expect(replay.headers.get("cache-control")).toBe(
-      "public, s-maxage=604800, stale-while-revalidate=86400"
-    );
+    const replayAge = sMaxAge(replay);
+    expect(replayAge).not.toBeNull();
+    expect(replayAge!).toBeLessThanOrEqual(3600);
+    expect(replayAge! * 1000).toBeLessThan(TILE_TTL_MS);
 
     const badReq = await GET(req("layer=nope&case=rs_2024&date=2024-05-01"));
     expect(badReq.headers.get("cache-control")).toBe("no-store");
@@ -640,9 +651,10 @@ describe("GET /api/tiles", () => {
         GET(req("layer=tpi_slide&case=now&date=2026-11-14"))
       );
       expect(now.status).toBe(200);
-      expect(now.headers.get("cache-control")).toBe(
-        "public, s-maxage=300, stale-while-revalidate=60"
-      );
+      const nowAge = sMaxAge(now);
+      expect(nowAge).not.toBeNull();
+      expect(nowAge!).toBeLessThanOrEqual(3600);
+      expect(nowAge! * 1000).toBeLessThan(TILE_TTL_MS);
     } finally {
       mock.restore();
     }
