@@ -4,7 +4,7 @@ import { fmtPct } from "@/lib/tpi";
 import type { CaseBundle } from "@/lib/types";
 import FeatureImportanceChart from "../charts/FeatureImportanceChart";
 import SwotChart from "../charts/SwotChart";
-import { isMockDerived } from "./format";
+import { isMockDerived, pendingIncludes } from "./format";
 import LeadTimeCard from "./LeadTimeCard";
 import { StatCard } from "./Stat";
 
@@ -13,7 +13,7 @@ import { StatCard } from "./Stat";
 // radar was needed at all. All metric reads go through bundle.metricsView.
 export default function ValidationTab({ bundle }: { bundle: CaseBundle }) {
   const m = bundle.metricsView;
-  if (!m) {
+  if (!m || pendingIncludes(bundle, "metrics")) {
     return (
       <div className="rounded-md border border-dashed border-zinc-700 p-4 text-center">
         <p className="text-xs font-medium text-zinc-300">
@@ -36,13 +36,26 @@ export default function ValidationTab({ bundle }: { bundle: CaseBundle }) {
         Flood detection vs reference (NISAR/OPERA)
       </p>
       <div className="grid grid-cols-2 gap-2">
-        <StatCard label="IoU" value={m.iou != null ? m.iou.toFixed(2) : "—"} />
-        <StatCard label="F1" value={m.f1 != null ? m.f1.toFixed(2) : "—"} />
+        <StatCard
+          label="IoU"
+          value={m.iou != null ? m.iou.toFixed(2) : "—"}
+          absent={m.iou == null}
+        />
+        <StatCard
+          label="F1"
+          value={m.f1 != null ? m.f1.toFixed(2) : "—"}
+          absent={m.f1 == null}
+        />
         <StatCard
           label="Landslide catalog hits"
           value={fmtPct(m.landslide_hit_pct)}
+          absent={m.landslide_hit_pct == null}
         />
-        <StatCard label="Hand validation" value={fmtPct(m.hand_validation)} />
+        <StatCard
+          label="Hand validation"
+          value={fmtPct(m.hand_validation)}
+          absent={m.hand_validation == null}
+        />
       </div>
       <p className="text-xs text-zinc-500">
         Scores are computed on clear-sky reference cells only — no cloud pixels
@@ -57,10 +70,12 @@ export default function ValidationTab({ bundle }: { bundle: CaseBundle }) {
           label="ML model AUC (XGBoost)"
           value={m.rf_auc != null ? m.rf_auc.toFixed(2) : "—"}
           accent="green"
+          absent={m.rf_auc == null}
         />
         <StatCard
           label="Manual slope-rule AUC"
           value={m.rule_auc != null ? m.rule_auc.toFixed(2) : "—"}
+          absent={m.rule_auc == null}
         />
       </div>
 
@@ -82,7 +97,9 @@ export default function ValidationTab({ bundle }: { bundle: CaseBundle }) {
       <SwotChart swot={bundle.swot} />
 
       {isMockDerived(bundle) && (
-        <p className="text-xs text-zinc-600">Illustrative demo data.</p>
+        <p className="text-xs text-zinc-600">
+          Data pending — pipeline output not published.
+        </p>
       )}
     </div>
   );

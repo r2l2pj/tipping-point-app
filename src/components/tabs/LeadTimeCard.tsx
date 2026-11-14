@@ -9,7 +9,19 @@ const numberText = (v: unknown) => finite(v) ? String(Math.round(v)) : "not repo
 
 export default function LeadTimeCard({ bundle }: { bundle: CaseBundle }) {
   const m = bundle.metricsView as Record<string, unknown> | undefined;
-  if (!m || !finite(m.lead_time_median_h)) return null;
+  if (!m || !finite(m.lead_time_median_h)) {
+    return (
+      <section className="rounded-md border border-dashed border-zinc-700 p-4 text-center">
+        <h3 className="text-xs font-semibold text-zinc-300">
+          How early? (in replay)
+        </h3>
+        <p className="mt-1 text-xs text-zinc-500">
+          Lead-time hindcast pending — IMERG latency-aware rerun not published
+          for this case.
+        </p>
+      </section>
+    );
+  }
   const iqr = Array.isArray(m.lead_time_iqr_h) ? m.lead_time_iqr_h : [];
   const assumptions = m.lead_time_assumptions;
   const note = typeof assumptions === "string" ? assumptions
@@ -24,7 +36,7 @@ export default function LeadTimeCard({ bundle }: { bundle: CaseBundle }) {
     <section className="space-y-2 rounded-md border border-zinc-800 p-3 text-xs text-zinc-300">
       <h3 className="font-semibold">How early? (in replay)</h3>
       {placeholder && <p className="text-amber-300">Illustrative numbers</p>}
-      <p className="font-medium">{`Median ${numberText(m.lead_time_median_h)} h before mapped landslides`}</p>
+      <p className="font-medium">{`Tipping Point would have warned ${Math.round(m.lead_time_median_h)} hours earlier`}</p>
       <p>{`IQR ${numberText(iqr[0])}–${numberText(iqr[1])} h · n = ${numberText(m.n_points)}`}{precision ? ` · ${precision}` : ""}</p>
       <dl className="grid grid-cols-2 gap-2">
         {([

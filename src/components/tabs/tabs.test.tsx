@@ -3,7 +3,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import type { CaseBundle } from "../../lib/types";
+import type { CaseBundle, PriorityZone } from "../../lib/types";
 import SidePanel, { type TabKey } from "../SidePanel";
 import { normalizeLeadTimeHist } from "../charts/LeadTimeHistogram";
 import Timeline from "../Timeline";
@@ -22,13 +22,13 @@ const bundle = (over: Partial<CaseBundle> = {}): CaseBundle => ({
   ...over,
 });
 
-const render = (tab: TabKey, b: CaseBundle, dayIndex = 0) =>
+const render = (tab: TabKey, b: CaseBundle, dayIndex = 0, zones: PriorityZone[] = []) =>
   renderToStaticMarkup(
     <SidePanel
       tab={tab}
       onTab={noop}
       bundle={b}
-      zones={[]}
+      zones={zones}
       dayIndex={dayIndex}
       onConfirmRadar={noop}
     />
@@ -72,7 +72,7 @@ describe("alert playback and contract values", () => {
       expect(render("alert", replay, index)).toContain("TIPPING POINT WATCH");
     }
     expect(render("alert", replay, 1)).toContain("TIPPING POINT REACHED");
-    expect(render("alert", bundle())).toContain("TIPPING POINT WATCH");
+    expect(render("alert", bundle())).toContain("MONITORING PENDING");
   });
 
   test("class cuts supply the threshold when the series has none", () => {
@@ -138,7 +138,7 @@ describe("lead-time replay context", () => {
       critical_area_with_damage_pct: 0.25, critical_area_km2: 40,
       anchor_precision: "mixed", lead_time_assumptions: { quality: "placeholder" },
     }) }));
-    for (const text of ["How early? (in replay)", "Median 30 h before mapped landslides",
+    for (const text of ["How early? (in replay)", "Tipping Point would have warned 30 hours earlier",
       "IQR 18–42 h · n = 12", "mixed-precision anchors", "Flagged before damage",
       "Warned &gt;= 24 h early", "Never crossed Critical", "80%", "60%", "20%",
       "vs first official warning: +6 h", "Event-level anchor lead: 24 h",
@@ -153,14 +153,17 @@ describe("lead-time replay context", () => {
     const html = render("validation", bundle({ metricsView: metrics({
       lead_time_median_h: 47.5,
     }) }));
-    expect(html).toContain("Median 48 h before mapped landslides");
+    expect(html).toContain("Tipping Point would have warned 48 hours earlier");
     expect(html).not.toContain("47.5");
   });
 
-  test("absent metrics or median hide the card; absent optional data stays safe", () => {
-    for (const m of [undefined, {}, { lead_time_median_h: null }]) {
-      expect(render("validation", bundle({ metricsView: m as CaseBundle["metricsView"] }))).not.toContain("How early?");
+  test("absent median renders a pending card; absent optional data stays safe", () => {
+    for (const m of [{}, { lead_time_median_h: null }]) {
+      const html = render("validation", bundle({ metricsView: m as CaseBundle["metricsView"] }));
+      expect(html).toContain("How early? (in replay)");
+      expect(html).toContain("Lead-time hindcast pending");
     }
+    expect(render("validation", bundle({ metricsView: undefined }))).not.toContain("How early?");
     const html = render("validation", bundle({ metricsView: { lead_time_median_h: 0 } }));
     expect(html).toContain("IQR not reported–not reported h · n = not reported");
     expect(html).toContain("IMERG Early ~4 h");
@@ -333,9 +336,10 @@ describe("banned strings", () => {
   });
 });
 
-describe("alert tab 'Illustrative demo data' marker", () => {
+describe("alert tab 'Data pending' marker", () => {
   test("hidden when metricsView is present", () => {
     const html = render("alert", bundle({ metricsView: FULL_METRICS }));
+    expect(html).not.toContain("pending.");
     expect(html).not.toContain("Illustrative");
   });
 
@@ -344,14 +348,29 @@ describe("alert tab 'Illustrative demo data' marker", () => {
       "alert",
       bundle({ mode: "live", summary: { people_critical: 1200 } })
     );
+    expect(html).not.toContain(">pending.");
     expect(html).not.toContain("Illustrative");
   });
 
-  test("shown only when the bundle is mock-derived", () => {
-    expect(render("alert", bundle())).toContain("Illustrative");
-    const flagged = bundle();
+  test("shown when the bundle is mock-derived (no metricsView and no summary)", () => {
+    // Needs a series so the stat row renders — the marker lives inside it.
+    const html = render("alert", bundle({ series: {
+      event: "wa_2025", reference_date: "2025-12-10", tpi_threshold: 0.75,
+      days: [{ date: "2025-12-10", offset: 0, kind: "observed", tpi: 0.5, imerg_mm: 1, smap: 0.5 }],
+    } }));
+    expect(html).toContain("pending.");
+    expect(html).not.toContain("Illustrative");
+  });
+
+  test("a fallback bundle is real last-saved data — no pending marker", () => {
+    const flagged = bundle({ series: {
+      event: "wa_2025", reference_date: "2025-12-10", tpi_threshold: 0.75,
+      days: [{ date: "2025-12-10", offset: 0, kind: "observed", tpi: 0.5, imerg_mm: 1, smap: 0.5 }],
+    }, metricsView: FULL_METRICS });
     (flagged as CaseBundle & { fallback?: boolean }).fallback = true;
-    expect(render("alert", flagged)).toContain("Illustrative");
+    const html = render("alert", flagged);
+    expect(html).not.toContain("pending.");
+    expect(html).not.toContain("Illustrative");
   });
 
   test("forecast_source badge renders the contract label", () => {
@@ -373,5 +392,113 @@ describe("alert tab 'Illustrative demo data' marker", () => {
       bundle({ mode: "live", summary: { forecast_source: "geos-fp" } })
     );
     expect(live).toContain("GEOS-FP");
+  });
+});
+
+describe("pending states (L14)", () => {
+  const withPending = (b: CaseBundle, tokens: string[]): CaseBundle =>
+    ({ ...b, pending: tokens }) as CaseBundle;
+
+  const oneSeries = {
+    event: "wa_2025", reference_date: "2025-12-10", tpi_threshold: 0.75,
+    days: [{ date: "2025-12-10", offset: 0, kind: "observed", tpi: 0.5, imerg_mm: 1, smap: 0.5 }],
+  } as CaseBundle["series"];
+
+  test("alert tab: no series and no zones renders neutral MONITORING PENDING", () => {
+    const html = render("alert", bundle());
+    expect(html).toContain("MONITORING PENDING");
+    expect(html).toContain("pipeline has not produced a TPI series or monitored zones");
+    expect(html).not.toContain("TIPPING POINT WATCH");
+    expect(html).not.toContain("TIPPING POINT REACHED");
+    // No zeros masquerading as data — the critical/people stat row is hidden.
+    expect(html).not.toContain("people exposed");
+    expect(html).toContain("Pending — no monitored zones for this case.");
+  });
+
+  test("alert tab: pending tokens 'series'/'priority_zones' force the neutral banner", () => {
+    const html = render("alert", withPending(bundle({ series: oneSeries }), ["series"]));
+    expect(html).toContain("MONITORING PENDING");
+    const zoned = render("alert", withPending(bundle({ series: oneSeries }), ["priority_zones"]));
+    expect(zoned).toContain("MONITORING PENDING");
+    // A real series without the token still renders WATCH.
+    expect(render("alert", bundle({ series: oneSeries }))).toContain("TIPPING POINT WATCH");
+  });
+
+  test("impact tab: pending card when metricsView is absent, basis box stays", () => {
+    const html = render("impact", bundle());
+    expect(html).toContain("Impact metrics pending");
+    expect(html).toContain("none published yet");
+    expect(html).toContain("Exposure basis");
+    expect(html).not.toContain("People flooded");
+    // Real values still render.
+    const real = render("impact", bundle({ metricsView: FULL_METRICS }));
+    expect(real).toContain("8,400");
+    expect(real).toContain("41.6 km²");
+    expect(real).not.toContain(">pending<");
+  });
+
+  test("impact tab: pending token 'metrics' forces the pending card", () => {
+    const html = render("impact", withPending(bundle({ metricsView: FULL_METRICS }), ["metrics"]));
+    expect(html).toContain("Impact metrics pending");
+    expect(html).not.toContain("8,400");
+  });
+
+  test("validation tab: per-field pending cells plus real values", () => {
+    const html = render("validation", bundle({ metricsView: { iou: 0.5 } }));
+    expect(html).toContain(">0.50<");
+    expect(html).toContain(">pending<");
+    // The pending token also triggers the whole-section pending card.
+    const tok = render("validation", withPending(bundle({ metricsView: FULL_METRICS }), ["metrics"]));
+    expect(tok).toContain("No validation metrics yet");
+  });
+
+  test("radar tab: NISAR pair without flooded_km2 renders a pending flood card", () => {
+    const html = render("radar", bundle({
+      metricsView: {},
+      data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" },
+    }));
+    expect(html).toContain("Flooded area (NISAR)");
+    expect(html).toContain(">pending<");
+    // No pair and no flooded value: the card stays hidden (dashed box explains).
+    const noPair = render("radar", bundle({ metricsView: {} }));
+    expect(noPair).not.toContain("Flooded area");
+  });
+
+  test("radar tab: scars absent is pending, empty scars is a real zero", () => {
+    const absentHtml = render("radar", bundle({ metricsView: {} }));
+    expect(absentHtml).toContain(">pending<");
+    const zero = render("radar", bundle({
+      metricsView: {},
+      scars: { type: "FeatureCollection", features: [] },
+    }));
+    expect(zero).toContain(">0<");
+    const tok = render("radar", withPending(bundle({
+      metricsView: {},
+      scars: { type: "FeatureCollection", features: [scarFeature()] },
+    }), ["landslide_candidates"]));
+    expect(tok).toContain(">pending<");
+    expect(tok).not.toContain(">1<");
+  });
+
+  test("agora card: absent or pending-flagged summary renders pending rows", () => {
+    const html = render("alert", bundle({ mode: "live" }));
+    expect(html).toContain("Live summary pending — awaiting the current run");
+    for (const label of ["IMERG Early — rain", "SMAP L4 — soil moisture", "GEOS-FP — forecast"]) {
+      expect(html).toContain(label);
+    }
+    expect(html).toContain(">pending<");
+    const tok = render("alert", withPending(
+      bundle({ mode: "live", summary: { people_critical: 1200 } }),
+      ["summary"]
+    ));
+    expect(tok).toContain("Live summary pending");
+    expect(tok).not.toContain("1,200");
+  });
+
+  test("validation tab: lead-time pending card when median is absent", () => {
+    const html = render("validation", bundle({ metricsView: { iou: 0.5 } }));
+    expect(html).toContain("Lead-time hindcast pending");
+    // Real values still render.
+    expect(render("validation", bundle({ metricsView: FULL_METRICS }))).toContain("warned 52 hours earlier");
   });
 });

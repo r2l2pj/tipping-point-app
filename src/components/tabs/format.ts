@@ -29,9 +29,18 @@ export const fmtBrt = (iso?: string | null): string => {
 export const fmtHours = (v?: number): string =>
   v == null ? "—" : `${Math.round(v)} h`;
 
-// A bundle is mock-derived when the loader flagged it as a fixture fallback or
-// it carries neither normalized metrics nor a live summary — the only cases
-// where "Illustrative demo data" may be shown.
+// A bundle is mock-derived when it carries neither normalized metrics nor a
+// live summary — the only case where a "Data pending" marker may be shown. A
+// fallback bundle is real last-saved data (the L8 banner already warns about
+// staleness), so it does not count as mock.
 export const isMockDerived = (bundle: CaseBundle): boolean =>
-  (bundle as CaseBundle & { fallback?: boolean }).fallback === true ||
-  (!bundle.metricsView && !bundle.summary);
+  !bundle.metricsView && !bundle.summary;
+
+// bundle.pending[] lists outputs the pipeline has not published for this case
+// (tokens: 'metrics', 'series', 'summary', 'alerts', product ids like
+// 'landslide_candidates', 'priority_zones'). Read defensively — the field may
+// be absent on older bundles.
+export const pendingIncludes = (bundle: CaseBundle, key: string): boolean => {
+  const p = (bundle as CaseBundle & { pending?: unknown }).pending;
+  return Array.isArray(p) && p.includes(key);
+};

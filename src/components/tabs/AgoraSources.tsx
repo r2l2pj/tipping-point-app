@@ -3,7 +3,7 @@
 import { forecastSourceLabel } from "@/lib/contract";
 import { fmtKm2, fmtPeople } from "@/lib/tpi";
 import type { CaseBundle, NisarPass } from "@/lib/types";
-import { fmtBrt } from "./format";
+import { fmtBrt, pendingIncludes } from "./format";
 import NisarPassList from "./NisarPassList";
 import { Stat } from "./Stat";
 
@@ -17,7 +17,7 @@ const SOURCE_LABELS: [string, string][] = [
 // areas and exposed people from now/summary.json, per-source data dates (BRT)
 // and the recent NISAR passes. Rendered only when bundle.mode === "live".
 export default function AgoraSources({ bundle }: { bundle: CaseBundle }) {
-  const summary = bundle.summary;
+  const summary = pendingIncludes(bundle, "summary") ? undefined : bundle.summary;
   const dd: Record<string, unknown> = {
     ...(bundle.data_dates ?? {}),
     ...(summary?.data_dates ?? {}),
@@ -53,27 +53,30 @@ export default function AgoraSources({ bundle }: { bundle: CaseBundle }) {
             </span>
           )}
         </p>
-        {summary && (
+        {summary ? (
           <div className="mb-3 grid grid-cols-2 gap-2">
             <Stat value={fmtKm2(summary.critical_km2?.any)} label="critical km² (any)" />
             <Stat value={fmtPeople(people)} label="people in critical areas" />
             <Stat value={fmtKm2(summary.critical_km2?.slide)} label="slide km²" />
             <Stat value={fmtKm2(summary.critical_km2?.flood)} label="flood km²" />
           </div>
+        ) : (
+          <p className="mb-3 text-xs text-zinc-500">
+            Live summary pending — awaiting the current run’s summary.json.
+          </p>
         )}
         <ul className="space-y-1">
-          {SOURCE_LABELS.map(
-            ([key, label]) =>
-              typeof dd[key] === "string" && (
-                <li
-                  key={key}
-                  className="flex items-center justify-between text-xs text-zinc-400"
-                >
-                  <span>{label}</span>
-                  <span className="text-zinc-500">{fmtBrt(dd[key] as string)}</span>
-                </li>
-              )
-          )}
+          {SOURCE_LABELS.map(([key, label]) => (
+            <li
+              key={key}
+              className="flex items-center justify-between text-xs text-zinc-400"
+            >
+              <span>{label}</span>
+              <span className="text-zinc-500">
+                {typeof dd[key] === "string" ? fmtBrt(dd[key] as string) : "pending"}
+              </span>
+            </li>
+          ))}
           {extraRows.map(([key, v]) => (
             <li
               key={key}

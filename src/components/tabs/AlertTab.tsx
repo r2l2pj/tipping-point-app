@@ -5,7 +5,7 @@ import { cutsFor, fmtKm2, fmtPeople } from "@/lib/tpi";
 import type { CaseBundle, PriorityZone } from "@/lib/types";
 import TpiChart from "../TpiChart";
 import AgoraSources from "./AgoraSources";
-import { isMockDerived } from "./format";
+import { isMockDerived, pendingIncludes } from "./format";
 import { Stat } from "./Stat";
 
 export default function AlertTab({
@@ -23,7 +23,12 @@ export default function AlertTab({
   const threshold = typeof seriesThreshold === "number" && Number.isFinite(seriesThreshold)
     ? seriesThreshold : cutsFor(bundle)[2];
   const critical = zones.filter((z) => z.tpi >= threshold);
-  const reached = (bundle.series?.days[dayIndex]?.tpi ?? -Infinity) >= threshold;
+  const monitoring =
+    (!bundle.series && zones.length === 0) ||
+    pendingIncludes(bundle, "series") ||
+    pendingIncludes(bundle, "priority_zones");
+  const reached = !monitoring &&
+    (bundle.series?.days[dayIndex]?.tpi ?? -Infinity) >= threshold;
   const areaKm2 = critical.reduce((a, z) => a + z.area_km2, 0);
   const people = critical.reduce((a, z) => a + z.people, 0);
   const mock = isMockDerived(bundle);
@@ -35,7 +40,8 @@ export default function AlertTab({
     <div className="space-y-3">
       <div
         className={`rounded-md border p-3 ${
-          reached ? "border-red-800 bg-red-950/60" : "border-amber-800 bg-amber-950/40"
+          monitoring ? "border-zinc-700 bg-zinc-900"
+            : reached ? "border-red-800 bg-red-950/60" : "border-amber-800 bg-amber-950/40"
         }`}
       >
         <div className="flex items-center gap-2">
@@ -44,10 +50,12 @@ export default function AlertTab({
             <div className="flex items-center gap-2">
               <p
                 className={`text-sm font-bold tracking-wide ${
-                  reached ? "text-red-400" : "text-amber-400"
+                  monitoring ? "text-zinc-400"
+                    : reached ? "text-red-400" : "text-amber-400"
                 }`}
               >
-                {reached ? "TIPPING POINT REACHED" : "TIPPING POINT WATCH"}
+                {monitoring ? "MONITORING PENDING"
+                  : reached ? "TIPPING POINT REACHED" : "TIPPING POINT WATCH"}
               </p>
               {source && (
                 <span className="rounded border border-zinc-700 bg-zinc-900/70 px-1.5 py-0.5 text-xs text-zinc-400">
@@ -56,23 +64,27 @@ export default function AlertTab({
               )}
             </div>
             <p className="text-xs text-zinc-400">
-              {reached
-                ? "High likelihood of landslide and/or flooding in monitored areas."
-                : "Elevated risk in monitored areas — conditions trending toward the tipping point."}
+              {monitoring
+                ? "No risk data published for this case yet — the pipeline has not produced a TPI series or monitored zones."
+                : reached
+                  ? "High likelihood of landslide and/or flooding in monitored areas."
+                  : "Elevated risk in monitored areas — conditions trending toward the tipping point."}
             </p>
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-5">
-          <Stat big value={fmtKm2(areaKm2)} label="critical" />
-          <Stat big value={fmtPeople(people)} label="people exposed" />
-          {mock && (
-            <span className="ml-auto text-right text-xs leading-tight text-zinc-500">
-              Illustrative
-              <br />
-              demo data.
-            </span>
-          )}
-        </div>
+        {!monitoring && (
+          <div className="mt-3 flex items-center gap-5">
+            <Stat big value={fmtKm2(areaKm2)} label="critical" />
+            <Stat big value={fmtPeople(people)} label="people exposed" />
+            {mock && (
+              <span className="ml-auto text-right text-xs leading-tight text-zinc-500">
+                Data
+                <br />
+                pending.
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {bundle.series && <TpiChart series={bundle.series} dayIndex={dayIndex} />}
@@ -84,6 +96,11 @@ export default function AlertTab({
           Priority zones (TPI ≥ {threshold.toFixed(2)})
         </p>
         <ul className="divide-y divide-zinc-800 rounded-md border border-zinc-800">
+          {zones.length === 0 && (
+            <li className="px-2.5 py-2 text-xs text-zinc-500">
+              Pending — no monitored zones for this case.
+            </li>
+          )}
           {zones.map((z) => (
             <li key={z.rank} className="flex items-center gap-2.5 px-2.5 py-2">
               <span className="flex h-5 w-5 items-center justify-center rounded bg-red-700 text-xs font-bold text-white">

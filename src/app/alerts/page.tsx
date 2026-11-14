@@ -32,22 +32,34 @@ async function AlertsList() {
   ).catch(() => undefined);
 
   const candidates = now?.nowAlerts?.candidates;
+  const file = candidates?.length ? undefined : await getAlerts().catch(() => undefined);
+  if (!candidates?.length) {
+    if (!file) {
+      return (
+        <div className="rounded-md border border-dashed border-zinc-700 p-4 text-center">
+          <p className="text-sm font-medium text-zinc-300">Alerts feed pending</p>
+          <p className="mt-1 text-xs text-zinc-500">
+            The alert pipeline has not published for this cycle yet.
+          </p>
+        </div>
+      );
+    }
+    if (!file.alerts?.length) {
+      return (
+        <p className="text-sm text-zinc-500">
+          No active alerts — the monitor is running and the region is below the
+          alert threshold.
+        </p>
+      );
+    }
+  }
   const alerts: AlertCardData[] = candidates?.length
     ? candidatesToAlerts(candidates, {
         places: now?.places ?? now?.municipalities,
         issuedAt: now?.updated_at,
         dataDates: alertDataDates(now?.data_dates),
       })
-    : ((await getAlerts().catch(() => null))?.alerts ?? []);
-
-  if (alerts.length === 0) {
-    return (
-      <p className="text-sm text-zinc-500">
-        No active alerts — the monitor is running and the region is below the
-        alert threshold.
-      </p>
-    );
-  }
+    : (file?.alerts ?? []);
   const sorted = [...alerts].sort(
     (a, b) => (LEVEL_ORDER[a.level] ?? 9) - (LEVEL_ORDER[b.level] ?? 9)
   );
@@ -153,7 +165,7 @@ export default function AlertsPage() {
         </Suspense>
       </main>
       <footer className="border-t border-zinc-800 px-4 py-3 text-xs text-zinc-600">
-        Data: NASA GPM · SMAP · NASADEM · NISAR · Illustrative demo data.
+        Data: NASA GPM · SMAP · NASADEM · NISAR
       </footer>
     </div>
   );
