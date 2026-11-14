@@ -11,7 +11,7 @@ export type TabKey = "alert" | "radar" | "validation" | "impact";
 const TABS: { key: TabKey; label: string }[] = [
   { key: "alert", label: "ALERT" },
   { key: "radar", label: "RADAR" },
-  { key: "validation", label: "Acertamos?" },
+  { key: "validation", label: "Did we get it right?" },
   { key: "impact", label: "IMPACT" },
 ];
 

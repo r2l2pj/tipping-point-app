@@ -40,7 +40,7 @@ export default function AgoraSources({ bundle }: { bundle: CaseBundle }) {
     <>
       <div className="rounded-md border border-zinc-800 p-3">
         <p className="mb-2 text-xs font-medium text-zinc-300">
-          Agora — live run
+          Now — live run
           {bundle.updated_at && (
             <span className="font-normal text-zinc-500">
               {" "}

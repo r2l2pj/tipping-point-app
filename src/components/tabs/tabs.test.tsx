@@ -100,6 +100,56 @@ describe("radar tab", () => {
   });
 });
 
+describe("radar tab NISAR gating", () => {
+  test("replay without a pair: observed reference card, no NISAR label", () => {
+    const html = render(
+      "radar",
+      bundle({
+        metricsView: { flooded_km2: 118.3 },
+        data_dates: { nisar_pre: null, nisar_post: null },
+      })
+    );
+    expect(html).not.toContain("Flooded area (NISAR)");
+    expect(html).toContain("No radar for this event (before NISAR launch)");
+    expect(html).toContain("Flooded area (observed reference)");
+    expect(html).toContain("118.3 km");
+  });
+
+  test("flood_source 'opera' labels the card optical/OPERA", () => {
+    const html = render(
+      "radar",
+      bundle({
+        metricsView: {
+          flooded_km2: 118.3,
+          flood_source: "opera",
+        } as CaseBundle["metricsView"],
+        data_dates: { nisar_pre: null, nisar_post: null },
+      })
+    );
+    expect(html).toContain("Flooded area (optical/OPERA reference)");
+    expect(html).not.toContain("Flooded area (NISAR)");
+  });
+
+  test("a data_dates pair shows the NISAR card and the date line", () => {
+    const html = render(
+      "radar",
+      bundle({
+        metricsView: { flooded_km2: 41.6 },
+        data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" },
+      })
+    );
+    expect(html).toContain("Flooded area (NISAR)");
+    expect(html).toContain("Dec 4, 2025");
+    expect(html).not.toContain("No radar for this event");
+  });
+
+  test("live case without a pair keeps the awaiting copy", () => {
+    const html = render("radar", bundle({ mode: "live" }));
+    expect(html).toContain("Awaiting a NISAR pair over the AOI.");
+    expect(html).not.toContain("No radar for this event");
+  });
+});
+
 describe("banned strings", () => {
   test("no 'confirmed scar/landslide' and no 'WorldPop' in any tab", () => {
     const b = bundle({

@@ -432,7 +432,7 @@ export function useMapLayers(
       fcastMarker.current = new Marker({ element: el, anchor: "top" });
     }
     fcastMarker.current.getElement().textContent =
-      forecastSourceLabel(bundle.manifest?.forecast_source) ?? "previsão";
+      forecastSourceLabel(bundle.manifest?.forecast_source) ?? "forecast";
     if (tpiOn && isForecast) {
       const b = activePng?.bounds ?? bundle.bbox;
       fcastMarker.current

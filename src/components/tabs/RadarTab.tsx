@@ -35,6 +35,16 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
   const postLayer = ml.find((l) => l.id === "nisar_post");
   const preUrl = assetUrl(caseDir, preLayer?.png);
   const postUrl = assetUrl(caseDir, postLayer?.png);
+  const hasNisarPair = Boolean(
+    (pre && post) ||
+      (preLayer &&
+        postLayer &&
+        (preUrl || assetUrl(caseDir, preLayer.cog)) &&
+        (postUrl || assetUrl(caseDir, postLayer.cog)))
+  );
+  const floodSource = (
+    bundle.metricsView as { flood_source?: string } | undefined
+  )?.flood_source;
   const swipe =
     preLayer && postLayer && preUrl && postUrl
       ? {
@@ -56,11 +66,25 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
-        <StatCard
-          label="Flooded area (NISAR)"
-          value={fmtKm2(bundle.metricsView?.flooded_km2)}
-          accent="blue"
-        />
+        {hasNisarPair ? (
+          <StatCard
+            label="Flooded area (NISAR)"
+            value={fmtKm2(bundle.metricsView?.flooded_km2)}
+            accent="blue"
+          />
+        ) : (
+          bundle.metricsView?.flooded_km2 != null && (
+            <StatCard
+              label={
+                floodSource === "opera"
+                  ? "Flooded area (optical/OPERA reference)"
+                  : "Flooded area (observed reference)"
+              }
+              value={fmtKm2(bundle.metricsView.flooded_km2)}
+              accent="blue"
+            />
+          )
+        )}
         <StatCard
           label="Landslide scar candidates (HLS optical)"
           value={candidates == null ? "—" : String(candidates)}
@@ -76,10 +100,16 @@ export default function RadarTab({ bundle }: { bundle: CaseBundle }) {
           NISAR GCOV — before / after
         </p>
         <p className="mt-1 text-xs text-zinc-500">
-          {pre && post
-            ? `${fmtDate(pre)} → ${fmtDate(post)}. `
-            : "Awaiting a NISAR pair over the AOI. "}
-          {swipe && "Drag the divider below to compare."}
+          {hasNisarPair ? (
+            <>
+              {pre && post ? `${fmtDate(pre)} → ${fmtDate(post)}. ` : null}
+              {swipe ? "Drag the divider below to compare." : null}
+            </>
+          ) : bundle.mode === "live" ? (
+            "Awaiting a NISAR pair over the AOI."
+          ) : (
+            "No radar for this event (before NISAR launch). The optical/observed reference is shown where available."
+          )}
         </p>
       </div>
 
