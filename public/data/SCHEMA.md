@@ -306,6 +306,12 @@ at its blob via the `metrics` field (`"metrics.json#rs_2024"`).
   never overwrites a written non-null value.
 - `iou`/`f1`/AUCs are 0–1 ratios; `*_pct` keys are 0–100 (the app normalizes
   `> 1` values to 0–1 for display).
+- `hand_validation` is a scalar 0–100 percentage: the HAND<5 m zone IoU
+  against MERIT at the selected radius, suitable for the app `MetricsV4`
+  percentage renderer. `hand_validation_radii` preserves per-radius `{r, iou}`
+  ratios; `hand_best_radius_m` is selected by maximum `r + iou` and written
+  back to `config.yaml` `thresholds.hand_proxy_radius_m`. No valid comparison
+  produces null plus `_null_reasons`, not an object in `hand_validation`.
 - `rf_auc` is the XGBoost model AUC — the key name stays for contract
   stability; public text says "XGBoost". Detailed sub-results may nest under
   extra sections (e.g. `landslide_ml`); the keys above stay flat.

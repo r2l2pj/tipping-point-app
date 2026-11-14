@@ -35,11 +35,11 @@
       "gee_id": "projects/hermes-fesolucoes/assets/tipping-point/wa_2025/landslide_catalog",
       "kind": "table",
       "status": "ingesting",
-      "ingested_at": "2026-11-14T19:16:20.095516Z",
-      "features": 259,
-      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data-wt/realrun/data/wa_2025/geojson/landslide_catalog.geojson",
-      "operation": "OQ4YUYI7DWFIBVNR7T7KNJCS"
+      "ingested_at": "2026-11-14T19:29:50.465885Z",
+      "features": 15,
+      "source": "/home/lucascoelho/code/r2l2pj/tipping-point-data/data/wa_2025/geojson/landslide_catalog.geojson",
+      "operation": "PWDJ4BCVJGWDNTXOHD7E2YYE"
     }
   ],
-  "updated_at": "2026-11-14T19:16:20.096311Z"
+  "updated_at": "2026-11-14T19:29:50.466125Z"
 }

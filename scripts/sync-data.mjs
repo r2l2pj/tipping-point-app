@@ -3,7 +3,7 @@
 // now/ is copied only when its manifest's updated_at is non-null — the
 // pipeline writes that file LAST, so a null/absent one means a run is in
 // progress (or no live bundle exists yet).
-import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const SRC = process.env.DATA_REPO
@@ -17,6 +17,19 @@ if (!existsSync(SRC)) {
   process.exit(0);
 }
 mkdirSync(DEST, { recursive: true });
+
+// Snapshot the existing bundled metrics before the copy overwrites it —
+// metrics.json is merged, not replaced: the app ships flagged placeholder
+// keys (lead_time_assumptions.quality: "placeholder", plus cases the pipeline
+// has not emitted yet — e.g. rs_2024 metrics) that must survive every sync.
+// Repo values always win per key; app-only cases and keys are preserved.
+const METRICS = "metrics.json";
+const repoMetrics = path.join(SRC, METRICS);
+const destMetrics = path.join(DEST, METRICS);
+const appMetrics = existsSync(destMetrics)
+  ? readFileSync(destMetrics, "utf-8")
+  : undefined;
+
 cpSync(SRC, DEST, {
   recursive: true,
   filter: (src) =>
@@ -25,6 +38,17 @@ cpSync(SRC, DEST, {
     !src.startsWith(NOW + path.sep),
 });
 console.log(`sync-data: ${SRC} -> ${DEST}`);
+
+if (existsSync(repoMetrics) && appMetrics !== undefined) {
+  const repo = JSON.parse(readFileSync(repoMetrics, "utf-8"));
+  const app = JSON.parse(appMetrics);
+  const cases = { ...app.cases };
+  for (const [id, m] of Object.entries(repo.cases ?? {})) {
+    cases[id] = { ...(app.cases?.[id] ?? {}), ...m };
+  }
+  writeFileSync(destMetrics, JSON.stringify({ ...app, ...repo, cases }, null, 2) + "\n");
+  console.log("sync-data: metrics.json merged (repo wins, app placeholders kept)");
+}
 
 const nowManifest = path.join(NOW, "manifest.json");
 if (!existsSync(nowManifest)) {
