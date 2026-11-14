@@ -3,7 +3,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { BotDeps, Simular } from "./bot";
-import { FirestoreStore } from "./firestore-store";
+import { NeonStore } from "./neon-store";
 import memoryStore from "./store";
 
 const send: BotDeps["send"] = async (chatId, text, replyMarkup) => {
@@ -46,12 +46,13 @@ let deps: BotDeps | null = null;
 
 export function depsFromEnv(): BotDeps {
   if (!deps) {
-    const sa = process.env.GCP_SA_KEY;
-    deps = {
-      send,
-      store: sa ? new FirestoreStore(JSON.parse(sa)) : memoryStore,
-      fetchSimular,
-    };
+    let store: BotDeps["store"] = memoryStore;
+    try {
+      if (process.env.DATABASE_URL) store = new NeonStore(process.env.DATABASE_URL);
+    } catch {
+      store = memoryStore;
+    }
+    deps = { send, store, fetchSimular };
   }
   return deps;
 }
