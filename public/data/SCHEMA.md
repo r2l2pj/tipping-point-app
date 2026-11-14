@@ -101,16 +101,19 @@ the app uses it for layer hints).
         { "id": "tpi_slide", "date": "2024-05-02",
           "png": "rs_2024/png/tpi_slide_20240502.png",
           "cog": "rs_2024/cog/rs_2024_tpi_slide_20240502.tif",
+          "asset": "projects/<GEE_PROJECT>/assets/tipping-point/rs_2024/tpi_slide_series",
           "legend": ["Baixo", "Moderado", "Alto", "Crítico"],
           "bounds": [-52.6, -30.6, -50.4, -28.9] },
         { "id": "tpi_slide_d1", "date": "2024-05-03",
           "png": "rs_2024/png/tpi_slide_d1_20240503.png",
           "cog": "rs_2024/cog/rs_2024_tpi_forecast_d1_20240502.tif",
+          "asset": null,
           "legend": ["Baixo", "Moderado", "Alto", "Crítico"],
           "bounds": [-52.6, -30.6, -50.4, -28.9],
           "forecast": true },
         { "id": "r_series", "date": "2024-05-02",
-          "png": null, "cog": "rs_2024/cog/rs_2024_r_series_20240502.tif" }
+          "png": null, "cog": "rs_2024/cog/rs_2024_r_series_20240502.tif",
+          "asset": "projects/<GEE_PROJECT>/assets/tipping-point/rs_2024/r_series" }
       ],
       "metrics": "metrics.json#rs_2024",
       "data_dates": { "imerg": "2024-05-02", "smap": "2024-04-30" },
@@ -143,7 +146,7 @@ the app uses it for layer hints).
 
 ### Layer fields
 
-`{id, date, png, cog, legend, bounds, forecast?}`:
+`{id, date, png, cog, asset, legend, bounds, forecast?}`:
 
 - `id` — one of the layer ids below; repeated ids with different `date`s are
   a per-day series.
@@ -152,6 +155,10 @@ the app uses it for layer hints).
   COG-only layers (`bounds`/`legend` then unused).
 - `cog` — download/reproducibility raster (EPSG:4326 or NISAR native); may be
   `null` on PNG layers, required on COG-only layers.
+- `asset` — full GEE asset id backing the layer
+  (`projects/<GEE_PROJECT>/assets/tipping-point/...`), or `null` for
+  file-only layers. `asset` is the primary source (served via the app
+  server); `png`/`cog` stay as fallback — see "GEE assets".
 - `legend` — pt-BR class names in index order, pinned exactly as
   `live/config.py LABELS`: `["Baixo", "Moderado", "Alto", "Crítico"]` for
   class values 0–3. The app maps by index to its own label names — order
@@ -325,9 +332,12 @@ everything else. Overwritten every 3 h by `live/run_now.py` via
   "layers": [
     { "id": "tpi_slide_d0", "date": "2026-11-15",
       "png": "png/tpi_slide_d0.png", "cog": "cog/tpi_slide_today.tif",
+      "asset": "projects/<GEE_PROJECT>/assets/tipping-point/now/tpi_slide_d0",
       "legend": ["Baixo", "Moderado", "Alto", "Crítico"],
       "bounds": [-58.0, -34.0, -48.0, -22.5], "forecast": false },
-    { "id": "tpi_slide_d1", "forecast": true, "...": "..." }
+    { "id": "tpi_slide_d1", "forecast": true,
+      "asset": "projects/<GEE_PROJECT>/assets/tipping-point/now/tpi_slide_d1",
+      "...": "..." }
   ],
   "products": { "critical_areas": "geojson/critical_areas.geojson",
                 "summary": "summary.json", "alerts": "alerts.json" },
@@ -372,6 +382,38 @@ sending and rate limiting.
 `prev_classes.npz` is internal state for upgrade detection between runs —
 not app-read.
 
+## GEE assets
+
+The rasters also live under the GEE asset namespace
+`projects/<GEE_PROJECT>/assets/tipping-point/` so the app server can read
+them server-side (geotiff.js/ee range reads). Tree:
+
+```
+tipping-point/
+├── static/<domain>/             # domain = south_brazil | wa_2025
+│   ├── clim_rain                # ImageCollection, 366 images, `doy` property;
+│   │                            #   bands p90|p95|p99 = 3-day-sum mm percentiles (~10 km)
+│   ├── slope                    # degrees
+│   └── hand                     # metres
+├── <case>/                      # rs_2024, wa_2025
+│   ├── tpi_slide_series, tpi_flood_series, r_series, s_series
+│   │                            # multiband, one band per day named YYYYMMDD
+│   ├── t_slide, t_flood         # single-band static terrain scores
+│   ├── landslide_candidates_hls
+│   └── ...                      # further ingested rasters — names in data/<case>/assets.json
+└── now/
+    ├── imerg_early, smap_l4, geosfp                            # input collections
+    └── tpi_slide_d0..d3, tpi_flood_d0..d3, r_d0..d3, s_d0..d3   # single-day images
+```
+
+- Every derived asset carries the image properties `data_date`
+  (YYYY-MM-DD) and `updated_at` (ISO-8601) — readers can check freshness
+  without the manifest.
+- Reader rule: a manifest layer's `asset` is the PRIMARY source (served via
+  the app server); `png`/`cog` remain the fallback, unchanged.
+- Extra ingested rasters beyond the names above are recorded by asset id in
+  `data/<case>/assets.json` (per case, written by the gathering ingest tool).
+
 ## Who writes what
 
 | File | Writer |
@@ -391,6 +433,8 @@ not app-read.
 | `data/<case>/series/<caso>_swot_<AAAAMMDD>.json` | `pipeline/scripts/05_swot.py` / `tp/swot.py` |
 | `data/<case>/nisar_products.json` | `pipeline/scripts/01_get_nisar.py` / `tp/nisar.py` (granule ids → `collections`) |
 | `data/now/*` | `live/run_now.py` (static grid `static/sul_static.npz` from `live/build_static.py`) |
+| `projects/<GEE_PROJECT>/assets/tipping-point/**` | `python -m gee.tpi` (static/<case>), `live/run_now.py` (now/), publish ingest (`tools/publish_case.py`) |
+| `data/<case>/assets.json` | lead-gathering ingest tool — records extra ingested asset ids per case |
 | `data/raw/**` | fetch scripts (NISAR, OPERA DSWx, HLS, MODIS NRT) — gitignored |
 | `simular.json` | `tools/build_simular.py` — an **app-side fixture** for the Telegram `/simular` demo, NOT a contract product |
 
