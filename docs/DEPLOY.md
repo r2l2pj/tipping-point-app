@@ -22,8 +22,7 @@ is ever committed; `.gitignore` already blocks the usual key file patterns.
 | `DATA_BASE_URL` | Optional fallback data base URL override. Defaults to `https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`; bundled `public/data` is the last resort on a remote miss. |
 | `GEE_PROJECT` | Google Cloud project registered for the Earth Engine API. |
 | `GCP_SA_KEY` | Service-account JSON key (single line) for Earth Engine access. Server-side only — never `NEXT_PUBLIC_`-prefixed. |
-| `SUPABASE_URL` | Supabase project URL for the Telegram subscriber store, accessed via REST/PostgREST with plain fetch/requests and no SDK dependency. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Secret service role key for server-side subscriber access only. Never expose to browser code or commit it. |
+| `DATABASE_URL` | Secret Neon Postgres connection string for server-only Telegram subscriber access via HTTPS SQL using plain fetch/requests, with no new dependency. Never expose to browser code or commit it. |
 | `TELEGRAM_TOKEN` | Bot token from BotFather, used to call the Telegram Bot API. |
 | `TELEGRAM_SECRET` | Shared secret Telegram sends as `X-Telegram-Bot-Api-Secret-Token`; the webhook route verifies it. |
 | `APP_URL` | Canonical public URL of the deployment (e.g. `https://<project>.vercel.app`), used to register the webhook. |
@@ -43,10 +42,10 @@ updating fallback data does not require a redeploy. The copy bundled into
 `public/data` by `bun run sync:data` is the last resort when a remote read
 fails; it is not the live source of truth.
 
-## Telegram subscriber store (Supabase)
+## Telegram subscriber store (Neon)
 
-Only the Telegram subscriber store needs a database. Create a free Supabase
-project and run `supabase/schema.sql` in its SQL editor. The `subscribers`
+Only the Telegram subscriber store needs a database. Create a free Neon
+Postgres project and run `db/schema.sql` in its SQL editor. The `subscribers`
 table has this schema:
 
 ```sql
@@ -63,11 +62,15 @@ create table subscribers (
 );
 ```
 
-Enable RLS; only the service role key may write subscribers. Access is through
-REST/PostgREST with plain fetch/requests, not a new SDK dependency. Copy
-`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` into both the Vercel environment
-and the data repo's GitHub Actions secrets. The service role key is secret,
-server-side only, never browser-exposed or committed.
+Access is server-only using the connection string, with no RLS requirement.
+Use Neon's HTTPS SQL endpoint with plain `fetch` in the app and `requests`
+in the data pipeline, with no new dependency: `POST https://<host>/sql`,
+header `Neon-Connection-String: <DATABASE_URL>`, `Content-Type: application/json`,
+and JSON body `{ "query": "<parameterized SQL>", "params": [] }`. Use bound
+parameters for subscriber values. Copy the secret `DATABASE_URL` into both
+the Vercel environment and the data repo's GitHub Actions secrets; never
+expose it to browser code or commit it. If this endpoint proves unreliable,
+ask the conductor before adding a driver dependency.
 
 LGPD rules are unchanged: round coordinates to two decimal places, record
 the consent flag, and delete the subscriber row on `/parar`.
@@ -81,8 +84,7 @@ All runtime services must stay on free tiers; no paid plan is required.
 - `raw.githubusercontent.com`: fallback small files only; no large COGs.
 - Vercel Hobby: set API routes' `maxDuration` within the plan's function
   duration limit.
-- Supabase free: projects pause after seven idle days; the three-hourly
-  alert job touching the subscriber table keeps it active.
+- Neon free: scales to zero and wakes on query; no keep-alive is needed.
 - Earthdata and Telegram Bot API: use their free access.
 
 ## Telegram webhook
@@ -102,15 +104,18 @@ GEE-first architecture: app tiles and numbers resolve through our `/api`
 routes against Earth Engine; the static manifest + raw branch copy stays the
 fallback contract the app degrades to. Workflows on the data repo:
 
-- `now.yml` — every 3 h: IMERG Early + SMAP L4 + GEOS-FP ingest →
+- `now.yml` — every 6 h (cron `0 */6 * * *`) + `workflow_dispatch`:
+  IMERG Early + SMAP L4 + GEOS-FP ingest →
   `tipping-point/now/` asset collections → TPI + D+1..D+3 in GEE → last-good
   static copy on the force-pushed `fallback` branch (`manifest.json` written last).
 - `nisar.yml` — daily: `asf_search` for new GCOV granules over the case AOIs
   and active alert areas.
-- `validation.yml` — daily while a case is active: OPERA DSWx + SWOT
-  Hydrocron table asset.
-- `reference.yml` — weekly/manual: landslide catalogs + municipal
-  boundaries.
+- `validation.yml` — daily: OPERA DSWx + SWOT Hydrocron table asset.
+- `reference.yml` — weekly + `workflow_dispatch`: landslide catalogs +
+  municipal boundaries.
+
+Freshness copy is “updated X h ago” against the six-hour refresh cadence.
+The stale-data warning threshold is **12 h** since the data update timestamp.
 
 Secrets (`EARTHDATA_TOKEN` ~60-day renewal, `GCP_SA_KEY`) live in GitHub
 secrets; a missing/expired token fails the job loudly. Jobs are idempotent,
@@ -137,5 +142,5 @@ until they exist.
 - Vercel project created with the env vars above.
 - `GEE_PROJECT` registered for the Earth Engine API with a service account.
 - Telegram bot token from BotFather.
-- Free Supabase project with `supabase/schema.sql` applied, RLS enabled, and
-  URL + service role key configured in Vercel and GitHub Actions secrets.
+- Free Neon Postgres project with `db/schema.sql` applied and server-only
+  `DATABASE_URL` configured in Vercel and GitHub Actions secrets.
