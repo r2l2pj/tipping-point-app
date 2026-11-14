@@ -8,6 +8,8 @@ import SidePanel, { type TabKey } from "../SidePanel";
 import { normalizeLeadTimeHist } from "../charts/LeadTimeHistogram";
 import Timeline from "../Timeline";
 import { fmtBrt } from "./format";
+import { cutsFor, tpiClass } from "../../lib/tpi";
+import { fmtDate } from "../../lib/layers";
 
 const noop = () => {};
 
@@ -20,14 +22,14 @@ const bundle = (over: Partial<CaseBundle> = {}): CaseBundle => ({
   ...over,
 });
 
-const render = (tab: TabKey, b: CaseBundle) =>
+const render = (tab: TabKey, b: CaseBundle, dayIndex = 0) =>
   renderToStaticMarkup(
     <SidePanel
       tab={tab}
       onTab={noop}
       bundle={b}
       zones={[]}
-      dayIndex={0}
+      dayIndex={dayIndex}
       onConfirmRadar={noop}
     />
   );
@@ -56,6 +58,52 @@ const FULL_METRICS: CaseBundle["metricsView"] = {
   feature_importance: { imerg_p95_mm: 0.41, smap_l4: 0.33, nasadem_slope: 0.26 },
   forecast_source: "perfect-forecast",
 };
+
+describe("alert playback and contract values", () => {
+  const replay = bundle({ series: {
+    event: "wa_2025", reference_date: "2025-12-10", tpi_threshold: 0.75,
+    days: [0.7, 0.75, 0.4].map((tpi, offset) => ({
+      date: `2025-12-${10 + offset}`, offset, kind: "observed", tpi, imerg_mm: 10, smap: 0.9,
+    })),
+  } });
+
+  test("reached follows the selected day, including equality and rewinding", () => {
+    for (const index of [0, 2, 9, 0]) {
+      expect(render("alert", replay, index)).toContain("TIPPING POINT WATCH");
+    }
+    expect(render("alert", replay, 1)).toContain("TIPPING POINT REACHED");
+    expect(render("alert", bundle())).toContain("TIPPING POINT WATCH");
+  });
+
+  test("class cuts supply the threshold when the series has none", () => {
+    const b = { ...replay, classCuts: [0.1, 0.3, 0.8],
+      series: { ...replay.series!, tpi_threshold: undefined } };
+    expect(render("alert", b, 1)).toContain("TIPPING POINT WATCH");
+    expect(render("alert", b, 1)).toContain("Priority zones (TPI ≥ 0.80)");
+  });
+
+  test("cuts are validated and resolve bundle before manifest before defaults", () => {
+    expect(cutsFor()).toEqual([0.2, 0.4, 0.6]);
+    for (const classCuts of [[0.4, 0.2, 0.6], [0.1, NaN, 0.8], [0.1, 0.2], [-1, 0.3, 0.8]]) {
+      expect(cutsFor({ classCuts })).toEqual([0.2, 0.4, 0.6]);
+    }
+    const b = { classCuts: [0.1, 0.3, 0.8], manifest: { tpi_cuts: [0.2, 0.5, 0.9] } };
+    expect(cutsFor(b)).toEqual([0.1, 0.3, 0.8]);
+    expect(cutsFor({ manifest: b.manifest })).toEqual([0.2, 0.5, 0.9]);
+    expect(cutsFor({ classCuts: null, manifest: b.manifest })).toEqual([0.2, 0.5, 0.9]);
+    expect(cutsFor({ manifest: { classes: [0.1, 0.3, 0.8] } })).toEqual([0.1, 0.3, 0.8]);
+    expect(cutsFor({ manifest: { classes: [{ min: 0 }, { min: 0.1 }, { min: 0.3 }, { min: 0.8 }] } })).toEqual([0.1, 0.3, 0.8]);
+    expect(tpiClass(0.7, b).key).toBe("high");
+    expect(tpiClass(0.8, b).key).toBe("critical");
+  });
+
+  test("canonical dates preserve calendar dates and render timestamps in BRT", () => {
+    expect(fmtDate("2026-11-11")).toBe("Nov 11, 2026");
+    expect(fmtDate("2026-11-11T01:00:00Z")).toBe("Nov 10, 2026");
+    expect(fmtDate(null)).toBe("—");
+    expect(fmtDate("invalid")).toBe("invalid");
+  });
+});
 
 describe("validation tab on metricsView", () => {
   test("cloud_pct 0.95 renders 'the optical saw only 5%'", () => {

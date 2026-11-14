@@ -1,7 +1,7 @@
 "use client";
 
 import { forecastSourceLabel } from "@/lib/contract";
-import { fmtKm2, fmtPeople } from "@/lib/tpi";
+import { cutsFor, fmtKm2, fmtPeople } from "@/lib/tpi";
 import type { CaseBundle, PriorityZone } from "@/lib/types";
 import TpiChart from "../TpiChart";
 import AgoraSources from "./AgoraSources";
@@ -19,8 +19,11 @@ export default function AlertTab({
   dayIndex: number;
   onConfirmRadar: () => void;
 }) {
-  const critical = zones.filter((z) => z.tpi >= 0.6);
-  const reached = critical.length > 0;
+  const seriesThreshold = bundle.series?.tpi_threshold;
+  const threshold = typeof seriesThreshold === "number" && Number.isFinite(seriesThreshold)
+    ? seriesThreshold : cutsFor(bundle)[2];
+  const critical = zones.filter((z) => z.tpi >= threshold);
+  const reached = (bundle.series?.days[dayIndex]?.tpi ?? -Infinity) >= threshold;
   const areaKm2 = critical.reduce((a, z) => a + z.area_km2, 0);
   const people = critical.reduce((a, z) => a + z.people, 0);
   const mock = isMockDerived(bundle);
@@ -78,7 +81,7 @@ export default function AlertTab({
 
       <div>
         <p className="mb-1.5 text-xs font-medium text-zinc-300">
-          Priority zones (TPI ≥ 0.60)
+          Priority zones (TPI ≥ {threshold.toFixed(2)})
         </p>
         <ul className="divide-y divide-zinc-800 rounded-md border border-zinc-800">
           {zones.map((z) => (

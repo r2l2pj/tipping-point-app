@@ -1,20 +1,39 @@
 // TPI classes, palette and the synthetic grid used while no real COG exists.
 // Palette per project doc v3 (ColorBrewer YlOrRd, colorblind-safe).
 
+const DEFAULT_CUTS: [number, number, number] = [0.2, 0.4, 0.6];
+
+export function cutsFor(bundle?: unknown): [number, number, number] {
+  const b = bundle && typeof bundle === "object" ? bundle as Record<string, unknown> : {};
+  const manifest = b.manifest && typeof b.manifest === "object"
+    ? b.manifest as Record<string, unknown> : {};
+  for (const candidate of [b.classCuts, manifest.tpi_cuts, manifest.classes]) {
+    const cuts = Array.isArray(candidate) && candidate.length === 4 &&
+      candidate.every((c) => c && typeof c === "object" && "min" in c)
+      ? candidate.slice(1).map((c) => c.min) : candidate;
+    if (Array.isArray(cuts) && cuts.length === 3 &&
+      cuts.every((v) => typeof v === "number" && Number.isFinite(v) && v > 0 && v < 1) &&
+      cuts[0] < cuts[1] && cuts[1] < cuts[2]) {
+      return [cuts[0], cuts[1], cuts[2]];
+    }
+  }
+  return [...DEFAULT_CUTS];
+}
+
 export const TPI_CLASSES = [
-  { key: "low", label: "Low", min: 0.0, max: 0.2, color: "#FFFFB2", opacity: 0.0 },
-  { key: "moderate", label: "Moderate", min: 0.2, max: 0.4, color: "#FECC5C", opacity: 0.65 },
-  { key: "high", label: "High", min: 0.4, max: 0.6, color: "#FD8D3C", opacity: 0.65 },
-  { key: "critical", label: "Critical", min: 0.6, max: 1.0, color: "#BD0026", opacity: 0.75 },
+  { key: "low", label: "Low", min: 0.0, max: DEFAULT_CUTS[0], color: "#FFFFB2", opacity: 0.0 },
+  { key: "moderate", label: "Moderate", min: DEFAULT_CUTS[0], max: DEFAULT_CUTS[1], color: "#FECC5C", opacity: 0.65 },
+  { key: "high", label: "High", min: DEFAULT_CUTS[1], max: DEFAULT_CUTS[2], color: "#FD8D3C", opacity: 0.65 },
+  { key: "critical", label: "Critical", min: DEFAULT_CUTS[2], max: 1.0, color: "#BD0026", opacity: 0.75 },
 ] as const;
 
-export const TPI_THRESHOLD = 0.6;
+export const TPI_THRESHOLD = DEFAULT_CUTS[2];
 
-export function tpiClass(v: number) {
-  return (
-    TPI_CLASSES.find((c) => v >= c.min && v < c.max) ??
-    TPI_CLASSES[TPI_CLASSES.length - 1]
-  );
+export function tpiClass(v: number, bundle?: unknown) {
+  const cuts = cutsFor(bundle);
+  const index = cuts.findIndex((cut) => v < cut);
+  const i = index < 0 ? 3 : index;
+  return { ...TPI_CLASSES[i], min: i === 0 ? 0 : cuts[i - 1], max: i === 3 ? 1 : cuts[i] };
 }
 
 interface Hotspot {
@@ -204,14 +223,4 @@ export function fmtPct(v?: number) {
   return v == null ? "—" : `${Math.round(v * 100)}%`;
 }
 
-export function fmtDate(iso?: string | null) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
+export { fmtDate } from "./layers";

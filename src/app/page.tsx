@@ -19,6 +19,7 @@ async function DashboardLoader() {
   // hardcoded date.
   const now = await getCaseBundle("now", "Now — Southern Brazil", [-58, -34, -48, -22.5], "2026-11-14");
   if (now.manifest) {
+    now.bbox = now.manifest.bounds ?? now.bbox;
     now.reference_date = now.manifest.updated_at?.slice(0, 10) ?? now.reference_date;
     cases.push(now);
   }

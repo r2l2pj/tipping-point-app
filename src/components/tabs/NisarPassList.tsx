@@ -1,5 +1,5 @@
 import type { NisarPass } from "@/lib/types";
-import { fmtDate } from "@/lib/tpi";
+import { fmtDate } from "@/lib/layers";
 
 // Recent NISAR acquisitions over the AOI — rendered from whatever
 // data_dates.nisar_passes carries (e.g. wa_2025: Nov 10 no-event reference,
