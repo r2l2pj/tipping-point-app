@@ -1,6 +1,6 @@
 # floodsrc implementation
 
-Status: implementation complete within scope; full-suite acceptance BLOCKED by an out-of-scope assertion. No scope expansion or model switch.
+Status: complete, including the conductor-authorized one-line scope extension described below. Full suite and production build now pass. No model switch.
 
 Branch: unit/floodsrc. Verification ran on base SHA 95cf6166c90944476cfa21ba7257ee751e4e8ce6 plus the changes committed with this report.
 
@@ -23,6 +23,14 @@ Branch: unit/floodsrc. Verification ran on base SHA 95cf6166c90944476cfa21ba7257
 - `bun test src/lib/contract.test.ts` final targeted verification: 26 pass, 0 fail, 92 expect() calls, 26 tests across 1 file.
 - `hc send t6b ...`: blocker reported to lead-integration; delivered successfully.
 
-## Required follow-up
+## Authorized follow-up — resolved
 
-Conductor/front must update the out-of-scope tabs.test.tsx:150 assertion to "perfect forecast" and rerun `bun test`, or explicitly authorize that test-file scope. No dependency, UI implementation, numeric field rename, or other file changes were made.
+After initial commit 151c1d4, t6b relayed conductor authorization to change exactly one line in src/components/tabs/tabs.test.tsx:150. Changed only `expect(replay).toContain("previsão perfeita")` to `expect(replay).toContain("perfect forecast")`. Nothing else in that file changed. This follow-up is committed separately rather than rewriting history.
+
+Verification ran on SHA 151c1d4 plus the authorized one-line assertion patch (the code tree of this follow-up commit):
+
+- `bun test`: exit 0; `198 pass`, `0 fail`, `564 expect() calls`, `Ran 198 tests across 13 files.`
+- `bun run build`: exit 0. Prebuild sync skipped because the sibling tipping-point-data/data directory was absent (no data overwritten). `Compiled successfully in 12.9s`; `Finished TypeScript in 3.5s`; `Generating static pages ... (11/11)` completed; route table emitted.
+- Lint evidence remains the successful `bun run lint` above: 0 errors. The only subsequent code change is the authorized test assertion string.
+
+No dependency, UI implementation, or numeric field rename changes. The full-suite blocker is resolved.

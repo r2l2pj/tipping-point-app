@@ -147,7 +147,7 @@ describe("alert tab 'Illustrative demo data' marker", () => {
         },
       })
     );
-    expect(replay).toContain("previsão perfeita");
+    expect(replay).toContain("perfect forecast");
 
     const live = render(
       "alert",
