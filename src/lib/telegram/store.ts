@@ -18,9 +18,8 @@ export interface SubscriberStore {
   delete(chatId: number | string): Promise<void>;
 }
 
-// Process-local store — the default when GCP_SA_KEY is unset (dev, previews,
-// cred-blocked deploys). Resets on cold start; FirestoreStore is the durable
-// swap-in.
+// Process-local fallback store; resets on cold start. Durable backends are
+// NeonStore/SqliteStore, chosen by DATABASE_URL in deps.ts.
 export class MemoryStore implements SubscriberStore {
   private subs = new Map<string, Subscriber>();
 

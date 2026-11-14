@@ -1,5 +1,5 @@
-// Builds BotDeps from env. Memoized module-level so the MemoryStore (and the
-// Firestore token cache) persist across warm invocations of the route.
+// Builds BotDeps from env. Memoized module-level so MemoryStore/SqliteStore/
+// NeonStore persist across warm invocations of the route.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { BotDeps, Simular } from "./bot";
