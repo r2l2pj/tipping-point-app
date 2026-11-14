@@ -2,6 +2,7 @@
 import { describe, expect, test } from "bun:test";
 import { bundle, liveBundle, manifest, point } from "./fixtures";
 import { nightLightsCompare, radarCard, radarCompare } from "./radar";
+import { sourceRows } from "./sources";
 import { evidence, replayCheckRows } from "./replayCheck";
 import type { CcBundle } from "./types";
 
@@ -145,6 +146,21 @@ describe("radar card", () => {
   test("the pass list comes from data_dates", () => {
     const passes = [{ date: "2025-11-10", track: "T048", note: "no-event reference" }];
     expect(radarCard(bundle({ data_dates: { nisar_passes: passes } })).passes).toEqual(passes);
+  });
+
+  test("passes of the live run are read: acquired, path, direction", () => {
+    const live = [
+      { granule: "NISAR_L0_A", acquired: "2026-11-13T21:25:37Z", path: 125, direction: "DESCENDING" },
+      { granule: "NISAR_L0_B", acquired: "2026-11-14T09:37:37Z", path: 132, direction: "ASCENDING" },
+      { granule: "NISAR_L0_C" },
+    ];
+    const b = bundle({ mode: "live", nisarPasses: live as never });
+    // Newest first; a pass without a time is left out.
+    expect(radarCard(b).passes).toEqual([
+      { date: "2026-11-14T09:37:37Z", track: "132", note: "ascending" },
+      { date: "2026-11-13T21:25:37Z", track: "125", note: "descending" },
+    ]);
+    expect(sourceRows(b).find((r) => r.id === "nisar")?.date).toBe("Nov 14, 06:37 AM BRT");
   });
 
   test("a published image pair enables the comparison", () => {

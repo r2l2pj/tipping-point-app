@@ -45,13 +45,13 @@ export function sourceRows(bundle: CcBundle, nowMs?: number): SourceRow[] {
   const pre = typeof dd.nisar_pre === "string" ? dd.nisar_pre : undefined;
   const post = typeof dd.nisar_post === "string" ? dd.nisar_post : undefined;
   const passes = nisarPasses(bundle);
-  const lastPass = passes.length ? passes[passes.length - 1].date : undefined;
+  const lastPass = passes[0]?.date; // newest first
   rows.push({
     id: "nisar",
     name: "NISAR radar",
     date: pre && post
       ? `${fmtDate(pre)} and ${fmtDate(post)}`
-      : lastPass ? fmtDate(lastPass)
+      : lastPass ? fmtBrt(lastPass)
       : live ? NOT_PUBLISHED : NO_RADAR_TEXT,
     missing: !(pre && post) && !lastPass,
   });

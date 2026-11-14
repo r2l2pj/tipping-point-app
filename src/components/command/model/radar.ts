@@ -93,11 +93,37 @@ export function swathLine(bundle: CcBundle): string | undefined {
   return `within the NISAR swath — ${Math.round(coverage > 1 ? coverage : coverage * 100)}% of the area covered`;
 }
 
+// One pass in the shape the card reads. The replay data publishes
+// { date, track, note }; the live run publishes { acquired, path, direction,
+// granule }. Both are read; a pass without a time is left out.
+function toPass(raw: unknown): NisarPass | undefined {
+  if (typeof raw !== "object" || raw === null) return undefined;
+  const r = raw as Record<string, unknown>;
+  const text = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+  const date = text(r.date) ?? text(r.acquired);
+  if (!date) return undefined;
+  const track = r.track ?? r.path;
+  const direction = text(r.direction);
+  return {
+    date,
+    track: typeof track === "string" || finite(track) ? String(track) : "",
+    note: text(r.note) ?? (direction ? direction.toLowerCase() : undefined),
+  };
+}
+
+// Passes over the area, newest first.
 export function nisarPasses(bundle: CcBundle): NisarPass[] {
   const dd = bundle.data_dates ?? {};
-  const fromDates = Array.isArray(dd.nisar_passes) ? (dd.nisar_passes as NisarPass[]) : [];
-  return fromDates.length ? fromDates : (bundle.nisarPasses ?? []);
+  const fromDates = Array.isArray(dd.nisar_passes) ? (dd.nisar_passes as unknown[]) : [];
+  const raw: unknown[] = fromDates.length ? fromDates : (bundle.nisarPasses ?? []);
+  return raw
+    .map(toPass)
+    .filter((p): p is NisarPass => p !== undefined)
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 }
+
+// The card lists the newest passes and counts the rest.
+export const PASSES_SHOWN = 5;
 
 export interface RadarCard {
   pair: boolean;

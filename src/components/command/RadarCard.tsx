@@ -1,7 +1,7 @@
 "use client";
 
-import type { RadarCard as RadarModel } from "./model/radar";
-import { fmtDate } from "./model/format";
+import { PASSES_SHOWN, type RadarCard as RadarModel } from "./model/radar";
+import { fmtBrt } from "./model/format";
 import { Icon, ICON } from "./ui";
 
 // Radar confirmation. "NISAR" is only said for a real pair; scars are always
@@ -61,12 +61,17 @@ export default function RadarCard({
         <div className="mt-2 border-t border-cc-rule pt-1.5">
           <p className="text-xs font-semibold">Recent NISAR passes over the area</p>
           <ul>
-            {radar.passes.map((p, i) => (
+            {radar.passes.slice(0, PASSES_SHOWN).map((p, i) => (
               <li key={i} className="flex justify-between text-xs text-cc-muted">
-                <span>{fmtDate(p.date)} · track {p.track}</span>
+                <span>{fmtBrt(p.date)}{p.track ? ` · track ${p.track}` : ""}</span>
                 {p.note && <span className="text-cc-faint">{p.note}</span>}
               </li>
             ))}
+            {radar.passes.length > PASSES_SHOWN && (
+              <li className="text-xs text-cc-faint">
+                and {radar.passes.length - PASSES_SHOWN} older passes
+              </li>
+            )}
           </ul>
         </div>
       )}
