@@ -1,0 +1,32 @@
+{
+  "case": "wa_2025",
+  "issue_date": "2025-12-01",
+  "creation_time": "2025-12-01T00:00:00Z",
+  "days": {
+    "d1": [
+      "2025-12-01",
+      "2025-12-02"
+    ],
+    "d2": [
+      "2025-12-02",
+      "2025-12-03"
+    ],
+    "d3": [
+      "2025-12-03",
+      "2025-12-04"
+    ]
+  },
+  "bands": [
+    "d1",
+    "d2",
+    "d3"
+  ],
+  "label": "forecast: NOAA GFS (issued 2025-12-01)",
+  "source": "NOAA GFS via GEE",
+  "collection": "NOAA/GFS0P25",
+  "band": "total_precipitation_surface",
+  "scale_m": 25000,
+  "grid": "native GFS 0.25 deg grid (crsTransform from source projection, no resampling)",
+  "native_resolution": "~25 km (0.25 deg); day bucket = sum of trailing 1-6h accumulations valid in the day",
+  "cog": "/home/lucascoelho/code/r2l2pj/tipping-point-data/data/wa_2025/forecast_rain/wa_2025_gfs_20251201.tif"
+}

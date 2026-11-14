@@ -39,7 +39,88 @@
           "lon": -121.982,
           "where": "Skykomish R., Sultan-Duvall"
         }
-      ]
+      ],
+      "official_warning_delta_h": -71.83333333333333,
+      "first_critical_at": "2025-12-09",
+      "official_warning_at": "2025-12-06T00:10:00Z",
+      "critical_km2": 4127.458,
+      "critical_km2_date": "2025-12-12",
+      "people_critical": 229782,
+      "critical_slide_km2": 2662.718,
+      "critical_flood_km2": 1464.74,
+      "_null_reasons": {
+        "lead_time_median_h": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+        "lead_time_iqr_h": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+        "lead_time_n": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+        "warned_before_pct": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+        "warned_24h_pct": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+        "never_critical_pct": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+        "lead_time_hist": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+        "rf_auc": "No local labeled WA feature CSV/parquet table or trained model exists. The ml pipeline is configured for RS-2024; no WA validation labels/features are available to compute case-specific AUC. Synthetic test fixtures are not validation data.",
+        "rule_auc": "No local labeled WA feature CSV/parquet table or trained model exists. The ml pipeline is configured for RS-2024; no WA validation labels/features are available to compute case-specific AUC. Synthetic test fixtures are not validation data."
+      },
+      "lead_time_median_h": null,
+      "lead_time_iqr_h": null,
+      "lead_time_n": null,
+      "warned_before_pct": null,
+      "warned_24h_pct": null,
+      "never_critical_pct": null,
+      "lead_time_hist": null,
+      "metrics": {
+        "cloud_pct": null,
+        "f1": null,
+        "hand_best_radius_m": 1000,
+        "hand_validation": 0.9751807438686789,
+        "hand_validation_radii": {
+          "1000": 0.00975180743868679,
+          "1500": 0.00938195579408305,
+          "3000": 0.0075653966720609705
+        },
+        "hls_f1": null,
+        "hls_iou": null,
+        "iou": null
+      },
+      "rf_auc": null,
+      "rule_auc": null,
+      "night_light_drop_pct": 43.920046430346254,
+      "ntl_mean_before": 0.7456146430292379,
+      "ntl_mean_after": 0.4181403456193361,
+      "people_flooded": 1150.8775801961883,
+      "flood_source": "nisar",
+      "cloud_pct": 92.89292282546754,
+      "confusion": {
+        "fn": 1186683.7058823535,
+        "fp": 37576,
+        "observed_px": 16253323.654901965,
+        "tp": 9287
+      },
+      "f1": 0.014944879521764607,
+      "hand_best_radius_m": 1000,
+      "hand_validation": 0.9751807438686789,
+      "hand_validation_radii": {
+        "1000": 0.00975180743868679,
+        "1500": 0.00938195579408305,
+        "3000": 0.0075653966720609705
+      },
+      "hls_confusion": {
+        "fn": 603407.9843137254,
+        "fp": 34,
+        "observed_px": 1523069.0509803928,
+        "tp": 8137
+      },
+      "hls_f1": 0.02626041672625543,
+      "hls_iou": 0.013304904531882858,
+      "hls_opera_dates": [
+        "2025-12-15",
+        "2025-12-17"
+      ],
+      "hls_opera_scenes": 6,
+      "iou": 0.007528697499424659,
+      "opera_dates": [
+        "2025-12-15",
+        "2025-12-17"
+      ],
+      "opera_scenes": 5
     },
     "rs_2024": {
       "event": "rs-2024-05",
@@ -75,7 +156,73 @@
           }
         ],
         "note": "TPI_slide sampled at the 16,027 RS landslide inventory points; at 1 km scale slope flattening kept the same series below 0.6."
-      }
+      },
+      "official_warning_delta_h": -51.327777777777776,
+      "first_critical_at": "2024-05-02",
+      "official_warning_at": "2024-04-26T16:50:00Z",
+      "critical_km2": 430.081,
+      "critical_km2_date": "2024-05-02",
+      "people_critical": 1488833,
+      "critical_slide_km2": 430.081,
+      "critical_flood_km2": 7646.837,
+      "_null_reasons": {
+        "never_critical_pct": "Cluster mode has no never-crossing denominator: clusters are defined by ever crossing Critical; the landslide catalog stub is empty (0 dated points)",
+        "point_lead_times": "data/rs_2024/geojson/landslide_catalog.geojson is an empty stub (1 feature, 0 coordinates): no dated inventory points available; fell back to cluster-lead vs damage_anchor",
+        "people_flooded": "no NISAR coverage — event predates launch (Jul 2025)",
+        "flooded_km2": "no NISAR coverage — event predates launch (Jul 2025)",
+        "flood_source": "no NISAR coverage — event predates launch (Jul 2025)",
+        "rf_auc": "No local labeled feature CSV/parquet table or trained ml/models/slide_xgb.json exists. Spatial block cross-validation and matched slope-rule baseline evaluation require labeled feature rows; synthetic test fixtures are not validation data.",
+        "rule_auc": "No local labeled feature CSV/parquet table or trained ml/models/slide_xgb.json exists. Spatial block cross-validation and matched slope-rule baseline evaluation require labeled feature rows; synthetic test fixtures are not validation data."
+      },
+      "lead_time_median_h": -57.0,
+      "lead_time_iqr_h": [
+        -57.0,
+        -57.0
+      ],
+      "lead_time_n": 5678,
+      "warned_before_pct": 0.0,
+      "warned_24h_pct": 0.0,
+      "lead_time_hist": [
+        31,
+        0,
+        0,
+        0,
+        1070,
+        0,
+        0,
+        0,
+        4530,
+        0,
+        0,
+        0,
+        26,
+        0,
+        0,
+        0,
+        21
+      ],
+      "lead_time_hist_bin_h": 6,
+      "lead_time_hist_from_h": -108.0,
+      "never_critical_pct": null,
+      "n_clusters": 5678,
+      "metrics": {
+        "cloud_free_pct": 0.0,
+        "cloud_pct": 100.0,
+        "hls_observed_px": 535466.6901960854,
+        "hls_scenes": 20
+      },
+      "rf_auc": null,
+      "rule_auc": null,
+      "night_light_drop_pct": 33.083565888004216,
+      "ntl_mean_before": 2.5860425450402267,
+      "ntl_mean_after": 1.730487455760022,
+      "people_flooded": null,
+      "flooded_km2": null,
+      "flood_source": null,
+      "cloud_free_pct": 0.0,
+      "cloud_pct": 100.0,
+      "hls_observed_px": 535466.6901960854,
+      "hls_scenes": 20
     }
   }
 }

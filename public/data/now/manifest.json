@@ -1,0 +1,867 @@
+{
+  "schema": "tipping-point/now@2",
+  "mode": "live",
+  "updated_at": "2026-11-14T22:08:35.513754Z",
+  "bounds": [
+    -58.0,
+    -34.0,
+    -48.0,
+    -22.5
+  ],
+  "data_dates": {
+    "imerg": "2026-11-14T00Z",
+    "smap": "SMAP_L4_SM_gph_20261110T223000_Vv8013_001.h5_u9loH5HD",
+    "geos_fp_issued": "2026-11-14T12:00:00Z"
+  },
+  "layers": [
+    {
+      "id": "tpi_slide_d0",
+      "date": "2026-11-14",
+      "png": "png/tpi_slide_d0.png",
+      "cog": "cog/tpi_slide_today.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -33.999842,
+        -48.001818,
+        -22.5
+      ],
+      "forecast": false
+    },
+    {
+      "id": "tpi_slide_d1",
+      "date": "2026-11-15",
+      "png": "png/tpi_slide_d1.png",
+      "cog": "cog/tpi_slide_d1.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -33.999842,
+        -48.001818,
+        -22.5
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_slide_d2",
+      "date": "2026-11-16",
+      "png": "png/tpi_slide_d2.png",
+      "cog": null,
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -33.999842,
+        -48.001818,
+        -22.5
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_slide_d3",
+      "date": "2026-11-17",
+      "png": "png/tpi_slide_d3.png",
+      "cog": null,
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -33.999842,
+        -48.001818,
+        -22.5
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d0",
+      "date": "2026-11-14",
+      "png": "png/tpi_flood_d0.png",
+      "cog": "cog/tpi_flood_today.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -33.999842,
+        -48.001818,
+        -22.5
+      ],
+      "forecast": false
+    },
+    {
+      "id": "tpi_flood_d1",
+      "date": "2026-11-15",
+      "png": "png/tpi_flood_d1.png",
+      "cog": "cog/tpi_flood_d1.tif",
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -33.999842,
+        -48.001818,
+        -22.5
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d2",
+      "date": "2026-11-16",
+      "png": "png/tpi_flood_d2.png",
+      "cog": null,
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -33.999842,
+        -48.001818,
+        -22.5
+      ],
+      "forecast": true
+    },
+    {
+      "id": "tpi_flood_d3",
+      "date": "2026-11-17",
+      "png": "png/tpi_flood_d3.png",
+      "cog": null,
+      "legend": [
+        "Baixo",
+        "Moderado",
+        "Alto",
+        "Crítico"
+      ],
+      "bounds": [
+        -58.0,
+        -33.999842,
+        -48.001818,
+        -22.5
+      ],
+      "forecast": true
+    }
+  ],
+  "products": {
+    "critical_areas": "geojson/critical_areas.geojson",
+    "summary": "summary.json",
+    "alerts": "alerts.json"
+  },
+  "nisar_passes": [
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_132_A_148S_20261114T093737_20261114T094613_P05036_F_J_001",
+      "acquired": "2026-11-14T09:37:37Z",
+      "path": 132,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_125_D_148S_20261113T212537_20261113T212641_P05036_F_J_001",
+      "acquired": "2026-11-13T21:25:37Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_125_D_156S_20261113T212415_20261113T212537_P05036_F_J_001",
+      "acquired": "2026-11-13T21:24:15Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_125_D_238S_20261113T212413_20261113T212415_P05036_F_J_001",
+      "acquired": "2026-11-13T21:24:13Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_125_D_238S_20261113T212353_20261113T212413_P05036_F_J_001",
+      "acquired": "2026-11-13T21:23:53Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_111_D_148S_20261112T215737_20261112T220819_P05036_F_J_001",
+      "acquired": "2026-11-12T21:57:37Z",
+      "path": 111,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_103_A_148S_20261112T092305_20261112T093321_P05036_F_J_001",
+      "acquired": "2026-11-12T09:23:05Z",
+      "path": 103,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_103_A_156S_20261112T092145_20261112T092305_P05036_F_J_001",
+      "acquired": "2026-11-12T09:21:45Z",
+      "path": 103,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_082_D_212S_20261110T215153_20261110T215211_P05036_F_J_001",
+      "acquired": "2026-11-10T21:51:53Z",
+      "path": 82,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_082_D_212S_20261110T215151_20261110T215153_P05036_F_J_001",
+      "acquired": "2026-11-10T21:51:51Z",
+      "path": 82,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_082_D_148S_20261110T214853_20261110T215151_P05036_F_J_001",
+      "acquired": "2026-11-10T21:48:53Z",
+      "path": 82,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_082_D_156S_20261110T214805_20261110T214853_P05036_F_J_001",
+      "acquired": "2026-11-10T21:48:05Z",
+      "path": 82,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_074_A_156S_20261110T090751_20261110T090843_P05036_F_J_001",
+      "acquired": "2026-11-10T09:07:51Z",
+      "path": 74,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_074_A_238S_20261110T090737_20261110T090751_P05036_F_J_001",
+      "acquired": "2026-11-10T09:07:37Z",
+      "path": 74,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_074_A_238S_20261110T090735_20261110T090737_P05036_F_J_001",
+      "acquired": "2026-11-10T09:07:35Z",
+      "path": 74,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_074_A_156S_20261110T090613_20261110T090735_P05036_F_J_001",
+      "acquired": "2026-11-10T09:06:13Z",
+      "path": 74,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_060_A_148S_20261109T094631_20261109T095721_P05036_F_J_001",
+      "acquired": "2026-11-09T09:46:31Z",
+      "path": 60,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_060_A_212S_20261109T094629_20261109T094631_P05036_F_J_001",
+      "acquired": "2026-11-09T09:46:29Z",
+      "path": 60,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_060_A_212S_20261109T094619_20261109T094629_P05036_F_J_001",
+      "acquired": "2026-11-09T09:46:19Z",
+      "path": 60,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_060_A_238S_20261109T094605_20261109T094619_P05036_F_J_001",
+      "acquired": "2026-11-09T09:46:05Z",
+      "path": 60,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_053_D_148S_20261108T213501_20261108T213549_P05036_F_J_001",
+      "acquired": "2026-11-08T21:35:01Z",
+      "path": 53,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_053_D_156S_20261108T213341_20261108T213501_P05036_F_J_001",
+      "acquired": "2026-11-08T21:33:41Z",
+      "path": 53,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_053_D_148S_20261108T213105_20261108T213341_P05036_F_J_001",
+      "acquired": "2026-11-08T21:31:05Z",
+      "path": 53,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_031_A_156S_20261107T093253_20261107T093337_P05036_F_J_001",
+      "acquired": "2026-11-07T09:32:53Z",
+      "path": 31,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_031_A_148S_20261107T093229_20261107T093253_P05036_F_J_001",
+      "acquired": "2026-11-07T09:32:29Z",
+      "path": 31,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_031_A_156S_20261107T093145_20261107T093229_P05036_F_J_001",
+      "acquired": "2026-11-07T09:31:45Z",
+      "path": 31,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_031_A_148S_20261107T092933_20261107T093145_P05036_F_J_001",
+      "acquired": "2026-11-07T09:29:33Z",
+      "path": 31,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_024_D_148S_20261106T211653_20261106T211725_P05036_F_J_001",
+      "acquired": "2026-11-06T21:16:53Z",
+      "path": 24,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_024_D_148S_20261106T211609_20261106T211633_P05036_F_J_001",
+      "acquired": "2026-11-06T21:16:09Z",
+      "path": 24,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_035_024_D_101_4005_DHDH_A_20261106T211603_20261106T211610_P05036_N_P_J_001",
+      "acquired": "2026-11-06T21:16:03Z",
+      "path": 24,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_035_024_D_101_4005_DHDH_A_20261106T211603_20261106T211610_P05036_N_P_J_001",
+      "acquired": "2026-11-06T21:16:03Z",
+      "path": 24,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_035_024_D_101_4005_DHDH_A_20261106T211603_20261106T211610_P05036_N_P_J_001",
+      "acquired": "2026-11-06T21:16:03Z",
+      "path": 24,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_024_D_156S_20261106T211521_20261106T211609_P05036_F_J_001",
+      "acquired": "2026-11-06T21:15:21Z",
+      "path": 24,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_035_024_D_100_4005_DHDH_A_20261106T211530_20261106T211604_P05036_N_F_J_001",
+      "acquired": "2026-11-06T21:15:30Z",
+      "path": 24,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_035_024_D_100_4005_DHDH_A_20261106T211530_20261106T211604_P05036_N_F_J_001",
+      "acquired": "2026-11-06T21:15:30Z",
+      "path": 24,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_035_024_D_100_4005_DHDH_A_20261106T211530_20261106T211604_P05036_N_F_J_001",
+      "acquired": "2026-11-06T21:15:30Z",
+      "path": 24,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_010_D_212S_20261105T220021_20261105T220040_P05036_F_J_001",
+      "acquired": "2026-11-05T22:00:21Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_035_010_D_105_2005_DHDH_A_20261105T215955_20261105T220030_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:59:55Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_035_010_D_105_2005_DHDH_A_20261105T215955_20261105T220030_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:59:55Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_035_010_D_105_2005_DHDH_A_20261105T215955_20261105T220030_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:59:55Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_010_D_212S_20261105T220019_20261105T220021_P05036_F_J_001",
+      "acquired": "2026-11-05T22:00:19Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_010_D_148S_20261105T215533_20261105T220019_P05036_F_J_001",
+      "acquired": "2026-11-05T21:55:33Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_035_010_D_104_2005_DHDH_A_20261105T215921_20261105T215956_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:59:21Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_035_010_D_104_2005_DHDH_A_20261105T215921_20261105T215956_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:59:21Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_035_010_D_104_2005_DHDH_A_20261105T215921_20261105T215956_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:59:21Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_035_010_D_103_2005_DHDH_A_20261105T215848_20261105T215922_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:58:48Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_035_010_D_103_2005_DHDH_A_20261105T215848_20261105T215922_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:58:48Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_035_010_D_103_2005_DHDH_A_20261105T215848_20261105T215922_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:58:48Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_035_010_D_102_2005_DHDH_A_20261105T215814_20261105T215849_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:58:14Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_035_010_D_102_2005_DHDH_A_20261105T215814_20261105T215849_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:58:14Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_035_010_D_102_2005_DHDH_A_20261105T215814_20261105T215849_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:58:14Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_035_010_D_101_2005_DHDH_A_20261105T215741_20261105T215815_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:57:41Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_035_010_D_101_2005_DHDH_A_20261105T215741_20261105T215815_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:57:41Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_035_010_D_101_2005_DHDH_A_20261105T215741_20261105T215815_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:57:41Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_035_010_D_100_2005_DHDH_A_20261105T215707_20261105T215742_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:57:07Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_035_010_D_100_2005_DHDH_A_20261105T215707_20261105T215742_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:57:07Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_035_010_D_100_2005_DHDH_A_20261105T215707_20261105T215742_P05036_N_F_J_001",
+      "acquired": "2026-11-05T21:57:07Z",
+      "path": 10,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_002_A_148S_20261105T091553_20261105T092429_P05036_F_J_001",
+      "acquired": "2026-11-05T09:15:53Z",
+      "path": 2,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_002_A_156S_20261105T091433_20261105T091553_P05036_F_J_001",
+      "acquired": "2026-11-05T09:14:33Z",
+      "path": 2,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_035_002_A_148S_20261105T091357_20261105T091433_P05036_F_J_001",
+      "acquired": "2026-11-05T09:13:57Z",
+      "path": 2,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_161_A_148S_20261104T095441_20261104T095751_P05036_F_J_001",
+      "acquired": "2026-11-04T09:54:41Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_161_A_162_2005_DHDH_A_20261104T095508_20261104T095543_P05036_N_F_J_001",
+      "acquired": "2026-11-04T09:55:08Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_161_A_162_2005_DHDH_A_20261104T095508_20261104T095543_P05036_N_F_J_001",
+      "acquired": "2026-11-04T09:55:08Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_161_A_162_2005_DHDH_A_20261104T095508_20261104T095543_P05036_N_F_J_001",
+      "acquired": "2026-11-04T09:55:08Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_161_A_161_2005_DHDH_M_20261104T095435_20261104T095509_P05036_N_F_J_001",
+      "acquired": "2026-11-04T09:54:35Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_161_A_161_2005_DHDH_M_20261104T095435_20261104T095509_P05036_N_F_J_001",
+      "acquired": "2026-11-04T09:54:35Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_161_A_161_2005_DHDH_M_20261104T095435_20261104T095509_P05036_N_F_J_001",
+      "acquired": "2026-11-04T09:54:35Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_161_A_161_4005_DHDH_A_20261104T095435_20261104T095442_P05036_N_P_J_001",
+      "acquired": "2026-11-04T09:54:35Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_161_A_161_4005_DHDH_A_20261104T095435_20261104T095442_P05036_N_P_J_001",
+      "acquired": "2026-11-04T09:54:35Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_161_A_161_4005_DHDH_A_20261104T095435_20261104T095442_P05036_N_P_J_001",
+      "acquired": "2026-11-04T09:54:35Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_161_A_156S_20261104T095321_20261104T095441_P05036_F_J_001",
+      "acquired": "2026-11-04T09:53:21Z",
+      "path": 161,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_154_D_156S_20261103T214341_20261103T214429_P05036_F_J_001",
+      "acquired": "2026-11-03T21:43:41Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_154_D_106_4005_DHDH_A_20261103T214350_20261103T214424_P05036_N_F_J_001",
+      "acquired": "2026-11-03T21:43:50Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_154_D_106_4005_DHDH_A_20261103T214350_20261103T214424_P05036_N_F_J_001",
+      "acquired": "2026-11-03T21:43:50Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_154_D_106_4005_DHDH_A_20261103T214350_20261103T214424_P05036_N_F_J_001",
+      "acquired": "2026-11-03T21:43:50Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_154_D_105_4005_DHDH_A_20261103T214345_20261103T214351_P05036_N_P_J_001",
+      "acquired": "2026-11-03T21:43:45Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_154_D_105_2005_DHDH_M_20261103T214316_20261103T214351_P05036_N_F_J_001",
+      "acquired": "2026-11-03T21:43:16Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_154_D_105_4005_DHDH_A_20261103T214345_20261103T214351_P05036_N_P_J_001",
+      "acquired": "2026-11-03T21:43:45Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_154_D_105_2005_DHDH_M_20261103T214316_20261103T214351_P05036_N_F_J_001",
+      "acquired": "2026-11-03T21:43:16Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_154_D_105_4005_DHDH_A_20261103T214345_20261103T214351_P05036_N_P_J_001",
+      "acquired": "2026-11-03T21:43:45Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_154_D_105_2005_DHDH_M_20261103T214316_20261103T214351_P05036_N_F_J_001",
+      "acquired": "2026-11-03T21:43:16Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_154_D_148S_20261103T214141_20261103T214341_P05036_F_J_001",
+      "acquired": "2026-11-03T21:41:41Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_154_D_102_4005_DHDH_A_20261103T214135_20261103T214142_P05036_N_P_J_001",
+      "acquired": "2026-11-03T21:41:35Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_154_D_102_4005_DHDH_A_20261103T214135_20261103T214142_P05036_N_P_J_001",
+      "acquired": "2026-11-03T21:41:35Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_154_D_102_4005_DHDH_A_20261103T214135_20261103T214142_P05036_N_P_J_001",
+      "acquired": "2026-11-03T21:41:35Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_154_D_156S_20261103T214053_20261103T214141_P05036_F_J_001",
+      "acquired": "2026-11-03T21:40:53Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_154_D_101_4005_DHDH_A_20261103T214101_20261103T214136_P05036_N_F_J_001",
+      "acquired": "2026-11-03T21:41:01Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_154_D_101_4005_DHDH_A_20261103T214101_20261103T214136_P05036_N_F_J_001",
+      "acquired": "2026-11-03T21:41:01Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_154_D_101_4005_DHDH_A_20261103T214101_20261103T214136_P05036_N_F_J_001",
+      "acquired": "2026-11-03T21:41:01Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_154_D_100_4005_DHDH_A_20261103T214057_20261103T214102_P05036_N_P_J_001",
+      "acquired": "2026-11-03T21:40:57Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_154_D_100_4005_DHDH_A_20261103T214057_20261103T214102_P05036_N_P_J_001",
+      "acquired": "2026-11-03T21:40:57Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_154_D_100_4005_DHDH_A_20261103T214057_20261103T214102_P05036_N_P_J_001",
+      "acquired": "2026-11-03T21:40:57Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_154_D_148S_20261103T213854_20261103T214053_P05036_F_J_001",
+      "acquired": "2026-11-03T21:38:54Z",
+      "path": 154,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_132_A_148S_20261102T093737_20261102T094613_P05036_F_J_001",
+      "acquired": "2026-11-02T09:37:37Z",
+      "path": 132,
+      "direction": "ASCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_125_D_104_2005_DHDH_A_20261101T212603_20261101T212641_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:26:03Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_125_D_104_2005_DHDH_A_20261101T212603_20261101T212641_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:26:03Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_125_D_104_2005_DHDH_A_20261101T212603_20261101T212641_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:26:03Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_125_D_148S_20261101T212537_20261101T212641_P05036_F_J_001",
+      "acquired": "2026-11-01T21:25:37Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_125_D_103_2005_DHDH_M_20261101T212530_20261101T212604_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:25:30Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_125_D_103_2005_DHDH_M_20261101T212530_20261101T212604_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:25:30Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_125_D_103_2005_DHDH_M_20261101T212530_20261101T212604_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:25:30Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_125_D_103_4005_DHDH_A_20261101T212530_20261101T212537_P05036_N_P_J_001",
+      "acquired": "2026-11-01T21:25:30Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_125_D_103_4005_DHDH_A_20261101T212530_20261101T212537_P05036_N_P_J_001",
+      "acquired": "2026-11-01T21:25:30Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_125_D_103_4005_DHDH_A_20261101T212530_20261101T212537_P05036_N_P_J_001",
+      "acquired": "2026-11-01T21:25:30Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_125_D_156S_20261101T212414_20261101T212537_P05036_F_J_001",
+      "acquired": "2026-11-01T21:24:14Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_125_D_102_4005_DHDH_A_20261101T212456_20261101T212531_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:24:56Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_125_D_102_4005_DHDH_A_20261101T212456_20261101T212531_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:24:56Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_125_D_102_4005_DHDH_A_20261101T212456_20261101T212531_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:24:56Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_125_D_101_4005_DHDH_A_20261101T212422_20261101T212457_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:24:22Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GCOV_034_125_D_101_4005_DHDH_A_20261101T212422_20261101T212457_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:24:22Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_125_D_101_4005_DHDH_A_20261101T212422_20261101T212457_P05036_N_F_J_001",
+      "acquired": "2026-11-01T21:24:22Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L2_PR_GSLC_034_125_D_100_4005_DHDH_A_20261101T212400_20261101T212423_P05036_N_P_J_001",
+      "acquired": "2026-11-01T21:24:00Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L1_PR_RSLC_034_125_D_100_4005_DHDH_A_20261101T212400_20261101T212423_P05036_N_P_J_001",
+      "acquired": "2026-11-01T21:24:00Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_125_D_238S_20261101T212412_20261101T212414_P05036_F_J_001",
+      "acquired": "2026-11-01T21:24:12Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    },
+    {
+      "granule": "NISAR_L0_PR_RRSD_034_125_D_238S_20261101T212357_20261101T212412_P05036_F_J_001",
+      "acquired": "2026-11-01T21:23:57Z",
+      "path": 125,
+      "direction": "DESCENDING"
+    }
+  ]
+}

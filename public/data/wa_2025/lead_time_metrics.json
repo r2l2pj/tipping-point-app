@@ -1,0 +1,31 @@
+{
+  "case": "wa_2025",
+  "metrics": {
+    "lead_time_median_h": null,
+    "lead_time_iqr_h": null,
+    "lead_time_n": null,
+    "warned_before_pct": null,
+    "warned_24h_pct": null,
+    "never_critical_pct": null,
+    "lead_time_hist": null,
+    "mode": "event_first_critical_only",
+    "threshold_tpi": 0.6,
+    "first_critical_time": "2025-12-09 00:00:00+00:00",
+    "event_lead_h": 0.5833333333333334,
+    "official_warning_delta_h": -71.83333333333333,
+    "damage_anchor": {
+      "at": "2025-12-09T00:35:00Z",
+      "source": "King County Flood Warning Center update"
+    },
+    "n_landslide_points": 0
+  },
+  "_null_reasons": {
+    "lead_time_median_h": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+    "lead_time_iqr_h": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+    "lead_time_n": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+    "warned_before_pct": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+    "warned_24h_pct": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+    "never_critical_pct": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined",
+    "lead_time_hist": "WGS landslide inventory points are undated and data/wa_2025/geojson/landslide_catalog.geojson is an empty stub: point-level lead time is undefined"
+  }
+}

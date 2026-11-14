@@ -1,0 +1,23 @@
+{
+  "schema": "tipping-point/gee-assets@1",
+  "assets": [
+    {
+      "asset_id": "projects/jovial-idiom-514715-j8/assets/tipping-point/now/geosfp/20261117",
+      "collection": "projects/jovial-idiom-514715-j8/assets/tipping-point/now/geosfp",
+      "kind": "image",
+      "input": "geosfp",
+      "tag": "20261117",
+      "date": "2026-11-17",
+      "product": "forecast",
+      "cog": "/home/lucascoelho/code/r2l2pj/tipping-point-data/data/now/cog/geosfp/geosfp_20261117.tif",
+      "source": {
+        "run": "tavg1_2d_flx_Nx.20261114_00",
+        "issued": "2026-11-14T00:00:00Z",
+        "lead": 3
+      },
+      "status": "local-only",
+      "ingested_at": "2026-11-14T21:23:49.201526Z"
+    }
+  ],
+  "updated_at": "2026-11-14T21:23:49.201556Z"
+}

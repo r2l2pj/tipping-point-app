@@ -11,6 +11,10 @@
       "imerg_mm": 0.0025562065331057432,
       "smap": 0.6615775407220947,
       "tpi": 0.0,
+      "critical_km2": 0.0,
+      "critical_slide_km2": 0.0,
+      "critical_flood_km2": 0.0,
+      "people_critical": 0,
       "river_m": null
     },
     {
@@ -20,6 +24,10 @@
       "imerg_mm": 3.2620601983801314,
       "smap": 0.6595786132697913,
       "tpi": 0.0,
+      "critical_km2": 0.0,
+      "critical_slide_km2": 0.0,
+      "critical_flood_km2": 0.0,
+      "people_critical": 0,
       "river_m": null
     },
     {
@@ -29,6 +37,10 @@
       "imerg_mm": 4.051479318643736,
       "smap": 0.663080226280251,
       "tpi": 0.0,
+      "critical_km2": 0.0,
+      "critical_slide_km2": 0.0,
+      "critical_flood_km2": 0.0,
+      "people_critical": 0,
       "river_m": null
     },
     {
@@ -38,7 +50,11 @@
       "imerg_mm": 6.11944759319865,
       "smap": 0.6630623202127133,
       "tpi": 0.0,
-      "river_m": null
+      "critical_km2": 0.0,
+      "critical_slide_km2": 0.0,
+      "critical_flood_km2": 0.0,
+      "people_critical": 0,
+      "river_m": 1.1342
     },
     {
       "date": "2024-04-26",
@@ -47,7 +63,11 @@
       "imerg_mm": 3.307597215378913,
       "smap": 0.6609137820882585,
       "tpi": 0.0,
-      "river_m": null
+      "critical_km2": 0.0,
+      "critical_slide_km2": 0.0,
+      "critical_flood_km2": 0.0,
+      "people_critical": 0,
+      "river_m": 7.114
     },
     {
       "date": "2024-04-27",
@@ -56,6 +76,10 @@
       "imerg_mm": 11.572347816082484,
       "smap": 0.6663611111143711,
       "tpi": 0.0,
+      "critical_km2": 0.0,
+      "critical_slide_km2": 0.0,
+      "critical_flood_km2": 0.0,
+      "people_critical": 0,
       "river_m": null
     },
     {
@@ -65,6 +89,10 @@
       "imerg_mm": 36.23333697065197,
       "smap": 0.6719727966594043,
       "tpi": 0.7162624597549438,
+      "critical_km2": 112.912,
+      "critical_slide_km2": 0.831,
+      "critical_flood_km2": 112.081,
+      "people_critical": 3762,
       "river_m": null
     },
     {
@@ -74,6 +102,10 @@
       "imerg_mm": 37.438706247779635,
       "smap": 0.6995078787950938,
       "tpi": 0.7423886656761169,
+      "critical_km2": 175.659,
+      "critical_slide_km2": 2.011,
+      "critical_flood_km2": 173.648,
+      "people_critical": 55499,
       "river_m": null
     },
     {
@@ -83,6 +115,10 @@
       "imerg_mm": 86.60890582508387,
       "smap": 0.7306392457610154,
       "tpi": 0.9870860576629639,
+      "critical_km2": 8230.765,
+      "critical_slide_km2": 2111.598,
+      "critical_flood_km2": 6119.167,
+      "people_critical": 1167799,
       "river_m": null
     },
     {
@@ -92,6 +128,10 @@
       "imerg_mm": 190.08888524539694,
       "smap": 0.8177198976854319,
       "tpi": 1.0,
+      "critical_km2": 10221.375,
+      "critical_slide_km2": 3024.685,
+      "critical_flood_km2": 7196.69,
+      "people_critical": 1467316,
       "river_m": null
     },
     {
@@ -101,6 +141,10 @@
       "imerg_mm": 290.37774451555634,
       "smap": 0.8846363761536712,
       "tpi": 1.0,
+      "critical_km2": 10569.812,
+      "critical_slide_km2": 3191.843,
+      "critical_flood_km2": 7377.97,
+      "people_critical": 1487866,
       "river_m": null
     },
     {
@@ -110,6 +154,10 @@
       "imerg_mm": 342.2909231894946,
       "smap": 0.9306371109707028,
       "tpi": 1.0,
+      "critical_km2": 10870.642,
+      "critical_slide_km2": 3223.806,
+      "critical_flood_km2": 7646.837,
+      "people_critical": 1488833,
       "river_m": null
     },
     {
@@ -119,6 +167,10 @@
       "imerg_mm": 215.8182441830184,
       "smap": 0.910766526336483,
       "tpi": 1.0,
+      "critical_km2": 10612.681,
+      "critical_slide_km2": 3221.885,
+      "critical_flood_km2": 7390.796,
+      "people_critical": 1488208,
       "river_m": null
     },
     {
@@ -128,7 +180,11 @@
       "imerg_mm": 151.64132177154266,
       "smap": 0.9045611263761433,
       "tpi": 1.0,
-      "river_m": null
+      "critical_km2": 10539.344,
+      "critical_slide_km2": 3188.567,
+      "critical_flood_km2": 7350.778,
+      "people_critical": 1486455,
+      "river_m": 6.815
     },
     {
       "date": "2024-05-06",
@@ -137,7 +193,11 @@
       "imerg_mm": 57.648699232764876,
       "smap": 0.9079566525266968,
       "tpi": 1.0,
-      "river_m": null
+      "critical_km2": 4555.086,
+      "critical_slide_km2": 1995.838,
+      "critical_flood_km2": 2559.248,
+      "people_critical": 221969,
+      "river_m": 8.6781
     },
     {
       "date": "2024-05-07",
@@ -146,6 +206,10 @@
       "imerg_mm": 53.99586553246583,
       "smap": 0.8968450342707162,
       "tpi": 1.0,
+      "critical_km2": 3508.64,
+      "critical_slide_km2": 1895.561,
+      "critical_flood_km2": 1613.079,
+      "people_critical": 151783,
       "river_m": null
     }
   ]

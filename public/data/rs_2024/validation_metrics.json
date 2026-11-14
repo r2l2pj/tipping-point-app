@@ -1,0 +1,14 @@
+{
+  "case": "rs_2024",
+  "collections": {
+    "cloud_pct_source": "NASA/HLS/HLSL30/v002 + NASA/HLS/HLSS30/v002 Fmask bits1-4 @ 2024-05-01..2024-05-03"
+  },
+  "computed_at": "2026-11-14T21:56:30.736276+00:00",
+  "event_date": "2024-05-02",
+  "metrics": {
+    "cloud_free_pct": 0.0,
+    "cloud_pct": 100.0,
+    "hls_observed_px": 535466.6901960854,
+    "hls_scenes": 20
+  }
+}

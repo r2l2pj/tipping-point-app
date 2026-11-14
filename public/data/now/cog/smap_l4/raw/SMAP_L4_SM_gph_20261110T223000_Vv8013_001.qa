@@ -1,0 +1,59 @@
+Quality Assessment for SMAP L4_SM Granule <SMAP_L4_SM_gph_20261110T223000_Vv8013_001.h5>
+Number of L4_SM EASEv2  9 km land grid cells =  1684725
+
+======================================================================================================================================
+Geophysical variables
+======================================================================================================================================
+Fieldname                                          ,Units (*1)      ,    Mean (*2), Std-dev (*2),          Min,          Max,   N (*3)
+--------------------------------------------------------------------------------------------------------------------------------------
+baseflow_flux                                      ,[b'kg m-2 s-1'] ,       0.0000,       0.0000,       0.0000,       0.0002,  1684725
+depth_to_water_table_from_surface                  ,[b'm']          ,      -0.3387,       0.2814,      -2.3815,      -0.0171,    68936
+free_surface_water_on_peat_flux                    ,[b'kg m-2 s-1'] ,      -0.0000,       0.0000,      -0.0003,       0.0003,    68936
+heat_flux_ground                                   ,[b'W m-2']      ,     -23.0079,      29.4594,    -130.4174,     220.6055,  1684725
+heat_flux_latent                                   ,[b'W m-2']      ,      15.1564,      29.3382,     -47.2552,     532.4755,  1684725
+heat_flux_sensible                                 ,[b'W m-2']      ,       3.6875,      44.4991,    -281.4139,     762.3361,  1684725
+height_lowatmmodlay                                ,[b'm']          ,      63.4245,       3.3214,      53.1266,      68.7580,  1684725
+land_evapotranspiration_flux                       ,[b'kg m-2 s-1'] ,       0.0000,       0.0000,      -0.0000,       0.0002,  1684725
+land_fraction_saturated                            ,[b'dimensionless'],       0.0814,       0.1001,       0.0000,       0.9221,  1684725
+land_fraction_snow_covered                         ,[b'dimensionless'],       0.1730,       0.3610,       0.0000,       1.0000,  1684725
+land_fraction_unsaturated                          ,[b'dimensionless'],       0.4146,       0.3353,       0.0000,       1.0000,  1684725
+land_fraction_wilting                              ,[b'dimensionless'],       0.3310,       0.3559,       0.0000,       1.0000,  1684725
+leaf_area_index                                    ,[b'm2 m-2']     ,       0.9576,       1.3808,       0.0000,       6.4355,  1684725
+mwrtm_vegopacity                                   ,[b'1']          ,       0.3532,       0.3573,       0.0000,       2.3681,  1589905
+net_downward_longwave_flux                         ,[b'W m-2']      ,     -51.6534,      32.6034,    -274.5571,      18.1035,  1684725
+net_downward_shortwave_flux                        ,[b'W m-2']      ,      41.5943,     100.8838,       0.0000,     927.2500,  1684725
+overland_runoff_flux                               ,[b'kg m-2 s-1'] ,       0.0000,       0.0000,       0.0000,       0.0037,  1684725
+precipitation_total_surface_flux                   ,[b'kg m-2 s-1'] ,       0.0000,       0.0001,       0.0000,       0.0054,  1684725
+radiation_longwave_absorbed_flux                   ,[b'W m-2']      ,     312.3868,      68.4585,     113.8673,     457.8314,  1684725
+radiation_shortwave_downward_flux                  ,[b'W m-2']      ,      50.9569,     120.8920,       0.0000,     996.5000,  1684725
+sm_profile                                         ,[b'm3 m-3']     ,       0.2312,       0.1663,       0.0082,       0.9294,  1684725
+sm_profile_pctl                                    ,[b'percent']    ,      36.6752,      31.0155,       0.0000,      99.9916,   673604
+sm_profile_wetness                                 ,[b'dimensionless'],       0.4803,       0.2210,       0.0205,       0.9994,  1684725
+sm_rootzone                                        ,[b'm3 m-3']     ,       0.2175,       0.1540,       0.0066,       0.9301,  1684725
+sm_rootzone_pctl                                   ,[b'percent']    ,      36.6318,      30.5155,       0.0000,      99.9916,   626388
+sm_rootzone_wetness                                ,[b'dimensionless'],       0.4524,       0.2116,       0.0164,       0.9997,  1684725
+sm_surface                                         ,[b'm3 m-3']     ,       0.1872,       0.1215,       0.0035,       0.8785,  1684725
+sm_surface_wetness                                 ,[b'dimensionless'],       0.3989,       0.2055,       0.0037,       0.9916,  1684725
+snow_depth                                         ,[b'm']          ,       0.0434,       0.0954,       0.0000,       6.2500,  1684725
+snow_mass                                          ,[b'kg m-2']     ,       6.9923,      22.1591,       0.0000,    2826.5288,  1684725
+snow_melt_flux                                     ,[b'kg m-2 s-1'] ,       0.0000,       0.0000,       0.0000,       0.0007,  1684725
+snowfall_surface_flux                              ,[b'kg m-2 s-1'] ,       0.0000,       0.0000,       0.0000,       0.0008,  1684725
+soil_temp_layer1                                   ,[b'K']          ,     287.2750,      12.5911,     243.2206,     324.1269,  1684725
+soil_temp_layer2                                   ,[b'K']          ,     288.3895,      12.3904,     244.9751,     317.8131,  1684725
+soil_temp_layer3                                   ,[b'K']          ,     289.3589,      11.6027,     248.0186,     317.9248,  1684725
+soil_temp_layer4                                   ,[b'K']          ,     290.3860,      10.8641,     250.7232,     317.1607,  1684725
+soil_temp_layer5                                   ,[b'K']          ,     290.8151,      10.5843,     250.6784,     317.3333,  1684725
+soil_temp_layer6                                   ,[b'K']          ,     289.0929,      11.0803,     248.5331,     315.2440,  1684725
+soil_water_infiltration_flux                       ,[b'kg m-2 s-1'] ,       0.0000,       0.0001,      -0.0000,       0.0031,  1684725
+specific_humidity_lowatmmodlay                     ,[b'kg kg-1']    ,       0.0074,       0.0055,       0.0001,       0.0230,  1684725
+surface_pressure                                   ,[b'Pa']         ,   94252.5994,    8030.5815,   49714.0273,  103441.2031,  1684725
+surface_temp                                       ,[b'K']          ,     284.0851,      14.8489,     231.3587,     331.7650,  1684725
+temp_lowatmmodlay                                  ,[b'K']          ,     285.4866,      14.2419,     240.1441,     308.8542,  1684725
+vegetation_greenness_fraction                      ,[b'dimensionless'],       0.7509,       0.2320,       0.0101,       0.9990,  1684725
+windspeed_lowatmmodlay                             ,[b'm s-1']      ,       4.2636,       2.5088,       0.1909,      26.8982,  1684725
+--------------------------------------------------------------------------------------------------------------------------------------
+See SMAP L4_SM Data Products Specification Document for additional information.
+
+(*1) Units are valid for all statistics except N [dimensionless].
+(*2) Mean and std-dev statistics are weighted by the land fraction of each grid cell.
+(*3) N is the number of 9 km EASEv2 grid cells that contribute to the statistics.
