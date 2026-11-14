@@ -87,14 +87,16 @@ describe("handleUpdate", () => {
     expect(sent).toHaveLength(1);
     expect(sent[0].text).toContain("Cadastro feito");
     expect(sent[0].text).toContain("sua região");
+    for (const s of sent) expect(s.text.endsWith(FOOTER)).toBe(true);
   });
 
   test("/status without registration points to /start", async () => {
     const { deps, sent } = makeDeps();
     await handleUpdate(text("/status"), deps);
     expect(sent[0].text).toBe(
-      "Você ainda não cadastrou uma localização. Use /start."
+      `Você ainda não cadastrou uma localização. Use /start.\n${FOOTER}`
     );
+    for (const s of sent) expect(s.text.endsWith(FOOTER)).toBe(true);
   });
 
   test("/status reports label, data date and the footer", async () => {
@@ -113,6 +115,7 @@ describe("handleUpdate", () => {
       `Risco agora na sua região: alto. Dados de 2024-05-02.\n${FOOTER}`
     );
     expect(sent[0].text).toContain("SMS 40199");
+    for (const s of sent) expect(s.text.endsWith(FOOTER)).toBe(true);
   });
 
   test("/status falls back to 'sem dados' and appends Mapa when APP_URL set", async () => {
@@ -133,6 +136,11 @@ describe("handleUpdate", () => {
     sent.length = 0;
     await handleUpdate(text("/status"), deps);
     expect(sent[0].text).toContain("\nMapa: https://tp.example");
+    for (const s of sent) expect(s.text.endsWith(FOOTER)).toBe(true);
+    // Map link goes before the footer.
+    expect(sent[0].text.indexOf("Mapa:")).toBeLessThan(
+      sent[0].text.indexOf(FOOTER)
+    );
   });
 
   test("/simular replays intro + ordered steps", async () => {
@@ -146,10 +154,11 @@ describe("handleUpdate", () => {
     });
     await handleUpdate(text("/simular"), deps);
     expect(sent.map((s) => s.text)).toEqual([
-      "Simulação: os avisos que o Tipping Point teria enviado para Encantado (RS) em 2024.",
-      "2024-04-30: risco moderado",
-      "2024-05-01: risco alto",
+      `Simulação: os avisos que o Tipping Point teria enviado para Encantado (RS) em 2024.\n${FOOTER}`,
+      `2024-04-30: risco moderado\n${FOOTER}`,
+      `2024-05-01: risco alto\n${FOOTER}`,
     ]);
+    for (const s of sent) expect(s.text.endsWith(FOOTER)).toBe(true);
   });
 
   test("/simular adds the map link when APP_URL is set", async () => {
@@ -157,15 +166,17 @@ describe("handleUpdate", () => {
     const { deps, sent } = makeDeps({ sim: { Encantado: [] } });
     await handleUpdate(text("/simular"), deps);
     expect(sent[sent.length - 1].text).toBe(
-      "Veja o replay completo no mapa: https://tp.example"
+      `Veja o replay completo no mapa: https://tp.example\n${FOOTER}`
     );
+    for (const s of sent) expect(s.text.endsWith(FOOTER)).toBe(true);
   });
 
   test("/simular degrades cleanly when the source fails", async () => {
     const { deps, sent } = makeDeps({ simError: true });
     await handleUpdate(text("/simular"), deps);
     expect(sent).toHaveLength(1);
-    expect(sent[0].text).toBe("Simulação indisponível no momento.");
+    expect(sent[0].text).toBe(`Simulação indisponível no momento.\n${FOOTER}`);
+    for (const s of sent) expect(s.text.endsWith(FOOTER)).toBe(true);
   });
 
   test("/parar deletes the subscriber record", async () => {
@@ -180,8 +191,9 @@ describe("handleUpdate", () => {
     await handleUpdate(text("/parar"), deps);
     expect(await store.get(CHAT)).toBeNull();
     expect(sent[0].text).toBe(
-      "Seus dados foram apagados. Volte quando quiser com /start."
+      `Seus dados foram apagados. Volte quando quiser com /start.\n${FOOTER}`
     );
+    for (const s of sent) expect(s.text.endsWith(FOOTER)).toBe(true);
   });
 
   test("unrelated text sends nothing", async () => {

@@ -37,6 +37,8 @@ export interface BotDeps {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+const withFooter = (body: string) => body + "\n" + FOOTER;
+
 export async function handleUpdate(
   update: TelegramUpdate,
   deps: BotDeps
@@ -56,7 +58,9 @@ export async function handleUpdate(
     });
     await deps.send(
       chatId,
-      "Cadastro feito. Você vai receber um aviso quando o risco da sua região subir. Use /status para ver o risco agora."
+      withFooter(
+        "Cadastro feito. Você vai receber um aviso quando o risco da sua região subir. Use /status para ver o risco agora."
+      )
     );
     return;
   }
@@ -71,13 +75,14 @@ export async function handleUpdate(
     if (!sub) {
       await deps.send(
         chatId,
-        "Você ainda não cadastrou uma localização. Use /start."
+        withFooter("Você ainda não cadastrou uma localização. Use /start.")
       );
     } else {
       await deps.send(
         chatId,
-        `Risco agora na sua região: ${sub.current_label ?? "sem dados"}. Dados de ${sub.data_date ?? "-"}.\n${FOOTER}` +
-          (appUrl ? `\nMapa: ${appUrl}` : "")
+        `Risco agora na sua região: ${sub.current_label ?? "sem dados"}. Dados de ${sub.data_date ?? "-"}.` +
+          (appUrl ? `\nMapa: ${appUrl}` : "") +
+          `\n${FOOTER}`
       );
     }
   } else if (text.startsWith("/simular")) {
@@ -85,23 +90,31 @@ export async function handleUpdate(
     try {
       sim = await deps.fetchSimular();
     } catch {
-      await deps.send(chatId, "Simulação indisponível no momento.");
+      await deps.send(
+        chatId,
+        withFooter("Simulação indisponível no momento.")
+      );
       return;
     }
     await deps.send(
       chatId,
-      "Simulação: os avisos que o Tipping Point teria enviado para Encantado (RS) em 2024."
+      withFooter(
+        "Simulação: os avisos que o Tipping Point teria enviado para Encantado (RS) em 2024."
+      )
     );
     for (const step of sim["Encantado"] ?? []) {
-      await deps.send(chatId, `${step.date}: risco ${step.label}`);
+      await deps.send(chatId, withFooter(`${step.date}: risco ${step.label}`));
     }
     if (appUrl)
-      await deps.send(chatId, `Veja o replay completo no mapa: ${appUrl}`);
+      await deps.send(
+        chatId,
+        withFooter(`Veja o replay completo no mapa: ${appUrl}`)
+      );
   } else if (text.startsWith("/parar")) {
     await deps.store.delete(chatId);
     await deps.send(
       chatId,
-      "Seus dados foram apagados. Volte quando quiser com /start."
+      withFooter("Seus dados foram apagados. Volte quando quiser com /start.")
     );
   }
 }
