@@ -29,3 +29,12 @@ Commands run from the worktree root:
 
 `git add submission/slides-outline.md .herdr/implement-sub-slides.md &&
 git commit -m "U11: slides — lead-time placeholder"` (Devin trailer).
+
+## Follow-up fix (lead-submission)
+
+L37 RS replay line now names its reference basis — RS has no radar, so the
+metrics are vs the OPERA/optical reference, not radar:
+
+- `RS replay (no radar — event predates NISAR; flood metrics vs OPERA/optical reference): ...`
+
+Committed on `unit/sub-slides` with the same trailer.
