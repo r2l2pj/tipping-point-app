@@ -96,6 +96,33 @@ and `observed` means anything else. Null or absent means no source claim.
 Flat metrics pass it through untouched; legacy nested metrics leave it undefined.
 The UI labels "Flooded area (NISAR)" only when `flood_source === 'nisar'`.
 
+### lead time (retrospective)
+
+Flat metrics.json keys describing lead time in a retrospective replay of the
+event. All optional; all pass through `toMetricsView()` untouched except the
+`*_pct` keys, which normalize to 0-1 like every other percent field. Legacy
+nested metrics never synthesize these keys — they stay absent.
+
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `lead_time_iqr_h` | `[number, number]` | `[p25, p75]` hours |
+| `warned_24h_pct` | number | share with lead >= 24h (0-1 after normalization) |
+| `never_critical_pct` | number | share never flagged critical (0-1 after normalization) |
+| `n_points` | number | damage points used in the calculation |
+| `anchor_precision` | `'hour'\|'date'\|'mixed'` | precision of the damage timestamps |
+| `event_lead_h` | number | event-level anchor lead, hours |
+| `official_warning_delta_h` | `number\|null` | + = TPI earlier than first official warning |
+| `critical_area_km2` | number | area flagged critical |
+| `critical_area_with_damage_pct` | number | share of critical area with damage (0-1) |
+| `lead_time_hist` | `LeadTimeHist` | `{bin_h, from_h, counts[]}` — `counts[i]` covers `[from_h+i*bin_h, +bin_h)`; negative bins allowed |
+| `lead_time_assumptions` | `LeadTimeAssumptions` | `{imerg?, smap?, geos_fp?, quality?: 'measured'\|'placeholder', …}` |
+| `damage_anchor` | `DamageAnchor` | `{at, source?, url?}` — `at` is ISO 8601 or `YYYY-MM-DD` |
+
+Honesty note: these are retrospective replay numbers only. The UI always shows
+median + IQR + `n_points` + `never_critical_pct` together; placeholder values
+are flagged via `lead_time_assumptions.quality === 'placeholder'`. The
+`damage_anchor` is also mirrored in `events/*.json` — keep them consistent.
+
 ## forecast_source
 
 Case-level or now-level string. UI labels via `forecastSourceLabel()`:

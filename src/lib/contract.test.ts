@@ -107,6 +107,45 @@ describe("toMetricsView", () => {
     for (const k of shared) expect(legacy[k]).toBe(flat[k]);
   });
 
+  test("lead-time percent keys normalize like other percent fields", () => {
+    const view = toMetricsView({
+      warned_24h_pct: 64,
+      never_critical_pct: 0.12,
+      critical_area_with_damage_pct: 27,
+    })!;
+    expect(view.warned_24h_pct).toBe(0.64);
+    expect(view.never_critical_pct).toBe(0.12);
+    expect(view.critical_area_with_damage_pct).toBe(0.27);
+  });
+
+  test("lead-time structured keys pass through untouched", () => {
+    const iqr: [number, number] = [32, 61];
+    const hist = { bin_h: 6, from_h: -12, counts: [2, 4, 15, 46] };
+    const anchor = { at: "2024-05-02T03:00:00Z", source: "placeholder" };
+    const assumptions = { imerg: "IMERG Early ~4h latency", quality: "placeholder" };
+    const view = toMetricsView({
+      lead_time_iqr_h: iqr,
+      lead_time_hist: hist,
+      damage_anchor: anchor,
+      lead_time_assumptions: assumptions,
+      warned_24h_pct: 64,
+    })!;
+    expect(view.lead_time_iqr_h).toBe(iqr);
+    expect(view.lead_time_hist).toBe(hist);
+    expect(view.damage_anchor).toBe(anchor);
+    expect(view.lead_time_assumptions).toBe(assumptions);
+  });
+
+  test("legacy nested metrics do not synthesize lead-time keys", () => {
+    expect(legacy.lead_time_iqr_h).toBeUndefined();
+    expect(legacy.warned_24h_pct).toBeUndefined();
+    expect(legacy.never_critical_pct).toBeUndefined();
+    expect(legacy.n_points).toBeUndefined();
+    expect(legacy.damage_anchor).toBeUndefined();
+    expect(legacy.lead_time_hist).toBeUndefined();
+    expect(legacy.critical_area_km2).toBeUndefined();
+  });
+
   test("empty input -> undefined", () => {
     expect(toMetricsView(undefined)).toBeUndefined();
     expect(toMetricsView(null)).toBeUndefined();

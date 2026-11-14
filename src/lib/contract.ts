@@ -18,6 +18,26 @@ const str = (v: unknown): string | undefined =>
 
 // --- metrics ---------------------------------------------------------------
 
+// Lead-time (retrospective) shapes — see docs/app-contract.md "lead time".
+export type AnchorPrecision = "hour" | "date" | "mixed";
+export interface LeadTimeHist {
+  bin_h: number;
+  from_h: number;
+  counts: number[]; // counts[i] covers [from_h+i*bin_h, +bin_h); negatives allowed
+}
+export interface DamageAnchor {
+  at: string; // ISO 8601 or YYYY-MM-DD
+  source?: string;
+  url?: string;
+}
+export interface LeadTimeAssumptions {
+  imerg?: string;
+  smap?: string;
+  geos_fp?: string;
+  quality?: "measured" | "placeholder";
+  [k: string]: unknown;
+}
+
 // metrics.json per event: flat keys (SCHEMA.md). All fields optional — the
 // pipeline writes them from several steps and a case may ship a subset.
 export interface MetricsV4 {
@@ -39,6 +59,18 @@ export interface MetricsV4 {
   rule_auc?: number;
   feature_importance?: Record<string, number>;
   forecast_source?: ForecastSource;
+  lead_time_iqr_h?: [number, number]; // [p25, p75] hours
+  warned_24h_pct?: number;
+  never_critical_pct?: number;
+  n_points?: number; // damage points used
+  anchor_precision?: AnchorPrecision;
+  event_lead_h?: number; // event-level anchor lead
+  official_warning_delta_h?: number | null; // + = TPI earlier than first official warning
+  lead_time_assumptions?: LeadTimeAssumptions;
+  lead_time_hist?: LeadTimeHist;
+  critical_area_km2?: number;
+  critical_area_with_damage_pct?: number;
+  damage_anchor?: DamageAnchor;
 }
 
 // The UI-facing metrics view. Same keys as MetricsV4; every percent field is
@@ -55,6 +87,9 @@ const PCT_KEYS = [
   "hand_validation",
   "night_light_drop_pct",
   "warned_before_pct",
+  "warned_24h_pct",
+  "never_critical_pct",
+  "critical_area_with_damage_pct",
 ] as const;
 
 const pct = (v: unknown): number | undefined => {
