@@ -273,7 +273,9 @@ const bandedTpi = () => {
 };
 
 const servers: { stop(): void }[] = [];
+const originalFetch = globalThis.fetch;
 afterEach(() => {
+  globalThis.fetch = originalFetch;
   while (servers.length) servers.pop()!.stop();
 });
 
@@ -304,6 +306,97 @@ function serveCog(buf: ArrayBuffer): string {
 }
 
 describe("resolvePixelValues", () => {
+  const day = { date: "2026-05-02" } as DayPoint;
+  const values = {
+    tpi_slide: 0.7, tpi_flood: 0.4, r: 0.8, s: 0.6,
+    t_slide: 0.9, t_flood: 0.3,
+  };
+
+  for (const kind of ["slide", "flood", undefined] as const) {
+    test(`GEE values are authoritative for ${kind ?? "unknown"} kind`, async () => {
+      let requested = "";
+      globalThis.fetch = (async (input: RequestInfo | URL) => {
+        requested = String(input);
+        return Response.json({ values });
+      }) as typeof fetch;
+      expect(await resolvePixelValues(undefined, -49.75, -29.25, {
+        caseId: "rs_2024", day, kind,
+      })).toEqual({
+        tpi: kind === "flood" ? 0.4 : 0.7,
+        r: 0.8, s: 0.6, t: kind === "flood" ? 0.3 : 0.9,
+        provenance: "gee",
+      });
+      const query = new URL(requested, "http://localhost").searchParams;
+      expect(Object.fromEntries(query)).toEqual({
+        case: "rs_2024", date: day.date, lat: "-29.25", lon: "-49.75",
+      });
+    });
+  }
+
+  test("GEE all-null values do not fall back to COG", async () => {
+    let calls = 0;
+    globalThis.fetch = (async () => {
+      calls++;
+      return Response.json({ values: Object.fromEntries(
+        Object.keys(values).map((key) => [key, null])
+      ) });
+    }) as typeof fetch;
+    expect(await resolvePixelValues(undefined, 0, 0, { caseId: "now", day }))
+      .toEqual({ tpi: null, r: null, s: null, t: null, provenance: "gee" });
+    expect(calls).toBe(1);
+  });
+
+  test("unknown kind and missing matching terrain use the other value", async () => {
+    globalThis.fetch = (async () => Response.json({
+      values: { ...values, tpi_slide: null, t_slide: null },
+    })) as typeof fetch;
+    for (const kind of [undefined, "slide"] as const) {
+      const px = await resolvePixelValues(undefined, 0, 0, { caseId: "now", day, kind });
+      expect(px?.tpi).toBe(kind === "slide" ? null : 0.4);
+      expect(px?.t).toBe(0.3);
+    }
+  });
+
+  for (const failure of [404, 503, "network", "json", "values"] as const) {
+    test(`GEE ${failure} failure falls back to COG`, async () => {
+      const url = serveCog(bandedTpi());
+      let calls = 0;
+      globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (String(input).startsWith("/api/point?")) {
+          calls++;
+          if (failure === "network") throw new Error("offline");
+          if (failure === "json") return new Response("not json");
+          if (failure === "values") return Response.json({ values: { r: "bad" } });
+          return new Response(null, { status: failure });
+        }
+        return originalFetch(input, init);
+      }) as typeof fetch;
+      const px = await resolvePixelValues(url, -49.75, -29.25, { caseId: "now", day });
+      expect(px?.tpi).toBeCloseTo(0.1, 6);
+      expect(px?.provenance).toBe("cog");
+      expect(calls).toBe(1);
+      expect(await resolvePixelValues(undefined, 0, 0, { caseId: "now", day })).toBeNull();
+    });
+  }
+
+  test("without case or date the endpoint is skipped", async () => {
+    const url = serveCog(bandedTpi());
+    let calls = 0;
+    globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).startsWith("/api/point?")) {
+        calls++;
+        throw new Error("unexpected endpoint request");
+      }
+      return originalFetch(input, init);
+    }) as typeof fetch;
+    expect(await resolvePixelValues(undefined, 0, 0, { day })).toBeNull();
+    expect(await resolvePixelValues(undefined, 0, 0, { caseId: "now" })).toBeNull();
+    const px = await resolvePixelValues(url, -49.75, -29.25, { day });
+    expect(px?.tpi).toBeCloseTo(0.1, 6);
+    expect(px?.provenance).toBe("cog");
+    expect(calls).toBe(0);
+  });
+
   test("no cog URL resolves to null", async () => {
     await expect(resolvePixelValues(undefined, 0, 0)).resolves.toBeNull();
   });

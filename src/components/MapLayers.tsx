@@ -22,6 +22,7 @@ import {
   overlayPlan,
   pointInPolygons,
   resolvePixelValues,
+  type PixelValues,
   type TabKey,
 } from "@/lib/layers";
 import {
@@ -514,18 +515,21 @@ export function useMapLayers(
       const seq = ++clickSeq.current;
 
       const html = (
-        pv: { tpi: number; r: number; s: number; t: number },
+        pv: PixelValues,
         provenance: string
-      ) =>
-        `<div class="tp-popup-body">` +
+      ) => {
+        const fmt = (value: number | null) =>
+          value === null || !Number.isFinite(value) ? "no data" : value.toFixed(2);
+        return `<div class="tp-popup-body">` +
           (place ? `<strong>${place}</strong><br/>` : "") +
-          `<strong>${tpiClass(pv.tpi).label} risk</strong> · TPI ${pv.tpi.toFixed(2)}<br/>` +
-          `R ${pv.r.toFixed(2)} · S ${pv.s.toFixed(2)} · T ${pv.t.toFixed(2)}<br/>` +
+          `<strong>${pv.tpi === null ? "no data" : `${tpiClass(pv.tpi).label} risk`}</strong> · TPI ${fmt(pv.tpi)}<br/>` +
+          `R ${fmt(pv.r)} · S ${fmt(pv.s)} · T ${fmt(pv.t)}<br/>` +
           `<span>data ${d ? fmtDataDate(d.date) : "—"} · IMERG ${fmtDataDate(String(dd.imerg ?? ""))} · SMAP ${fmtDataDate(String(dd.smap ?? ""))} · ${provenance}</span>` +
           (cogUrl
             ? `<br/><a href="${cogUrl}" target="_blank" rel="noreferrer">Download COG</a>`
             : "") +
         `</div>`;
+      };
 
       // Render the day-level estimate immediately, then swap in the COG
       // pixel read when it resolves (async-safe: stale clicks are dropped).
@@ -540,9 +544,12 @@ export function useMapLayers(
         tpi: v,
         bandOrder,
         rstUrls,
+        caseId: cd,
+        kind: ap?.id.includes("flood") ? "flood" : "slide",
       }).then((px) => {
         if (px && seq === clickSeq.current && popup.isOpen()) {
-          popup.setHTML(html(px, "COG pixel read"));
+          popup.setHTML(html(px, px.provenance === "gee" ? "GEE point read"
+            : px.provenance === "cog" ? "COG pixel read" : "day estimate"));
         }
       });
     };

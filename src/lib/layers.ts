@@ -193,10 +193,11 @@ export const VIRIDIS: [number, string][] = [
 // --- COG pixel seam -----------------------------------------------------------
 
 export interface PixelValues {
-  tpi: number;
-  r: number;
-  s: number;
-  t: number;
+  tpi: number | null;
+  r: number | null;
+  s: number | null;
+  t: number | null;
+  provenance?: "gee" | "cog";
 }
 
 // COG pixel seam for the click popup. Reads the TPI value out of the frame's
@@ -218,8 +219,37 @@ export async function resolvePixelValues(
     tpi?: number;
     bandOrder?: string[];
     rstUrls?: CogRSTUrls;
+    caseId?: string;
+    kind?: "slide" | "flood";
   }
 ): Promise<PixelValues | null> {
+  if (ctx?.caseId && ctx.day?.date) {
+    try {
+      const res = await fetch("/api/point?" + new URLSearchParams({
+        case: ctx.caseId,
+        date: ctx.day.date,
+        lat: String(lat),
+        lon: String(lon),
+      }));
+      if (res.ok) {
+        const { values } = await res.json();
+        const keys = ["tpi_slide", "tpi_flood", "r", "s", "t_slide", "t_flood"] as const;
+        if (values && typeof values === "object" && !Array.isArray(values) &&
+          keys.every((key) => values[key] === null ||
+            (typeof values[key] === "number" && Number.isFinite(values[key])))) {
+          return {
+            tpi: ctx.kind === "slide" ? values.tpi_slide : ctx.kind === "flood"
+              ? values.tpi_flood : values.tpi_slide ?? values.tpi_flood,
+            r: values.r,
+            s: values.s,
+            t: ctx.kind === "flood" ? values.t_flood ?? values.t_slide
+              : values.t_slide ?? values.t_flood,
+            provenance: "gee",
+          };
+        }
+      }
+    } catch {}
+  }
   if (!cogUrl) return null;
   const opts = { date: ctx?.day?.date, bandOrder: ctx?.bandOrder };
   const tpi = await readCogPixel(cogUrl, lon, lat, opts);
@@ -233,5 +263,5 @@ export async function resolvePixelValues(
   const { r, s, t } = ctx?.rstUrls
     ? await readCogRST(ctx.rstUrls, lon, lat, opts)
     : { r: null, s: null, t: null };
-  return { tpi, r: r ?? est.r, s: s ?? est.s, t: t ?? est.t };
+  return { tpi, r: r ?? est.r, s: s ?? est.s, t: t ?? est.t, provenance: "cog" };
 }
