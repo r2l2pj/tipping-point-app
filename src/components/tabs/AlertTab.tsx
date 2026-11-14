@@ -24,23 +24,18 @@ export default function AlertTab({
   const seriesThreshold = bundle.series?.tpi_threshold;
   const threshold = typeof seriesThreshold === "number" && Number.isFinite(seriesThreshold)
     ? seriesThreshold : cutsFor(bundle)[2];
-  const critical = zones.filter((z) => /^critical$/i.test(z.class));
   const monitoring =
     (!bundle.series && zones.length === 0) ||
     pendingIncludes(bundle, "series") ||
     pendingIncludes(bundle, "priority_zones");
   const reached = !monitoring &&
     (bundle.series?.days[dayIndex]?.tpi ?? -Infinity) >= threshold;
-  const areaKm2 = critical.reduce((a, z) => a + z.area_km2, 0);
-  // GPW population join is optional in the pipeline — when every zone
-  // ships people:null the exposed count is pending, not zero.
-  const hasPeople = zones.some(
-    (z) => typeof z.people === "number" && Number.isFinite(z.people)
-  );
-  const people = critical.reduce(
-    (a, z) => a + (typeof z.people === "number" ? z.people : 0),
-    0
-  );
+  // Card totals come from metrics: the zone list is a trimmed top-20, so
+  // summing it would understate the AOI total (L14: absent metric -> pending,
+  // not a partial approximation).
+  const areaKm2 = bundle.metricsView?.critical_km2;
+  const areaDate = bundle.metricsView?.critical_km2_date;
+  const people = bundle.metricsView?.people_critical;
   const mock = isMockDerived(bundle);
   const source = forecastSourceLabel(
     bundle.manifest?.forecast_source ?? bundle.summary?.forecast_source
@@ -84,8 +79,17 @@ export default function AlertTab({
         </div>
         {!monitoring && (
           <div className="mt-3 flex items-center gap-5">
-            <Stat big value={fmtKm2(areaKm2)} label="critical" absent={zones.length === 0} />
-            <Stat big value={fmtPeople(people)} label="people exposed" absent={!hasPeople} />
+            <Stat
+              big
+              value={fmtKm2(areaKm2)}
+              label={
+                areaDate && areaDate !== bundle.series?.days[dayIndex]?.date
+                  ? `critical (${areaDate})`
+                  : "critical"
+              }
+              absent={areaKm2 == null}
+            />
+            <Stat big value={fmtPeople(people)} label="people exposed" absent={people == null} />
             {mock && (
               <span className="ml-auto text-right text-xs leading-tight text-zinc-500">
                 Data
@@ -135,7 +139,7 @@ export default function AlertTab({
                 {z.class.toUpperCase()}
               </span>
               <span className="w-14 text-right text-xs text-zinc-400">
-                {z.area_km2.toFixed(1)} km²
+                {fmtKm2(z.area_km2)}
               </span>
               <span className="w-14 text-right text-xs text-zinc-400">
                 {fmtPeople(z.people)}
