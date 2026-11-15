@@ -120,3 +120,34 @@ describe("live NISAR finds nothing (conductor: R2 may publish 0 candidates)", ()
     expect(nisarNoFlood(some)).toBe(false);
   });
 });
+
+describe("lead-analysis R2 status (nisar_meta.json)", () => {
+  test("no_usable_pair: status_label as headline, 'not computed', no zoom, no old numbers", async () => {
+    const { toNowResponse } = await import("@/lib/response");
+    const { tourStops } = await import("../StartHere");
+    const label = "No usable NISAR pair this pass — flood candidates not computed (pre/post acquisition modes differ (2005_DHDH_M vs 4005_DHDH_A): not comparable)";
+    const live = liveBundle({ response: toNowResponse({ status: "no_usable_pair", status_label: label, pairs: [], flooded_km2: null }),
+      data_dates: { nisar_pre: "2026-10-25", nisar_post: "2026-11-06" } } as never);
+    const card = radarCard(live);
+    expect(card.headline).toBe(label);
+    expect(card.flooded!.value).toBe("not computed");
+    expect(card.people).toBeUndefined();
+    expect(card.canShowOnMap).toBe(false);
+    expect(JSON.stringify(card)).not.toMatch(/2\.3 km²|\b82\b/);
+    expect(tourStops([live])[0].what).toContain("no flood candidates (no usable pair)");
+    expect(tourStops([live])[0].title).toBe("1 · Now — Southern Brazil");
+  });
+  test("no_new_flooding with dates; candidates -> normal card; no status + nothing computed -> reason", async () => {
+    const { toNowResponse } = await import("@/lib/response");
+    const fresh = liveBundle({ response: toNowResponse({ status: "no_new_flooding", status_label: "No new flooding detected this pass",
+      pairs: [{ pre_acquired: "2026-11-06", post_acquired: "2026-11-18" }] }) } as never);
+    expect(radarCard(fresh).headline).toBe("No new flooding detected this pass (Nov 6, 2026 → Nov 18, 2026)");
+    const cands = liveBundle({ response: toNowResponse({ status: "candidates", flooded_km2: 4.2, n_polygons: 3 }) } as never);
+    expect(radarCard(cands).headline).not.toContain("No ");
+    const now = liveBundle({ response: toNowResponse({ pairs: [], flooded_km2: null,
+      _null_reasons: { pairs: "every paired granule failed to read (see pair reasons)" } }) } as never);
+    const c = radarCard(now);
+    expect(c.headline).toBe("No NISAR flood candidates this pass");
+    expect(c.note).toBe("every paired granule failed to read (see pair reasons).");
+  });
+});

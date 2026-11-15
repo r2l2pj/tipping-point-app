@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { canonicalCaseId } from "@/lib/contract";
 import type { Action } from "./state";
 import type { CcBundle } from "./model/types";
-import { nisarNoFlood } from "./model/radar";
+import { nisarNoCandidates } from "./model/radar";
 
 // "Start here" (judge report #6, conductor): four stops that show the
 // project in under a minute. Each one sets case, day, hazard and layers in
@@ -38,8 +38,8 @@ export function tourStops(cases: readonly CcBundle[]): TourStop[] {
   });
   if (live) stops.push({
     key: "now",
-    what: nisarNoFlood(live)
-      ? "Latest NISAR pass: no new flooding detected — plus today's risk and public alerts (every 3 h)"
+    what: nisarNoCandidates(live)
+      ? `Latest NISAR pass: ${nisarNoCandidates(live)!.computed ? "no new flooding detected" : "no flood candidates (no usable pair)"} — plus today's risk and public alerts (every 3 h)`
       : "Today's NISAR radar flood candidates, risk and public alerts (every 3 h)",
     action: { type: "goTo", id: live.id },
   });
@@ -55,7 +55,8 @@ export function tourStops(cases: readonly CcBundle[]): TourStop[] {
   });
   const titles: Record<string, string> = {
     "wa-radar": "Washington, Dec 2025 — NISAR radar",
-    now: "Now — Southern Brazil, NISAR radar",
+    // R2: no live NISAR candidates -> the stop is not billed as NISAR.
+    now: live && nisarNoCandidates(live) ? "Now — Southern Brazil" : "Now — Southern Brazil, NISAR radar",
     rs: "Rio Grande do Sul, May 2024 — rain index",
     wa: "Washington, Dec 2025 — forecast replay",
   };

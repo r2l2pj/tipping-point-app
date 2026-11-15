@@ -214,12 +214,33 @@ export interface RadarCard {
 // Conductor: the live NISAR pass may find nothing (lead-analysis R2 fix can
 // publish 0 candidates with a reason) — then the card says so, with the
 // dates and the pass list, and never offers an empty map zoom for NISAR.
-export function nisarNoFlood(bundle: CcBundle): boolean {
-  if (bundle.mode !== "live" || !bundle.response) return false;
+// lead-analysis R2: nisar_meta.json status — 'candidates' shows polygons;
+// 'no_new_flooding' / 'no_usable_pair' show status_label. Without a status:
+// 0 km² / 0 polygons = no new flooding; no area, no polygons = not computed.
+export interface NisarNoCandidates { label: string; computed: boolean; reason?: string }
+export function nisarNoCandidates(bundle: CcBundle): NisarNoCandidates | undefined {
+  const r = bundle.response;
+  if (bundle.mode !== "live" || !r) return undefined;
+  if (r.status) {
+    if (r.status === "candidates") return undefined;
+    const fresh = r.status === "no_new_flooding";
+    return {
+      label: r.status_label ?? (fresh ? "No new flooding detected this pass" : "No usable NISAR pair this pass — flood candidates not computed"),
+      computed: fresh,
+    };
+  }
   const r3 = bundle.responseSources?.find((x) => /nisar/i.test(x.source));
   const zero = (v: unknown) => finite(v) && v === 0;
-  return r3 ? zero(r3.flooded_km2) || zero(r3.features) : zero(bundle.response.flooded_km2) || zero(bundle.response.polygons);
+  if (r3 ? zero(r3.flooded_km2) || zero(r3.features) : zero(r.flooded_km2) || zero(r.polygons)) {
+    return { label: "No new flooding detected in the latest NISAR pass", computed: true };
+  }
+  if (!r3 && !finite(r.flooded_km2) && !finite(r.polygons)) {
+    const reason = r.null_reasons?.pairs ?? r.null_reasons?.flooded_km2;
+    return { label: "No NISAR flood candidates this pass", computed: false, reason };
+  }
+  return undefined;
 }
+export const nisarNoFlood = (bundle: CcBundle): boolean => !!nisarNoCandidates(bundle);
 
 // Live case with a published radar response (lead-live R2).
 function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
@@ -237,17 +258,20 @@ function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
   const age = finite(r.latency_h)
     ? ` Newest pair published ${Math.round(r.latency_h)} h after the radar pass.`
     : "";
-  if (nisarNoFlood(bundle)) {
-    const pre = r.pre_acquired ?? (bundle.data_dates?.nisar_pre as string | undefined);
-    const post = r.post_acquired ?? (bundle.data_dates?.nisar_post as string | undefined);
-    const dates = pre && post ? ` (${fmtDate(pre)} → ${fmtDate(post)})` : post ? ` (${fmtDate(post)})` : "";
-    const reason = reasonOf("flooded_km2") ?? reasonOf("polygons");
+  const none = nisarNoCandidates(bundle);
+  if (none) {
+    const pre = r.pre_acquired;
+    const post = r.post_acquired;
+    // Dates only for a computed pair (the label of a rejected pair says why).
+    const dates = none.computed && pre && post && !/\(/.test(none.label) ? ` (${fmtDate(pre)} → ${fmtDate(post)})` : "";
+    const reason = none.reason ?? reasonOf("flooded_km2") ?? reasonOf("polygons");
     return {
       ...base,
-      headline: `No new flooding detected in the latest NISAR pass${dates}`,
-      flooded: { label: RESPONSE_AREA_LABEL, value: "none detected" },
+      pair: false,
+      headline: `${none.label}${dates}`,
+      flooded: { label: RESPONSE_AREA_LABEL, value: none.computed ? "none detected" : "not computed" },
       people: undefined,
-      note: reason ? `${reason}.${age}` : `${RESPONSE_NOTE}${age}`,
+      note: reason && !none.label.includes(reason) ? `${reason}.` : undefined,
       limitation: undefined,
       canShowOnMap: false,
     };
