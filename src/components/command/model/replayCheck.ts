@@ -232,8 +232,23 @@ export const WARNED_NAME = {
 // EMSR720 flood map — Taquari valley only (EMS did not map Porto Alegre /
 // Guaíba). Headline = observed rain, High or above; before-onset shares;
 // attribution required by the EMS licence.
+// "That run flagged only 4.2% of the case area as High or above — and that
+// area held 36.5% of the landslides: 8.8× what chance would give."
+export function liftLine(areaShare: unknown, lift: unknown, what: string): string | undefined {
+  if (!finite(areaShare) || !finite(lift) || lift <= 0) return undefined;
+  return `That run flagged only ${pct100(areaShare)} of the case area as High or above: ${lift.toFixed(1)}× the share of ${what} expected by chance.`;
+}
+
 export const EMS_ROW_NAME = "Flood map vs Copernicus EMS (Taquari valley only)";
 export const EMS_ATTRIBUTION = "© European Union, Copernicus Emergency Management Service";
+const emsLift = (m: M): string => {
+  const l = m.flood_ems_flagged_before_onset_lift;
+  const a = m.flood_ems_flagged_before_onset_area_share_pct;
+  const hit = m.flood_ems_flagged_before_onset_pct;
+  return finite(l) && l > 0 && finite(a) && finite(hit)
+    ? `Before the onset the GFS run flagged ${pct100(a)} of the mapped Taquari area as High or above but ${pct100(hit)} of the EMS flood: ${l.toFixed(1)}× chance. `
+    : "";
+};
 export function emsRow(m: M): CheckRow | undefined {
   if (![m.flood_ems_iou, m.flood_ems_f1].some(finite)) return undefined;
   const e = isRecord(m.flood_ems) ? m.flood_ems : {};
@@ -263,7 +278,7 @@ export function emsRow(m: M): CheckRow | undefined {
     id: "ems",
     name: EMS_ROW_NAME,
     value: `IoU ${fmtScore(m.flood_ems_iou)} · F1 ${fmtScore(m.flood_ems_f1)}${pr ? ` · ${pr}` : ""}`,
-    detail: `Flood index High or above (observed rain)${img ? ` vs the EMS ${typeof e.activation === "string" ? `${e.activation} ` : ""}flood map of ${img}` : " vs the EMS flood map"}.${scope}${before} ${EMS_ATTRIBUTION}.`,
+    detail: `${emsLift(m)}Flood index High or above (observed rain)${img ? ` vs the EMS ${typeof e.activation === "string" ? `${e.activation} ` : ""}flood map of ${img}` : " vs the EMS flood map"}.${scope}${before} ${EMS_ATTRIBUTION}.`,
     missing: false,
   };
 }
@@ -321,6 +336,9 @@ export function warnedRow(m: M): CheckRow | undefined {
         ? `NOAA GFS forecast issued ${runText.join("; ")}${runText.length > 1 ? " — single runs vary" : ""}`
         : `TPI High or above in the NOAA GFS forecast issued 24 h before ${anchor}`) +
         (finite(obs) ? `; with observed rain instead: ${pct100(obs)}` : "") + ".",
+      // L43 lift (lead-analysis): hit rate ÷ share of the area the same run
+      // flagged; undefined (WA 0 % / 0 %) -> no line.
+      liftLine(m[`${hz}_warned_gfs_24h_area_share_pct`], m[`${hz}_warned_gfs_24h_lift`], hz === "slide" ? "landslides" : "flooded area"),
       // WA: why 27.9 km² here vs 27.99 km² flooded (lead-analysis).
       typeof m[`${hz}_warned_denominator_label`] === "string" ? `${m[`${hz}_warned_denominator_label`]}.` : undefined,
       typeof obj.explanation === "string" ? obj.explanation : undefined,

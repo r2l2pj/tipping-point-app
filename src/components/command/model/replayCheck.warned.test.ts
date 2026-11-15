@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { anchorShort, catalogHitsDetail, emsRow, handCheck, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
+import { anchorShort, catalogHitsDetail, emsRow, handCheck, liftLine, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
 
 // lead-analysis fallback bb125cf values (authored 0-100).
 describe("warned before the damage (lead-analysis)", () => {
@@ -173,5 +173,21 @@ describe("RS flood vs Copernicus EMS (lead-analysis a363629)", () => {
     expect(r.value).toBe("IoU 0.18 · F1 0.31 · P 0.46 · R 0.24");
     expect(r.detail).toBe("Flood index High or above (observed rain) vs the EMS EMSR720 flood map of May 6, 2024. EMS mapped only five Taquari-valley areas; the Porto Alegre / Guaíba flood is not in it. Before the onset (Apr 29, 2024): 0.21% of the EMS flood area was High or above with observed rain, 6.6% in the NOAA GFS forecast issued Apr 28, 2024 (Critical 0.10%). © European Union, Copernicus Emergency Management Service.");
     expect(emsRow({})).toBeUndefined();
+  });
+});
+
+describe("L43 lift (lead-analysis f2b7ff3)", () => {
+  test("RS row: 4.16% of the area held 36.45% of landslides -> 8.8×; absent/undefined -> no line", () => {
+    const r = warnedRow({ slide_warned_pct: 36.45, slide_warned_gfs_24h_area_share_pct: 4.16, slide_warned_gfs_24h_lift: 8.76,
+      slide_warned: { anchor_basis: "onset", n_points: 16027 } })!;
+    expect(r.detail).toContain("That run flagged only 4.2% of the case area as High or above: 8.8× the share of landslides expected by chance.");
+    expect(liftLine(0, null, "x")).toBeUndefined();
+    const wa = warnedRow({ flood_warned_pct: 0, flood_warned_gfs_24h_area_share_pct: 0, flood_warned_gfs_24h_lift: null, flood_warned: { anchor_basis: "onset" } })!;
+    expect(wa.detail).not.toContain("chance");
+  });
+  test("EMS row leads with its lift when published", () => {
+    const m = { ...JSON.parse(readFileSync(join(import.meta.dir, "../../../../test/fixtures/rs-ems.json"), "utf8")),
+      flood_ems_flagged_before_onset_lift: 2.23, flood_ems_flagged_before_onset_area_share_pct: 2.94 };
+    expect(emsRow(m)!.detail).toStartWith("Before the onset the GFS run flagged 2.9% of the mapped Taquari area as High or above but 6.6% of the EMS flood: 2.2× chance. Flood index");
   });
 });
