@@ -2,7 +2,7 @@
 
 > **DRAFT — pending approval.**
 
-One page: every public-facing sentence in the pack, where it appears, and which placeholders still need real values. All sentences below are **awaiting Lucas** (copy review 2026-11-15 morning, per L18).
+Morning summary for Lucas: `submission/MORNING.md`. One page: every public-facing sentence in the pack, where it appears, and which placeholders still need real values. All sentences below are **awaiting Lucas** (copy review 2026-11-15 morning, per L18).
 
 | Sentence | Where | Open placeholders | Status |
 | --- | --- | --- | --- |
