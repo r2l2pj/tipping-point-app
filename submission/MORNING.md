@@ -7,6 +7,10 @@ One page. Full detail, sources and history: `submission/REVIEW.md`. Every number
 1. **ASF OPERA RTC-S1 EULA.** Accept the Alaska Satellite Facility EULA that covers OPERA RTC-S1 for the Earthdata account the pipeline uses (Earthdata Login profile → EULAs, or the prompt ASF shows when you sign in at search.asf.alaska.edu). Today ASF answers "EULA Acceptance Failure", so Rio Grande do Sul 2024 has **no radar flood map** (`flooded_km2` / `people_flooded` null). Then tell the conductor; lead-analysis runs the RS Sentinel-1 flood unit (post May 8/11, 2024).
 2. **Optional — external trigger for the 3-hourly Now job.** GitHub sometimes drops scheduled runs (one fired in 6 h on Nov 15). In-repo backup `now-watchdog.yml` is already live and needs nothing. For a trigger outside GitHub: a Cloudflare Worker cron every 3 h that calls GitHub's `workflow_dispatch` for `now.yml`, which needs your Cloudflare account and a fine-grained GitHub PAT (Actions: write on `r2l2pj/tipping-point-data`) stored as a Worker secret, never in a repo. Skip it if the watchdog keeps runs on time.
 
+## Check on your phone
+
+Open https://tipping-point-app.vercel.app on a real phone: the headless capture rendered the mobile Now map mostly black (likely a headless GPU artefact). Prod tour with screenshots: `.crew/review/morning/index.md`.
+
 ## Awaiting you (20) — reply "approve all", or edit by number
 
 1. "Tipping Point turns NASA rainfall and soil moisture data into a near real-time landslide and flood warning, then uses NISAR radar to confirm where the ground actually moved or flooded, so civil defense teams know where to act first." — *summary.md: Theme sentence (verbatim from docs/PLAN.md)* — doc-verbatim (L18); note: the UI swept "confirm" to "candidates", only this sentence and the tagline keep "confirm"
