@@ -301,7 +301,9 @@ export interface NowSummary {
   people_critical?: number;
   people_exposed?: number;
   forecast_source?: ForecastSource;
-  classes_km2?: Record<string, number>;
+  // v1: one flat map (union of hazards). v2 (lead-live 2026-11-15): one map
+  // per hazard, { landslide: {...}, flood: {...} }. Read through liveClasses.
+  classes_km2?: Record<string, number | Record<string, number>>;
   data_dates?: Record<string, string>;
 }
 
@@ -406,3 +408,53 @@ export const forecastSourceLabel = (
   source: string | null | undefined
 ): string | undefined =>
   source == null ? undefined : (FORECAST_SOURCE_LABELS[source] ?? source);
+
+// --- live summary: Critical area and classes per hazard ---------------------
+//
+// Summary v1: classes_km2 flat (both hazards), critical_km2.<hazard> =
+// Critical only. Summary v2 (lead-live, 2026-11-15): classes_km2 per hazard
+// and critical_km2.<hazard> = High + Critical. The screen says "Critical
+// area", so v2 is read from the per-hazard "Crítico" class.
+
+const HAZARD_KEYS: Record<"slide" | "flood", string[]> = {
+  slide: ["landslide", "slide"],
+  flood: ["flood"],
+};
+
+const isNumMap = (v: unknown): v is Record<string, number> =>
+  isRecord(v) && Object.values(v).every((x) => typeof x === "number");
+
+// Area by class for the hazard (v2), or the flat union map (v1).
+export function liveClasses(
+  summary: NowSummary | undefined,
+  hazard: "slide" | "flood"
+): Record<string, number> | undefined {
+  const c = summary?.classes_km2;
+  if (!isRecord(c)) return undefined;
+  for (const key of HAZARD_KEYS[hazard]) {
+    if (isNumMap(c[key])) return c[key] as Record<string, number>;
+  }
+  return isNumMap(c) ? c : undefined;
+}
+
+// v2: classes_km2 carries one map per hazard.
+export const liveSummaryV2 = (summary: NowSummary | undefined): boolean => {
+  const c = summary?.classes_km2;
+  return isRecord(c) && Object.values(HAZARD_KEYS).flat().some((k) => isNumMap(c[k]));
+};
+
+// Critical-only area of the hazard; undefined when not published. The v1
+// union `any` is the fallback only for v1 (in v2 `any` counts High too).
+export function liveCriticalKm2(
+  summary: NowSummary | undefined,
+  hazard: "slide" | "flood"
+): number | undefined {
+  const c = summary?.classes_km2;
+  const perHazard = isRecord(c) && HAZARD_KEYS[hazard].some((k) => isNumMap(c[k]));
+  if (perHazard) {
+    const v = liveClasses(summary, hazard)?.["Crítico"] ?? liveClasses(summary, hazard)?.["Critical"];
+    return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+  }
+  const v = summary?.critical_km2?.[hazard] ?? summary?.critical_km2?.any;
+  return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+}

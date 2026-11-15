@@ -53,6 +53,18 @@ describe("Now radar default (L27)", () => {
   });
 });
 
+describe("live summary v2 in the tile and status", () => {
+  test("Critical area and 'reached' read the Crítico class of the hazard", () => {
+    const v2 = liveBundle({ manifest: manifest([frame("tpi_flood", "2026-11-15")]),
+      summary: { critical_km2: { slide: 12, flood: 130, any: 140 },
+        classes_km2: { landslide: { Baixo: 1, Alto: 12, Crítico: 0 }, flood: { Baixo: 1, Alto: 100, Crítico: 30 } } } as never });
+    expect(criticalAreaTile(v2, "flood").value).toBe("30.0 km²");
+    expect(criticalAreaTile(v2, "slide").value).toBe("0.0 km²");
+    expect(statusChip(v2, stepsFor(v2), 0, "slide").kind).toBe("below");
+    expect(statusChip(v2, stepsFor(v2), 0, "flood").kind).toBe("reached");
+  });
+});
+
 describe("replay: forecast issued this day (beat 2)", () => {
   const gfs = (hz: string, k: number, issued: string, date: string) => ({
     id: `tpi_${hz}_gfs_d${k}`, date, issued, png: `wa_2025/png/tpi_${hz}_gfs_d${k}_${date.replace(/-/g, "")}.png`,

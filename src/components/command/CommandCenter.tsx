@@ -1,5 +1,7 @@
 "use client";
 
+import { liveClasses } from "@/lib/contract";
+
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import type { AlertCardData } from "@/lib/alerts";
@@ -196,7 +198,8 @@ export function CommandCenterView({
     : undefined;
   const snap = zoneSnapshot(bundle, step?.date);
   const tag = forecastTag(bundle);
-  const classesKm2 = bundle.riskPaused ? [] : Object.entries(bundle.summary?.classes_km2 ?? {});
+  // Area by class of the selected hazard (summary v2), or the v1 union.
+  const classesKm2 = bundle.riskPaused ? [] : Object.entries(liveClasses(bundle.summary, state.hazard) ?? {});
 
   const viewOnMap = (alert: AlertCardData) => {
     onView("command");

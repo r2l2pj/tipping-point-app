@@ -1,6 +1,6 @@
 // The two tiles of the Situation panel. Values come from the metrics, the
 // summary or the zone snapshot; a missing value is never shown as 0.
-import { count } from "@/lib/contract";
+import { count, liveCriticalKm2, liveSummaryV2 } from "@/lib/contract";
 import type { DayPoint } from "@/lib/types";
 import { availability, missingText } from "./availability";
 import { priorityAreas } from "./areas";
@@ -93,11 +93,12 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
     };
   }
   if (bundle.mode === "live") {
-    const km2 = bundle.summary?.critical_km2;
-    const byHazard = km2?.[hazard];
-    return finite(byHazard)
-      ? finish(bundle, stepDate, label, byHazard, fmtKm2, "summary", `${hazard === "flood" ? "flood" : "landslide"} hazard`)
-      : finish(bundle, stepDate, label, km2?.any, fmtKm2, "summary", "any hazard");
+    // Critical only, per hazard (summary v1 or v2; see liveCriticalKm2).
+    const own = bundle.summary?.critical_km2?.[hazard];
+    const value = liveCriticalKm2(bundle.summary, hazard);
+    const note = liveSummaryV2(bundle.summary) || finite(own)
+      ? `${hazard === "flood" ? "flood" : "landslide"} hazard` : "any hazard";
+    return finish(bundle, stepDate, label, value, fmtKm2, "summary", note);
   }
   const fromMetrics = bundle.metricsView?.critical_area_km2;
   if (finite(fromMetrics)) return finish(bundle, stepDate, label, fromMetrics, fmtKm2, "critical_area_km2");
