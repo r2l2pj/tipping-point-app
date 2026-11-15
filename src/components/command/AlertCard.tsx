@@ -53,6 +53,9 @@ export default function AlertCard({
           {a.area_km2 !== undefined && <><span className="text-cc-muted">Area:</span> {fmtKm2(a.area_km2)}</>}
           {a.area_km2 !== undefined && a.when ? " · " : ""}
           {a.when && <><span className="text-cc-muted">When:</span> {a.when === "today" ? "today" : "tomorrow (forecast)"}</>}
+          {a.when === "d1" && (
+            <> · <span className="text-cc-muted">today:</span> {a.today_level ? (ALERT_LEVEL_WORDS[a.today_level] ?? a.today_level).toLowerCase() : "below High"}</>
+          )}
         </p>
       )}
       {a.rain && <p className="mt-1 text-[13px]">{a.rain} {a.soil}</p>}

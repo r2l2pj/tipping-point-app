@@ -683,3 +683,16 @@ describe("public page: active area-alerts", () => {
     expect(html).not.toContain("No active alerts");
   });
 });
+
+describe("'when' = d1 with today's class (lead-live 20e51bc)", () => {
+  test("a Crítico that only exists tomorrow says so, with today's class", () => {
+    const list = buildAlertList({ now: liveBundle({ updated_at: "2026-11-15T06:33:00Z", nowAlerts: { active: [
+      { kind: "tpi", hazard: "landslide", class: 3, municipality: "Santo Amaro da Imperatriz", uf: "SC", when: "d1", class_today: 2 },
+      { kind: "tpi", hazard: "flood", class: 2, municipality: "Taquarussu", uf: "MS", when: "d1", class_today: 1 },
+    ] } as never }) });
+    const html = render(liveBundle(), {}, "public", list);
+    expect(html).toContain("tomorrow (forecast)");
+    expect(html).toContain("today:</span> high");
+    expect(html).toContain("today:</span> below High");
+  });
+});
