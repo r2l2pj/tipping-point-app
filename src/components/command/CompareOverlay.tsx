@@ -32,16 +32,22 @@ export default function CompareOverlay({
   pair,
   onClose,
   controlsRef,
+  init,
 }: {
   pair: ComparePair;
   onClose: () => void;
   controlsRef: MutableRefObject<CompareControls | null>;
+  init?: { before?: string; after?: string; pol?: "HH" | "HV" };
 }) {
-  const [pol, setPol] = useState<"HH" | "HV">("HH");
+  const [pol, setPol] = useState<"HH" | "HV">(init?.pol ?? "HH");
   const stack = pair.stack;
   const n = stack?.dates.length ?? 0;
-  const [bi, setBi] = useState(0);
-  const [ai, setAi] = useState(Math.max(0, n - 1));
+  const at = (d: string | undefined, fallback: number) => {
+    const i = d && stack ? stack.dates.indexOf(d.slice(0, 10)) : -1;
+    return i >= 0 ? i : fallback;
+  };
+  const [bi, setBi] = useState(at(init?.before, 0));
+  const [ai, setAi] = useState(at(init?.after, Math.max(0, n - 1)));
   const sideAt = (i: number) => {
     const f = stack!.frames[stack!.dates[i]];
     return (pol === "HV" ? f.HV ?? f.HH : f.HH ?? f.HV)!;

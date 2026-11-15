@@ -36,6 +36,7 @@ export interface ScreenState {
   selectedArea: number | null; // zone rank
   calloutExpanded: boolean;
   compareOpen: ComparePair["kind"] | null;
+  compareInit?: { before?: string; after?: string; pol?: "HH" | "HV" }; // deep link, first open only
   detailsOpen: boolean;
   layersOpen: boolean;
   listExpanded: boolean;
@@ -137,10 +138,15 @@ export function featuredFirst<T extends CcBundle>(cases: readonly T[]): T[] {
 // The screen opens on Now when a live case is loaded, else on the first case.
 // `initialCase` (the `?case=<id|alias>` deep link of the old screen) opens
 // that case when it is loaded.
+export interface DeepLink { lead?: string; compare?: string; before?: string; after?: string; pol?: string }
+
 export function initialState(
   cases: readonly CcBundle[],
   initialCase?: string,
-  initialDay?: number | string // `?day=<offset or date>`
+  initialDay?: number | string, // `?day=<offset or date>`
+  // Recording deep links: ?lead=1..3 (forecast issued N days ahead),
+  // ?compare=radar, ?before=/?after=YYYY-MM-DD and ?pol=HH|HV for the swipe.
+  link: DeepLink = {}
 ): ScreenState {
   const want = initialCase ? canonicalCaseId(initialCase) : undefined;
   const linked = initialCase
@@ -156,13 +162,14 @@ export function initialState(
     dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first)),
     playing: false,
     hazard,
-    layers: first ? withRadarDefault(first, keepAvailable(first, defaultLayersFor(first, hazard), hazard), hazard) : [],
+    layers: first ? withRadarDefault(first, keepAvailable(first, Number(link.lead) > 0 ? ["tpi"] : defaultLayersFor(first, hazard), hazard), hazard) : [],
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
-    issueLead: 0,
+    issueLead: [1, 2, 3].includes(Number(link.lead)) && first && layerAvailable(first, "tpi", hazard) ? Number(link.lead) as 1 | 2 | 3 : 0,
     selectedArea: null,
     calloutExpanded: false,
-    compareOpen: null,
+    compareOpen: link.compare === "radar" ? "radar" : null,
+    compareInit: { before: link.before, after: link.after, pol: link.pol === "HV" ? "HV" : link.pol === "HH" ? "HH" : undefined },
     detailsOpen: false,
     layersOpen: true,
     listExpanded: false,

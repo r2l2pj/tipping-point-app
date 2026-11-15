@@ -80,10 +80,10 @@ describe("status chip and contract values (S1, L9)", () => {
   });
 
   test("the legend takes its cuts from the bundle, then the manifest, then the defaults", () => {
-    expect(render(bundle())).toContain("Critical (0.60 or more)");
+    expect(render(bundle(), { layers: ["tpi"] })).toContain("Critical (0.60 or more)");
     const cut = { ...bundle(), classCuts: [0.1, 0.3, 0.8], manifest: manifest([], { tpi_cuts: [0.2, 0.5, 0.9] }) };
-    expect(render(cut)).toContain("Critical (0.80 or more)");
-    expect(render(bundle({ manifest: manifest([], { tpi_cuts: [0.2, 0.5, 0.9] }) }))).toContain("High (0.50 to below 0.90)");
+    expect(render(cut, { layers: ["tpi"] })).toContain("Critical (0.80 or more)");
+    expect(render(bundle({ manifest: manifest([], { tpi_cuts: [0.2, 0.5, 0.9] }) }), { layers: ["tpi"] })).toContain("High (0.50 to below 0.90)");
   });
 
   test("dates render in BRT; a date-only value keeps its day", () => {
@@ -520,7 +520,7 @@ describe("new assertions of the checklist", () => {
 
   test("a value of exactly 0.60 gets one class on the chip, the list, the pin and the legend", () => {
     const b = bundle({ series: series([0.6]), zones: zones([zone(1, { tpi: 0.6, class: "Critical" })]) });
-    const html = render(b);
+    const html = render(b, { layers: ["tpi"] });
     expect(html).toContain("Tipping point reached");
     expect(html).toContain("Critical (0.60 or more)");
     expect(html).toContain("High (0.40 to below 0.60)");
