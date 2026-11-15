@@ -25,7 +25,7 @@ export default function Map({
   center = [-51.5, -30.0] as [number, number],
   zoom = 7,
   minZoom = 5,
-  maxZoom = 13,
+  maxZoom = 17,
   onReady,
   children,
 }: {

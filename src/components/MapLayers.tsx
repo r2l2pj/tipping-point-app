@@ -48,6 +48,8 @@ import {
   zoneMarkersOn,
   type MapLayerOptions,
 } from "./command/model/overlays";
+import { basemapPlan, BM_PREFIX, type Basemap } from "./command/model/basemap";
+import { floodShownOn } from "./command/model/steps";
 import {
   bboxPolygon,
   boundsToImageCoordinates,
@@ -184,8 +186,76 @@ export function useMapLayers(
   // failure is not kept here (see isPermanentFrameFailure).
   const frameFailed = useRef<Set<string>>(new Set());
   const frameNote = useRef<string | null>(null);
+  // Tile URL set per basemap source — the satellite date changes per case and
+  // is applied with setTiles instead of rebuilding the source.
+  const bmTiles = useRef<Record<string, string>>({});
+  // CARTO GL style layers fetched once per map (labels/streets grafts).
+  const bmStyle = useRef<{
+    streets: Record<string, unknown>[];
+    labelsDark: Record<string, unknown>[];
+    labelsVoy: Record<string, unknown>[];
+  } | null>(null);
+  // Latest basemap options — the graft fetch resolves after the update pass.
+  const bmOpts = useRef<{ basemap: Basemap; imageryDate?: string }>({ basemap: "dark" });
   const imgUrls = useRef<Record<string, string>>({});
   const day = bundle?.series?.days[dayIndex];
+
+  // Graft the fetched GL-style layers onto the running style (idempotent):
+  // voyager's cartography under the app layers, the symbol label sets on top.
+  const graftBasemap = (m: MapInstance) => {
+    const st = bmStyle.current;
+    if (!st) return;
+    const add = (prefix: string, specs: Record<string, unknown>[], before?: string) => {
+      for (const l of specs) {
+        const id = prefix + String(l.id);
+        if (m.getLayer(id)) continue;
+        try {
+          m.addLayer({ ...l, id } as never, before);
+        } catch {
+          // A layer the style rejects is skipped, never fatal.
+        }
+      }
+    };
+    add(BM_PREFIX.streets, st.streets, LYR.hillshade);
+    add(BM_PREFIX.labelsDark, st.labelsDark);
+    add(BM_PREFIX.labelsVoy, st.labelsVoy);
+  };
+
+  // Basemap visibility + satellite date; labels re-raised to the top so a
+  // layer added later cannot cover them.
+  const syncBasemap = (m: MapInstance) => {
+    const plan = basemapPlan(bmOpts.current.basemap, bmOpts.current.imageryDate);
+    const vis = (id: string, on: boolean) => {
+      if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+    };
+    const key = plan.satellite.tiles.join("|");
+    const src = m.getSource(plan.satellite.source) as
+      | { setTiles?: (t: string[]) => void }
+      | undefined;
+    if (src && bmTiles.current[plan.satellite.source] !== key) {
+      bmTiles.current[plan.satellite.source] = key;
+      try {
+        src.setTiles?.(plan.satellite.tiles);
+      } catch {
+        // keep the tiles it has
+      }
+    }
+    vis(plan.satellite.layer, plan.satellite.on);
+    const st = bmStyle.current;
+    if (!st) return;
+    const group = (prefix: string, specs: Record<string, unknown>[], on: boolean) => {
+      for (const l of specs) vis(prefix + String(l.id), on);
+    };
+    group(BM_PREFIX.streets, st.streets, plan.streetsOn);
+    const dark = plan.labels === "dark";
+    group(BM_PREFIX.labelsDark, st.labelsDark, dark);
+    group(BM_PREFIX.labelsVoy, st.labelsVoy, !dark);
+    const top = (dark ? st.labelsDark : st.labelsVoy).map(
+      (l) => (dark ? BM_PREFIX.labelsDark : BM_PREFIX.labelsVoy) + String(l.id)
+    );
+    for (const id of top) if (m.getLayer(id)) m.moveLayer(id);
+  };
+
 
   // Manifest asset paths resolve under /data/<canonical-case-dir>/ — the v4
   // data folders are the canonical underscore ids (rs_2024, wa_2025, now).
@@ -395,6 +465,46 @@ export function useMapLayers(
       map.addLayer(spec as never);
     }
 
+    // L52 basemap switcher: the satellite raster underlay goes below the app
+    // layers; label/streets vector layers graft on once the CARTO GL styles
+    // resolve. The base dark-matter style is never replaced.
+    const plan = basemapPlan(options?.basemap ?? "dark", options?.imageryDate);
+    try {
+      map.addSource(plan.satellite.source, {
+        type: "raster",
+        tiles: plan.satellite.tiles,
+        tileSize: plan.satellite.tileSize,
+        maxzoom: plan.satellite.maxzoom,
+        attribution: plan.satellite.attribution,
+      });
+      bmTiles.current[plan.satellite.source] = plan.satellite.tiles.join("|");
+      map.addLayer(
+        {
+          id: plan.satellite.layer,
+          type: "raster",
+          source: plan.satellite.source,
+          layout: { visibility: "none" },
+        } as never,
+        LYR.hillshade
+      );
+    } catch {
+      // A half-added basemap layer must not block the app layers.
+    }
+    void Promise.all([
+      fetch(plan.styleUrls.dark).then((r) => r.json()),
+      fetch(plan.styleUrls.voyager).then((r) => r.json()),
+    ])
+      .then(([dark, voyager]) => {
+        bmStyle.current = {
+          streets: voyager.layers.filter((l: { type: string }) => l.type !== "symbol"),
+          labelsDark: dark.layers.filter((l: { type: string }) => l.type === "symbol"),
+          labelsVoy: voyager.layers.filter((l: { type: string }) => l.type === "symbol"),
+        };
+        graftBasemap(map);
+        syncBasemap(map);
+      })
+      .catch(() => {});
+
     return () => {
       map.off("error", onMapError as never);
       fcastMarker.current?.remove();
@@ -406,6 +516,14 @@ export function useMapLayers(
         if (map.getLayer(lyr)) map.removeLayer(lyr);
         if (map.getSource(src)) map.removeSource(src);
       }
+      try {
+        for (const l of map.getStyle().layers) {
+          if (l.id.startsWith("tp-bm-")) map.removeLayer(l.id);
+        }
+      } catch {
+        // style mid-teardown
+      }
+      if (map.getSource(plan.satellite.source)) map.removeSource(plan.satellite.source);
       for (const s of Object.values(SRC)) if (map.getSource(s)) map.removeSource(s);
       if (map.hasImage("tp-hatch")) map.removeImage("tp-hatch");
     };
@@ -443,6 +561,14 @@ export function useMapLayers(
     const vis = (id: string, on: boolean) => {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
     };
+
+    // L52 basemap: toggle underlays + grafted labels, re-date the satellite
+    // source per case; labels stay on top.
+    bmOpts.current = {
+      basemap: options?.basemap ?? "dark",
+      imageryDate: options?.imageryDate,
+    };
+    syncBasemap(map);
 
     const tpiOn = (layers.tpiFlood || layers.tpiSlide) && plan.tpi;
     const usePng = tpiOn && !!activePng;
@@ -671,7 +797,9 @@ export function useMapLayers(
     // With no tab context the caller drives flood/scars via showFlood (and
     // the nisar toggle); with a tab the overlayPlan decides; explicit
     // options.overlays replace both (see resolveOverlays).
-    const wantFlood = overlay.flood;
+    // L52 merged view: the NISAR outlines paint only on/after the pass that
+    // mapped them (floodShownOn); earlier replay days hide them.
+    const wantFlood = overlay.flood && floodShownOn(bundle, frameDate);
     const wantScars = overlay.scars;
     const wantCatalog = overlay.catalog;
     const wantEms = overlay.ems;
@@ -736,7 +864,7 @@ export function useMapLayers(
       console.warn("MapLayers update failed (map kept alive)", err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey, options?.probHorizon]);
+  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey, options?.probHorizon, options?.basemap, options?.imageryDate]);
 
   // Priority-zone pins — top 20 by rank (matches the side list), anchored
   // at the polygon label point (real files are Polygons, not Points).

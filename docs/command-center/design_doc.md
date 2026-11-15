@@ -1,5 +1,8 @@
 # Command Center screen for tipping-point-app
 
+> **L55 (2026-11-15): Telegram is removed for good** — no bot, no subscriber store, no Neon Postgres. Telegram/subscriber items below are historical. Alerts are the in-app Public Alerts page only.
+
+
 *   **Author:** front-end owner
 *   **Status:** Final for implementation. Not reviewed: the review round was dropped at the
     author's request (hackathon scope).

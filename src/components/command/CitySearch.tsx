@@ -2,17 +2,36 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { parsePlaces, searchPlaces, type Place, type Places } from "./model/places";
+import { filterPlacesToBBox, replayPlacesFrom, type SearchSource } from "./model/replayPlaces";
 
 // City search (Lucas): accent-insensitive, fuzzy, keyboard (↑ ↓ Enter Esc,
 // "/" focuses). places.json (~0.6 MB) loads on first focus, or at once for a
-// ?city= link.
+// ?city= link. In a replay case the source is that case's own
+// municipalities/towns (or the live list cut to the case bounds).
+const fetchJson = async (u: string) => {
+  const r = await fetch(u);
+  return r.ok ? r.json() : Promise.reject(new Error(String(r.status)));
+};
+
+const loadSource = async (s: SearchSource): Promise<Places | undefined> => {
+  if (s.kind === "geo") {
+    const [muni, towns] = await Promise.all(
+      [s.muni, s.towns].map((u) => (u ? fetchJson(u).catch(() => null) : null))
+    );
+    return replayPlacesFrom(muni, towns);
+  }
+  const raw = await fetchJson(s.url);
+  const p = raw ? parsePlaces(raw) : undefined;
+  return p && s.kind === "live-box" ? filterPlacesToBBox(p, s.bbox) : p;
+};
+
 export default function CitySearch({
-  url,
+  source,
   initialCityId,
   onSelect,
   className = "",
 }: {
-  url?: string;
+  source?: SearchSource;
   initialCityId?: string;
   onSelect: (place: Place, all: Places) => void;
   className?: string;
@@ -26,12 +45,10 @@ export default function CitySearch({
   const linked = useRef(false);
 
   const load = () => {
-    if (!url || data || state === "loading") return;
+    if (!source || data || state === "loading") return;
     setState("loading");
-    fetch(url)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((raw) => {
-        const p = parsePlaces(raw);
+    loadSource(source)
+      .then((p) => {
         if (!p) throw new Error("schema");
         setData(p);
         setState("idle");
@@ -44,7 +61,7 @@ export default function CitySearch({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- deep link: one fetch after mount
     if (initialCityId) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialCityId, url]);
+  }, [initialCityId, source]);
   useEffect(() => {
     if (!data || !initialCityId || linked.current) return;
     linked.current = true;
@@ -66,7 +83,7 @@ export default function CitySearch({
   }, []);
 
   const results = useMemo(() => (data ? searchPlaces(data.places, q) : []), [data, q]);
-  if (!url) return null;
+  if (!source) return null;
   const pick = (p: Place) => {
     if (!data) return;
     onSelect(p, data);

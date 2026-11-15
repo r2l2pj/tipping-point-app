@@ -224,7 +224,7 @@ describe("conductor blocker: 'NISAR' only for NISAR data (layer sensor field)", 
     expect(JSON.stringify(card)).not.toContain("NISAR radar");
     const stop = tourStops([uy])[0];
     expect(stop.title).toBe("1 · Untitled — radar".replace("Untitled", uy.title ?? "Uruguay River flood"));
-    expect(stop.what).toMatch(/^Radar maps the river flood/);
+    expect(stop.what).toMatch(/^Flood index day by day with the radar flood outlines/);
   });
   test("sensor 'NISAR' or no field (WA) keeps NISAR wording; mixed stack -> 'Radar dates'", () => {
     const n = bundle({ id: "rs_uruguai_2026", data_dates: {}, manifest: { event: "rs_uruguai_2026", layers: pairLayers("NISAR") } } as never);
@@ -282,4 +282,31 @@ test("Uruguay: tpi_replay_note replaces 'No frames published yet' (timeline, cap
   expect(noStepsText(uy)).toBe(note.replace("its own P99", "its extreme level").replace("(see forecast_proof)", "(see the upstream-rain test)")); // L42a: no file keys on screen
   expect(mapCaption(uy, [], 0, "flood", ["flood"]).text).toBe("No rain-index replay for this case");
   expect(noStepsText(bundle({ series: undefined } as never))).toBe("No frames published yet");
+});
+
+test("Uruguaiana swipe stack: one viewing geometry (main track, or no context passes)", async () => {
+  const { nisarStack } = await import("./radar");
+  const f = (date: string, png: string, extra: Record<string, unknown> = {}) =>
+    ({ id: `nisar_hh_${date}`, date, png, kind: "nisar_frame", polarization: "HH", ...extra });
+  const mk = (layers: unknown[]) => ({ id: "rs_uruguai_2026", mode: "replay", bbox: [-58, -30, -56, -29], manifest: { event: "rs_uruguai_2026", layers } }) as never;
+  const byTrack = nisarStack(mk([
+    f("2026-09-30", "png/a.png", { track: "010D" }), f("2026-10-05", "png/b_082D.png", { track: "082D" }),
+    f("2026-10-12", "png/c.png", { track: "010D" }), f("2026-10-28", "png/d.png", { track: "060A" }),
+  ]))!;
+  expect(byTrack.dates).toEqual(["2026-09-30", "2026-10-12"]);
+  const noTrack = nisarStack(mk([
+    f("2026-09-30", "png/a.png"), f("2026-10-05", "png/b_082D.png"), f("2026-10-12", "png/c.png"),
+    f("2026-10-17", "png/e.png", { note: "track 082 D frame 103; context track (082 D)" }),
+  ]))!;
+  expect(noTrack.dates).toEqual(["2026-09-30", "2026-10-12"]);
+});
+
+test("Uruguaiana change maps (kind nisar_change) join the NISAR extras, HH only, plain dates", async () => {
+  const { nisarExtras } = await import("./nisarExtras");
+  const b = { id: "rs_uruguai_2026", mode: "replay", bbox: [-58, -30, -56, -29], manifest: { event: "rs_uruguai_2026", layers: [
+    { id: "nisar_hh_change_20261012", kind: "nisar_change", date: "2026-10-12", png: "rs_uruguai_2026/png/nisar_hh_change_20261012.png", label: "NISAR HH change (Sep 30 → 10-12)", legend: ["Baixo"] },
+    { id: "nisar_hv_change_20261012", kind: "nisar_change", date: "2026-10-12", png: "rs_uruguai_2026/png/nisar_hv_change_20261012.png", label: "NISAR HV change (Sep 30 → 10-12)" },
+  ] } } as never;
+  const x = nisarExtras(b);
+  expect(x.map((e) => e.label)).toEqual(["NISAR HH change (Sep 30 → Oct 12)"]);
 });

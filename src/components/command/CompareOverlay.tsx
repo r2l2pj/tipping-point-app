@@ -11,7 +11,6 @@ import { boundsToImageCoordinates } from "@/lib/tpi";
 import { cameraPatch, clipPathFor, dragStep, pctFromClientX, SWIPE_MAX_PCT, SWIPE_MIN_PCT } from "@/lib/swipe";
 import { FLOODED_FILL, FLOODED_OUTLINE, type ComparePair } from "./model/radar";
 import { ISSUE_LEADS, type IssueLead } from "./model/steps";
-import { fmtDate } from "./model/format";
 
 // Same worker fix and the same dark basemap as Map.tsx.
 setWorkerUrl("/maplibre-gl-worker.js");
@@ -50,24 +49,30 @@ export default function CompareOverlay({
     const i = d && stack ? stack.dates.indexOf(d.slice(0, 10)) : -1;
     return i >= 0 ? i : fallback;
   };
-  const [bi, setBi] = useState(at(init?.before, 0));
-  const [ai, setAi] = useState(at(init?.after, Math.max(0, n - 1)));
-  const sideAt = (i: number) => {
+  // Lucas: the dates are picked in the Radar card (chips), not here.
+  const bi = at(init?.before, 0);
+  const ai = Math.max(bi, at(init?.after, Math.max(0, n - 1)));
+  // Same tag wording as the pair: "NISAR radar before (HH) — Sep 30, 2026".
+  const sideAt = (i: number, side: "before" | "after") => {
     const f = stack!.frames[stack!.dates[i]];
-    return (pol === "HV" ? f.HV ?? f.HH : f.HH ?? f.HV)!;
+    const s = (pol === "HV" ? f.HV ?? f.HH : f.HH ?? f.HV)!;
+    const p = s === f.HV ? "HV" : "HH";
+    return { ...s, label: s.label.replace(/ (HH|HV) — /, ` ${side} (${p}) — `) };
   };
   const shown = stack
-    ? { ...pair, before: sideAt(bi), after: sideAt(ai) }
+    ? { ...pair, before: sideAt(bi, "before"), after: sideAt(ai, "after") }
     : pol === "HV" && pair.hv ? { ...pair, before: pair.hv.before, after: pair.hv.after } : pair;
   const hasHv = !!pair.hv || !!stack?.dates.some((d) => stack.frames[d].HV);
   const seg = (on: boolean) =>
     `rounded-full px-2.5 py-0.5 text-xs font-semibold ${on ? "bg-cc-accent text-white" : "text-cc-ink"}`;
-  const day = (i: number) => fmtDate(stack!.dates[i]);
   return (
     <>
       <CompareMaps key={`${pol}-${bi}-${ai}`} pair={shown} onClose={onClose} controlsRef={controlsRef} />
-      {(hasHv || stack || forecastCtl) && (
-        <div className={`absolute left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1 ${forecastCtl ? "top-12" : "top-3"}`}>
+      {(hasHv || forecastCtl) && (
+        <div className={`absolute z-30 flex -translate-x-1/2 flex-col items-center gap-1 ${forecastCtl || stack ? "top-12" : "top-3"}`}
+          // Centred on the visible map, never under the floating cards.
+          style={{ left: "calc(var(--cc-il, 0px) + (100% - var(--cc-il, 0px) - var(--cc-ir, 0px)) / 2)",
+            maxWidth: "calc(100% - var(--cc-il, 0px) - var(--cc-ir, 0px) - 24px)" }}>
           {forecastCtl && (
             <div role="group" aria-label="Forecast lead" data-forecast-leads
               className="flex items-center gap-1 rounded-full border border-cc-line-strong bg-white/95 p-[3px] shadow">
@@ -87,21 +92,6 @@ export default function CompareOverlay({
               {(["HH", "HV"] as const).map((p) => (
                 <button key={p} type="button" aria-pressed={pol === p} onClick={() => setPol(p)} className={seg(pol === p)}>{p}</button>
               ))}
-            </div>
-          )}
-          {stack && (
-            <div data-radar-dates className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-cc-line-strong bg-white/95 px-2.5 py-1 text-xs text-cc-ink shadow">
-              <span className="font-semibold">{stack.title}</span>
-              <label className="flex items-center gap-1">Before
-                <input type="range" min={0} max={n - 1} step={1} value={bi} aria-label="Before date"
-                  onChange={(e) => setBi(Math.min(Number(e.target.value), ai))} />
-                <span className="tabular-nums">{day(bi)}</span>
-              </label>
-              <label className="flex items-center gap-1">After
-                <input type="range" min={0} max={n - 1} step={1} value={ai} aria-label="After date"
-                  onChange={(e) => setAi(Math.max(Number(e.target.value), bi))} />
-                <span className="tabular-nums">{day(ai)}</span>
-              </label>
             </div>
           )}
         </div>
@@ -124,6 +114,23 @@ function CompareMaps({
   const afterEl = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const [pct, setPct] = useState(50);
+  // QA (v6 demo): start the divider in the middle of the VISIBLE map — the
+  // floating cards cover the stage edges (--cc-il / --cc-ir insets).
+  useEffect(() => {
+    // The card insets are measured after the first paint (deep links open the
+    // swipe at once): read them once they have settled.
+    const t = setTimeout(() => {
+      const el = containerRef.current;
+      if (!el || !el.clientWidth || dragging.current) return;
+      const css = getComputedStyle(el);
+      const il = parseFloat(css.getPropertyValue("--cc-il")) || 0;
+      const ir = parseFloat(css.getPropertyValue("--cc-ir")) || 0;
+      const w = el.clientWidth;
+      const mid = ((il + (w - il - ir) / 2) / w) * 100;
+      if (Number.isFinite(mid)) setPct(Math.min(SWIPE_MAX_PCT, Math.max(SWIPE_MIN_PCT, mid)));
+    }, 700);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (!beforeEl.current || !afterEl.current) return;

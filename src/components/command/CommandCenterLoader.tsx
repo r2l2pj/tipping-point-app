@@ -78,7 +78,8 @@ const KEEP_LEGEND = (id: string) => id.startsWith("imerg") || id === "hand_low";
 function slimLayer(layer: NonNullable<CcBundle["manifest"]>["layers"][number]) {
   const out = { ...layer } as Record<string, unknown>;
   if (!KEEP_LEGEND(layer.id)) delete out.legend;
-  delete out.kind;
+  // `kind` is read only for the NISAR layers (date stack, extras, change maps).
+  if (typeof out.kind !== "string" || !out.kind.startsWith("nisar")) delete out.kind;
   if (GFS_ID.test(layer.id)) delete out.forecast_source;
   if (layer.id.startsWith("p_trigger")) for (const k of PTRIGGER_DROP) delete out[k];
   return out as unknown as typeof layer;
@@ -166,7 +167,12 @@ function withMl(bundle: CcBundle, ml: Awaited<ReturnType<typeof getMlArtifacts>>
 // The bundle as the browser needs it (A10 page budget).
 function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
   const manifest = bundle.manifest
-    ? { ...bundle.manifest, layers: bundle.manifest.layers.map(slimLayer) }
+    // Experimental layers (lead-analysis tpi_flood_upstream, kind
+    // 'experimental') stay off the screen: not part of the live method, and
+    // their ids would compete with the TPI frames of the same date.
+    ? { ...bundle.manifest, layers: bundle.manifest.layers
+        .filter((l) => (l as unknown as { kind?: unknown }).kind !== "experimental" && !l.id.includes("_upstream"))
+        .map(slimLayer) }
     : undefined;
   const zones = slimZones(bundle.zones);
   const metricsView = bundle.metricsView
@@ -203,7 +209,7 @@ function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
 // Loads the case bundles and builds the alert list once, on the server, for
 // both routes (/ and /alerts). The alert list is built here because
 // candidatesToAlerts reads the clock when no issue time is given.
-type Search = Promise<{ case?: string; day?: string; lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string; city?: string }> | undefined;
+type Search = Promise<{ case?: string; day?: string; lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string; city?: string; basemap?: string }> | undefined;
 
 async function Loaded({ searchParams }: { searchParams?: Search }) {
   const search = await searchParams;
@@ -299,7 +305,7 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
       initialCase={initialCase}
       initialDay={initialDay}
       initialCity={search?.city || undefined}
-      deepLink={{ lead: search?.lead, compare: search?.compare, before: search?.before, after: search?.after, pol: search?.pol, layers: search?.layers, fit: search?.fit }}
+      deepLink={{ lead: search?.lead, compare: search?.compare, before: search?.before, after: search?.after, pol: search?.pol, layers: search?.layers, fit: search?.fit, basemap: search?.basemap }}
     />
   );
 }

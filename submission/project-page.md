@@ -126,7 +126,7 @@ We used AI coding assistants (Anthropic Claude via Claude Code, Cognition Devin,
 ### Tools
 - **App:** TypeScript, Next.js 16, React 19, MapLibre GL, Recharts, Tailwind (self-hosted on a VPS).
 - **Pipeline:** Python with uv, earthaccess, asf_search, xarray/rioxarray, rasterio, h5py, geopandas, scikit-image, XGBoost/scikit-learn/SHAP, cfgrib/ecCodes.
-- **Platforms:** Google Earth Engine (one-off compute), GitHub Actions (3-hourly live job), Neon Postgres (alert subscribers).
+- **Platforms:** Google Earth Engine (one-off compute), GitHub Actions (3-hourly live job).
 - **Team:** `[TEAM NAME]` — `[member names]` — Local Event `Florianópolis (Founder Haus, Jurerê)`.
 
 ## NASA Data (form field 7) and References (form field 8)

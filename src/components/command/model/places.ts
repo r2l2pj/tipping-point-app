@@ -77,11 +77,11 @@ export function parsePlaces(raw: unknown): Places | undefined {
 // (best), a substring, or — for words of 4+ letters — an in-order
 // subsequence of one word (typos like "florinopolis"). Ranked by match
 // quality, then by population.
-export function searchPlaces(list: readonly Place[], query: string, limit = 8): Place[] {
+export function searchPlaces<P extends Place>(list: readonly P[], query: string, limit = 8): P[] {
   const q = fold(query);
   if (!q) return [];
   const qWords = q.split(" ");
-  const scored: { p: Place; s: number }[] = [];
+  const scored: { p: P; s: number }[] = [];
   for (const p of list) {
     const words = p.key.split(" ");
     let s = 0;

@@ -1,55 +1,56 @@
-# implement — cc-l27-panel (L27: response first, prediction second)
+# L52 — replay city finder (replay-city)
 
-Reordered the Situation overview panel (command view) and pinned the
-last-saved/stale banner rule in a dedicated model test.
+## What changed
 
-## Files changed
+- `src/components/command/model/replayPlaces.ts` (new) — pure adapter:
+  - `ReplayPlace extends Place` — empty hazard days, plus `outline`
+    (municipal polygon feature), `teammateKm2`, `code` (IBGE).
+  - `replaySource(bundle, livePlacesUrl)` — `geo` = the case's own
+    `municipal_boundaries` + `places` products (geoUrl/caseDirOf);
+    `live-box` = the live places.json filtered to the case bbox (RS-style
+    fallback); `undefined` = hide the box.
+  - `replayPlacesFrom(muni, towns)` — polygons → entries (bbox from
+    geometry, centroid = bbox centre), towns merged deduped by name.
+  - `filterPlacesToBBox`, `placesDailyUrl`, `replayDayClass`
+    (places[<code>].observed[<date>].flood_class_max).
+- `model/places.ts` — `searchPlaces` genericized (`<P extends Place>`) so
+  ReplayPlace reuses the fuzzy matcher.
+- `CitySearch.tsx` — `url` prop → `source: SearchSource` (live / live-box
+  / geo); loads one or two files accordingly. Same combobox UX.
+- `ReplayCityCard.tsx` (new) — name, UF, population (estimate, GPW),
+  `NISAR flood candidates (teammate map): X km²` when
+  `teammate_candidates_km2` is present, and the step day's observed flood
+  class (`Flood on <Mon D>: High`) when `products.places_daily` is
+  published. No live forecast numbers; close button.
+- `MapStage.tsx` — `cityOutline` prop: a `tp-city-outline-line` GeoJSON
+  line layer in the accent colour (#17473f), removed on close.
+- `CommandCenter.tsx` — `searchSource` per active case (`key={bundle.id}`
+  remounts the box); a replay pick stays in the replay (no setMode to
+  Now), flies to the polygon bbox (setFocus), shows pin + outline +
+  ReplayCityCard; `places_daily` fetched once per replay (URL-keyed read
+  guards stale files). The card closes on a case switch (guarded render
+  reset). `?city=` still resolves only in Now (initialCityId only when
+  the live case is active). Now behavior untouched.
 
-- `src/components/command/PanelSection.tsx` (new) — labelled `<section>`
-  wrapper for the two panel groups ("Now on the ground", "Prediction"),
-  `aria-label` + visible `h2`, top divider suppressed on the first group.
-- `src/components/command/CommandCenter.tsx` — command-view panel reordered:
-  1. **Now on the ground**: RadarCard (NISAR flooded area, passes,
-     confirm/compare), "Who is affected" group (Tiles people + critical-area
-     tiles, then the area-by-class list), then PriorityAreas (where to act).
-  2. **Prediction**: StatusBlock (TPI chip stays the prediction headline,
-     step line, sentence, last-saved/stale notice, replay-offer children
-     unchanged), RainSoilChart, one-line pointer "Model probabilities
-     (24 h–14 d) are in the Layers column."
-  3. ReplayCheck/EvidenceDetails (replay only) and GetAlertsCard after;
-     SourceAges stays last. Public view untouched; `<LayersColumn .../>`
-     element untouched. All props preserved.
-- `src/components/command/model/dataStatus.test.ts` (new) — banner rule:
-  `fallback: true` → `last-saved` (replay and live), non-fallback replay →
-  `archive`, live 7 h old → `stale`, 5 h old → `live`, `staleLimitMs()`
-  default = 6 h.
-- `src/components/command/command.test.tsx` — new describe "response-first
-  section order (L27)": Now on the ground before Prediction; Radar/flooded,
-  Who-is-affected/people and Priority areas before the TPI chip; chip →
-  chart → Layers pointer inside Prediction; Replay check and Data sources
-  after; sections absent from the public view. No existing assertions or
-  banned-string rules changed.
+## Commands run (memory-capped)
 
-## Verification of model/dataStatus.ts (no change needed)
+```
+B=$HOME/.local/share/mise/installs/bun/1.4.4/bin/bun
+systemd-run --user --scope -q -p MemoryMax=3G -p MemorySwapMax=1G \
+  --working-directory=$PWD -E PATH=$PATH -E TMPDIR=$HOME/.cache/lead-app/tmp
+```
 
-`dataStatus()` already matches the ruling: `bundle.fallback === true` →
-`last-saved` (loader sets `fallback` only for the bundled copy /
-degraded-credentialed run, src/lib/data.ts:721), replay without fallback →
-`archive`, live → `stale` past `2 × NEXT_PUBLIC_REFRESH_HOURS` (default
-6 h) else `live`. StatusBlock renders the notice only for `last-saved` and
-`stale`.
+- `$B test` (full suite): **816 pass / 0 fail / 17 skip** (+9 new tests).
+- `$B x tsc --noEmit -p .`: clean except 2 pre-existing errors in untouched
+  `src/app` files (RouteContext, LayoutProps).
+- `$B x eslint src/components`: 0 errors, 4 pre-existing warnings.
 
-## Commands run
+## Browser check notes
 
-- `bun test` — 550 pass, 7 skip, 0 fail (557 tests, 33 files; skips are the
-  live GEE/Neon smoke specs).
-- `bunx tsc --noEmit` — two pre-existing errors in `src/app/**`
-  (`RouteContext`, `LayoutProps` — Next typegen, also present on the clean
-  tree, verified via `git stash`), outside my scope; none from my files.
-- `bunx eslint` on the four touched files — clean, no output.
-
-## Unresolved
-
-- Nothing. `Situation overview` h1 lives inside StatusBlock (not editable),
-  so the panel's h1 sits at the top of the Prediction section — per the
-  ruling (keep every component and its props).
+- `rs_2024` and `wa_2025` both declare `municipal_boundaries` + `places` →
+  replay search uses the case files (138 RS municipalities / 260 WA
+  subdivisions — neither ships uf/pop/teammate fields; those rows degrade
+  gracefully).
+- Uruguaiana (`rs_uruguai_2026`) isn't in the local manifest; when its
+  products declare `municipal_boundaries` (with code/uf/pop/
+  teammate_candidates_km2) + `places_daily` the card shows all rows.

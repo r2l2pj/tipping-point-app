@@ -13,6 +13,7 @@ import { Legend } from "./LayersColumn";
 import LocatorInset from "./LocatorInset";
 import MapTools from "./MapTools";
 import { pinAreas, type PriorityArea } from "./model/areas";
+import { BASEMAP_LABEL, BASEMAP_ORDER } from "./model/basemap";
 import { STATUS_WORD, type DataStatus } from "./model/dataStatus";
 import { forecastCompare, hasGfsFrames, swipeLeadsFor } from "./model/forecastCompare";
 import { layerStateFor, overlaysFor } from "./model/layerRegistry";
@@ -20,8 +21,10 @@ import type { ComparePair } from "./model/radar";
 import { assetUrl } from "@/lib/layers";
 import { caseDirOf } from "./model/lazy";
 import { preloadFrames } from "./model/preload";
-import { frameFor, issuedFrame, issueLeadsFor, mapCaption, type IssueLead, type Step } from "./model/steps";
+import { floodCaptionNote, frameFor, issuedFrame, issueLeadsFor, mapCaption, type IssueLead, type Step } from "./model/steps";
 import type { CcBundle } from "./model/types";
+import { hourLabel } from "./model/hours";
+import type { ManifestLayer } from "@/lib/types";
 import type { Action, ScreenState } from "./state";
 import type { Insets } from "./useInsets";
 
@@ -41,6 +44,9 @@ export interface MapFocus {
 // The searched city (City search): a pin with its name.
 export interface CityPin { center: [number, number]; name: string }
 
+const CITY_OUTLINE_SRC = "tp-city-outline";
+const CITY_OUTLINE_LYR = "tp-city-outline-line";
+
 export default function MapStage({
   bundle,
   steps,
@@ -55,6 +61,9 @@ export default function MapStage({
   focus,
   featuredCase,
   cityPin,
+  cityOutline,
+  compareDefaults,
+  hourFrame,
 }: {
   bundle: CcBundle;
   steps: Step[];
@@ -69,6 +78,13 @@ export default function MapStage({
   featuredCase?: { id: string; short: string };
   focus?: MapFocus;
   cityPin?: CityPin;
+  // L52 replay city pick: the municipality polygon, drawn as an accent
+  // outline over the frame; removed when the card closes.
+  cityOutline?: GeoJSON.Feature | null;
+  // The radar pair's own pass dates: where the swipe date chips start.
+  compareDefaults?: { before?: string; after?: string };
+  // Lucas: a 6-hourly TPI frame picked with the timeline hour chips.
+  hourFrame?: ManifestLayer;
 }) {
   const [map, setMap] = useState<MapInstance | null>(null);
   const [bearing, setBearing] = useState(0);
@@ -95,9 +111,16 @@ export default function MapStage({
       frameDate: step?.date,
       overlays: overlaysFor(state.layers),
       probHorizon: state.probHorizon,
-      frameLayer: issued,
+      frameLayer: issued ?? hourFrame,
+      // L52: the satellite underlay is dated by the case (its reference day);
+      // live gets the latest imagery GIBS published.
+      basemap: state.basemap,
+      imageryDate:
+        bundle.mode === "live"
+          ? undefined
+          : (bundle.series?.reference_date ?? bundle.reference_date)?.slice(0, 10),
     }),
-    [step?.date, state.layers, state.probHorizon, issued]
+    [step?.date, state.layers, state.probHorizon, issued, hourFrame, state.basemap, bundle]
   );
   useMapLayers(map, bundle, state.dayIndex, layerState, false, undefined, options);
 
@@ -170,6 +193,30 @@ export default function MapStage({
     return () => { m.remove(); };
   }, [map, cityPin]);
 
+  // The replay municipality outline: a single line layer in the accent
+  // colour, added lazily and removed on close/unmount.
+  useEffect(() => {
+    if (!map || !cityOutline) return;
+    try {
+      map.addSource(CITY_OUTLINE_SRC, {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [cityOutline] },
+      });
+      map.addLayer({
+        id: CITY_OUTLINE_LYR,
+        type: "line",
+        source: CITY_OUTLINE_SRC,
+        paint: { "line-color": "#17473f", "line-width": 2.5 },
+      });
+    } catch {
+      // map mid-teardown or a style reload: the next pass retries.
+    }
+    return () => {
+      try { if (map.getLayer(CITY_OUTLINE_LYR)) map.removeLayer(CITY_OUTLINE_LYR); } catch {}
+      try { if (map.getSource(CITY_OUTLINE_SRC)) map.removeSource(CITY_OUTLINE_SRC); } catch {}
+    };
+  }, [map, cityOutline]);
+
   useEffect(() => {
     if (!map) return;
     const onRotate = () => setBearing(map.getBearing());
@@ -211,6 +258,8 @@ export default function MapStage({
   }, [map, bundle.id, insets.left, insets.right, insets.bottom]);
   const comparing = !!comparePair;
   const caption = mapCaption(bundle, steps, state.dayIndex, state.hazard, state.layers, state.issueLead);
+  // L52 merged view: name the NISAR pass while the outlines are on screen.
+  const captionNote = floodCaptionNote(bundle, step?.date, state.layers);
   const showLeads = bundle.mode === "replay" && (leads.length > 0 || state.issueLead > 0);
   // Prod regression: the ML forecast horizon must be on the map, not only in
   // the Layers panel (closed on phones).
@@ -318,21 +367,35 @@ export default function MapStage({
 
       {!comparing && (
         <span data-caption className={`absolute z-10 max-w-[46%] ${chip} ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`} style={{ left: L(14), bottom: B(36) }}>
-          {caption.text}
+          {caption.text}{hourFrame && !issued ? ` · 72 h rain until ${hourLabel(hourFrame)}` : ""}{captionNote}
         </span>
       )}
 
       {!comparing && (
-        <div className="absolute z-10 flex items-end gap-2" style={{ right: R(14), bottom: B(12) }}>
-          <Legend bundle={bundle} layers={state.layers} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact
-            className={`rounded-[10px] bg-white/95 px-2.5 py-2 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)] max-[639px]:hidden ${state.layersOpen ? "min-[900px]:hidden" : ""}`} />
-          {/* Phones: the legend is collapsed by default so it does not cover
-              the map and the timeline chips; one tap opens it. */}
-          <details data-legend-phone className="min-[640px]:hidden rounded-[10px] bg-white/95 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-            <summary className="cursor-pointer list-none px-2.5 py-1.5 text-xs font-semibold">Legend</summary>
-            <Legend bundle={bundle} layers={state.layers} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact className="max-h-[50vh] overflow-y-auto px-2.5 pb-2" />
-          </details>
-          <LocatorInset bbox={bundle.bbox} className="max-[899px]:hidden" />
+        <div className="absolute z-10 flex flex-col items-end gap-1.5" style={{ right: R(14), bottom: B(12) }}>
+          {/* Basemap switcher (L52): a row above the locator inset, clear of
+              the horizon chips (left) and the City card (top-centre). */}
+          <div role="group" aria-label="Basemap" data-basemap
+            className={`flex items-center gap-1 ${chip} !py-0.5`}>
+            {BASEMAP_ORDER.map((b) => (
+              <button key={b} type="button" aria-pressed={state.basemap === b}
+                onClick={() => dispatch({ type: "setBasemap", basemap: b })}
+                className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${state.basemap === b ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`}>
+                {BASEMAP_LABEL[b]}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-end gap-2">
+            <Legend bundle={bundle} layers={state.layers} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact
+              className={`rounded-[10px] bg-white/95 px-2.5 py-2 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)] max-[639px]:hidden ${state.layersOpen ? "min-[900px]:hidden" : ""}`} />
+            {/* Phones: the legend is collapsed by default so it does not cover
+                the map and the timeline chips; one tap opens it. */}
+            <details data-legend-phone className="min-[640px]:hidden rounded-[10px] bg-white/95 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+              <summary className="cursor-pointer list-none px-2.5 py-1.5 text-xs font-semibold">Legend</summary>
+              <Legend bundle={bundle} layers={state.layers} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact className="max-h-[50vh] overflow-y-auto px-2.5 pb-2" />
+            </details>
+            <LocatorInset bbox={bundle.bbox} className="max-[899px]:hidden" />
+          </div>
         </div>
       )}
 
@@ -351,7 +414,8 @@ export default function MapStage({
       )}
 
       {comparePair && (
-        <CompareOverlay key={`${bundle.id}-${comparePair.kind}-${comparePair.before.url}-${comparePair.after.url}`} pair={comparePair} init={state.compareInit}
+        <CompareOverlay key={`${bundle.id}-${comparePair.kind}-${comparePair.before.url}-${comparePair.after.url}`} pair={comparePair}
+          init={{ ...state.compareInit, before: state.compareInit?.before ?? compareDefaults?.before, after: state.compareInit?.after ?? compareDefaults?.after }}
           forecastCtl={comparePair.kind === "forecast"
             ? { lead: comparePair.lead ?? 0, leads: swipeLeads, onLead: (k) => dispatch({ type: "setIssueLead", lead: k }) }
             : undefined}

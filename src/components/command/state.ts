@@ -3,6 +3,7 @@ import { manifestRaster } from "@/lib/layers";
 // on a case change. Now / Replay is derived from the active case and the view
 // (command / public) from the address; neither is stored here.
 import { canonicalCaseId } from "@/lib/contract";
+import { parseBasemap, type Basemap } from "./model/basemap";
 import { probHorizonsAvailable, type ProbHorizon } from "@/lib/layers";
 import {
   confirmRadarLayers,
@@ -17,7 +18,7 @@ import {
 } from "./model/layerRegistry";
 import type { ComparePair } from "./model/radar";
 import { viewLayers, type ViewId } from "./model/views";
-import { caseHasHazard, defaultStepIndex, stepsFor, type IssueLead } from "./model/steps";
+import { caseHasHazard, defaultStepIndex, floodPostDate, stepsFor, type IssueLead } from "./model/steps";
 import type { CcBundle, Hazard } from "./model/types";
 
 export interface ScreenState {
@@ -40,6 +41,9 @@ export interface ScreenState {
   compareOpen: ComparePair["kind"] | null;
   compareInit?: { before?: string; after?: string; pol?: "HH" | "HV" }; // deep link, first open only
   fitTo?: [number, number, number, number]; // deep link ?fit=<layer>: initial map bounds
+  // L52: Dark / Satellite / Streets chip on the map. The featured replay
+  // opens on Satellite (case default); a ?basemap= link wins.
+  basemap: Basemap;
   autoTpi?: boolean; // Now: TPI stood in for the ML layer on a forecast day
   detailsOpen: boolean;
   layersOpen: boolean;
@@ -67,10 +71,13 @@ export type Action =
   | { type: "toggleCallout" }
   | { type: "openCompare"; kind: ComparePair["kind"] }
   | { type: "closeCompare" }
+  // Lucas: NISAR swipe dates are chips in the Radar card.
+  | { type: "setCompareDates"; before?: string; after?: string }
   | { type: "toggleDetails" }
   | { type: "toggleLayersOpen" }
   | { type: "toggleList" }
   | { type: "toggleTable" }
+  | { type: "setBasemap"; basemap: Basemap }
   | { type: "escape" }
   // "Start here" (judge report #6): one stop of the guided tour.
   | { type: "goTo"; id: string; day?: number | string; hazard?: Hazard; lead?: IssueLead; layer?: LayerId; compare?: ComparePair["kind"] };
@@ -127,7 +134,7 @@ export function linkParams(
   const offset = steps[dayIndex]?.offset;
   return {
     case: canonicalCaseId(bundle.id),
-    day: dayIndex !== defaultStepIndex(steps) && offset !== undefined ? String(offset) : undefined,
+    day: dayIndex !== defaultStepIndex(steps, bundle) && offset !== undefined ? String(offset) : undefined,
   };
 }
 
@@ -144,7 +151,7 @@ export function featuredFirst<T extends CcBundle>(cases: readonly T[]): T[] {
 // The screen opens on Now when a live case is loaded, else on the first case.
 // `initialCase` (the `?case=<id|alias>` deep link of the old screen) opens
 // that case when it is loaded.
-export interface DeepLink { lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string }
+export interface DeepLink { lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string; basemap?: string }
 
 // ?layers=imerg,hand5 → layer ids ("hand5"/"hand" = low ground); ?fit=<key>
 // → the map opens on that layer's bounds (the upstream basin for imerg).
@@ -184,13 +191,14 @@ export function initialState(
   return {
     activeId: first?.id ?? "",
     lastReplayId: first?.mode === "replay" ? first.id : null,
-    dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first)),
+    dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first), first),
     playing: false,
     hazard,
     layers: first
       ? (linkLayers(first, link, hazard) ?? withRadarDefault(first, keepAvailable(first, Number(link.lead) > 0 ? ["tpi"] : defaultLayersFor(first, hazard), hazard), hazard))
       : [],
     fitTo: first ? linkFit(first, link) : undefined,
+    basemap: parseBasemap(link.basemap) ?? (first && isFeatured(first) ? FEATURED_BASEMAP : "dark"),
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
     issueLead: [1, 2, 3].includes(Number(link.lead)) && first && layerAvailable(first, "tpi", hazard) ? Number(link.lead) as 1 | 2 | 3 : 0,
@@ -210,11 +218,15 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
   if (!bundle || id === state.activeId) return state;
   const hazard = hazardFor(bundle, state.hazard);
   const kept = keepAvailable(bundle, state.layers, hazard);
+  // L52: a replay that ships the NISAR flood outlines (a flood product
+  // with a published pass date) opens merged — the day's TPI frame (or
+  // its GFS forecast) under the flood outlines.
+  const replayMix = bundle.mode === "replay" && !!floodPostDate(bundle) && layerAvailable(bundle, "tpi", hazard) && layerAvailable(bundle, "flood", hazard);
   return {
     ...state,
     activeId: id,
     lastReplayId: bundle.mode === "replay" ? id : state.lastReplayId,
-    dayIndex: defaultStepIndex(stepsFor(bundle)),
+    dayIndex: defaultStepIndex(stepsFor(bundle), bundle),
     playing: false,
     hazard,
     // The TPI index is the default layer: a case change never leaves the
@@ -225,10 +237,14 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
     // with only the flood candidates on must not open a replay without it).
     layers: withRadarDefault(
       bundle,
-      !layerAvailable(bundle, "tpi", hazard) || kept.includes("tpi") ? kept : toggleLayer(kept, "tpi").layers,
+      replayMix ? ["tpi", "flood"]
+        : !layerAvailable(bundle, "tpi", hazard) || kept.includes("tpi") ? kept : toggleLayer(kept, "tpi").layers,
       hazard
     ),
     layerNotice: null,
+    // A case change resets the basemap to the case default (the featured
+    // replay opens on Satellite).
+    basemap: isFeatured(bundle) ? FEATURED_BASEMAP : "dark",
     // The horizon the new case ships first (display order), else the default.
     probHorizon: probHorizonsAvailable(bundle.manifest?.layers)[0] ?? "24h",
     issueLead: 0,
@@ -251,7 +267,7 @@ export function reduce(
     // Each stop starts from the case's own opening layers, not the last stop's.
     const hazard = action.hazard && caseHasHazard(target, action.hazard) ? action.hazard : next.hazard;
     next = { ...next, hazard, layers: withRadarDefault(target, keepAvailable(target, defaultLayersFor(target, hazard), hazard), hazard), layerNotice: null };
-    const day = linkedDay(target, action.day) ?? defaultStepIndex(stepsFor(target));
+    const day = linkedDay(target, action.day) ?? defaultStepIndex(stepsFor(target), target);
     next = reduce(next, { type: "seek", index: day }, cases);
     next = reduce(next, { type: "setIssueLead", lead: action.lead ?? 0 }, cases);
     if (action.layer && !next.layers.includes(action.layer) && layerAvailable(target, action.layer, next.hazard)) {
@@ -370,6 +386,8 @@ export function reduce(
       return { ...state, compareOpen: action.kind, playing: false };
     case "closeCompare":
       return { ...state, compareOpen: null };
+    case "setCompareDates":
+      return { ...state, compareInit: { ...state.compareInit, before: action.before, after: action.after } };
     case "toggleDetails":
       return { ...state, detailsOpen: !state.detailsOpen };
     case "toggleLayersOpen":
@@ -378,6 +396,8 @@ export function reduce(
       return { ...state, listExpanded: !state.listExpanded };
     case "toggleTable":
       return { ...state, chartAsTable: !state.chartAsTable };
+    case "setBasemap":
+      return { ...state, basemap: action.basemap };
     case "escape":
       if (state.compareOpen) return { ...state, compareOpen: null };
       return state.selectedArea === null
@@ -385,4 +405,7 @@ export function reduce(
   }
 }
 
+// Featured replay basemap: Dark for now — the VIIRS daily satellite is cloud-
+// white over Uruguaiana on the reference date (browser check, L52 U3).
+export const FEATURED_BASEMAP: Basemap = "dark";
 export const PLAYBACK_MS = 1000; // L52: 1 s per step (today → +3 d)

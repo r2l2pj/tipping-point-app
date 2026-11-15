@@ -24,3 +24,10 @@ test("other replays keep the full layout (missing data stays labelled)", () => {
   expect(t).toContain("Who is affected");
   expect(t).toMatch(/pending|not published yet/);
 });
+
+test("WA: the forecast-vs-NISAR note (metrics forecast_nisar_overlap_note) shows in the Radar tab", () => {
+  const note = "NOAA forecast runs 1–3 days before the Dec 8 onset flagged 0% of the 27.9 km² NISAR flood area as High/Critical.";
+  const html = renderToStaticMarkup(<CommandCenterView cases={[bundle({ id: "wa_2025", metricsView: { forecast_nisar_overlap_note: note } as never })]}
+    alertList={UNAVAILABLE} view="command" onView={noop} panelTab="all" />);
+  expect(text(html)).toContain("Forecast vs NISAR: " + note);
+});

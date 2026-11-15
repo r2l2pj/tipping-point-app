@@ -12,7 +12,9 @@ import LayersColumn from "./LayersColumn";
 import MapStage, { type CityPin, type MapFocus } from "./MapStage";
 import CityCard from "./CityCard";
 import CitySearch from "./CitySearch";
+import ReplayCityCard from "./ReplayCityCard";
 import { parsePlaces, type Place, type Places } from "./model/places";
+import { placesDailyUrl, replayDayClass, replaySource, type ReplayPlace } from "./model/replayPlaces";
 import PanelTabs, { type PanelTab } from "./PanelTabs";
 import { headlineFor } from "./model/headline";
 import { geoUrl } from "@/lib/layers";
@@ -44,6 +46,8 @@ import SourceAges from "./SourceAges";
 import { initialState, linkParams, PLAYBACK_MS, reduce, type Action, type ScreenState, type DeepLink, isFeatured } from "./state";
 import StatusBlock from "./StatusBlock";
 import { hideMissingFor } from "./model/sparse";
+import { hasHourFrames, hourFrameFor, hoursOn } from "./model/hours";
+import { plainText } from "./model/plain";
 import Tiles from "./Tiles";
 import TimelineBar from "./TimelineBar";
 import TopBar, { type View } from "./TopBar";
@@ -125,13 +129,19 @@ export function CommandCenterView({
   const [focus, setFocus] = useState<MapFocus>(); // "View on the map" target
 
   // City search (Lucas): places.json of the live run (lead-analysis). A
-  // pick opens Now (the card is about today), frames the city and pins it.
+  // pick in Now opens the live card; a pick in a replay case stays there —
+  // the source is that case's municipalities (replaySource).
   const liveCase = cases.find((c) => c.mode === "live");
   const placesUrl = liveCase && declared(liveCase, "places")
     ? geoUrl(liveCase, caseDirOf(liveCase), "places", "places.json")
     : undefined;
   const [city, setCity] = useState<{ place: Place; dates: string[] }>();
+  // Lucas: hour chips (6-hourly frames) — kept per case, cleared on a case change.
+  const [hourPick, setHourPick] = useState<{ caseId: string; hour: string | null }>({ caseId: "", hour: null });
+  const [replayCity, setReplayCity] = useState<ReplayPlace>();
   // L52 U1: right-panel tabs (content moved, nothing deleted).
+  // Lucas: every case lands on the map + Overview; only a radar swipe link
+  // opens the Radar tab.
   const [tab, setTab] = useState<PanelTab | "all">(panelTab ?? (deepLink?.compare === "radar" ? "radar" : "overview"));
   const show = (t: PanelTab) => tab === t || tab === "all";
   // Headline card (Lucas, "simple and WOW"): the live places file, once.
@@ -155,15 +165,36 @@ export function CommandCenterView({
   };
   const onCity = useCallback((place: Place, all: Places) => {
     onView("command");
-    if (liveCase && activeRef.current !== liveCase.id) dispatch({ type: "setMode", mode: "now" });
-    setCity({ place, dates: all.dates });
+    // L52 (Lucas): city zoom-ins on a detailed basemap with street labels
+    // (Streets: the daily VIIRS satellite is too coarse/cloudy at city zoom).
+    dispatch({ type: "setBasemap", basemap: "streets" });
+    if (liveCase && activeRef.current === liveCase.id) {
+      // Now: the live city card (forecast days) — unchanged behaviour.
+      setCity({ place, dates: all.dates });
+      setReplayCity(undefined);
+      setCityParam(place.id);
+    } else {
+      // Replay pick: stay in the case — the replay card + outline, never
+      // a switch to Now and no live numbers.
+      setReplayCity(place as ReplayPlace);
+      setCity(undefined);
+    }
     setFocus({ bbox: place.bbox, center: place.centroid, key: Date.now() });
-    setCityParam(place.id);
   }, [liveCase, onView]);
   const cityPin = useMemo<CityPin | undefined>(
-    () => (city ? { center: city.place.centroid, name: city.place.name } : undefined),
-    [city]
+    () => {
+      const p = city?.place ?? replayCity;
+      return p ? { center: p.centroid, name: p.name } : undefined;
+    },
+    [city, replayCity]
   );
+  // A case change closes the replay card (its municipality belongs to the
+  // case it was picked in); the live card keeps resolving to Now.
+  const [prevActive, setPrevActive] = useState(state.activeId);
+  if (prevActive !== state.activeId) {
+    setPrevActive(state.activeId);
+    if (replayCity) setReplayCity(undefined);
+  }
 
   useEffect(() => {
     if (!state.playing) return;
@@ -219,6 +250,19 @@ export function CommandCenterView({
     [loaded, fullZones, zonesUrl, scars, scarsUrl]
   );
   const steps = useMemo(() => stepsFor(bundle), [bundle]);
+  // places_daily (lead-analysis, tipping-point/places-daily@1): the shown
+  // step day's observed flood class per municipality — replay only.
+  const dailyUrl = bundle?.mode === "replay" ? placesDailyUrl(bundle) : undefined;
+  const [daily, setDaily] = useState<{ url: string; raw: unknown }>();
+  useEffect(() => {
+    if (!dailyUrl) return;
+    let alive = true;
+    fetch(dailyUrl)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((raw) => { if (alive) setDaily({ url: dailyUrl, raw }); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [dailyUrl]);
   const areas = useMemo(() => priorityAreas(bundle), [bundle]);
   const marks = useMemo(() => (bundle ? stepMarks(bundle, steps) : []), [bundle, steps]);
   const radar = useMemo(() => (bundle ? radarCard(bundle) : undefined), [bundle]);
@@ -251,7 +295,16 @@ export function CommandCenterView({
   }
 
   const live = bundle.mode === "live";
+  const hour = hourPick.caseId === bundle.id ? hourPick.hour : null;
   const step = steps[state.dayIndex];
+  // Keyed read: a stale places_daily while a new case's is in flight.
+  const dailyRaw = daily && daily.url === dailyUrl ? daily.raw : undefined;
+  // Every case gets the box when it has a source: Now reads the live
+  // places.json; a replay reads its own municipalities (or the live list
+  // cut to its bounds; no source → the box hides).
+  const searchSource = live
+    ? (placesUrl ? { kind: "live" as const, url: placesUrl } : undefined)
+    : replaySource(bundle, placesUrl);
   const status = dataStatus(bundle, nowMs);
   const chip = statusChip(bundle, steps, state.dayIndex, state.hazard);
   // Featured replay (v6): blocks with no data for this case are not shown.
@@ -281,6 +334,9 @@ export function CommandCenterView({
   // Area by class of the selected hazard (summary v2), or the v1 union.
   const classesKm2 = bundle.riskPaused ? [] : Object.entries(liveClasses(bundle.summary, state.hazard) ?? {});
   const headlineData = live && places ? headlineFor(places) : undefined;
+  // lead-analysis (WA): one honest line on forecast vs the NISAR flood area.
+  const fnn = (bundle.metricsView as Record<string, unknown> | undefined)?.forecast_nisar_overlap_note;
+  const forecastNisarNote = typeof fnn === "string" && fnn.trim() ? plainText(fnn.trim()) : undefined;
   const tabsShown: PanelTab[] = ["overview", "forecast", "radar", ...(!sparse || areas.length > 0 ? ["places" as const] : []), "sources"];
   const areaTile = criticalAreaTile(bundle, state.hazard, step?.date, step?.day, overlayFrame);
   const peopleT = peopleTile(bundle, step?.date, step?.day, overlayFrame);
@@ -310,7 +366,14 @@ export function CommandCenterView({
         onSelectCase={(id) => dispatch({ type: "selectCase", id })}
         freshness={freshnessText(status, nowMs)}
         freshnessKind={status.kind}
-        search={placesUrl && <CitySearch url={placesUrl} initialCityId={initialCity} onSelect={onCity} />}
+        search={searchSource && (
+          <CitySearch
+            key={bundle.id}
+            source={searchSource}
+            initialCityId={live ? initialCity : undefined}
+            onSelect={onCity}
+          />
+        )}
       />
 
       {/* Wide: the map fills the whole area and the cards float over it.
@@ -327,7 +390,10 @@ export function CommandCenterView({
           insets={insets}
           stageRef={stageRef}
           focus={focus}
-          cityPin={live ? cityPin : undefined}
+          cityPin={cityPin}
+          compareDefaults={{ before: radar.preIso, after: radar.postIso }}
+          hourFrame={hourFrameFor(bundle, state.hazard, step?.date, hour)}
+          cityOutline={!live ? replayCity?.outline : undefined}
           featuredCase={(() => {
             const f = cases.find((c) => c.mode === "replay" && isFeatured(c));
             return f ? { id: f.id, short: "Uruguaiana Oct 2026" } : undefined;
@@ -342,6 +408,15 @@ export function CommandCenterView({
             <CityCard place={city.place} dates={city.dates}
               onShow={() => setFocus({ bbox: city.place.bbox, center: city.place.centroid, key: Date.now() })}
               onClose={() => { setCity(undefined); setCityParam(undefined); }} />
+          </div>
+        )}
+        {replayCity && !live && view === "command" && (
+          <div className="pointer-events-auto z-30 mx-3 mt-3 min-[900px]:absolute min-[900px]:left-1/2 min-[900px]:top-14 min-[900px]:mx-0 min-[900px]:mt-0 min-[900px]:w-[360px] min-[900px]:-translate-x-1/2">
+            <ReplayCityCard place={replayCity}
+              stepDate={step?.date}
+              dayClass={replayDayClass(dailyRaw, replayCity.code, step?.date)}
+              onShow={() => setFocus({ bbox: replayCity.bbox, center: replayCity.centroid, key: Date.now() })}
+              onClose={() => setReplayCity(undefined)} />
           </div>
         )}
         {drawer && (
@@ -363,6 +438,10 @@ export function CommandCenterView({
           onProbHorizon={(horizon) => dispatch({ type: "setProbHorizon", horizon })}
           onClose={() => setDrawer(false)}
           onView={(v) => dispatch({ type: "setView", view: v })}
+          satellite={{
+            on: state.basemap === "satellite",
+            toggle: () => dispatch({ type: "setBasemap", basemap: state.basemap === "satellite" ? "dark" : "satellite" }),
+          }}
           className={`${drawer ? "max-[899px]:flex" : "max-[899px]:hidden"} ${state.layersOpen ? "min-[900px]:flex" : "min-[900px]:hidden"}`}
         />
 
@@ -416,6 +495,12 @@ export function CommandCenterView({
                 <PanelSection label="Now on the ground">
                 <RadarCard
                   hideMissing={sparse}
+                  swipeDates={state.compareOpen === "radar" && radar.compare.pair?.stack ? {
+                    dates: radar.compare.pair.stack.dates,
+                    before: state.compareInit?.before ?? radar.preIso ?? radar.compare.pair.stack.dates[0],
+                    after: state.compareInit?.after ?? radar.postIso ?? radar.compare.pair.stack.dates[radar.compare.pair.stack.dates.length - 1],
+                    onPick: (before, after) => dispatch({ type: "setCompareDates", before, after }),
+                  } : undefined}
                   radar={radar}
                   floodOn={state.layers.includes("flood")}
                   compareOpen={state.compareOpen === "radar"}
@@ -424,6 +509,11 @@ export function CommandCenterView({
                   onCompare={() =>
                     dispatch(state.compareOpen === "radar" ? { type: "closeCompare" } : { type: "openCompare", kind: "radar" })}
                 />
+                {forecastNisarNote && (
+                  <p className="m-0 rounded-lg border border-cc-line bg-cc-well px-2.5 py-1.5 text-xs" data-forecast-nisar-note>
+                    <span className="font-semibold">Forecast vs NISAR: </span>{forecastNisarNote}
+                  </p>
+                )}
                 </PanelSection>
               )}
               {show("places") && (
@@ -522,6 +612,7 @@ export function CommandCenterView({
         onPrev={() => dispatch({ type: "prev" })}
         onNext={() => dispatch({ type: "next" })}
         onPlayToggle={() => dispatch({ type: "togglePlay" })}
+        hours={hasHourFrames(bundle, state.hazard) ? { available: hoursOn(bundle, state.hazard, step?.date), hour, onHour: (h) => setHourPick({ caseId: bundle.id, hour: h }) } : undefined}
       />
         </div>
         </div>

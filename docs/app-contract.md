@@ -81,7 +81,7 @@ absent it falls back to fixed filenames under the case dir.
 | `priority_zones`, `permanent_water`, `flood_confirmed`, `landslide_candidates` | Radar/reference overlays (`zones`/`water`/`flood`/`scars`). |
 | `imerg_smap_daily` | `series/` rain/soil chart (`SeriesDaily`). |
 | `swot` | `series/` SWOT line chart, meters (`CaseBundle.swot` — shape settled by data lead). |
-| `catalog`, `municipalities`, `simular` | `simular.json` feeds the Telegram `/simular` flow (app-hosted fixture fallback). |
+| `catalog`, `municipalities`, `simular` | `simular.json` (fixture; its Telegram `/simular` consumer was removed, L55). |
 
 ## now/ bundle (schema `tipping-point/now@2`)
 

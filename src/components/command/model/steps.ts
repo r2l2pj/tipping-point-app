@@ -86,9 +86,19 @@ export function stepsFor(bundle: CcBundle | undefined): Step[] {
 
 // Step shown when a case opens: the event day (offset 0), else the last
 // observed step, else the first step.
-export function defaultStepIndex(steps: Step[]): number {
+export function defaultStepIndex(steps: Step[], bundle?: CcBundle): number {
   const event = steps.findIndex((s) => s.offset === 0);
   if (event >= 0) return event;
+  // A replay without an event day (Uruguaiana) lands on its first index
+  // signal (lead-analysis timeline_marks kind 'signal': Sep 30).
+  const tm = (bundle?.metricsView as Record<string, unknown> | undefined)?.timeline_marks;
+  const signal = Array.isArray(tm)
+    ? tm.find((x) => x && typeof x === "object" && (x as Record<string, unknown>).kind === "signal" && typeof (x as Record<string, unknown>).date === "string") as { date: string } | undefined
+    : undefined;
+  if (signal) {
+    const i = steps.findIndex((s) => s.date.slice(0, 10) === signal.date.slice(0, 10));
+    if (i >= 0) return i;
+  }
   for (let i = steps.length - 1; i >= 0; i--) if (!steps[i].forecast) return i;
   return 0;
 }
@@ -164,8 +174,8 @@ export function timelineForecastTag(bundle: CcBundle): string {
 
 export interface StepMark {
   index: number;
-  label: "first Critical" | "first damage";
-  color: "amber" | "red";
+  label: string; // "first Critical", "first damage", or a data timeline mark
+  color: "amber" | "red" | "blue";
 }
 
 // Marks of the old timeline: first day at or above the threshold, and the
@@ -184,6 +194,19 @@ export function stepMarks(bundle: CcBundle, steps: Step[]): StepMark[] {
   if (typeof at === "string") {
     const i = steps.findIndex((s) => s.date.slice(0, 10) === at.slice(0, 10));
     if (i >= 0) marks.push({ index: i, label: "first damage", color: "red" });
+  }
+  // lead-analysis timeline_marks [{date, label, kind: event|nisar|signal}]
+  // (Uruguaiana: flood stage, crest, displaced, NISAR passes, index signal).
+  const tm = m?.timeline_marks;
+  if (Array.isArray(tm)) {
+    for (const x of tm) {
+      if (!x || typeof x !== "object") continue;
+      const { date, label, kind } = x as Record<string, unknown>;
+      if (typeof date !== "string" || typeof label !== "string" || !label.trim()) continue;
+      const i = steps.findIndex((s) => s.date.slice(0, 10) === date.slice(0, 10));
+      if (i < 0) continue;
+      marks.push({ index: i, label: plainText(label.trim()), color: kind === "nisar" ? "blue" : kind === "event" ? "red" : "amber" });
+    }
   }
   return marks;
 }
@@ -410,3 +433,41 @@ export function stepLabel(bundle: CcBundle, step: Step): string {
 // frame's own data_basis wins over the case-level field.
 export const frameBasis = (bundle: CcBundle, date: string | undefined, hazard: Hazard): string | undefined =>
   frameFor(bundle, date, hazard)?.layer.data_basis ?? bundle.manifest?.data_basis;
+
+// L52 (Lucas: "mix Washington: forecast + NISAR"): in a replay that ships
+// the NISAR flood outlines, each timeline day paints that day's TPI frame
+// (observed, or the GFS forecast via the issue-lead chips) under the
+// outlines — but the outlines show only on/after the NISAR pass that
+// mapped them (post date: the nisar_post/radar_post layer date, or
+// data_dates).
+export function floodPostDate(bundle: CcBundle): string | undefined {
+  const l = (bundle.manifest?.layers ?? []).find(
+    (x) => /^(nisar|radar)_post$/.test(x.id) && typeof x.date === "string"
+  );
+  const dd = bundle.data_dates;
+  const d =
+    l?.date ??
+    (typeof dd?.nisar_post === "string" ? dd.nisar_post : undefined) ??
+    (typeof dd?.radar_post === "string" ? dd.radar_post : undefined);
+  return d ? d.slice(0, 10) : undefined;
+}
+
+// Outlines on/after the pass day only (replay). A live case, or a replay
+// without a post date, keeps the flood layer on every day.
+export function floodShownOn(bundle: CcBundle, date?: string): boolean {
+  if (bundle.mode !== "replay") return true;
+  const post = floodPostDate(bundle);
+  return !post || !date || date.slice(0, 10) >= post;
+}
+
+// " · NISAR flood outlines (pass Dec 16, 2025)" while the flood layer is on
+// and the shown day is on/after the pass.
+export function floodCaptionNote(
+  bundle: CcBundle,
+  date: string | undefined,
+  on: readonly LayerId[]
+): string {
+  const post = floodPostDate(bundle);
+  if (!post || !on.includes("flood") || !floodShownOn(bundle, date)) return "";
+  return ` · NISAR flood outlines (pass ${fmtDate(post)})`;
+}

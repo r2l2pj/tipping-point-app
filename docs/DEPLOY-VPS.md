@@ -19,7 +19,6 @@ VPS, build on another machine and `docker save | ssh vps docker load`.
 git clone https://github.com/r2l2pj/tipping-point-app.git && cd tipping-point-app
 git checkout freeze-1300            # or main
 docker build -t tipping-point-app \
-  --build-arg NEXT_PUBLIC_TELEGRAM_BOT_URL=https://t.me/<bot> \
   .
 docker run -d --name tp-app --restart unless-stopped \
   -p 127.0.0.1:3000:3000 \
@@ -27,14 +26,17 @@ docker run -d --name tp-app --restart unless-stopped \
   -v tp-data:/app/.data \
   tipping-point-app
 docker ps            # STATUS shows (healthy) after ~20 s
-curl -s localhost:3000/api/health | head -c 400
+curl -s localhost:3000/api/health      # {"ok":true}
 ```
 
 The image: bun installs and builds (same lockfile and build as Vercel, the
 data sync step skips and keeps the committed `public/data`), then Node 24
 runs `next start` as the non-root `node` user. `HEALTHCHECK` calls
-`/api/health`, which answers 200 JSON whenever the server is up (the body is
-the report: env presence, manifest freshness), so it is a liveness check.
+`/api/health`, which answers 200 `{"ok":true}` whenever the server is up — a
+liveness check, nothing else in the body. GitHub Actions
+(`.github/workflows/keepalive.yml`) pings
+`https://tippingpoint.l17s.dev/api/health` every 10 minutes; a failed ping
+fails the run and GitHub emails the repo owner.
 
 Update: `git pull && docker build … && docker rm -f tp-app && docker run …`
 (a few seconds of downtime; fine for one instance).
@@ -54,7 +56,7 @@ podman rm -f tp-smoke
 
 | Check | Result |
 | --- | --- |
-| `/api/health` | 200, 523 B, up 2 s after start; `ok: true`, GEE disabled, manifest read from GitHub raw (cases updated 13:08Z) |
+| `/api/health` | 200 `{"ok":true}`, up 2 s after start (liveness only since 2026-11-15) |
 | `/` | 200, 282 KB (first request 2.8 s, cold cache) |
 | `/alerts` | 200, 280 KB |
 | `/?case=rs_2024`, `/?case=wa_2025` | 200, 291 KB / 297 KB; RS page shows the onset row ("36.5% of 16,027") |
@@ -73,33 +75,53 @@ they are **build** arguments, not runtime env.
 | `DATA_BASE_URL` | runtime | **Leave unset.** Unset already reads the GitHub raw `fallback` branch first (`https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`), then Neon, then the bundled copy. Setting it makes that URL the ONLY remote (no Neon fallback) — set it to the GitHub raw URL only if Neon must be skipped. |
 | `NEON_S3_ENDPOINT` | runtime | Optional, not a secret. Unset = built-in public bucket URL. |
 | `GEE_ENABLED` | runtime | **Unset** (L25: no Earth Engine at runtime). `GEE_PROJECT`, `GCP_SA_KEY` stay unset too. |
-| `DATABASE_URL` | runtime | Secret Neon `postgresql://…` string for the Telegram subscriber table (same value as on Vercel). Unset = SQLite file in `/app/.data` — keep the `tp-data` volume or subscribers are lost on rebuild. |
-| `TELEGRAM_TOKEN` | runtime | Bot token (BotFather). Secret. |
-| `TELEGRAM_SECRET` | runtime | Webhook shared secret (Telegram sends it as `X-Telegram-Bot-Api-Secret-Token`). Secret. |
 | `APP_URL` | runtime | The new public URL, e.g. `https://tipping-point.example.org` (no trailing slash). |
 | `PORT` | runtime | Default `3000`. Match the `-p` mapping and the proxy. |
 | `ALERTS_PAUSED` | runtime | Optional `1` pauses the public alerts panel. |
-| `NEXT_PUBLIC_TELEGRAM_BOT_URL` | **build arg** | `https://t.me/<bot>`; unset hides the Telegram card. |
 | `NEXT_PUBLIC_REFRESH_HOURS` | **build arg** | Live-run period in hours, default 3. |
-
-### Telegram webhook moves with the URL
-
-Telegram still posts to the old Vercel URL until the webhook is re-registered
-against the VPS (after TLS works):
-
-```bash
-curl -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/setWebhook" \
-  -d url="$APP_URL/api/telegram" -d secret_token="$TELEGRAM_SECRET"
-curl -s "https://api.telegram.org/bot$TELEGRAM_TOKEN/getWebhookInfo"   # url = new one, no last_error
-```
 
 ## 3. Reverse proxy and TLS
 
-Bind the container to `127.0.0.1` and put a proxy with TLS in front. The
+Keep the app private (`127.0.0.1` for a host proxy, or a private Docker
+network for a containerized proxy) and put a proxy with TLS in front. The
 pages **stream** (Partial Prerendering + Suspense): the proxy must not buffer
 responses, or the page waits for the slowest data read.
 
 ### Caddy (automatic Let's Encrypt)
+
+The current VPS runs `lucaslorentz/caddy-docker-proxy`, not a host Caddyfile.
+`tipping-point-app` is healthy on the private `caddy_proxy` network at port
+3000, with its SQLite volume mounted at `/app/.data`. DNS for
+`tippingpoint.l17s.dev` points to this VPS. To restore the live route without
+restarting the app or touching its volume, use the existing `node:24-slim`
+image for a small, portless label carrier:
+
+```bash
+docker run -d --name tipping-point-route --restart unless-stopped \
+  --network caddy_proxy --user node --read-only --cap-drop ALL \
+  --security-opt no-new-privileges --memory 64m --pids-limit 32 \
+  --label caddy=tippingpoint.l17s.dev \
+  --label caddy.reverse_proxy=tipping-point-app:3000 \
+  --label caddy.reverse_proxy.flush_interval=-1 \
+  --label caddy_ingress_network=caddy_proxy \
+  node:24-slim node -e 'setInterval(() => {}, 1073741824)'
+docker inspect tipping-point-route --format '{{.State.Status}} {{json .Config.Labels}}'
+docker inspect tipping-point-app --format '{{.State.Health.Status}}'
+curl -fsS -o /dev/null https://tippingpoint.l17s.dev/api/health
+curl -fsS -o /dev/null https://tippingpoint.l17s.dev/
+```
+
+The route container survives Docker restarts, but its creation is still a
+manual VPS step; merging this documentation does not create it. Keep the
+container name `tipping-point-app` stable across deploys so Docker DNS follows
+the replacement. Do not simultaneously set `caddy=tippingpoint.l17s.dev` on
+the app in a deploy workflow: choose one owner for the hostname. If moving
+the labels to the app, first ensure the replacement app is healthy, then
+remove the helper with `docker rm -f tipping-point-route` and validate HTTPS;
+restore the helper if the replacement route fails. Publishing the site does
+not change `APP_URL`; configure it separately.
+
+For a standalone Caddy installation instead, use a Caddyfile:
 
 ```caddyfile
 tipping-point.example.org {
@@ -164,10 +186,8 @@ certificate.
 | `next/font/google` | Downloaded at **build** time → the build host needs internet; fonts are then served by the app. |
 | Streaming / PPR | Works with `next start`; the proxy must not buffer (section 3). |
 | Data cache (`"use cache"`) | In memory per process (section 4). |
-| Telegram webhook URL | Points at the old Vercel URL until re-registered (section 2). |
-| SQLite subscriber fallback (`node:sqlite`) | Needs Node ≥ 22.13 (image: Node 24) and the `/app/.data` volume. Production uses `DATABASE_URL` (Neon) anyway. |
 | Hard-coded `*.vercel.app` URLs | Only in docs (`docs/DEPLOY.md`, `docs/PLAN.md`) and submission links — update to `APP_URL`. Nothing in `src/`. |
 | GitHub Actions of the data repo | Unchanged: they publish data, they never call the app. |
 
 Nothing in the app breaks off Vercel; the only required actions are TLS,
-the env file, and the Telegram webhook.
+and the env file.
