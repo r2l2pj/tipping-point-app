@@ -491,7 +491,7 @@ describe("pending states carried over from main (L14)", () => {
   });
 
   test("the boundary credit follows the case", () => {
-    expect(render(bundle())).toContain("US Census · Population");
+    expect(render(bundle())).toContain("US Census · Landslide points: Washington Geological Survey · Population");
     expect(render(bundle({ id: "rs_2024" }))).toContain("IBGE");
   });
 });

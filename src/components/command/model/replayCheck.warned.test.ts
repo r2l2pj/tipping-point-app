@@ -138,3 +138,29 @@ describe("HAND check + WA denominator (lead-analysis fallback 80505ff)", () => {
     expect(r.detail).toContain("27.9 km² of NISAR flood pixels on the ~12 m flood raster (the denominator); the canonical flooded_km2 27.99 km² is the polygon set within the swath.");
   });
 });
+
+describe("HAND card on the served radius (conductor)", () => {
+  const byRadius = {
+    "1000": { iou: 0.2613, r: 0.8720 },
+    "1500": { iou: 0.1914, r: 0.8544 },
+    "3000": { iou: 0.1079, r: 0.7886 },
+  };
+  test("served 1500 m: its numbers, best 1000 m as a note", () => {
+    const h = handCheck({ hand_served_radius_m: 1500, hand_best_radius_m: 1000, hand_validation_by_radius: byRadius,
+      hand_validation_iou: 0.2613, hand_validation_r: 0.872, hand_validation_radius_m: 1000 })!;
+    expect(h.line).toBe("IoU 0.19 · r 0.85 · radius 1500 m (the radius the index uses)");
+    expect(h.note).toBe("Best radius 1000 m (IoU 0.26, r 0.87).");
+  });
+  test("no served key yet: the configured 1500 m from by_radius (lead-analysis), best as note", () => {
+    const h = handCheck({ hand_best_radius_m: 1000, hand_validation_by_radius: byRadius, hand_validation_iou: 0.2613, hand_validation_r: 0.872, hand_validation_radius_m: 1000 })!;
+    expect(h.line).toBe("IoU 0.19 · r 0.85 · radius 1500 m (the radius the index uses)");
+    expect(h.note).toBe("Best radius 1000 m (IoU 0.26, r 0.87).");
+  });
+  test("served_* keys win; no by_radius at all -> published headline radius", () => {
+    const h = handCheck({ hand_validation_served_radius_m: 1500, hand_validation_served_iou: 0.344, hand_validation_served_r: 0.859,
+      hand_best_radius_m: 1000, hand_validation_by_radius: { "1000": { iou: 0.42, r: 0.9 } } })!;
+    expect(h.line).toBe("IoU 0.34 · r 0.86 · radius 1500 m (the radius the index uses)");
+    expect(h.note).toBe("Best radius 1000 m (IoU 0.42, r 0.90).");
+    expect(handCheck({ hand_validation_iou: 0.26, hand_validation_r: 0.87, hand_validation_radius_m: 1000 })!.line).toBe("IoU 0.26 · r 0.87 · radius 1000 m");
+  });
+});

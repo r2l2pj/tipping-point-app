@@ -28,6 +28,8 @@ const snapshot = (bundle: CcBundle): { iso?: string; text?: string } => {
   return { iso, text: iso ? fmtDate(iso) : undefined };
 };
 
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+
 const finish = (
   bundle: CcBundle,
   stepDate: string | undefined,
@@ -116,8 +118,11 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
     // Critical only, per hazard (summary v1 or v2; see liveCriticalKm2).
     const own = bundle.summary?.critical_km2?.[hazard];
     const value = liveCriticalKm2(bundle.summary, hazard);
-    const note = liveSummaryV2(bundle.summary) || finite(own)
-      ? `${hazard === "flood" ? "flood" : "landslide"} hazard` : "any hazard";
+    const v3 = isRecord((bundle.summary as Record<string, unknown> | undefined)?.alert_km2);
+    const note = (liveSummaryV2(bundle.summary) || finite(own) || v3
+      ? `${hazard === "flood" ? "flood" : "landslide"} hazard` : "any hazard") +
+      // lead-analysis v3: areas count Brazilian land only (stats_domain).
+      (v3 ? " · Brazilian land only" : "");
     return finish(bundle, stepDate, label, value, fmtKm2, "summary", note);
   }
   const fromMetrics = bundle.metricsView?.critical_area_km2;
@@ -144,7 +149,10 @@ export function peopleTile(bundle: CcBundle, stepDate?: string, day?: DayPoint, 
   if (day && ofDay !== undefined) return dayTile(label, fmtPeople(ofDay), day.date);
   if (bundle.mode === "live") {
     const s = bundle.summary;
-    return finish(bundle, stepDate, label, s?.people_critical ?? s?.people_exposed, fmtPeople, "summary");
+    // v3 (alert_km2 present): people_critical = Critical only, today or D+1.
+    const v3 = isRecord((s as Record<string, unknown> | undefined)?.alert_km2);
+    return finish(bundle, stepDate, label, s?.people_critical ?? s?.people_exposed, fmtPeople, "summary",
+      v3 && finite(s?.people_critical) ? "in Critical areas, today or tomorrow" : undefined);
   }
   const fromMetrics = bundle.metricsView?.people_critical;
   if (finite(fromMetrics)) return finish(bundle, stepDate, label, fromMetrics, fmtPeople, "people_critical");

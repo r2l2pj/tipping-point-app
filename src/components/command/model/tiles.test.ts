@@ -98,3 +98,23 @@ describe("tiles", () => {
     expect(peopleTile(liveBundle({ summary: {} })).missing).toBe(true);
   });
 });
+
+describe("live summary v3 (lead-analysis 022dbd6: strict critical, alert_km2)", () => {
+  const summary = {
+    updated_at: "2026-11-15T12:00:00Z",
+    critical_km2: { slide: 0, flood: 122.5, any: 122.5 },
+    alert_km2: { slide: 26.3, flood: 225.5, any: 251.7 },
+    people_critical: 1200, people_alert: 9000, people_exposed: 9000,
+    classes_km2: { landslide: { Baixo: 1, Moderado: 1, Alto: 26.3, Crítico: 0 }, flood: { Baixo: 1, Moderado: 1, Alto: 103, Crítico: 122.5 } },
+  };
+  test("Critical area = strict critical_km2, labelled Brazilian land only", () => {
+    const t = criticalAreaTile(liveBundle({ summary } as never), "flood");
+    expect(t.value).toBe("122.5 km²");
+    expect(t.note).toBe("flood hazard · Brazilian land only");
+  });
+  test("people = Critical only, today or tomorrow (never the High+ count)", () => {
+    const t = peopleTile(liveBundle({ summary } as never));
+    expect(t.value).toContain("1,200");
+    expect(t.note).toBe("in Critical areas, today or tomorrow");
+  });
+});

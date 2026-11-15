@@ -426,7 +426,7 @@ export function CommandCenterView({
       <footer className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 px-5 pb-2 pt-1.5 text-xs text-cc-faint">
         <span className="min-w-0 grow">
           Data: NASA GPM · SMAP · NASADEM · NISAR · OPERA · Forecast rain: NOAA GFS (the only non-NASA input) · Basemap © CARTO © OpenStreetMap · Boundaries ©{" "}
-          {caseDirOf(bundle) === "wa_2025" ? "US Census" : "IBGE"} · Population: GPW (NASA SEDAC) / US Census
+          {caseDirOf(bundle) === "wa_2025" ? "US Census · Landslide points: Washington Geological Survey" : "IBGE"} · Population: GPW (NASA SEDAC) / US Census
         </span>
         {/* Judges (conductor): methods links, closed by default. */}
         <MethodsDrawer />

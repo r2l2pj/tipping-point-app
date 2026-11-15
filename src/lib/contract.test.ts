@@ -394,6 +394,14 @@ describe("live summary v1 / v2 (per-hazard classes)", () => {
     expect(liveClasses(v2 as never, "flood")).toEqual(v2.classes_km2.flood);
     expect(liveClasses(v2 as never, "slide")).toEqual(v2.classes_km2.landslide);
   });
+  test("v3 (alert_km2 present): critical_km2.<hazard> is strict Critical", () => {
+    const v3 = { ...v2, critical_km2: { slide: 2, flood: 30 }, alert_km2: { slide: 12, flood: 130 } };
+    expect(liveCriticalKm2(v3 as never, "slide")).toBe(2);
+    expect(liveCriticalKm2(v3 as never, "flood")).toBe(30);
+    // the published live v2 summary: critical_km2 = High+Critical (>= 0.4), no alert_km2 -> Crítico class
+    const live = { ...v2, critical_km2: { slide: 12, flood: 130, any: 142 } };
+    expect(liveCriticalKm2(live as never, "flood")).toBe(30);
+  });
   test("nothing published reads undefined", () => {
     expect(liveCriticalKm2(undefined, "flood")).toBeUndefined();
     expect(liveClasses({} as never, "flood")).toBeUndefined();

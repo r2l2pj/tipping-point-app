@@ -318,14 +318,36 @@ export interface LeadTimeBlock {
 // Terrain check (lead-analysis fallback 80505ff): the NASADEM HAND proxy vs
 // MERIT Hydro (reference only), IoU 0-1 of the HAND < 5 m zones + Pearson r.
 // Reads hand_validation_iou (hand_validation sits in PCT_KEYS).
-export interface HandCheck { line: string; definition?: string }
+export interface HandCheck { line: string; note?: string; definition?: string }
+// Conductor: show the SERVED radius (the one the index uses), with the best
+// radius as a note. Served radius key from lead-analysis; numbers from
+// hand_validation_by_radius[served]. Without a served key: the published
+// headline radius (hand_validation_iou / _r / _radius_m).
+const SERVED_RADIUS_KEYS = ["hand_validation_served_radius_m", "hand_served_radius_m"];
+// config.yaml: the HAND proxy radius the index uses (lead-analysis, until
+// hand_validation_served_radius_m is published — same numbers).
+export const HAND_SERVED_RADIUS_DEFAULT_M = 1500;
 export function handCheck(m: M): HandCheck | undefined {
-  const iou = m.hand_validation_iou;
+  const byRadius = isRecord(m.hand_validation_by_radius) ? m.hand_validation_by_radius : {};
+  const servedKey = SERVED_RADIUS_KEYS.find((k) => finite(m[k]));
+  const at = (r: number | undefined) => (r !== undefined && isRecord(byRadius[String(Math.round(r))]) ? byRadius[String(Math.round(r))] as M : undefined);
+  const served = servedKey ? (m[servedKey] as number)
+    : at(HAND_SERVED_RADIUS_DEFAULT_M) ? HAND_SERVED_RADIUS_DEFAULT_M : undefined;
+  // served_* keys win; else by_radius[served].
+  const sv = finite(m.hand_validation_served_iou)
+    ? { iou: m.hand_validation_served_iou, r: m.hand_validation_served_r } as M
+    : at(served);
+  const iou = sv ? sv.iou : m.hand_validation_iou;
+  const r = sv ? sv.r : m.hand_validation_r;
+  const radius = sv ? served : m.hand_validation_radius_m;
   if (!finite(iou) || iou < 0 || iou > 1) return undefined;
-  const r = m.hand_validation_r;
-  const radius = m.hand_validation_radius_m;
+  const best = finite(m.hand_best_radius_m) ? m.hand_best_radius_m : undefined;
+  const bv = at(best);
   return {
-    line: `IoU ${fmtScore(iou)}${finite(r) ? ` · r ${fmtScore(r)}` : ""}${finite(radius) ? ` · radius ${Math.round(radius)} m` : ""}`,
+    line: `IoU ${fmtScore(iou)}${finite(r) ? ` · r ${fmtScore(r)}` : ""}${finite(radius) ? ` · radius ${Math.round(radius)} m${sv ? " (the radius the index uses)" : ""}` : ""}`,
+    note: sv && best !== undefined && Math.round(best) !== Math.round(served as number)
+      ? `Best radius ${Math.round(best)} m${bv && finite(bv.iou) ? ` (IoU ${fmtScore(bv.iou)}${finite(bv.r) ? `, r ${fmtScore(bv.r)}` : ""})` : ""}.`
+      : undefined,
     definition: typeof m.hand_validation_definition === "string" ? m.hand_validation_definition : undefined,
   };
 }
