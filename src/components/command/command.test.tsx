@@ -118,6 +118,16 @@ describe("status chip and contract values (S1, L9)", () => {
 });
 
 describe("replay check and evidence details (S17, S18, S19)", () => {
+  test("ML v2 card renders VAL next to TEST, the held headline and no provisional banner", () => {
+    const card = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/ml/ml_card_v2.json"), "utf8"));
+    const html = details(bundle({ id: "rs_2024", metricsView: mv({}), ml: buildMlView(card, "rs_2024", "xgb_all") }));
+    expect(html).toContain("VAL PR-AUC");
+    expect(html).toContain("Not a headline yet — independent overfit audit pending.");
+    expect(html).toContain("Model version v2");
+    expect(html).not.toContain("Provisional — being re-scored");
+    expect(html).toContain("Retrained without any Rio Grande do Sul 2024 point.");
+  });
+
   test("HAND check card renders IoU, r, radius and the definition (0-1 IoU only)", () => {
     const html = details(bundle({ metricsView: mv({ hand_validation_iou: 0.2613, hand_validation_r: 0.8719, hand_validation_radius_m: 1000, hand_validation_definition: "IoU of HAND<5 m zones" }) }));
     expect(html).toContain("Terrain check: HAND proxy vs MERIT Hydro (reference only)");

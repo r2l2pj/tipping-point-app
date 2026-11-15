@@ -581,7 +581,9 @@ export const getMlArtifacts = async (): Promise<{
     readData<unknown>(newCtx(), "", "ml/ml_card_v2.json")
       .then((v2) => v2 ?? readData<unknown>(ctx, "", "ml/ml_card.json")),
     readData<unknown>(ctx, "", "ml/feature_importance_3b.json"),
-    readData<unknown>(ctx, "", "ml/t_ml.json"),
+    // T_ML v2 (retrained without RS, L32) next to the v2 card; else v1.
+    readData<unknown>(newCtx(), "", "ml/t_ml_v2.json")
+      .then((v2) => v2 ?? readData<unknown>(ctx, "", "ml/t_ml.json")),
   ]);
   return { card, importance, tml, base: ctx.lastBase ?? ctx.bases[0] };
 };

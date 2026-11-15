@@ -168,3 +168,40 @@ describe("ML v2 card (data/ml/ml_card_v2.json)", () => {
     expect(spreadFor(buildMlView(v1, "rs_2024")!, "24h", "gfs")).toBeUndefined();
   });
 });
+
+describe("ML v2 real export (lead-ml fallback f5fbab1, trimmed fixture)", () => {
+  const card = read("ml_card_v2.json");
+  const v = buildMlView(card, "rs_2024", "xgb_all")!;
+  test("v2: no provisional banner, GFS back, headline held, VAL next to TEST", () => {
+    expect(v.provisional).toBe(false);
+    expect(v.sources).toEqual(["gfs", "perfect"]);
+    expect(v.horizons).toEqual(["24h", "48h", "72h", "7d"]);
+    expect(v.headlineHeld).toBe("Not a headline yet — independent overfit audit pending.");
+    expect(v.valNote).toContain("VAL PR-AUC (24h ~0.13)");
+    const rows = v.when["24h|gfs"].rows;
+    expect(rows.map((r) => r.model)).toEqual(["xgb_rain_soil", "xgb_all", "rf_all", "rule_tpi", "climatology"]);
+    expect(rows[0].label).toBe("XGBoost rain + soil — the model live");
+    expect(rows[0].cells.prAuc).toBe("0.62");
+    expect(rows[0].valPrAuc).toBe("0.13");
+    expect(rows[4].label).toBe("XGBoost no rain/soil (baseline)");
+    expect(v.servedLine).toBe("The live layer runs XGBoost rain + soil.");
+  });
+  test("events: 11 with years 2017–2025, sources say when there was no GFS archive", () => {
+    expect(v.testEventList).toHaveLength(11);
+    const maria = v.testEventList.find((e) => e.id === "maria_2017")!;
+    expect(maria.source).toBe("observed rain only (no GFS archive)");
+    expect(maria.nPos).toBe(6000);
+    const c = mlCaveats(v);
+    expect(c[0]).toContain("The TEST covers 11 events");
+    expect(c[1]).toBe("Trained on dated landslide catalogs (GLC/COOLR, worldwide); tested on 11 disaster events from 2017–2025 it never saw.");
+    expect(c.join(" ")).not.toContain("2015–2018 landslide catalog");
+  });
+  test("spread per source; T_ML v2 note; calibration note makes no ranking claim", () => {
+    const sp = spreadFor(v, "24h", "gfs")!;
+    expect(sp.source).toBe("gfs");
+    expect(spreadLine(sp.rows[0], sp.source)).toMatch(/^PR-AUC across 8 events \(NOAA GFS forecast\): median 0\.68 \(range [0-9.]+–[0-9.]+; weakest: Petrópolis|^PR-AUC across 8 events \(NOAA GFS forecast\): median 0\.68 \(range [0-9.]+–[0-9.]+; weakest: /);
+    expect(v.tmlExcludesRs).toBe(true);
+    expect(v.where!.rows[0].label).toContain("the model on the map");
+    expect(v.calibrationNote).toBe("Scores of the calibrated models, as served on the map.");
+  });
+});
