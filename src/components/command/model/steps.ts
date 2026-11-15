@@ -86,9 +86,19 @@ export function stepsFor(bundle: CcBundle | undefined): Step[] {
 
 // Step shown when a case opens: the event day (offset 0), else the last
 // observed step, else the first step.
-export function defaultStepIndex(steps: Step[]): number {
+export function defaultStepIndex(steps: Step[], bundle?: CcBundle): number {
   const event = steps.findIndex((s) => s.offset === 0);
   if (event >= 0) return event;
+  // A replay without an event day (Uruguaiana) lands on its first index
+  // signal (lead-analysis timeline_marks kind 'signal': Sep 30).
+  const tm = (bundle?.metricsView as Record<string, unknown> | undefined)?.timeline_marks;
+  const signal = Array.isArray(tm)
+    ? tm.find((x) => x && typeof x === "object" && (x as Record<string, unknown>).kind === "signal" && typeof (x as Record<string, unknown>).date === "string") as { date: string } | undefined
+    : undefined;
+  if (signal) {
+    const i = steps.findIndex((s) => s.date.slice(0, 10) === signal.date.slice(0, 10));
+    if (i >= 0) return i;
+  }
   for (let i = steps.length - 1; i >= 0; i--) if (!steps[i].forecast) return i;
   return 0;
 }
@@ -257,6 +267,28 @@ export function issuedFrame(
   return layer ? { layer, hazard, forecast: true } : undefined;
 }
 
+// Lucas (forecast view): the user picks the TARGET day D; the forecast is
+// the GFS frame depicting D issued k days before (D−k).
+const DAY_MS = 86_400_000;
+export const shiftDay = (iso: string, days: number): string =>
+  new Date(new Date(`${iso.slice(0, 10)}T12:00:00Z`).getTime() + days * DAY_MS).toISOString().slice(0, 10);
+export function forecastForDay(bundle: CcBundle, day: string | undefined, hazard: Hazard, k: IssueLead): Frame | undefined {
+  if (!day || k === 0) return undefined;
+  const f = issuedFrame(bundle, shiftDay(day, -k), hazard, k);
+  const depicted = f?.layer.date?.slice(0, 10);
+  return f && (depicted === undefined || depicted === day.slice(0, 10)) ? f : undefined;
+}
+export const forecastLeadsForDay = (bundle: CcBundle, day: string | undefined, hazard: Hazard): IssueLead[] =>
+  ISSUE_LEADS.filter((k) => forecastForDay(bundle, day, hazard, k));
+// Never a dead chip: a lead without an archived run falls back to the
+// nearest one that has it (ties: the longer lead).
+export function effectiveLead(bundle: CcBundle, day: string | undefined, hazard: Hazard, k: IssueLead): IssueLead {
+  if (k === 0) return 0;
+  const avail = forecastLeadsForDay(bundle, day, hazard);
+  if (avail.includes(k)) return k;
+  return [...avail].sort((a, b) => Math.abs(a - k) - Math.abs(b - k) || b - a)[0] ?? 0;
+}
+
 // Leads with a frame for the day (either hazard): the control shows only
 // when there is at least one.
 export const issueLeadsFor = (bundle: CcBundle, issueDate: string | undefined, hazard: Hazard): IssueLead[] =>
@@ -318,11 +350,12 @@ export function mapCaption(
   if (!step) return { text: tpiReplayNote(bundle) ? "No rain-index replay for this case" : NO_STEPS_TEXT, forecast: false };
   const when = `${fmtDate(step.date)}${step.sub ? ` (${step.sub})` : ""}`;
   if (issueLead > 0 && on.includes("tpi")) {
-    const f = issuedFrame(bundle, step.date, hazard, issueLead);
-    const ahead = `${issueLead} ${issueLead === 1 ? "day" : "days"} ahead`;
+    // Forecast view: the frame depicting the step day D, issued D−k.
+    const f = forecastForDay(bundle, step.date, hazard, issueLead);
+    const issued = shiftDay(step.date, -issueLead);
     return f
-      ? { text: `${HAZARD_LABEL[f.hazard]} TPI · ${fmtDate(f.layer.date ?? "")} · ${forecastChip(f.layer, undefined)}, ${ahead}`, forecast: true }
-      : { text: `No NOAA GFS forecast issued ${fmtDate(step.date)} for ${ahead}`, forecast: false };
+      ? { text: `Forecast for ${fmtDate(step.date)}, issued ${fmtDate(issued)} (NOAA GFS) · ${HAZARD_LABEL[f.hazard]} TPI`, forecast: true }
+      : { text: `No NOAA run archived for ${fmtDate(issued)}`, forecast: false };
   }
   if (bundle.riskPaused) return { text: `${RISK_PAUSED_TEXT} · ${when}`, forecast: false };
   // Conductor: in Now a forecast day of the timeline reads as the rain-index

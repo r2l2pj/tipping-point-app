@@ -1,5 +1,8 @@
 # Tipping Point: documento do projeto (plano final)
 
+> **L55 (2026-11-15): Telegram is removed for good** — no bot, no subscriber store, no Neon Postgres. Telegram/subscriber items below are historical. Alerts are the in-app Public Alerts page only.
+
+
 Nov 14, 2026. Fonte: documento do projeto v4 (Claude Docs), copiado aqui como plano final do time. Este arquivo é o mesmo nos dois repositórios (`tipping-point-data/docs/PLAN.md` e `tipping-point-app/docs/PLAN.md`).
 
 ## Decisões adotadas que substituem o texto abaixo

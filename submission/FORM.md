@@ -26,7 +26,7 @@ The video is built from `storyboard.md` + `captions.srt` (L38 response-first VO,
 
 ## 4. Link to Final Project
 
-[APP URL]
+https://tippingpoint.l17s.dev
 
 It is public, needs no login, and returns 200. The code links are in the description below:
 - https://github.com/r2l2pj/tipping-point-app
@@ -89,7 +89,7 @@ Source: `nasa-data.md` (awaiting Lucas):
 >
 > **Code and tools (open source):** Next.js, React, MapLibre GL, Recharts, Tailwind CSS, geotiff/georaster, the Google Earth Engine API, earthaccess, asf_search, xarray, rioxarray, rasterio, h5py, NumPy, SciPy, pandas, geopandas, scikit-image, scikit-learn, XGBoost, SHAP, cfgrib/ecCodes, Playwright (demo recording) and ffmpeg.
 >
-> **Services:** our own VPS (hosting), GitHub Actions, Neon.
+> **Services:** our own VPS (hosting), GitHub Actions.
 >
 > **Space Agency Partners:** ESA Sentinel-1 radar, through NASA OPERA DSWx-S1 (live flood candidates and the Washington validation reference). The Brazilian Space Agency is also a 2026 partner; Brazil-specific data (Cemaden, IBGE) is listed above.
 >

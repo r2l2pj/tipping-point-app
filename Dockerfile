@@ -22,9 +22,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # NEXT_PUBLIC_* are inlined into the browser bundle at build time.
 ARG NEXT_PUBLIC_REFRESH_HOURS=
-ARG NEXT_PUBLIC_TELEGRAM_BOT_URL=
 ENV NEXT_PUBLIC_REFRESH_HOURS=${NEXT_PUBLIC_REFRESH_HOURS} \
-    NEXT_PUBLIC_TELEGRAM_BOT_URL=${NEXT_PUBLIC_TELEGRAM_BOT_URL} \
     NEXT_TELEMETRY_DISABLED=1 \
     DATA_REPO=/nonexistent
 # prebuild (sync-data) finds no sibling data repo and keeps the committed
@@ -48,7 +46,8 @@ COPY --from=build --chown=node:node /app/db ./db
 RUN mkdir -p .next/cache .data && chown -R node:node .next/cache .data
 USER node
 EXPOSE 3000
-# /api/health always answers 200 JSON while the server is up (the body is the report).
+# /api/health?live=1 answers 200 {"ok":true} while the server is up (liveness);
+# plain /api/health also checks the live data age (503 when older than 6 h).
 HEALTHCHECK --interval=30s --timeout=20s --start-period=20s --retries=3 \
-  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health?live=1').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 CMD ["node", "node_modules/next/dist/bin/next", "start", "-H", "0.0.0.0"]

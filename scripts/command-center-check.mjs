@@ -322,7 +322,7 @@ check("CUJ-1", (await attr("data-case")) === "now", "the screen opens on Now");
   check("CUJ-12", !/^Live/.test(fresh) || /updated/.test(fresh), "freshness never reads live without a run time");
   check("CUJ-9", (await page.locator('section[aria-label="Replay check"]').count()) === 0, "no Replay check in Now");
   info("CUJ-5", `timeline: ${(await page.locator('[aria-label="Timeline steps"]').count()) ? "steps" : "No frames published yet"}`);
-  info("CUJ-11", (await page.locator('section[aria-label="Get alerts"]').count()) ? "Telegram card shown" : "no bot address: card hidden");
+  check("CUJ-11", (await page.locator('section[aria-label="Get alerts"]').count()) === 0, "no Telegram card (L55: removed)");
   check("CUJ-2", (await page.locator('header [aria-label="Region"]').innerText()) === "Southern Brazil", "Now shows the region label, not a select");
 }
 await invariants("now");

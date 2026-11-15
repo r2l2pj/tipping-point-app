@@ -13,10 +13,12 @@ import type { CcBundle, Hazard } from "./types";
 type BBox = [number, number, number, number];
 
 // Side tags (fixed wording of the brief).
-export const forecastSideLabel = (issued: string | undefined): string =>
+// Lucas: "Forecast for Oct 11, issued Oct 8 (NOAA GFS)" | "Observed Oct 11 (NASA IMERG + SMAP)".
+export const forecastSideLabel = (issued: string | undefined, day?: string): string =>
+  day ? `Forecast for ${fmtDate(day).replace(/,\s*\d{4}$/, "")}, issued ${fmtDate(issued).replace(/,\s*\d{4}$/, "")} (NOAA GFS)` :
   `Forecast (NOAA GFS, issued ${fmtDate(issued)})`;
 export const observedSideLabel = (day: string): string =>
-  `Observed (NASA IMERG + SMAP) — ${fmtDate(day)}`;
+  `Observed ${fmtDate(day).replace(/,\s*\d{4}$/, "")} (NASA IMERG + SMAP)`;
 
 const DAY_MS = 86_400_000;
 // Calendar-date arithmetic; the input may carry a time part.
@@ -126,7 +128,7 @@ export function forecastCompare(
       bounds: unionBounds(fc.layer.bounds, obs.bounds) ?? bundle.bbox,
       before: {
         url: before,
-        label: forecastSideLabel(fc.layer.issued ?? issued),
+        label: forecastSideLabel(fc.layer.issued ?? issued, day),
         bounds: fc.layer.bounds,
       },
       after: { url: after, label: observedSideLabel(day), bounds: obs.bounds },

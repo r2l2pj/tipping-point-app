@@ -3,11 +3,11 @@
 Fullstack app for **Tipping Point** — NASA Space Apps Challenge 2026,
 "Dancing with the SARs". Rain warns. Radar sees through.
 
-**Live demo:** [APP URL] · **Data pipeline:** [r2l2pj/tipping-point-data](https://github.com/r2l2pj/tipping-point-data) · **License:** Apache-2.0 · **Team:** [TEAM NAME] — NASA Space Apps 2026, challenge #5 "Dancing with the SARs"
+**Live demo:** [https://tippingpoint.l17s.dev](https://tippingpoint.l17s.dev) · **Data pipeline:** [r2l2pj/tipping-point-data](https://github.com/r2l2pj/tipping-point-data) · **License:** Apache-2.0 · **Team:** [TEAM NAME] — NASA Space Apps 2026, challenge #5 "Dancing with the SARs"
 
 ## What it is
 
-Tipping Point helps responders know **when, where and who** in floods and landslides: NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) show where risk is rising, and NISAR's L-band radar sees through cloud to where the ground newly flooded. Our main case is at home: the **Uruguay River at Uruguaiana** (Rio Grande do Sul, Brazil), which stayed above its 8.50 m flood stage on Oct 5–21, 2026 (ANA gauge). In a **post-event test** (not the live index), NASA satellite rain over the upstream basin was already extreme five days before flood stage, pointing to a river corridor where about 20,900 people live; NISAR passes every 12 days saw the river through cloud. Two past disasters back it up: Washington State, December 2025 (NISAR flood candidates under 92.9% cloud) and Rio Grande do Sul, May 2024 (a replay with each forecast as it was issued). The river will still flood; what we aim to prevent is the disaster. **Rain warns. Radar sees through.**
+Tipping Point helps responders know **when, where and who** in floods and landslides: NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) show where risk is rising, and NISAR's L-band radar sees through cloud to where the ground newly flooded. Our main case is at home: the **Uruguay River at Uruguaiana** (Rio Grande do Sul, Brazil). In October 2026 the Uruguay River at Uruguaiana stayed above its 8.50 m flood stage on Oct 5–21 (ANA gauge). Replayed with the data as it was available, our index, fed by NASA satellite rain, turned the Uruguaiana region Critical on Sep 30, five days before flood stage, and NOAA's GFS forecast from Sep 27 already pointed there, 8 days ahead (near-real-time rain; it holds when scaled to the final product; 3 small false alarms on Sep 20–22). It found the right days, not yet the right streets; NISAR passes every 12 days then saw the water through cloud, and about 98,000 people live on the low floodplain. Two past disasters back it up: Washington State, December 2025 (NISAR flood candidates under 92.9% cloud) and Rio Grande do Sul, May 2024 (a replay with each forecast as it was issued). The river will still flood; what we aim to prevent is the disaster. **Rain warns. Radar sees through.**
 
 | Uruguaiana, Oct 2026 — NISAR before / during the flood | Washington, Dec 2025 — NISAR before / after | Live public alerts (experimental) |
 |---|---|---|
@@ -32,7 +32,7 @@ Full table with every n and caveat: [Validation](#validation).
 | Rio Grande do Sul 2024: landslides, forecast as issued | 5.8% of 16,027 mapped landslides were High or Critical in the forecast issued 27 h before the first deaths, while that forecast flagged 2.1% of the area: 2.7× chance | runs issued 51 and 75 h before: 0%; one run carries it |
 | Forecast lead (replays, horizon 0–3 days) | about 1 day in Rio Grande do Sul (the run 27 h before the first deaths); none for Washington's flooded places (0% at 24/48/72 h) | local-rain index; official warnings came first in both replays |
 | Forecast alarms by municipality | Rio Grande do Sul 1.4× chance, Washington 2.0× | landslide maps undated |
-| Uruguaiana 2026 (post-event test, not live) | upstream NASA rain extreme 5 days before flood stage; the low-lying corridor (about 20,900 people) holds 54% of a teammate's NISAR change map in 36% of the land | small sample (7 polygons, ~1.8 km²); our stricter automatic check did not reproduce that map; no claim of being earlier than official warnings |
+| Uruguaiana 2026 (replay) | Critical over the Uruguaiana region on Sep 30 (13,129 km², 6,121 on the low floodplain), 5 days before flood stage; the NOAA GFS run of Sep 27 already showed Critical on the floodplain for Sep 29–30 (8 days ahead); 54% of the NISAR flood candidates (a teammate's polygons) lie on the floodplain, which is 28% of the land (1.92×); about 98,000 people on the floodplain | near-real-time rain, holds scaled to the final product (3,541 km² on the floodplain); 15 Critical days Sep 15–Oct 31, 3 small ones (Sep 20–22) with no flood stage within 10 d; Critical area only 1.34× concentrated on the floodplain; numbers depend on the case box; our stricter automatic NISAR check did not reproduce the teammate polygons |
 | ML trigger model | median per-event ROC 0.93 over 9 held-out disasters | about as good as a simple rule; ~4–5 alarm-days per site per year; experimental |
 
 ## Repo map
@@ -95,7 +95,6 @@ The app shows no AI-generated images, video or audio.
 | `src/app/alerts` | public alerts: the same Command Center screen with the public alert view in the right panel (in-app only) |
 | `src/app/api/events` | events index + per-event manifest |
 | `src/app/api/ee/status` | live-GEE health check (service account; opt-in — needs `GEE_ENABLED` = `1`/`true`, else 503) |
-| `src/app/api/telegram` + `src/lib/telegram/` | (inactive — not part of this submission) Telegram bot webhook + Neon (free) subscriber store via HTTPS SQL endpoint (plain fetch, no dep) — 503 until `TELEGRAM_TOKEN` + `TELEGRAM_SECRET` are set (cred-blocked) |
 | `src/lib/ee.ts` | server-only Earth Engine client (`GEE_PROJECT` + `GCP_SA_KEY` in `.env`; `GEE_SERVICE_ACCOUNT_KEY` (fallback) also accepted) — opt-in via `GEE_ENABLED`; EE API routes return 503 while disabled |
 | `public/data/<event>/`, `public/data/now/`, `public/data/alerts.json` | committed artifacts per SCHEMA.md — synced by `sync:data`; last-resort copy when every remote read misses |
 | `docs/`, `submission/` | `docs/{PLAN,app-contract,DEPLOY}.md` project doc + contract/deploy notes; `submission/{summary,nasa-data,ai-declaration,demo-script,slides-outline}.md` (incl. ≤30s demo script) |
@@ -106,14 +105,13 @@ Vercel (repo is public — Hobby plan can deploy public org repos). `prebuild`
 runs the data sync, so committed `public/data` is the last-resort deploy
 fallback. Read order: the `fallback` branch of `r2l2pj/tipping-point-data`
 (`raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`) is the
-primary source, Neon Object Storage is the fallback, and an explicit
-`DATA_BASE_URL` overrides both — runbook in `docs/DEPLOY.md`. Neon Postgres
-serves only the Telegram subscriber store.
+primary source, Neon Object Storage is the fallback (removed in the L53 merge), and an explicit
+`DATA_BASE_URL` overrides both — runbook in `docs/DEPLOY.md`.
 The `now.yml` live job refreshes data every 3 h: it computes TPI locally
 from IMERG Early / SMAP / NOAA GFS forecast rain and publishes the result as one
 force-pushed orphan commit per run (`manifest.json` last). The stale-data
 warning threshold is 6 h. Everything runs on free tiers: GitHub Actions,
-GitHub raw, Vercel Hobby, Earthdata, Telegram Bot API, Neon free.
+GitHub raw, Vercel Hobby, Earthdata, Neon free object storage (until the L53 merge).
 
 ## Credentials
 
@@ -123,11 +121,8 @@ Earthdata auth uses a bearer token: env var and GitHub secret
 (`now.yml`) fails loudly when the token dies. `EDL_USER`/`EDL_PASS`
 remain a local-only fallback, never in secrets.
 
-The Telegram subscriber store uses `DATABASE_URL` (Neon connection string,
-server-only) — set in Vercel env + GitHub secrets, never in repos.
-
-Full env list (`GCP_SA_KEY` canonical; `GEE_SERVICE_ACCOUNT_KEY` fallback;
-`DATABASE_URL` for the subscriber store): `docs/DEPLOY.md`.
+Full env list (`GCP_SA_KEY` canonical; `GEE_SERVICE_ACCOUNT_KEY` fallback): `docs/DEPLOY.md`.
+There is no database secret: Telegram and its subscriber store were removed (L55).
 
 ## Forecast & model
 

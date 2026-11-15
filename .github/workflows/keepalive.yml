@@ -1,0 +1,16 @@
+# Keepalive (Lucas): ping the production app every 10 minutes so it never
+# idles out; a failed ping fails the run and GitHub emails the repo owner.
+# No secrets.
+name: keepalive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: curl -fsS --max-time 30 --retry 2 --retry-delay 10 https://tippingpoint.l17s.dev/api/health

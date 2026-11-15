@@ -75,6 +75,8 @@ export type Action =
   | { type: "toggleCallout" }
   | { type: "openCompare"; kind: ComparePair["kind"] }
   | { type: "closeCompare" }
+  // Lucas: NISAR swipe dates are chips in the Radar card.
+  | { type: "setCompareDates"; before?: string; after?: string }
   | { type: "toggleDetails" }
   | { type: "toggleLayersOpen" }
   | { type: "toggleList" }
@@ -141,7 +143,7 @@ export function linkParams(
   const offset = steps[dayIndex]?.offset;
   return {
     case: canonicalCaseId(bundle.id),
-    day: dayIndex !== defaultStepIndex(steps) && offset !== undefined ? String(offset) : undefined,
+    day: dayIndex !== defaultStepIndex(steps, bundle) && offset !== undefined ? String(offset) : undefined,
   };
 }
 
@@ -158,7 +160,7 @@ export function featuredFirst<T extends CcBundle>(cases: readonly T[]): T[] {
 // The screen opens on Now when a live case is loaded, else on the first case.
 // `initialCase` (the `?case=<id|alias>` deep link of the old screen) opens
 // that case when it is loaded.
-export interface DeepLink { lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string; basemap?: string }
+export interface DeepLink { view?: string; lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string; basemap?: string }
 
 // ?layers=imerg,hand5 → layer ids ("hand5"/"hand" = low ground); ?fit=<key>
 // → the map opens on that layer's bounds (the upstream basin for imerg).
@@ -198,7 +200,7 @@ export function initialState(
   return {
     activeId: first?.id ?? "",
     lastReplayId: first?.mode === "replay" ? first.id : null,
-    dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first)),
+    dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first), first),
     playing: false,
     hazard,
     layers: first
@@ -209,10 +211,13 @@ export function initialState(
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
     overlayOpacity: OPACITY_DEFAULT,
-    issueLead: [1, 2, 3].includes(Number(link.lead)) && first && layerAvailable(first, "tpi", hazard) ? Number(link.lead) as 1 | 2 | 3 : 0,
+    // Lucas: ?view=observed|forecast|compare (&lead=1..3, default 3).
+    issueLead: !first || !layerAvailable(first, "tpi", hazard) || link.view === "observed" ? 0
+      : [1, 2, 3].includes(Number(link.lead)) ? Number(link.lead) as 1 | 2 | 3
+      : link.view === "forecast" || link.view === "compare" ? 3 : 0,
     selectedArea: null,
     calloutExpanded: false,
-    compareOpen: link.compare === "radar" ? "radar" : link.compare === "forecast" ? "forecast" : null,
+    compareOpen: link.compare === "radar" ? "radar" : link.compare === "forecast" || link.view === "compare" ? "forecast" : null,
     compareInit: { before: link.before, after: link.after, pol: link.pol === "HV" ? "HV" : link.pol === "HH" ? "HH" : undefined },
     detailsOpen: false,
     layersOpen: true,
@@ -234,7 +239,7 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
     ...state,
     activeId: id,
     lastReplayId: bundle.mode === "replay" ? id : state.lastReplayId,
-    dayIndex: defaultStepIndex(stepsFor(bundle)),
+    dayIndex: defaultStepIndex(stepsFor(bundle), bundle),
     playing: false,
     hazard,
     // The TPI index is the default layer: a case change never leaves the
@@ -275,7 +280,7 @@ export function reduce(
     // Each stop starts from the case's own opening layers, not the last stop's.
     const hazard = action.hazard && caseHasHazard(target, action.hazard) ? action.hazard : next.hazard;
     next = { ...next, hazard, layers: withRadarDefault(target, keepAvailable(target, defaultLayersFor(target, hazard), hazard), hazard), layerNotice: null };
-    const day = linkedDay(target, action.day) ?? defaultStepIndex(stepsFor(target));
+    const day = linkedDay(target, action.day) ?? defaultStepIndex(stepsFor(target), target);
     next = reduce(next, { type: "seek", index: day }, cases);
     next = reduce(next, { type: "setIssueLead", lead: action.lead ?? 0 }, cases);
     if (action.layer && !next.layers.includes(action.layer) && layerAvailable(target, action.layer, next.hazard)) {
@@ -398,6 +403,8 @@ export function reduce(
       return { ...state, compareOpen: action.kind, playing: false };
     case "closeCompare":
       return { ...state, compareOpen: null };
+    case "setCompareDates":
+      return { ...state, compareInit: { ...state.compareInit, before: action.before, after: action.after } };
     case "toggleDetails":
       return { ...state, detailsOpen: !state.detailsOpen };
     case "toggleLayersOpen":

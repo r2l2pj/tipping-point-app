@@ -17,5 +17,5 @@ Checked 2026-11-15 ~09:30 BRT by lead-submission. Rules come from the official 2
 | k | Open source (the challenge asks for it) | ✓ | Both repos carry an Apache-2.0 LICENSE (tipping-point-data; tipping-point-app since lead-app 5daac30, in the freeze-1300 merge). |
 | l | All members confirmed at the same Local Event (≤ 6) | ☐ Lucas | Only the team owner can check this. |
 | m | All form fields complete, English, both boxes ticked, Submit clicked before **Sun Nov 15 23:59 local** | ☐ Lucas | `FORM.md` + `project-page.md`. Judges see only the last save. |
-| n | Public alerts not presented as official warnings | ✓ copy / ☐ app | The copy now says "experimental research product, not official warnings (official: Defesa Civil, SMS 40199)". The app card and Telegram label belong to lead-app and lead-live. |
+| n | Public alerts not presented as official warnings | ✓ copy / ☐ app | The copy now says "experimental research product, not official warnings (official: Defesa Civil, SMS 40199)". The app card label belongs to lead-app (Telegram removed, L55). |
 | o | Optional: FortiGuard web-filter classification of vercel.app | ☐ Lucas | This is a form on the FortiGuard site. |

@@ -1,7 +1,7 @@
 "use client";
 
 import { PASSES_SHOWN, type RadarCard as RadarModel } from "./model/radar";
-import { fmtBrt } from "./model/format";
+import { fmtBrt, fmtDate } from "./model/format";
 import NisarSeriesChart from "./NisarSeriesChart";
 import { Icon, ICON } from "./ui";
 import { isMissingText } from "./model/sparse";
@@ -30,9 +30,12 @@ export default function RadarCard({
   onShowFlood,
   onCompare,
   hideMissing = false,
+  swipeDates,
 }: {
   radar: RadarModel;
   hideMissing?: boolean; // featured replay: no "pending" scar block (conductor, v6)
+  // Lucas: the NISAR dates of the open swipe, as chips (no slider).
+  swipeDates?: { dates: string[]; before: string; after: string; onPick: (before: string, after: string) => void };
   floodOn: boolean;
   compareOpen: boolean;
   onConfirm: () => void;
@@ -115,6 +118,7 @@ export default function RadarCard({
         {!radar.compare.pair && radar.compare.reason && (
           <span className="text-xs italic text-cc-faint">Before / after: {radar.compare.reason}</span>
         )}
+        {swipeDates && <SwipeDatePicker {...swipeDates} />}
       </div>
 
       {/* A caveat stays in view; the method notes fold away. */}
@@ -197,5 +201,32 @@ export default function RadarCard({
         </details>
       )}
     </section>
+  );
+}
+
+// Before / after dates as chips: one tap each; picking a 'before' on or after
+// the current 'after' moves 'after' to the next date (never a dead chip).
+function SwipeDatePicker({ dates, before, after, onPick }: { dates: string[]; before: string; after: string; onPick: (b: string, a: string) => void }) {
+  const chip = (on: boolean) => `rounded-md px-2 py-0.5 text-xs font-semibold ${on ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`;
+  const short = (d: string) => fmtDate(d).replace(/,\s*\d{4}$/, "");
+  const next = (d: string) => dates.find((x) => x > d) ?? d;
+  const prev = (d: string) => [...dates].reverse().find((x) => x < d) ?? d;
+  return (
+    <div className="mt-1.5 grid w-full gap-1 text-xs" data-swipe-dates>
+      <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Radar date before">
+        <span className="w-12 text-cc-muted">Before</span>
+        {dates.map((d) => (
+          <button key={d} type="button" aria-pressed={d === before} className={chip(d === before)}
+            onClick={() => onPick(d, d >= after ? next(d) : after)}>{short(d)}</button>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Radar date after">
+        <span className="w-12 text-cc-muted">After</span>
+        {dates.map((d) => (
+          <button key={d} type="button" aria-pressed={d === after} className={chip(d === after)}
+            onClick={() => onPick(d <= before ? prev(d) : before, d)}>{short(d)}</button>
+        ))}
+      </div>
+    </div>
   );
 }

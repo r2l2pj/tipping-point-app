@@ -7,7 +7,6 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncE
 import { usePathname } from "next/navigation";
 import type { AlertCardData } from "@/lib/alerts";
 import EvidenceDetails from "./EvidenceDetails";
-import GetAlertsCard from "./GetAlertsCard";
 import LayersColumn from "./LayersColumn";
 import MapStage, { type CityPin, type MapFocus } from "./MapStage";
 import CityCard from "./CityCard";
@@ -34,7 +33,7 @@ import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
 import { sourceRows } from "./model/sources";
 import { statusChip } from "./model/status";
-import { chartForecastLabel, forecastTag, frameFor, issuedFrame, stepLabel, stepMarks, stepsFor, timelineForecastTag, noStepsText } from "./model/steps";
+import { chartForecastLabel, effectiveLead, forecastForDay, forecastLeadsForDay, forecastTag, frameFor, stepLabel, stepMarks, stepsFor, timelineForecastTag, noStepsText } from "./model/steps";
 import { criticalAreaTile, peopleTile, zoneSnapshot } from "./model/tiles";
 import type { CcBundle } from "./model/types";
 import PriorityAreas from "./PriorityAreas";
@@ -47,6 +46,7 @@ import SourceAges from "./SourceAges";
 import { initialState, linkParams, PLAYBACK_MS, reduce, type Action, type ScreenState, type DeepLink, isFeatured } from "./state";
 import StatusBlock from "./StatusBlock";
 import { hideMissingFor } from "./model/sparse";
+import { hasHourFrames, hourFrameFor, hoursOn } from "./model/hours";
 import { plainText } from "./model/plain";
 import Tiles from "./Tiles";
 import TimelineBar from "./TimelineBar";
@@ -57,7 +57,6 @@ import { useInsets } from "./useInsets";
 export interface CommandCenterProps {
   cases: CcBundle[];
   alertList: AlertList;
-  botUrl?: string;
   fontClass?: string;
   // `?case=<id|alias>` deep link: the case the screen opens on.
   initialCase?: string;
@@ -97,7 +96,6 @@ export default function CommandCenter(props: CommandCenterProps) {
 export function CommandCenterView({
   cases: rawCases,
   alertList,
-  botUrl,
   fontClass = "",
   initialCase,
   initialDay,
@@ -136,11 +134,13 @@ export function CommandCenterView({
     ? geoUrl(liveCase, caseDirOf(liveCase), "places", "places.json")
     : undefined;
   const [city, setCity] = useState<{ place: Place; dates: string[] }>();
+  // Lucas: hour chips (6-hourly frames) — kept per case, cleared on a case change.
+  const [hourPick, setHourPick] = useState<{ caseId: string; hour: string | null }>({ caseId: "", hour: null });
   const [replayCity, setReplayCity] = useState<ReplayPlace>();
   // L52 U1: right-panel tabs (content moved, nothing deleted).
-  // The featured replay is the radar case: it opens on its Radar tab.
-  const [tab, setTab] = useState<PanelTab | "all">(panelTab ?? (deepLink?.compare === "radar" ||
-    (!!initialCase && /uruguai|uruguay/i.test(initialCase)) ? "radar" : "overview"));
+  // Lucas: every case lands on the map + Overview; only a radar swipe link
+  // opens the Radar tab.
+  const [tab, setTab] = useState<PanelTab | "all">(panelTab ?? (deepLink?.compare === "radar" ? "radar" : "overview"));
   const show = (t: PanelTab) => tab === t || tab === "all";
   // Headline card (Lucas, "simple and WOW"): the live places file, once.
   const [places, setPlaces] = useState<Places>();
@@ -293,6 +293,7 @@ export function CommandCenterView({
   }
 
   const live = bundle.mode === "live";
+  const hour = hourPick.caseId === bundle.id ? hourPick.hour : null;
   const step = steps[state.dayIndex];
   // Keyed read: a stale places_daily while a new case's is in flight.
   const dailyRaw = daily && daily.url === dailyUrl ? daily.raw : undefined;
@@ -315,7 +316,7 @@ export function CommandCenterView({
     // L52: forecast vs observed — the pair follows the timeline day and
     // the lead chips (state.issueLead); both sides change together.
     : state.compareOpen === "forecast"
-      ? forecastCompare(bundle, step?.date, state.hazard, state.issueLead).pair
+      ? forecastCompare(bundle, step?.date, state.hazard, effectiveLead(bundle, step?.date, state.hazard, state.issueLead || 3)).pair
       : undefined;
   const snap = zoneSnapshot(bundle, step?.date);
   // The ML card's global tables travel on one case only (page budget).
@@ -326,7 +327,7 @@ export function CommandCenterView({
   // timeline chip: the "forecast issued this day" overlay when on, else the
   // step's own frame (TPI index on).
   const tpiOn = state.layers.includes("tpi");
-  const overlayFrame = tpiOn ? issuedFrame(bundle, step?.date, state.hazard, state.issueLead)?.layer : undefined;
+  const overlayFrame = tpiOn ? forecastForDay(bundle, step?.date, state.hazard, effectiveLead(bundle, step?.date, state.hazard, state.issueLead))?.layer : undefined;
   const mapFrame = overlayFrame ?? (tpiOn ? frameFor(bundle, step?.date, state.hazard)?.layer : undefined);
   // Area by class of the selected hazard (summary v2), or the v1 union.
   const classesKm2 = bundle.riskPaused ? [] : Object.entries(liveClasses(bundle.summary, state.hazard) ?? {});
@@ -388,6 +389,8 @@ export function CommandCenterView({
           stageRef={stageRef}
           focus={focus}
           cityPin={cityPin}
+          compareDefaults={{ before: radar.preIso, after: radar.postIso }}
+          hourFrame={hourFrameFor(bundle, state.hazard, step?.date, hour)}
           cityOutline={!live ? replayCity?.outline : undefined}
           featuredCase={(() => {
             const f = cases.find((c) => c.mode === "replay" && isFeatured(c));
@@ -458,7 +461,6 @@ export function CommandCenterView({
               bundle={bundle}
               stepDate={step?.date}
             >
-              <GetAlertsCard botUrl={botUrl} />
             </PublicAlertsPanel>
           ) : (
             <>
@@ -488,13 +490,18 @@ export function CommandCenterView({
                     </dl>
                   )}
                 </div>}
-                  <GetAlertsCard botUrl={botUrl} />
                 </>
               )}
               {show("radar") && (
                 <PanelSection label="Now on the ground">
                 <RadarCard
                   hideMissing={sparse}
+                  swipeDates={state.compareOpen === "radar" && radar.compare.pair?.stack ? {
+                    dates: radar.compare.pair.stack.dates,
+                    before: state.compareInit?.before ?? radar.preIso ?? radar.compare.pair.stack.dates[0],
+                    after: state.compareInit?.after ?? radar.postIso ?? radar.compare.pair.stack.dates[radar.compare.pair.stack.dates.length - 1],
+                    onPick: (before, after) => dispatch({ type: "setCompareDates", before, after }),
+                  } : undefined}
                   radar={radar}
                   floodOn={state.layers.includes("flood")}
                   compareOpen={state.compareOpen === "radar"}
@@ -606,6 +613,8 @@ export function CommandCenterView({
         onPrev={() => dispatch({ type: "prev" })}
         onNext={() => dispatch({ type: "next" })}
         onPlayToggle={() => dispatch({ type: "togglePlay" })}
+        forecastDates={live ? undefined : new Set(steps.filter((s) => forecastLeadsForDay(bundle, s.date, state.hazard).length > 0).map((s) => s.date))}
+        hours={hasHourFrames(bundle, state.hazard) ? { available: hoursOn(bundle, state.hazard, step?.date), hour, onHour: (h) => setHourPick({ caseId: bundle.id, hour: h }) } : undefined}
       />
         </div>
         </div>

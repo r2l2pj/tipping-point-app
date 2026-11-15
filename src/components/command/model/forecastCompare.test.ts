@@ -70,8 +70,8 @@ describe("forecastCompare pair builder", () => {
     expect(opt.reason).toBeUndefined();
     expect(p?.kind).toBe("forecast");
     expect(p?.lead).toBe(1);
-    expect(p?.before.label).toBe("Forecast (NOAA GFS, issued May 2, 2024)");
-    expect(p?.after.label).toBe("Observed (NASA IMERG + SMAP) — May 3, 2024");
+    expect(p?.before.label).toBe("Forecast for May 3, issued May 2 (NOAA GFS)");
+    expect(p?.after.label).toBe("Observed May 3 (NASA IMERG + SMAP)");
     expect(p?.before.url).toBe("/data/rs_2024/png/tpi_flood_gfs_d1_20240503.png");
     expect(p?.after.url).toBe("/data/rs_2024/png/tpi_flood_20240503.png");
     expect(p?.bounds).toEqual([-122.6, 47, -121.5, 48.5]);
@@ -80,7 +80,7 @@ describe("forecastCompare pair builder", () => {
   test("lead 2 reads the run issued two days before", () => {
     const p = forecastCompare(rs(), "2024-05-03", "flood", 2).pair;
     expect(p?.lead).toBe(2);
-    expect(p?.before.label).toBe("Forecast (NOAA GFS, issued May 1, 2024)");
+    expect(p?.before.label).toBe("Forecast for May 3, issued May 1 (NOAA GFS)");
     expect(p?.before.url).toContain("tpi_flood_gfs_d2_20240503.png");
   });
 
@@ -95,7 +95,7 @@ describe("forecastCompare pair builder", () => {
     // swipe open on the pair that exists.
     const opt = forecastCompare(rs(), "2024-05-05", "flood", 1);
     expect(opt.pair?.lead).toBe(3);
-    expect(opt.pair?.before.label).toBe("Forecast (NOAA GFS, issued May 2, 2024)");
+    expect(opt.pair?.before.label).toBe("Forecast for May 5, issued May 2 (NOAA GFS)");
   });
 
   test("a missing GFS frame gives a reason, not a pair", () => {
@@ -149,7 +149,7 @@ describe("forecast compare state", () => {
     // The pair the screen builds for it.
     const step = s.dayIndex >= 0 ? DAYS[s.dayIndex] : undefined;
     expect(forecastCompare(rs(), step, s.hazard, s.issueLead).pair?.before.label).toContain(
-      "issued May 1, 2024"
+      "issued May 1 (NOAA GFS)"
     );
   });
 
@@ -178,5 +178,22 @@ describe("forecast compare state", () => {
     const moved = reduce(s, { type: "seek", index: 3 }, cases);
     expect(moved.compareOpen).toBe("forecast");
     expect(moved.dayIndex).toBe(3);
+  });
+});
+
+describe("forecast view (Lucas): target day, nearest lead, ?view=", () => {
+  test("a missing lead falls back to the nearest archived one (never a dead chip)", async () => {
+    const { effectiveLead, forecastLeadsForDay } = await import("./steps");
+    expect(forecastLeadsForDay(rs(), "2024-05-05", "flood")).toEqual([3]);
+    expect(effectiveLead(rs(), "2024-05-05", "flood", 1)).toBe(3);
+    expect(effectiveLead(rs(), "2024-05-03", "flood", 2)).toBe(2);
+    expect(effectiveLead(rs(), "2024-05-03", "flood", 0)).toBe(0);
+  });
+  test("?view=forecast opens Forecast at 3 days before; observed = no lead; compare = swipe; never compare by default", () => {
+    const cases = [rs()];
+    expect(initialState(cases, "rs_2024", "2024-05-03", { view: "forecast" })).toMatchObject({ issueLead: 3, compareOpen: null });
+    expect(initialState(cases, "rs_2024", "2024-05-03", { view: "observed", lead: "2" })).toMatchObject({ issueLead: 0, compareOpen: null });
+    expect(initialState(cases, "rs_2024", "2024-05-03", { view: "compare", lead: "1" })).toMatchObject({ issueLead: 1, compareOpen: "forecast" });
+    expect(initialState(cases, "rs_2024", "2024-05-03")).toMatchObject({ issueLead: 0, compareOpen: null });
   });
 });

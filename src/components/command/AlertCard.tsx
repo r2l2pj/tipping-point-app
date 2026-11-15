@@ -11,7 +11,7 @@ export const LEVEL_STYLE: Record<AlertLevel, { chip: string; border: string }> =
   watch: { chip: "bg-[#fecc5c] text-cc-ink", border: "border-[#e8d08e] bg-[#fffaea]" },
 };
 
-// One alert, in the message format the Telegram bot sends. Every field of the
+// One alert, in the project's alert-message format (project doc v4). Every field of the
 // old alerts page is kept. "View on the map" is an action, not a link.
 export default function AlertCard({
   alert: a,

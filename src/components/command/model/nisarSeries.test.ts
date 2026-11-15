@@ -224,7 +224,7 @@ describe("conductor blocker: 'NISAR' only for NISAR data (layer sensor field)", 
     expect(JSON.stringify(card)).not.toContain("NISAR radar");
     const stop = tourStops([uy])[0];
     expect(stop.title).toBe("1 · Untitled — radar".replace("Untitled", uy.title ?? "Uruguay River flood"));
-    expect(stop.what).toMatch(/^Radar maps the river flood/);
+    expect(stop.what).toMatch(/^Flood index day by day with the radar flood outlines/);
   });
   test("sensor 'NISAR' or no field (WA) keeps NISAR wording; mixed stack -> 'Radar dates'", () => {
     const n = bundle({ id: "rs_uruguai_2026", data_dates: {}, manifest: { event: "rs_uruguai_2026", layers: pairLayers("NISAR") } } as never);

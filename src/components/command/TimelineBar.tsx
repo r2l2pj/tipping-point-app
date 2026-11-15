@@ -5,6 +5,8 @@ import { forecastChip, isGfsFrame } from "@/lib/layers";
 import type { ManifestLayer } from "@/lib/types";
 import { NO_STEPS_TEXT, type Step, type StepMark } from "./model/steps";
 import { Icon, ICON } from "./ui";
+import { fmtDate } from "./model/format";
+import { HOURS } from "./model/hours";
 
 // Width of one step. Above DENSE_FROM steps the narrow width is used, so a
 // 21-step case fits the 768 px track of a 1440 px screen without a scroll.
@@ -26,7 +28,13 @@ export default function TimelineBar({
   onPlayToggle,
   children,
   emptyText = NO_STEPS_TEXT,
+  hours,
+  forecastDates,
 }: {
+  // Replay: days that have an archived NOAA forecast (marked in the picker).
+  forecastDates?: Set<string>;
+  // Lucas: HOUR selector (6-hourly frames); only for cases that publish them.
+  hours?: { available: string[]; hour: string | null; onHour: (h: string | null) => void };
   emptyText?: string;
   steps: Step[];
   marks: StepMark[];
@@ -92,6 +100,25 @@ export default function TimelineBar({
             <path d="M5 5v14l10-7z" /><path d="M18 5v14" fill="none" strokeLinecap="round" />
           </svg>
         </button>
+        {/* Lucas: a date picker, not only the step dots. */}
+        {n > 1 && (
+          <select aria-label="Pick a day" value={dayIndex} onChange={(e) => onSeek(Number(e.target.value))} data-day-picker
+            className="h-[38px] rounded-lg border border-cc-line-strong bg-cc-surface px-2 text-sm font-semibold text-cc-ink">
+            {steps.map((s) => (
+              <option key={s.date} value={s.index}>{fmtDate(s.date)}{s.forecast ? " (forecast)" : ""}{forecastDates?.has(s.date) ? " · ● NOAA forecast" : ""}</option>
+            ))}
+          </select>
+        )}
+        {hours && (
+          <div role="group" aria-label="Hour (UTC)" className="flex items-center gap-1" data-hours>
+            <button type="button" aria-pressed={hours.hour === null} onClick={() => hours.onHour(null)}
+              className={`rounded-md px-2 py-1 text-xs font-semibold ${hours.hour === null ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`}>Day</button>
+            {HOURS.filter((h) => hours.available.includes(h)).map((h) => (
+              <button key={h} type="button" aria-pressed={hours.hour === h} onClick={() => hours.onHour(h)}
+                className={`rounded-md px-2 py-1 text-xs font-semibold tabular-nums ${hours.hour === h ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`}>{h}Z</button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div ref={track} className="min-w-0 flex-[1_1_460px] overflow-x-auto">

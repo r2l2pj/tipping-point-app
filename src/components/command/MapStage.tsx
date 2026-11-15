@@ -15,14 +15,18 @@ import MapTools from "./MapTools";
 import { pinAreas, type PriorityArea } from "./model/areas";
 import { BASEMAP_LABEL, BASEMAP_ORDER } from "./model/basemap";
 import { STATUS_WORD, type DataStatus } from "./model/dataStatus";
-import { forecastCompare, hasGfsFrames, swipeLeadsFor } from "./model/forecastCompare";
+import { hasGfsFrames, swipeLeadsFor } from "./model/forecastCompare";
+import { fmtDate } from "./model/format";
 import { layerStateFor, overlaysFor } from "./model/layerRegistry";
 import type { ComparePair } from "./model/radar";
 import { assetUrl } from "@/lib/layers";
 import { caseDirOf } from "./model/lazy";
 import { preloadFrames } from "./model/preload";
-import { floodCaptionNote, frameFor, issuedFrame, issueLeadsFor, mapCaption, type IssueLead, type Step } from "./model/steps";
+import { effectiveLead, floodCaptionNote, forecastForDay, forecastLeadsForDay, frameFor, mapCaption, shiftDay, type IssueLead, type Step } from "./model/steps";
 import type { CcBundle } from "./model/types";
+import { hourLabel } from "./model/hours";
+import { shortCaption } from "./model/caption";
+import type { ManifestLayer } from "@/lib/types";
 import type { Action, ScreenState } from "./state";
 import type { Insets } from "./useInsets";
 
@@ -60,6 +64,8 @@ export default function MapStage({
   featuredCase,
   cityPin,
   cityOutline,
+  compareDefaults,
+  hourFrame,
 }: {
   bundle: CcBundle;
   steps: Step[];
@@ -77,9 +83,14 @@ export default function MapStage({
   // L52 replay city pick: the municipality polygon, drawn as an accent
   // outline over the frame; removed when the card closes.
   cityOutline?: GeoJSON.Feature | null;
+  // The radar pair's own pass dates: where the swipe date chips start.
+  compareDefaults?: { before?: string; after?: string };
+  // Lucas: a 6-hourly TPI frame picked with the timeline hour chips.
+  hourFrame?: ManifestLayer;
 }) {
   const [map, setMap] = useState<MapInstance | null>(null);
   const [bearing, setBearing] = useState(0);
+  const [capOpen, setCapOpen] = useState(false);
   const compare = useRef<CompareControls | null>(null);
   const step = steps[state.dayIndex];
 
@@ -90,10 +101,9 @@ export default function MapStage({
   // Replay "forecast issued this day": the GFS frame issued on the step
   // day for D+k replaces the day's own frame.
   const issued = useMemo(
-    () => issuedFrame(bundle, step?.date, state.hazard, state.issueLead)?.layer,
+    () => forecastForDay(bundle, step?.date, state.hazard, effectiveLead(bundle, step?.date, state.hazard, state.issueLead))?.layer,
     [bundle, step?.date, state.hazard, state.issueLead]
   );
-  const leads = useMemo(() => issueLeadsFor(bundle, step?.date, state.hazard), [bundle, step?.date, state.hazard]);
   // L52 forecast-vs-observed swipe: leads with a full pair for the day.
   const swipeLeads = useMemo(() => swipeLeadsFor(bundle, step?.date, state.hazard), [bundle, step?.date, state.hazard]);
   const gfsAny = useMemo(() => hasGfsFrames(bundle), [bundle]);
@@ -103,7 +113,7 @@ export default function MapStage({
       frameDate: step?.date,
       overlays: overlaysFor(state.layers),
       probHorizon: state.probHorizon,
-      frameLayer: issued,
+      frameLayer: issued ?? hourFrame,
       // L52: the satellite underlay is dated by the case (its reference day);
       // live gets the latest imagery GIBS published.
       basemap: state.basemap,
@@ -113,7 +123,7 @@ export default function MapStage({
           : (bundle.series?.reference_date ?? bundle.reference_date)?.slice(0, 10),
       opacity: state.overlayOpacity,
     }),
-    [step?.date, state.layers, state.probHorizon, issued, state.basemap, state.overlayOpacity, bundle]
+    [step?.date, state.layers, state.probHorizon, issued, hourFrame, state.basemap, state.overlayOpacity, bundle]
   );
   useMapLayers(map, bundle, state.dayIndex, layerState, false, undefined, options);
 
@@ -250,10 +260,11 @@ export default function MapStage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, bundle.id, insets.left, insets.right, insets.bottom]);
   const comparing = !!comparePair;
-  const caption = mapCaption(bundle, steps, state.dayIndex, state.hazard, state.layers, state.issueLead);
+  const effLead = effectiveLead(bundle, step?.date, state.hazard, state.issueLead);
+  const fLeads = forecastLeadsForDay(bundle, step?.date, state.hazard);
+  const caption = mapCaption(bundle, steps, state.dayIndex, state.hazard, state.layers, effLead);
   // L52 merged view: name the NISAR pass while the outlines are on screen.
   const captionNote = floodCaptionNote(bundle, step?.date, state.layers);
-  const showLeads = bundle.mode === "replay" && (leads.length > 0 || state.issueLead > 0);
   // Prod regression: the ML forecast horizon must be on the map, not only in
   // the Layers panel (closed on phones).
   const probHorizons = useMemo(() => probHorizonsAvailable(bundle.manifest?.layers), [bundle]);
@@ -329,40 +340,67 @@ export default function MapStage({
         </div>
       )}
 
-      {!comparing && showLeads && (
-        <div role="group" aria-label="Forecast issued this day" data-issue-leads
-          className={`absolute z-10 flex items-center gap-1 ${chip} !py-0.5`} style={{ left: L(14), bottom: B(70) }}>
-          <span className="pr-1 text-xs font-semibold">Forecast issued this day:</span>
-          {([0, 1, 2, 3] as IssueLead[]).map((k) => (
-            <button key={k} type="button" aria-pressed={state.issueLead === k}
-              disabled={k > 0 && !leads.includes(k)}
-              onClick={() => dispatch({ type: "setIssueLead", lead: k })}
-              className={`rounded-md px-1.5 py-0.5 text-xs font-semibold disabled:opacity-40 ${state.issueLead === k ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`}>
-              {k === 0 ? "Off" : `+${k} d`}
-            </button>
-          ))}
+      {/* Lucas: one map view at a time — Observed | Forecast | Compare ⇆.
+          The user picks the target day on the timeline; Forecast shows the
+          NOAA GFS run issued 1–3 days before it. Compare opens only from its
+          own button. A lead without an archived run falls back to the
+          nearest one, with the reason inline (never a dead chip). */}
+      {!comparing && bundle.mode === "replay" && gfsAny && (
+        <div className={`absolute z-10 flex max-w-[calc(100%-28px)] flex-col items-start gap-1 ${chip} !py-1`} style={{ left: L(14), bottom: B(70) }} data-fview>
+          <div role="group" aria-label="Map view" className="flex flex-wrap items-center gap-1">
+            {([["observed", "Observed"], ["forecast", "Forecast"], ["compare", "Compare ⇆"]] as const).map(([v, label]) => {
+              const on = v === "observed" ? state.issueLead === 0 : v === "forecast" ? state.issueLead > 0 : false;
+              return (
+                <button key={v} type="button" aria-pressed={on} data-fview-btn={v}
+                  onClick={() => {
+                    if (v === "observed") dispatch({ type: "setIssueLead", lead: 0 });
+                    else {
+                      if (state.issueLead === 0) dispatch({ type: "setIssueLead", lead: 3 });
+                      if (v === "compare") dispatch({ type: "openCompare", kind: "forecast" });
+                    }
+                  }}
+                  className={`rounded-md px-2 py-0.5 text-xs font-semibold ${on ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`}>{label}</button>
+              );
+            })}
+          </div>
+          {state.issueLead > 0 && (
+            <div role="group" aria-label="Forecast issued" className="flex flex-wrap items-center gap-1" data-issue-leads>
+              {([1, 2, 3] as IssueLead[]).map((k) => (
+                <button key={k} type="button" aria-pressed={effLead === k}
+                  onClick={() => dispatch({ type: "setIssueLead", lead: k })}
+                  className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${effLead === k ? "bg-cc-accent text-white" : fLeads.includes(k) ? "border border-cc-line-strong" : "border border-dashed border-cc-line-strong text-cc-muted"}`}>
+                  {k} {k === 1 ? "day" : "days"} before
+                </button>
+              ))}
+            </div>
+          )}
+          {state.issueLead > 0 && step && effLead !== state.issueLead && (
+            <p className="m-0 text-xs font-medium text-cc-muted" data-lead-note>
+              {fLeads.length
+                ? `No NOAA run archived for ${fmtDate(shiftDay(step.date, -state.issueLead))} — showing ${effLead} ${effLead === 1 ? "day" : "days"} before`
+                : `No NOAA forecast archived for ${fmtDate(step.date)}`}
+            </p>
+          )}
         </div>
       )}
 
-      {/* L52: forecast-vs-observed swipe. Offered in Replay when the case
-          ships issued GFS frames; disabled (with the reason) on a day with
-          no pair. Sits a row above the issue-lead chips. */}
-      {!comparing && bundle.mode === "replay" && gfsAny && (
-        <button type="button" data-forecast-swipe
-          disabled={swipeLeads.length === 0}
-          title={swipeLeads.length ? undefined : forecastCompare(bundle, step?.date, state.hazard, state.issueLead).reason}
-          onClick={() => dispatch({ type: "openCompare", kind: "forecast" })}
-          className={`absolute z-10 ${chip} !py-1 !text-xs disabled:opacity-50`}
-          style={{ left: L(14), bottom: B(showLeads ? 104 : 70) }}>
-          Forecast vs observed
-        </button>
-      )}
-
-      {!comparing && (
-        <span data-caption className={`absolute z-10 max-w-[46%] ${chip} ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`} style={{ left: L(14), bottom: B(36) }}>
-          {caption.text}{captionNote}
-        </span>
-      )}
+      {!comparing && (() => {
+        // Lucas: the full sentence covered the map — a one-line chip, the
+        // full sentence behind ⓘ (tap) and in the tooltip / screen readers.
+        const full = `${caption.text}${hourFrame && !issued ? ` · 72 h rain until ${hourLabel(hourFrame)}` : ""}${captionNote}`;
+        return (
+          <div className="absolute z-10 flex max-w-[60%] flex-col items-start gap-1 max-[639px]:max-w-[calc(100%-120px)]" style={{ left: L(14), bottom: B(36) }}>
+            {capOpen && (
+              <p className={`m-0 ${chip} !font-medium`} data-caption-full>{full}</p>
+            )}
+            <button type="button" data-caption title={full} aria-expanded={capOpen} onClick={() => setCapOpen((o) => !o)}
+              className={`${chip} max-w-full truncate !py-0.5 text-left ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`}>
+              <span className="sr-only">{full} </span>
+              <span aria-hidden="true">{shortCaption(caption.text, caption.forecast)} ⓘ</span>
+            </button>
+          </div>
+        );
+      })()}
 
       {!comparing && (
         <div className="absolute z-10 flex flex-col items-end gap-1.5" style={{ right: R(14), bottom: B(12) }}>
@@ -407,9 +445,10 @@ export default function MapStage({
       )}
 
       {comparePair && (
-        <CompareOverlay key={`${bundle.id}-${comparePair.kind}-${comparePair.before.url}-${comparePair.after.url}`} pair={comparePair} init={state.compareInit}
+        <CompareOverlay key={`${bundle.id}-${comparePair.kind}-${comparePair.before.url}-${comparePair.after.url}`} pair={comparePair}
+          init={{ ...state.compareInit, before: state.compareInit?.before ?? compareDefaults?.before, after: state.compareInit?.after ?? compareDefaults?.after }}
           forecastCtl={comparePair.kind === "forecast"
-            ? { lead: comparePair.lead ?? 0, leads: swipeLeads, onLead: (k) => dispatch({ type: "setIssueLead", lead: k }) }
+            ? { lead: comparePair.lead ?? 0, leads: [1, 2, 3], onLead: (k) => dispatch({ type: "setIssueLead", lead: k }) }
             : undefined}
           controlsRef={compare} onClose={() => dispatch({ type: "closeCompare" })} />
       )}
