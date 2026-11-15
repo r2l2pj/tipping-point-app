@@ -338,9 +338,11 @@ export function CommandCenterView({
                   onSeek={seek}
                   onToggleTable={toggleTable}
                 />
-                <p className="m-0 text-xs text-cc-faint">
-                  Model probabilities (24 h–14 d) are in the Layers column.
-                </p>
+                {rows.some((r) => r.id === "ptrigger" && r.available) && (
+                  <p className="m-0 text-xs text-cc-faint">
+                    Model probabilities (24 h–14 d) are in the Layers column.
+                  </p>
+                )}
               </PanelSection>
 
               {!live && (

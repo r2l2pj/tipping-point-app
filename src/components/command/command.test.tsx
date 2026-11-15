@@ -325,6 +325,16 @@ describe("response-first section order (L27)", () => {
     series: series([0.9]),
     metricsView: mv({ flooded_km2: 41.6, people_critical: 8400 }),
     data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" },
+    manifest: {
+      event: "wa_2025",
+      layers: [{ id: "p_trigger_24h", date: "2025-12-10", png: "wa_2025/png/p_trigger_24h_20251210.png" }],
+    },
+  });
+
+  test("the probability pointer shows only when the case publishes P(trigger) frames", () => {
+    const pointer = "Model probabilities (24 h–14 d) are in the Layers column.";
+    expect(render(b)).toContain(pointer);
+    expect(render({ ...b, manifest: { event: "wa_2025", layers: [] } })).not.toContain(pointer);
   });
 
   test("Now on the ground precedes Prediction; ground facts precede the TPI chip", () => {
