@@ -16,7 +16,7 @@ import { priorityAreas } from "./model/areas";
 import { availability, missingText } from "./model/availability";
 import { dataStatus, freshnessText } from "./model/dataStatus";
 import { classLabel, fmtKm2 } from "./model/format";
-import { layerRows } from "./model/layerRegistry";
+import { layerRows, visibleLayerRows } from "./model/layerRegistry";
 import { caseDirOf, effectiveBundle, productUrl, withLazy, zonesAreTrimmed } from "./model/lazy";
 import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
@@ -196,7 +196,7 @@ export function CommandCenterView({
   const step = steps[state.dayIndex];
   const status = dataStatus(bundle, nowMs);
   const chip = statusChip(bundle, steps, state.dayIndex, state.hazard);
-  const rows = layerRows(bundle, state.layers, state.hazard, step?.date, state.probHorizon);
+  const rows = visibleLayerRows(layerRows(bundle, state.layers, state.hazard, step?.date, state.probHorizon));
   const nightLights = nightLightsCompare(bundle);
   const comparePair =
     state.compareOpen === "radar" ? radar.compare.pair

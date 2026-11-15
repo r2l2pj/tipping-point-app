@@ -180,6 +180,12 @@ export function layerRows(
   });
 }
 
+// Judge report #6 (conductor): a toggle that can never turn on for this case
+// ("no map layer for this case") is hidden, not shown greyed out. Rows with
+// a reason that can change (risk paused, radar pending, pass dates) stay.
+export const visibleLayerRows = <T extends { available: boolean; sub?: string }>(rows: T[]): T[] =>
+  rows.filter((r) => r.available || r.sub !== NO_MAP_LAYER_TEXT);
+
 export interface ToggleResult {
   layers: LayerId[]; // oldest first, at most MAX_LAYERS
   evicted?: LayerId;
