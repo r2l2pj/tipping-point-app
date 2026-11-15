@@ -34,7 +34,7 @@
 
 ## Slide 5 — Did it work?
 - WA Dec 2025: "Optical satellites were 92.9% blind under the clouds. On the 7% they could see, our radar flood map overlaps at F1 0.15 (precision 0.19, recall 0.13, new flood only). Radar maps the rest." — 27.99 km² flooded within the NISAR swath; landslides remain candidates only
-- Early warning headline: **"Using the forecast available at the time, Tipping Point flagged the area 85 hours before the damage."** (wording decided by Lucas 2026-11-15; 85 h = WA median, n = 6 of 8 forecast days — case choice awaiting Lucas)
+- Early warning headline: **"Using the forecast available at the time, Tipping Point flagged the area 85 hours before the damage."** (decided by Lucas 2026-11-15: 85 h = WA median, n = 6 of 8 forecast days)
 - "With the forecast available at the time, the index marked the area as critical before the damage, adding a map of where and who to the official warnings."
   - supporting line (footnote): "In replay with the NOAA GFS forecast issued each day (no look-ahead), Washington (Dec 2025) reached Critical a median of 85 h before the damage (IQR 55–115 h; 6 of 8 forecast days flagged it); in Rio Grande do Sul (May 2024), 1 of 4 forecast days flagged it, 111 h ahead."
 - RS replay (no radar — event predates NISAR, so no flood-overlap score): 111 h ahead on the one forecast day (of 4) that flagged it — too few to call a median
