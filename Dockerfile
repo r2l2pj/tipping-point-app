@@ -10,13 +10,13 @@ ARG BUN_VERSION=1.4.4
 ARG NODE_VERSION=24
 
 # --- deps: exact lockfile install ------------------------------------------
-FROM oven/bun:${BUN_VERSION} AS deps
+FROM docker.io/oven/bun:${BUN_VERSION} AS deps
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 # --- build: next build (fonts are fetched from Google Fonts at build time) ---
-FROM oven/bun:${BUN_VERSION} AS build
+FROM docker.io/oven/bun:${BUN_VERSION} AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -32,7 +32,7 @@ ENV NEXT_PUBLIC_REFRESH_HOURS=${NEXT_PUBLIC_REFRESH_HOURS} \
 RUN bun run build && rm -rf .next/cache
 
 # --- runtime: Node, non-root ------------------------------------------------
-FROM node:${NODE_VERSION}-slim AS runtime
+FROM docker.io/library/node:${NODE_VERSION}-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \

@@ -39,6 +39,29 @@ the report: env presence, manifest freshness), so it is a liveness check.
 Update: `git pull && docker build … && docker rm -f tp-app && docker run …`
 (a few seconds of downtime; fine for one instance).
 
+Podman works the same (`podman build --format docker …`: the default OCI
+format drops `HEALTHCHECK`).
+
+### Verified locally (2026-11-15, fix/cc-feedback 09bc8fe, Podman 6.1.4)
+
+```bash
+podman build --format docker --memory 4g -t tipping-point-app:smoke .   # 84 s cold, exit 0; image 1.09 GB
+podman run -d --name tp-smoke --memory 1g -p 127.0.0.1:3125:3000 tipping-point-app:smoke
+curl -s -o /dev/null -w "%{http_code} %{size_download}\n" http://127.0.0.1:3125/<path>
+podman healthcheck run tp-smoke; podman inspect tp-smoke --format "{{.State.Health.Status}}"
+podman rm -f tp-smoke
+```
+
+| Check | Result |
+| --- | --- |
+| `/api/health` | 200, 523 B, up 2 s after start; `ok: true`, GEE disabled, manifest read from GitHub raw (cases updated 13:08Z) |
+| `/` | 200, 282 KB (first request 2.8 s, cold cache) |
+| `/alerts` | 200, 280 KB |
+| `/?case=rs_2024`, `/?case=wa_2025` | 200, 291 KB / 297 KB; RS page shows the onset row ("36.5% of 16,027") |
+| Healthcheck | `healthy` |
+| Runtime | Node v24.22.3, uid 1000 (`node`), ~150 MB RSS idle |
+| SQLite fallback | `node:sqlite` opens and writes `/app/.data` |
+
 ## 2. Environment
 
 Put runtime variables in `/etc/tipping-point/app.env` (mode 600, root-owned,
