@@ -24,11 +24,10 @@ bun run dev          # predev syncs ../tipping-point-data/data -> public/data
 | --- | --- |
 | `src/lib/data.ts` + `src/lib/types.ts` + `src/lib/contract.ts` | reader/normalizer for the data contract (`public/data`, see SCHEMA.md) |
 | `src/lib/tpi.ts` | TPI classes/palette + `mockTpiGrid` synthetic raster stand-in |
-| `src/components/Dashboard.tsx` | `/` ops dashboard (replay cases + `now/` live mode) |
+| `src/app/page.tsx` + `src/components/command/` | `/` Command Center: opens on Now (Southern Brazil live, refreshed every 3 h); `?case=<id\|alias>&day=<offset>` deep-links a replay case and day. Right panel is response first ("Now on the ground"), then "Prediction"; evidence for replays ("How early? (in replay)", "Why radar") and the NISAR before/after compare |
 | `src/components/Map.tsx` + `MapLayers.tsx` | MapLibre dark basemap + v3 layer stack (hillshade → TPI → water → flood → landslide candidates → labels) |
-| `src/components/tabs/` | side-panel tabs ALERT · RADAR · Did we get it right? · IMPACT (metrics read via `metricsView`) |
 | `src/lib/layers.ts` | layer stack per tab and day, in doc order |
-| `src/app/alerts` | public alert feed — same message format as the Telegram bot |
+| `src/app/alerts` | public alerts: the same Command Center screen with the public alert view in the right panel — same message format as the Telegram bot |
 | `src/app/api/events` | events index + per-event manifest |
 | `src/app/api/ee/status` | live-GEE health check (service account; opt-in — needs `GEE_ENABLED` = `1`/`true`, else 503) |
 | `src/app/api/telegram` + `src/lib/telegram/` | Telegram bot webhook + Neon (free) subscriber store via HTTPS SQL endpoint (plain fetch, no dep) — 503 until `TELEGRAM_TOKEN` + `TELEGRAM_SECRET` are set (cred-blocked) |
@@ -90,7 +89,7 @@ RandomForest and a TPI-threshold baseline on held-out data.
 - NISAR revisits every ~12 days, so radar confirmation can arrive days after
   the event. L-band coherence loss also occurs with vegetation and rain —
   landslide marks are always candidates, never field confirmation.
-- The demo runs in replay, not real time.
+- The video demo is a replay of past events; the live view (`now/`) covers Southern Brazil only and refreshes every 3 h.
 - The rs_2024 case has no radar confirmation — the event predates NISAR.
 - The wa_2025 radar confirms flood only (NISAR GCOV). Landslide marks are
   candidates from post-event HLS optical, and no GUNW pair spans the event

@@ -21,6 +21,7 @@ One page: every public-facing sentence in the pack, where it appears, and which 
 | "With the forecast available at the time, the index marked the area as critical before the damage, adding a map of where and who to the official warnings." | demo-script.md: beat 4 on-screen caption; slides-outline.md: slide 5 | none | **decided by Lucas 2026-11-15** (replaces "% warned first" everywhere) |
 | "230,000 people in critical areas, prioritized for Civil Defense." | demo-script.md: beat 5 VO (+ on-screen 229,782, night-light drop 44%) | none — filled (WA people_critical 229,782 on Dec 12, 2025) | awaiting Lucas |
 | "May 2024, Rio Grande do Sul: worst floods in state history — 446 of 497 municipalities hit / 185 dead, 581,000+ displaced, ~R$88.9 billion in damage" | slides-outline.md: slide 2 | none (documented facts) | awaiting Lucas |
+| "Built for municipal Civil Defense in Southern Brazil (RS/SC/PR), the demo replays both events end-to-end, and a live Southern Brazil view refreshes every 3 hours." | summary.md: Summary ¶ | none | awaiting Lucas — was "…the live operational pipeline is on our roadmap", false since the 3-hourly Now job runs (L13b/L26; now.yml green 2026-11-15) |
 | "Alerts cover whole municipalities — they say where it could happen, not where it did" | slides-outline.md: slide 2 | none | awaiting Lucas |
 | "Optical satellites were blind: 100% cloud cover across 20 HLS scenes during the event" | slides-outline.md: slide 2 | none — filled (RS cloud_pct 100.0, hls_scenes 20) | awaiting Lucas |
 | "TPI = geometric mean of Rain · Soil · Terrain scores, each in [0,1]" + class bands | slides-outline.md: slide 3 | none | awaiting Lucas |
@@ -52,3 +53,10 @@ One page: every public-facing sentence in the pack, where it appears, and which 
 - **Official-warning comparison** — REMOVED from public copy: real deltas are negative (official forecast warnings preceded our observed-rain crossing: rs_2024 -31.2 h vs INMET aviso 2024-04-26T16:50Z; wa_2025 -71.8 h vs NWS watch 2025-12-06T00:10Z). Never claim earlier-than-official; the lead-time headline stays vs the damage anchor. Lucas decides whether the honest comparison is shown.
 - **U5** — landed: RADAR NISAR before/after swipe is wired and the published wa_2025 manifest has `nisar_pre`/`nisar_post`; verify on the recorded build.
 - **Copy approval** — Lucas reviews all of the above on the morning of 2026-11-15 (L18).
+
+## Decisions taken autonomously (lead-submission, 2026-11-15 night — Lucas asleep; conductor: decide within decisions.md and log)
+
+- Demo beat 1 stays on the RS replay (its VO "Tipping Point replays it" refers to the RS cold open); beat 2 switches to WA per Lucas.
+- Summary: "live operational pipeline is on our roadmap" → "a live Southern Brazil view refreshes every 3 hours" (fact per L13b/L26/L27; now.yml runs green). Row above stays awaiting Lucas.
+- README: Seams table rewritten for the Command Center (removed `Dashboard.tsx` / `tabs/`, which no longer exist); limitation "The demo runs in replay, not real time" → the video is a replay and the live view covers Southern Brazil every 3 h.
+- Demo/slides on-screen UI labels are being resynced to the Command Center (worker sub-uisync2); VO and every number unchanged.
