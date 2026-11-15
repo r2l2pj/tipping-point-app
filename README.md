@@ -141,8 +141,9 @@ land-cover-aware detection. Data: `data/wa_2025/nisar_hypothesis.json`
   (MetSul report; Jornal do Comércio). The result is fragile: with the
   onset on Apr 30 (first landslide deaths) the 24 h run shows 0%, and the
   earlier May 1 anchor gave 88.13%; one forecast run carries it. Post-event OPERA DIST-ALERT-HLS scar
-  candidates: 2,849 (20.0 km²); 46% of inventory points lie within 500 m of
-  one.
+  candidates: 2,849 (20.0 km²); 17.5% of inventory points lie within 100 m of
+  one (vs the EMS slides below: 3.3× a random steep-terrain baseline at 100 m,
+  only 1.1× at 500 m).
 - Rio Grande do Sul 2024, Copernicus EMS EMSR720 landslide polygons (497,
   Taquari valley only, 258 km², undated): scored at each slide's centre cell,
   57% fell in High-or-above cells of the GFS run issued 27 h before the first
