@@ -156,8 +156,9 @@ export function CommandCenterView({
   const onCity = useCallback((place: Place, all: Places) => {
     onView("command");
     if (liveCase && activeRef.current !== liveCase.id) dispatch({ type: "setMode", mode: "now" });
-    // L52 (Lucas): city zoom-ins on the satellite basemap with labels.
-    dispatch({ type: "setBasemap", basemap: "satellite" });
+    // L52 (Lucas): city zoom-ins on a detailed basemap with street labels
+    // (Streets: the daily VIIRS satellite is too coarse/cloudy at city zoom).
+    dispatch({ type: "setBasemap", basemap: "streets" });
     setCity({ place, dates: all.dates });
     setFocus({ bbox: place.bbox, center: place.centroid, key: Date.now() });
     setCityParam(place.id);

@@ -196,7 +196,7 @@ export function initialState(
       ? (linkLayers(first, link, hazard) ?? withRadarDefault(first, keepAvailable(first, Number(link.lead) > 0 ? ["tpi"] : defaultLayersFor(first, hazard), hazard), hazard))
       : [],
     fitTo: first ? linkFit(first, link) : undefined,
-    basemap: parseBasemap(link.basemap) ?? (first && isFeatured(first) ? "satellite" : "dark"),
+    basemap: parseBasemap(link.basemap) ?? (first && isFeatured(first) ? FEATURED_BASEMAP : "dark"),
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
     issueLead: [1, 2, 3].includes(Number(link.lead)) && first && layerAvailable(first, "tpi", hazard) ? Number(link.lead) as 1 | 2 | 3 : 0,
@@ -237,7 +237,7 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
     layerNotice: null,
     // A case change resets the basemap to the case default (the featured
     // replay opens on Satellite).
-    basemap: isFeatured(bundle) ? "satellite" : "dark",
+    basemap: isFeatured(bundle) ? FEATURED_BASEMAP : "dark",
     // The horizon the new case ships first (display order), else the default.
     probHorizon: probHorizonsAvailable(bundle.manifest?.layers)[0] ?? "24h",
     issueLead: 0,
@@ -396,4 +396,7 @@ export function reduce(
   }
 }
 
+// Featured replay basemap: Dark for now — the VIIRS daily satellite is cloud-
+// white over Uruguaiana on the reference date (browser check, L52 U3).
+export const FEATURED_BASEMAP: Basemap = "dark";
 export const PLAYBACK_MS = 1000; // L52: 1 s per step (today → +3 d)

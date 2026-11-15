@@ -1,7 +1,7 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
 import { bundle, frame, liveBundle, manifest, point, series, zones } from "./model/fixtures";
-import { caseHazard, initialState, linkParams, reduce, type Action, type ScreenState } from "./state";
+import { caseHazard, initialState, linkParams, reduce, type Action, type ScreenState, FEATURED_BASEMAP } from "./state";
 import { zone } from "./model/fixtures";
 import { layerRows } from "./model/layerRegistry";
 import { statusChip } from "./model/status";
@@ -448,12 +448,12 @@ test("L52 setView: one tap sets the view's layer set; a view without data change
 describe("basemap (L52)", () => {
   const uy = bundle({ id: "rs_uruguai_2026" }); // the featured replay
 
-  test("Dark by default; the featured replay opens on Satellite", () => {
+  test("Dark by default; the featured replay opens on FEATURED_BASEMAP", () => {
     expect(initialState([wa]).basemap).toBe("dark");
-    expect(initialState([uy]).basemap).toBe("satellite");
+    expect(initialState([uy]).basemap).toBe(FEATURED_BASEMAP);
     // Now stays the opening screen when loaded — on Dark.
     expect(initialState([uy, now]).basemap).toBe("dark");
-    expect(initialState([uy, now], "rs_uruguai_2026").basemap).toBe("satellite");
+    expect(initialState([uy, now], "rs_uruguai_2026").basemap).toBe(FEATURED_BASEMAP);
   });
 
   test("the ?basemap= deep link wins over the case default", () => {
@@ -470,12 +470,12 @@ describe("basemap (L52)", () => {
     s = reduce(s, { type: "selectCase", id: "wa_2025" }, c);
     expect(s.basemap).toBe("dark");
     s = reduce(s, { type: "selectCase", id: "rs_uruguai_2026" }, c);
-    expect(s.basemap).toBe("satellite");
+    expect(s.basemap).toBe(FEATURED_BASEMAP);
   });
 
   test("a goTo stop lands on the case default too", () => {
     const c = [uy, wa];
     const s = reduce(initialState(c, "wa_2025"), { type: "goTo", id: "rs_uruguai_2026" }, c);
-    expect(s.basemap).toBe("satellite");
+    expect(s.basemap).toBe(FEATURED_BASEMAP);
   });
 });
