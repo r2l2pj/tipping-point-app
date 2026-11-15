@@ -39,7 +39,7 @@ grep -rn -E "36%|36\.45|8\.8×|4%|4\.16|57%|2\.1×|81%|3\.0×|0\.18|0\.31|6\.6%|
 
 ## Uruguaiana (main case) — pick A or B at the 14:45 sync from lead-analysis's numbers
 
-Current text in the files = version A with [TBD]. NISAR pair Oct 24 → Nov 5, 2026 (HH + HV); Itaqui outside the swath. Never call the Sep 30 → Oct 12 pair NISAR.
+Current text in the files = version A with [TBD]. Keys (fallback ~14:00): `cases.rs_uruguai_2026.radar_darkening_corridor_km2`, `radar_darkening_fields_km2`, `radar_darkening_pair`; A only if `nisar_flooded_km2` + `nisar_people_flooded` are non-null (else `_null_reasons.nisar_flooded_km2` → B). Teammate v0 keys `flooded_km2` 1.817 / `people_flooded` 28 are NOT NISAR. NISAR pair Oct 24 → Nov 5, 2026 (HH + HV); Itaqui outside the swath. Never call the Sep 30 → Oct 12 pair NISAR.
 
 **A — the guard fix yields gated flood candidates** (fill km² and people from the published keys):
 - Page lead: "A NISAR pass pair (Oct 24 → Nov 5, 2026) mapped [km²] km² of flood candidates at Uruguaiana through cloud, home to about [people] people (Itaqui is outside that swath)."
