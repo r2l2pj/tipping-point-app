@@ -1,0 +1,19 @@
+1
+00:00:00,000 --> 00:00:02,500
+Team [TEAM NAME], Brazil.
+
+2
+00:00:02,500 --> 00:00:11,000
+Our index turned the Uruguaiana region Critical five days before flood stage; NOAA's forecast pointed there eight days ahead.
+
+3
+00:00:11,000 --> 00:00:19,500
+Right days, not yet the right streets: NISAR saw the water through cloud; 98,000 people live on the floodplain.
+
+4
+00:00:19,500 --> 00:00:25,000
+We aim to prevent the disaster, not the flood.
+
+5
+00:00:25,000 --> 00:00:28,000
+Rain warns. Radar sees through.
