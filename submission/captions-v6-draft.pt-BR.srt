@@ -1,0 +1,19 @@
+1
+00:00:00,000 --> 00:00:02,500
+Time [TEAM NAME], Brasil.
+
+2
+00:00:02,500 --> 00:00:10,000
+Num teste feito depois do evento, a chuva da NASA rio acima já era extrema cinco dias antes de o rio Uruguai atingir a cota de inundação em Uruguaiana.
+
+3
+00:00:10,000 --> 00:00:18,500
+Ela apontava o corredor do rio, onde moram cerca de 20.900 pessoas; o NISAR viu o rio através das nuvens.
+
+4
+00:00:18,500 --> 00:00:25,000
+Queremos evitar o desastre, não a cheia.
+
+5
+00:00:25,000 --> 00:00:28,000
+A chuva avisa. O radar enxerga através.

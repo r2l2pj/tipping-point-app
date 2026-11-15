@@ -14,6 +14,20 @@ Voiceover: **55 words** (team name counted as one word), 5 cues, numbers 93% and
 
 Honesty rules for this VO: NISAR is spoken only over the Washington case (the RS event predates NISAR); flood polygons are "candidates"; landslides are never "confirmed"; live alerts are experimental, not official; no lead time or "warned before" claim is spoken or captioned (the official warnings came before the index in both replays). Tagline (L42): "Rain warns. Radar sees through." ("Radar confirms" is retired: next to "candidates" it read as an overclaim).
 
+## v6 — Uruguaiana main case (conductor 2026-11-15: v5 skipped; render once ~14:45–15:30 from main with the Uruguay data)
+
+Story (F1b, lead-ml proof 13:25): upstream NASA rain → corridor → people → radar. No 'NOAA forecast map', no 'neighbourhoods'; 'notice', never 'prevented'; no 'earlier than official'. Numbers [N] / [X] from lead-ml's `uruguai-forecast-proof.md` and lead-analysis's `rs_uruguai_2026` keys (~14:30); pick wording from NUMBERS.md (A/B/C). Captions: `captions-v6-draft.srt` (53 words, team name as one word; when / where / who framing) + `captions-v6-draft.pt-BR.srt`. Never "prevented"; on the page and slide: "could have given about [N] days' notice".
+
+| Beat | Time | On screen | Voiceover | Words |
+| --- | --- | --- | --- | --- |
+| A | 0–2.5 s | Title card (team, challenge) over the Uruguaiana map | "Team [TEAM NAME], Brazil." | 3 |
+| B | 2.5–10 s | WHEN: the upstream Uruguay basin with the NASA IMERG rain on Sep 30, 2026 (rain layer / R score; observed, not a forecast). Overlay "NASA IMERG rain upstream, Sep 30 · extreme (above the 95th percentile) · 5 days before flood stage at Uruguaiana (Oct 5)". | "In a post-event test, NASA rain upstream was already extreme five days before the Uruguay River reached flood stage at Uruguaiana." | 21 |
+| C | 10–18.5 s | WHERE + WHO, then radar: the low-lying corridor (height above drainage ≤ 5 m) highlighted, overlay "54% of the area radar later saw flooded, in 36% of the land · about 20,900 people"; then the NISAR swipe Sep 30 vs the flood-peak date with the flood candidates. | "It pointed to the river corridor, home to about 20,900 people; NISAR saw the river through cloud." | 17 |
+| D | 18.5–25 s | WHEN / WHERE / WHO card: 5 days · 54% of the flooded area in 36% of the land · about 20,900 people; small line "Post-event test (Nov 15) · no claim of being earlier than official warnings · also tested: Washington Dec 2025, Rio Grande do Sul May 2024". | "We aim to prevent the disaster, not the flood." | 9 |
+| E | 25–28 s | Wordmark card + data credits (+ app URL when known) | "Rain warns. Radar sees through." | 4 |
+
+Build: lead-app serves a local prod build of main with the Uruguay data on :3100 at ~14:45 and sends the deep-links (forecast-issue day, NISAR stack, people). Cut 28.0 s (≤ 29.5 s gate). Never "prevented the flood"; "could have given about [N] days' notice" on page/slides only.
+
 ## Production notes
 
 - WA flooded figure (now in published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15)): 27.99 km2 flooded within the NISAR swath (Dec 4 -> Dec 16, 2025); clusters in the Snohomish/Skykomish valleys; Skagit had receded before the pass. The post scene covers only 74.1% of the AOI (SW cut off) — always say within the NISAR swath when quoting it. Beat 3 VO (Lucas, 2026-11-15) says "28 square kilometers of flood candidates"; the on-screen 27.99 km² stays "within the NISAR swath".

@@ -85,6 +85,8 @@ Source: `nasa-data.md` (awaiting Lucas):
 >
 > **Related NASA work (cited, not reused):** LHASA v2 — Stanley, T. A., et al. (2021), *Frontiers in Earth Science*, doi:10.3389/feart.2021.640043; LHASA-F — Khan, S., et al. (2022), *Frontiers in Earth Science*, doi:10.3389/feart.2022.878996.
 >
+> **Uruguay River flood, Oct–Nov 2026 (press, not official):** Encontra Uruguaiana, "Cheia do Rio Uruguai mantém alerta na Fronteira Oeste" (Nov 13, 2026); Jornal do Comércio (Oct 2026); Correio da Manhã (Oct 2026). Official red alerts for Itaqui and Uruguaiana: Government of Rio Grande do Sul / Defesa Civil RS, Jul 26–29, 2026.
+>
 > **Code and tools (open source):** Next.js, React, MapLibre GL, Recharts, Tailwind CSS, geotiff/georaster, the Google Earth Engine API, earthaccess, asf_search, xarray, rioxarray, rasterio, h5py, NumPy, SciPy, pandas, geopandas, scikit-image, scikit-learn, XGBoost, SHAP, cfgrib/ecCodes, Playwright (demo recording) and ffmpeg.
 >
 > **Services:** our own VPS (hosting), GitHub Actions, Neon.

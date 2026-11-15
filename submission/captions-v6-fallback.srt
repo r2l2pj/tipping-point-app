@@ -1,0 +1,19 @@
+1
+00:00:00,000 --> 00:00:02,500
+Team [TEAM NAME], Brazil.
+
+2
+00:00:02,500 --> 00:00:10,000
+In October, the Uruguay River flooded Uruguaiana, on our home state's border, under cloud.
+
+3
+00:00:10,000 --> 00:00:18,000
+NISAR radar mapped the flooded areas through it, every 12 days; about [X] people live there.
+
+4
+00:00:18,000 --> 00:00:24,500
+Next we test whether the forecast can point there days ahead.
+
+5
+00:00:24,500 --> 00:00:27,500
+Rain warns. Radar sees through.
