@@ -33,10 +33,11 @@
 - *Visual:* 2–3 real screenshots — banner over the heated Taquari valley map, RADAR NISAR before/after swipe, /alerts card
 
 ## Slide 5 — Did it work?
-- WA Dec 2025 replay vs NISAR GCOV reference: **IoU X, F1 X** over **X km²** confirmed flooded
-- Early warning headline: **"Tipping Point would have warned X hours earlier"** (X = median) — P% of zones warned before the event
+- WA Dec 2025: "Optical satellites were 92.9% blind under the clouds. On the 7% they could see, our radar flood map overlaps at F1 0.15 (precision 0.19, recall 0.13, new flood only). Radar maps the rest." — 27.99 km² flooded within the NISAR swath; landslides remain candidates only
+- Early warning headline: **"Tipping Point would have warned X hours earlier"** (X = median; quoted only after the rebuilt forecast numbers, with n)
+- "With the forecast available at the time, the index marked the area as critical before the damage, adding a map of where and who to the official warnings."
   - supporting line (footnote): "In replay, using only data available at the time, the index crossed Critical a median of X h (IQR A-B h) before mapped landslides (n = N)" (in replay; median, IQR A-B h, n = N)
-- RS replay (no radar — event predates NISAR; flood metrics vs OPERA/optical reference): IoU X, F1 X, median X h (IQR A-B h, n = N), P% warned
+- RS replay (no radar — event predates NISAR, so no flood-overlap score): median X h (IQR A-B h, n = N)
 - **Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar**
 - *Visual:* Did we get it right? tab screenshot next to a small metrics table for both cases
 
@@ -56,4 +57,4 @@
 - Repo + live app links; built with AI assistants under human review
 - *Visual:* mission-logo strip / data-source grid + QR code to the repo
 
-*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Remaining X/A/B/N/P placeholders (IoU, F1, flooded-km² on slide 5, lead time, % warned) are held for Lucas — not validated results yet.*
+*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Slide 5 flood score is from the published `metrics.json` (tipping-point-data 864cf95, GitHub `fallback` branch) (Lucas's wording, 2026-11-15); "% warned" is dropped. Remaining X/A/B/N placeholders are the lead time only — quoted after the rebuilt forecast numbers, with n.*
