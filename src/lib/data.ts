@@ -43,10 +43,12 @@ const dataDir = () =>
     : path.join(process.cwd(), "public", "data"));
 
 export interface LoadedCaseBundle extends CaseBundle {
-  // True when a remote read failed and at least one file came from disk —
-  // the bundle is a mix of raw fallback branch data and the bundled copy.
-  // Also true when GEE creds exist but the live overlay degraded (every call
-  // failed, or the layer probe answered with nothing published).
+  // "Showing last saved data" trigger (L27 ruling): true only when the ROOT
+  // MANIFEST came from the bundled copy (no remote answered it), or when the
+  // opt-in GEE overlay was expected but degraded (every call failed, or the
+  // layer probe answered with nothing published). Individual file misses
+  // that fall through to another base or to disk do NOT set it. Data-age
+  // staleness (> 6 h, live case) is judged on the client.
   fallback?: boolean;
   // First remote base — the client builds lazy layer URLs from
   // products[key] + this (bundled copy falls back to /data/<key>).
@@ -396,6 +398,7 @@ export async function getCaseBundle(
   // Browser asset base: the remote that served the root manifest (GitHub
   // normally, Neon when GitHub missed); first base when disk answered.
   const assetBase = ctx.lastBase ?? ctx.bases[0];
+  const manifestFromDisk = ctx.lastBase === undefined;
   const entry = root?.cases?.[canonical] ?? root?.cases?.[id];
   // missing pieces the merge falls back on.
   const needPerCase =
@@ -710,7 +713,8 @@ export async function getCaseBundle(
   // with zero published layers) counts as stale: the user sees last-good
   // static although live was expected. No creds -> not stale, just offline.
   bundle.fallback =
-    ctx.fellBack || (credentialed && (layersEmpty || (attempted && !anyContent)));
+    manifestFromDisk ||
+    (credentialed && (layersEmpty || (attempted && !anyContent)));
 
   return bundle;
 }

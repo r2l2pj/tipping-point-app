@@ -485,6 +485,10 @@ describe("default remote bases (no DATA_BASE_URL)", () => {
       expect(b.assetBase).toBe(GH.replace(/\/$/, ""));
       const png = b.manifest?.layers.find((l) => l.png)?.png;
       expect(png?.startsWith(GH)).toBe(true);
+      // Some per-case files 404 on every remote here (Neon is down in this
+      // mock) and fall to disk — individual misses never raise the banner.
+      expect(requested.some((u) => u.startsWith("https://neon-s3.example.com/"))).toBe(true);
+      expect(b.fallback).toBe(false);
     } finally {
       remote.mockRestore();
     }
@@ -511,7 +515,8 @@ describe("default remote bases (no DATA_BASE_URL)", () => {
       expect(b.assetBase).toBe(NEON.replace(/\/$/, ""));
       const png = b.manifest?.layers.find((l) => l.png)?.png;
       expect(png?.startsWith(NEON)).toBe(true);
-      expect(b.fallback).toBe(true);
+      // L27 ruling: the manifest came from a remote (Neon) -> no banner.
+      expect(b.fallback).toBe(false);
     } finally {
       remote.mockRestore();
     }
