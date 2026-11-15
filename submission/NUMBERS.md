@@ -53,3 +53,5 @@ Current text in the files = version A with [TBD]. NISAR pair Oct 24 → Nov 5, 2
 - Validation table: add a row "Uruguaiana NISAR pair (Oct 24 → Nov 5, 2026) | 5.6 km² darkening along the river corridor; 11.9 km² over fields | no gated flood candidates (the per-scene threshold did not fire); not yet a flood map"
 
 Both: VO beat C = "At Uruguaiana, NISAR saw the Uruguay River through cloud in late October." ("every 12 days" only with ≥ 3 NISAR dates). Re-check the summary stays ≤ 200 words.
+
+Teammate pair (Sep 30 → Oct 12, 2026, "track 010 frame 103"): NOT NISAR (no NISAR GCOV in CMR for those dates; likely Sentinel-1, unconfirmed). If it is mentioned at all: "a teammate's radar pair (sensor unconfirmed, likely Sentinel-1): 1.82 km² of candidates, about 28 people, possibly rice irrigation" — never in the headline or VO. lead-analysis fallback 8315d80 carries this label.
