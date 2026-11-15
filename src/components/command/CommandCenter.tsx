@@ -35,7 +35,7 @@ import RainSoilChart from "./RainSoilChart";
 import ReplayCheck from "./ReplayCheck";
 import SituationPanel from "./SituationPanel";
 import SourceAges from "./SourceAges";
-import { initialState, linkParams, PLAYBACK_MS, reduce, type Action, type ScreenState, type DeepLink } from "./state";
+import { initialState, linkParams, PLAYBACK_MS, reduce, type Action, type ScreenState, type DeepLink, isFeatured } from "./state";
 import StatusBlock from "./StatusBlock";
 import Tiles from "./Tiles";
 import TimelineBar from "./TimelineBar";
@@ -261,6 +261,10 @@ export function CommandCenterView({
           insets={insets}
           stageRef={stageRef}
           focus={focus}
+          featuredCase={(() => {
+            const f = cases.find((c) => c.mode === "replay" && isFeatured(c));
+            return f ? { id: f.id, short: "Uruguaiana Oct 2026" } : undefined;
+          })()}
           onToggleLayers={() => {
             dispatch({ type: "toggleLayersOpen" });
             setDrawer((d) => !d);

@@ -41,14 +41,16 @@ describe("Start here stops", () => {
 });
 
 describe("Uruguay River flood as the main case (rs_uruguai_2026)", () => {
-  test("listed first, opened by default (before Now), tour stop #1; ?case= still wins", async () => {
+  test("listed first among replays, tour stop #1; '/' opens Now (prod regression); ?case= opens it", async () => {
     const { featuredFirst, initialState } = await import("./state");
     const uy = bundle({ id: "rs_uruguai_2026", title: "Uruguay River flood, Oct–Nov 2026", manifest: { event: "rs_uruguai_2026", layers: [] } } as never);
     const wa = bundle({ id: "wa_2025" });
     const live = liveBundle();
     const cases = featuredFirst([wa, live, uy]);
     expect(cases.map((c) => c.id)).toEqual(["rs_uruguai_2026", "wa_2025", "now"]);
-    expect(initialState(cases).activeId).toBe("rs_uruguai_2026");
+    expect(initialState(cases).activeId).toBe("now");
+    expect(initialState(cases, "rs_uruguai_2026").activeId).toBe("rs_uruguai_2026");
+    expect(initialState([wa, uy]).activeId).toBe("rs_uruguai_2026"); // no live case: the featured replay
     expect(initialState(cases, "wa_2025").activeId).toBe("wa_2025");
     const stops = tourStops(cases);
     expect(stops[0]).toMatchObject({ key: "uy-radar", primary: true, title: "1 · Uruguay River flood, Oct–Nov 2026 — NISAR radar" });

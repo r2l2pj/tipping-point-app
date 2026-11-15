@@ -163,7 +163,10 @@ export function initialState(
         c.id === initialCase || canonicalCaseId(c.id) === want ||
         canonicalCaseId(c.manifest?.event ?? c.id) === want)
     : undefined;
-  const first = linked ?? cases.find(isFeatured) ?? cases.find((c) => c.mode === "live") ?? cases[0];
+  // Prod regression (Lucas): '/' opens the live Now forecast; the featured
+  // Uruguay case stays first in the Replay list and the tour (and its own
+  // ?case= link / map chip).
+  const first = linked ?? cases.find((c) => c.mode === "live") ?? cases.find(isFeatured) ?? cases[0];
   const hazard = hazardFor(first, "slide");
   return {
     activeId: first?.id ?? "",

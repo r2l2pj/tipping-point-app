@@ -1,5 +1,7 @@
 "use client";
 
+import { horizonLabel, probHorizonsAvailable } from "@/lib/layers";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MapInstance } from "maplibre-gl";
 import Map from "../Map";
@@ -47,6 +49,7 @@ export default function MapStage({
   insets,
   stageRef,
   focus,
+  featuredCase,
 }: {
   bundle: CcBundle;
   steps: Step[];
@@ -58,6 +61,7 @@ export default function MapStage({
   onToggleLayers: () => void;
   insets: Insets; // space covered by the floating cards
   stageRef: React.RefObject<HTMLDivElement | null>;
+  featuredCase?: { id: string; short: string };
   focus?: MapFocus;
 }) {
   const [map, setMap] = useState<MapInstance | null>(null);
@@ -172,6 +176,10 @@ export default function MapStage({
   const comparing = !!comparePair;
   const caption = mapCaption(bundle, steps, state.dayIndex, state.hazard, state.layers, state.issueLead);
   const showLeads = bundle.mode === "replay" && (leads.length > 0 || state.issueLead > 0);
+  // Prod regression: the ML forecast horizon must be on the map, not only in
+  // the Layers panel (closed on phones).
+  const probHorizons = useMemo(() => probHorizonsAvailable(bundle.manifest?.layers), [bundle]);
+  const showHorizons = state.layers.includes("ptrigger") && probHorizons.length > 0;
   const chip =
     "rounded-lg bg-white/95 px-2.5 py-1 text-[13px] font-semibold text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]";
 
@@ -210,6 +218,27 @@ export default function MapStage({
       <span data-status={status.kind} className={`absolute top-3 z-10 ${chip} !text-xs tracking-[0.02em]`} style={{ left: L(56) }}>
         {STATUS_WORD[status.kind]}
       </span>
+
+      {!comparing && featuredCase && bundle.mode === "live" && (
+        <button type="button" data-featured-case onClick={() => dispatch({ type: "goTo", id: featuredCase.id, hazard: "flood" })}
+          className={`absolute top-3 z-10 ${chip} !text-xs font-semibold text-cc-accent`} style={{ left: L(140) }}>
+          <span className="max-[639px]:hidden">Open the </span>{featuredCase.short}<span className="max-[639px]:hidden"> case</span> →
+        </button>
+      )}
+
+      {!comparing && showHorizons && (
+        <div role="radiogroup" aria-label="Forecast horizon" data-horizons
+          className={`absolute z-10 flex flex-wrap items-center gap-1 ${chip} !py-0.5 max-[639px]:!bottom-auto max-[639px]:top-12`} style={{ left: L(14), bottom: B(70) }}>
+          <span className="pr-1 text-xs font-semibold"><span className="max-[639px]:hidden">Landslide likelihood, </span>next:</span>
+          {probHorizons.map((h) => (
+            <button key={h} type="button" role="radio" aria-checked={state.probHorizon === h}
+              onClick={() => dispatch({ type: "setProbHorizon", horizon: h })}
+              className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${state.probHorizon === h ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`}>
+              {horizonLabel(h)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {!comparing && showLeads && (
         <div role="group" aria-label="Forecast issued this day" data-issue-leads
