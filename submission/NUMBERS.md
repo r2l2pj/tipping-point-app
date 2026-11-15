@@ -18,7 +18,7 @@ Legend for "where": P = `project-page.md` (summary / validation table / text), R
 | WA flood 0 / 0 / 0.14% (24 / 48 / 72 h) | `wa_2025.flood_warned_gfs_{24,48,72}h_pct` | P table + Limitations, R, S5 |
 | WA people in index-critical areas 254,263 (Dec 12; native grid, data 3f7a5ab) | `wa_2025.people_critical` | P summary + table, S6, D |
 | RS people in index-critical areas 1,681,783 (May 3; native grid, data 3f7a5ab) | `rs_2024.people_critical` | P table, S6, D |
-| WA people inside NISAR flood candidates about 1,150 (1150.9) | `wa_2025.people_flooded` | P summary + table, S5/S6, B, D |
+| WA people inside NISAR flood candidates about 950 (949; native grid, exact cell fractions) | `wa_2025.people_flooded` | P summary + table, S5/S6, B, D |
 | WA landslide inventory 66.7% of 15 (WGS, peak day) | `wa_2025.landslide_hit_pct` | P table, R |
 | Alarm precision RS 33.7% (327/971) vs 24.9% (1.35×) · WA 19.7% (13/66) vs 10.0% (1.97×) | `<case>.alarm_precision_critical_pct`, `_n_hits`, `_n_alarms`, `alarm_baseline_pct`, `alarm_lift` | P table |
 | Night-light drop WA 44% · RS 33% | `night_lights` keys | P table, S6, D |
