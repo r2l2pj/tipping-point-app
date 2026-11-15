@@ -17,6 +17,7 @@ import { buildMlView } from "./model/ml";
 import { priorityAreas } from "./model/areas";
 import { bundle, liveBundle, manifest, point, series, zone, zones } from "./model/fixtures";
 import type { CcBundle } from "./model/types";
+import { LEAD_TIME_HELD } from "./model/replayCheck";
 import type { ScreenState } from "./state";
 
 const noop = () => {};
@@ -121,7 +122,7 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
     expect(details(bundle({ metricsView: mv({ cloud_pct: 0.95 }) }))).toContain("the optical saw only 5%");
   });
 
-  test("without the ML card no model score is shown (never a metric without n); lead hours integer", () => {
+  test.skipIf(LEAD_TIME_HELD)("without the ML card no model score is shown (never a metric without n); lead hours integer", () => {
     const html = details(bundle({ metricsView: FULL_METRICS, forecastLeadTime: WA_LEAD }));
     for (const text of ["Model scores pending", "IQR 55–115 h", "85 h", "no cloud pixels"]) {
       expect(html).toContain(text);
@@ -142,7 +143,7 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
     }
   });
 
-  test("WA: the card and the row carry the submission headline words", () => {
+  test.skipIf(LEAD_TIME_HELD)("WA: the card and the row carry the submission headline words", () => {
     const html = details(bundle({ metricsView: mv({ critical_area_with_damage_pct: 0.25, critical_area_km2: 40 }),
       forecastLeadTime: WA_LEAD }));
     for (const text of ["How early? (in replay)",
@@ -160,13 +161,13 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
     expect(html).not.toContain("would have warned");
   });
 
-  test("RS: one flagging forecast day, never a median", () => {
+  test.skipIf(LEAD_TIME_HELD)("RS: one flagging forecast day, never a median", () => {
     const html = details(bundle({ id: "rs_2024", metricsView: mv({}), forecastLeadTime: RS_LEAD }));
     expect(html).toContain("1 of 4 forecast days flagged it, 111 h ahead");
     expect(html).not.toMatch(/median 111|Median 111/);
   });
 
-  test("no median or no n: the row and the card read 'pending: forecast rebuild'; no metrics hides the card", () => {
+  test.skipIf(LEAD_TIME_HELD)("no median or no n: the row and the card read 'pending: forecast rebuild'; no metrics hides the card", () => {
     // Never a stat without n: a median with n missing (the real RS metrics:
     // median -57 h, IQR -57–-57, n null) is pending too.
     for (const m of [{}, { lead_time_median_h: null },

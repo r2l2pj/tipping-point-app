@@ -7,7 +7,7 @@ import { bundle, liveBundle, manifest, point } from "./fixtures";
 import { toNowDist } from "../../../lib/response";
 import { nightLightsCompare, radarCard, radarCompare } from "./radar";
 import { sourceRows } from "./sources";
-import { evidence, opticalSeenPct, replayCheckRows } from "./replayCheck";
+import { evidence, LEAD_TIME_HELD, LEAD_TIME_REEVALUATED, opticalSeenPct, replayCheckRows } from "./replayCheck";
 import type { CcBundle } from "./types";
 
 const mv = (m: Record<string, unknown>) => m as CcBundle["metricsView"];
@@ -17,7 +17,17 @@ const row = (b: CcBundle, id: string) => replayCheckRows(b).find((r) => r.id ===
 
 describe("replay check rows", () => {
   // Real files of lead-analysis (data/<case>/forecast_lead_time.json).
-  test("WA: median with IQR and 'k of n forecast days' — the submission headline words", () => {
+  test.if(LEAD_TIME_HELD)("L35: the lead-time headline is held — 'being re-evaluated', no 85 h anywhere", () => {
+    for (const b of [bundle({ forecastLeadTime: WA_LEAD, metricsView: { iou: 0.5 } as never }),
+      bundle({ id: "rs_2024", forecastLeadTime: RS_LEAD, metricsView: { iou: 0.5 } as never })]) {
+      expect(row(b, "lead-time")).toMatchObject({ value: LEAD_TIME_REEVALUATED, missing: true });
+      const e = evidence(b);
+      expect(e.leadTime?.missing).toBe(`Lead time: ${LEAD_TIME_REEVALUATED}.`);
+      expect(JSON.stringify([replayCheckRows(b), e])).not.toMatch(/\b(85|111) h\b|median \d/);
+    }
+  });
+
+  test.skipIf(LEAD_TIME_HELD)("WA: median with IQR and 'k of n forecast days' — the submission headline words", () => {
     const b = bundle({ forecastLeadTime: WA_LEAD });
     expect(row(b, "lead-time")).toMatchObject({
       name: "Lead time before the damage (NOAA GFS forecast replay)",
@@ -26,25 +36,25 @@ describe("replay check rows", () => {
     });
   });
 
-  test("RS: one flagging day is never a median", () => {
+  test.skipIf(LEAD_TIME_HELD)("RS: one flagging day is never a median", () => {
     const value = row(bundle({ id: "rs_2024", forecastLeadTime: RS_LEAD }), "lead-time")!.value;
     expect(value).toBe("1 of 4 forecast days flagged it, 111 h ahead");
     expect(value).not.toContain("median");
   });
 
-  test("two flagging days show both values", () => {
+  test.skipIf(LEAD_TIME_HELD)("two flagging days show both values", () => {
     const two = { ...WA_LEAD, n_warned: 2, issue_days: (WA_LEAD.issue_days as Record<string, unknown>[])
       .map((d, i) => (i === 2 || i === 3 ? d : { ...d, warned: false, lead_h: null })) };
     expect(row(bundle({ forecastLeadTime: two }), "lead-time")!.value)
       .toBe("2 of 8 forecast days flagged it, 145 h and 121 h ahead");
   });
 
-  test("the file wins; metrics.forecast_lead_time is the fallback", () => {
+  test.skipIf(LEAD_TIME_HELD)("the file wins; metrics.forecast_lead_time is the fallback", () => {
     expect(row(bundle({ metricsView: mv({ forecast_lead_time: WA_LEAD }) }), "lead-time")!.value)
       .toBe("median 85 h (IQR 55–115 h, 6 of 8 forecast days)");
   });
 
-  test("the older event-anchor stat never shows: absent forecast lead reads 'pending: forecast rebuild'", () => {
+  test.skipIf(LEAD_TIME_HELD)("the older event-anchor stat never shows: absent forecast lead reads 'pending: forecast rebuild'", () => {
     for (const m of [undefined, {}, { lead_time_median_h: null },
       { lead_time_median_h: -57, lead_time_iqr_h: [-57, -57], lead_time_n: 5678 },
       { lead_time_median_h: 30, lead_time_iqr_h: [18, 42], lead_time_n: 12 }]) {
@@ -182,7 +192,7 @@ describe("evidence", () => {
     }
   });
 
-  test("the lead-time block: hidden without metrics, pending without a forecast lead", () => {
+  test.skipIf(LEAD_TIME_HELD)("the lead-time block: hidden without metrics, pending without a forecast lead", () => {
     expect(evidence(bundle()).leadTime).toBeUndefined();
     const missing = evidence(bundle({ metricsView: mv({ lead_time_median_h: -57, lead_time_n: 5678 }) })).leadTime!;
     expect(missing.missing).toBe("Lead time: pending: forecast rebuild.");

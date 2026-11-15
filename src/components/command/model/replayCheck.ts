@@ -84,9 +84,16 @@ export function forecastLead(bundle: CcBundle): ForecastLead | undefined {
   };
 }
 
-export const hasLeadTime = (bundle: CcBundle): boolean => forecastLead(bundle) !== undefined;
+// L35 (conductor, 2026-11-15): the forecast lead-time headline (WA "median
+// 85 h") is held until lead-analysis re-scores it — WA's flooded places were
+// not flagged before the damage. Set to false once L35 publishes.
+export const LEAD_TIME_HELD = true;
+export const LEAD_TIME_REEVALUATED = "being re-evaluated";
 
-export const LEAD_TIME_PENDING = "pending: forecast rebuild";
+export const hasLeadTime = (bundle: CcBundle): boolean => !LEAD_TIME_HELD && forecastLead(bundle) !== undefined;
+
+export const LEAD_TIME_PENDING_REBUILD = "pending: forecast rebuild";
+export const LEAD_TIME_PENDING = LEAD_TIME_HELD ? LEAD_TIME_REEVALUATED : LEAD_TIME_PENDING_REBUILD;
 export const LEAD_TIME_NAME = "Lead time before the damage (NOAA GFS forecast replay)";
 
 const ofDays = (f: ForecastLead) => `${round(f.warned)} of ${round(f.scorable)} forecast days`;
