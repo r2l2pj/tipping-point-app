@@ -16,13 +16,13 @@ Honesty rules for this VO: NISAR is spoken only over the Washington case (the RS
 
 ## v6 draft — Uruguaiana main case (conductor 2026-11-15; render ~15:00 if lead-analysis's series lands by 14:30)
 
-Same cut as v5 except beat C. Captions: `captions-v6-draft.srt` (55 words, team name as one word; "Responders, like Civil Defense" leaves the VO — the page keeps it).
+Same cut as v5 except beat C. Captions: `captions-v6-draft.srt` (52 words, team name as one word; "Responders, like Civil Defense" leaves the VO — the page keeps it).
 
 | Beat | Time | On screen | Voiceover | Words |
 | --- | --- | --- | --- | --- |
-| C | 11–17.5 s | Live view `/` zoomed to Uruguaiana / Itaqui on the Uruguay River: the NISAR 12-day series ([TBD] pass dates) with the flood candidates ([TBD] km²) and the people inside ([TBD]); then **Public Alerts** (experimental). Overlay "Uruguay River · Uruguaiana, Rio Grande do Sul · NISAR every 12 days · [TBD] dates". The NISAR pair is Sep 30 → Oct 12, 2026. Keep "every 12 days" only if the series lands with ≥ 3 dates; otherwise "In October the Uruguay River flooded Uruguaiana; NISAR saw it through cloud." If the series shows no new water, change the line. | "In October the Uruguay River flooded Uruguaiana; NISAR tracked it through cloud every 12 days." | 15 |
+| C | 11–17.5 s | Uruguaiana on the Uruguay River: the NISAR pass pair **Oct 24 → Nov 5, 2026** (HH + HV) with its flood candidates ([TBD] km²) and the people inside ([TBD]); then **Public Alerts** (experimental). Overlay "Uruguay River · Uruguaiana, Rio Grande do Sul · NISAR Oct 24 → Nov 5, 2026". Never call the Sep 30 → Oct 12 pair NISAR (likely Sentinel-1, unconfirmed). Use "every 12 days" only if lead-analysis lands ≥ 3 NISAR dates. | "At Uruguaiana, NISAR saw the Uruguay River through cloud in late October." | 12 |
 
-Must-read for C: the Uruguaiana pass dates and "flood candidates" in the NISAR card. Fallback if the series is late or empty: ship v5 as recorded at 13:00.
+Must-read for C: "Oct 24" and "Nov 5, 2026" and "flood candidates" in the NISAR card. Fallback if the series is late or empty: ship v5 as recorded at 13:00.
 
 ## Production notes
 

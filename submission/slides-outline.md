@@ -23,7 +23,7 @@
 - *Visual:* NISAR before/after swipe on the left; the TPI gauge small on the right
 
 ## Slide 4 — The demo
-- **Uruguaiana, Oct–Nov 2026:** NISAR passes every 12 days over the Uruguay River — [TBD] dates, flood candidates [TBD] km², about [TBD] people inside (live view, Southern Brazil)
+- **Uruguaiana, Oct–Nov 2026:** NISAR pass pair Oct 24 → Nov 5, 2026 (HH + HV) over the Uruguay River — flood candidates [TBD] km², about [TBD] people inside; Itaqui is outside the swath
 - Ops dashboard `/` (**Command Center**): top-bar **Now / Replay** switch + **Past event** selector, timeline D-10 → EVENT → D+n, Play control; map control **Forecast issued this day: Off / +1 d / +2 d / +3 d** replays each day's GFS run
 - **Tipping point reached** (Situation overview) + ranked **Priority areas** (Critical and High)
 - Right panel: **Now on the ground** (NISAR radar card: "Check with NISAR radar →", **Before / after**), **Who is affected**, **Prediction**, **Replay check**; **Show details: validation and impact** opens **How early? (in replay)** / **Why radar** / **Impact**
