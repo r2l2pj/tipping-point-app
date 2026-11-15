@@ -118,8 +118,8 @@ describe("status chip and contract values (S1, L9)", () => {
 });
 
 describe("replay check and evidence details (S17, S18, S19)", () => {
-  test("cloud_pct 0.95 renders 'the optical saw only 5%'", () => {
-    expect(details(bundle({ metricsView: mv({ cloud_pct: 0.95 }) }))).toContain("the optical saw only 5%");
+  test("cloud_pct 0.95 renders 'clouds hid 95%'", () => {
+    expect(details(bundle({ metricsView: mv({ cloud_pct: 0.95 }) }))).toContain("clouds hid 95% of the area");
   });
 
   test.skipIf(LEAD_TIME_HELD)("without the ML card no model score is shown (never a metric without n); lead hours integer", () => {

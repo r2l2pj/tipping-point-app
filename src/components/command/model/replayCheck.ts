@@ -24,7 +24,7 @@ const round = (v: unknown): string => (finite(v) ? String(Math.round(v)) : "not 
 // percent. metricsView already normalizes cloud_pct to 0-1, so 1 means 100%
 // cloud here; only a value > 1 can be a raw 0-100 metrics.json number (e.g.
 // 92.9) that skipped normalization — rescale it so it can never render as
-// -9189%. Out of range -> null: no "the optical saw" sentence.
+// -9189%. Out of range -> null: no "clouds hid" sentence.
 export function opticalSeenPct(cloudPct: unknown): number | null {
   if (!finite(cloudPct)) return null;
   const frac = cloudPct > 1 ? cloudPct / 100 : cloudPct;
@@ -373,7 +373,12 @@ export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
     leadTime: leadTimeBlock(bundle, m),
     rainCheck: rainCheckLine(m),
     whyRadar: optical != null
-      ? `During the event the optical saw only ${optical}% of the scene — the rest was cloud. SAR sees through.`
+      // Conductor: the cloud share is measured on the optical scenes named
+      // in cloud_pct_source (WA: OPERA DSWx-HLS, Dec 15/17, after the storm),
+      // never "during the event".
+      ? (/HLS/.test(String(m.cloud_pct_source ?? ""))
+          ? `In the optical (HLS) scenes after the storm, clouds hid ${100 - optical}% of the area. Radar sees through cloud.`
+          : `In the optical scenes, clouds hid ${100 - optical}% of the area. Radar sees through cloud.`)
       : "Cloud cover during the event is not reported for this case — SAR sees through either way.",
     featureImportance:
       m.feature_importance && typeof m.feature_importance === "object"

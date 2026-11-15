@@ -111,9 +111,13 @@ describe("replay check rows", () => {
 });
 
 describe("evidence", () => {
-  test("cloud_pct 0.95 gives 'the optical saw only 5%'", () => {
+  test("cloud_pct 0.95 gives 'clouds hid 95%'; an HLS source says 'after the storm', never 'during the event'", () => {
     expect(evidence(bundle({ metricsView: mv({ cloud_pct: 0.95 }) })).whyRadar)
-      .toContain("the optical saw only 5%");
+      .toBe("In the optical scenes, clouds hid 95% of the area. Radar sees through cloud.");
+    const wa = evidence(bundle({ metricsView: mv({ cloud_pct: 92.89292282546754,
+      cloud_pct_source: "OPERA DSWx-HLS cloud class (WTR 253) 2025-12-15/17 over the AOI" }) })).whyRadar;
+    expect(wa).toBe("In the optical (HLS) scenes after the storm, clouds hid 93% of the area. Radar sees through cloud.");
+    expect(wa).not.toContain("during the event");
   });
 
   test("opticalSeenPct accepts 0-1 and 0-100 cloud_pct, never out of range", () => {
@@ -149,7 +153,7 @@ describe("evidence", () => {
       diagnosis: "raw FN 1.19M px = permanent/pre-existing water",
     });
     // a raw 0-100 cloud_pct is rescaled once, never double-scaled
-    expect(e.whyRadar).toContain("the optical saw only 7%");
+    expect(e.whyRadar).toContain("clouds hid 93%");
   });
 
   test("no *_raw keys -> no secondary block; no validation_method -> clear-sky note", () => {
@@ -160,20 +164,20 @@ describe("evidence", () => {
     expect(evidence(bundle({ metricsView: mv({ iou_raw: 0.01 }) })).floodSecondary).toBeDefined();
   });
 
-  test("out-of-range cloud_pct yields no 'optical saw' sentence", () => {
+  test("out-of-range cloud_pct yields no 'clouds hid' sentence", () => {
     for (const cloud_pct of [-3, 250]) {
       const w = evidence(bundle({ metricsView: mv({ cloud_pct }) })).whyRadar;
-      expect(w).not.toContain("the optical saw");
+      expect(w).not.toContain("clouds hid");
       expect(w).toContain("not reported");
     }
   });
 
-  test("rs_2024: cloud_pct 100 -> 'the optical saw only 0%'", () => {
+  test("rs_2024: cloud_pct 100 -> 'clouds hid 100%'", () => {
     expect(evidence(bundle({ metricsView: mv({ cloud_pct: 100 }) })).whyRadar)
-      .toContain("the optical saw only 0%");
+      .toContain("clouds hid 100% of the area");
   });
 
-  test("real public/data/metrics.json renders a sane optical % for every case", () => {
+  test("real public/data/metrics.json renders a sane cloud % for every case", () => {
     const real = JSON.parse(
       readFileSync(join(import.meta.dir, "../../../../public/data/metrics.json"), "utf8")
     ) as { cases: Record<string, Record<string, unknown>> };
@@ -181,14 +185,15 @@ describe("evidence", () => {
       if (raw.cloud_pct == null) continue;
       const cloud = Number(raw.cloud_pct);
       // metrics.json authors *_pct 0-100 (SCHEMA)
-      const expected = Math.round(100 - cloud);
+      const expected = 100 - Math.round(100 - cloud);
       // normalized path (what the loader builds via toMetricsView)
       expect(evidence(bundle({ metricsView: toMetricsView(raw) })).whyRadar)
-        .toContain(`the optical saw only ${expected}%`);
+        .toContain(`clouds hid ${expected}% of the area`);
       // raw path: an un-normalized value must not leak a negative percent
       const viaRaw = evidence(bundle({ metricsView: mv({ cloud_pct: cloud }) })).whyRadar;
-      expect(viaRaw).toContain(`the optical saw only ${expected}%`);
-      expect(viaRaw).not.toMatch(/saw only -/);
+      expect(viaRaw).toContain(`clouds hid ${expected}% of the area`);
+      expect(viaRaw).not.toMatch(/hid -/);
+      expect(viaRaw).not.toContain("during the event");
     }
   });
 
