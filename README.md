@@ -4,8 +4,10 @@ Fullstack app for **Tipping Point** — NASA Space Apps Challenge 2026,
 "Dancing with the SARs". Rain warns. Radar confirms.
 
 Next.js 16 (App Router) + MapLibre + `@google/earthengine`. Serves the artifacts
-produced by [`r2l2pj/tipping-point-data`](https://github.com/r2l2pj/tipping-point-data)
-and (stretch) live Earth Engine layers through server-side API routes.
+published by [`r2l2pj/tipping-point-data`](https://github.com/r2l2pj/tipping-point-data).
+Earth Engine is not on the runtime path — it is used only for one-off compute and
+hosted copies; live EE layers stay off by default, opt-in via `GEE_ENABLED`
+(`1`/`true`).
 
 ## Run
 
@@ -28,20 +30,26 @@ bun run dev          # predev syncs ../tipping-point-data/data -> public/data
 | `src/lib/layers.ts` | layer stack per tab and day, in doc order |
 | `src/app/alerts` | public alert feed — same message format as the Telegram bot |
 | `src/app/api/events` | events index + per-event manifest |
-| `src/app/api/ee/status` | live-GEE health check (service account) |
+| `src/app/api/ee/status` | live-GEE health check (service account; opt-in — needs `GEE_ENABLED` = `1`/`true`, else 503) |
 | `src/app/api/telegram` + `src/lib/telegram/` | Telegram bot webhook + Neon (free) subscriber store via HTTPS SQL endpoint (plain fetch, no dep) — 503 until `TELEGRAM_TOKEN` + `TELEGRAM_SECRET` are set (cred-blocked) |
-| `src/lib/ee.ts` | server-only Earth Engine client (`GEE_PROJECT` + `GCP_SA_KEY` in `.env`; `GEE_SERVICE_ACCOUNT_KEY` (fallback) also accepted) |
-| `public/data/<event>/`, `public/data/now/`, `public/data/alerts.json` | mock artifacts per SCHEMA.md — overwritten by `sync:data` when real data lands |
+| `src/lib/ee.ts` | server-only Earth Engine client (`GEE_PROJECT` + `GCP_SA_KEY` in `.env`; `GEE_SERVICE_ACCOUNT_KEY` (fallback) also accepted) — opt-in via `GEE_ENABLED`; EE API routes return 503 while disabled |
+| `public/data/<event>/`, `public/data/now/`, `public/data/alerts.json` | committed artifacts per SCHEMA.md — synced by `sync:data`; last-resort copy when every remote read misses |
 | `docs/`, `submission/` | `docs/{PLAN,app-contract,DEPLOY}.md` project doc + contract/deploy notes; `submission/{summary,nasa-data,ai-declaration,demo-script,slides-outline}.md` (incl. ≤30s demo script) |
 
 ## Deploy
 
 Vercel (repo is public — Hobby plan can deploy public org repos). `prebuild`
-runs the data sync, so committed `public/data` JSON is the deploy fallback.
-Live-data fallback (`DATA_BASE_URL` -> `raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback`) + env vars: runbook in `docs/DEPLOY.md`.
-The `now.yml` live job refreshes data every 3 h; the stale-data warning
-threshold is 6 h. Everything runs on free tiers: GEE non-commercial,
-GitHub Actions, Vercel Hobby, Earthdata, Telegram Bot API, Neon free.
+runs the data sync, so committed `public/data` is the last-resort deploy
+fallback. Read order: the `fallback` branch of `r2l2pj/tipping-point-data`
+(`raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`) is the
+primary source, Neon Object Storage is the fallback, and an explicit
+`DATA_BASE_URL` overrides both — runbook in `docs/DEPLOY.md`. Neon Postgres
+serves only the Telegram subscriber store.
+The `now.yml` live job refreshes data every 3 h: it computes TPI locally
+from IMERG Early / SMAP / GEOS-FP and publishes the result as one
+force-pushed orphan commit per run (`manifest.json` last). The stale-data
+warning threshold is 6 h. Everything runs on free tiers: GitHub Actions,
+GitHub raw, Vercel Hobby, Earthdata, Telegram Bot API, Neon free.
 
 ## Credentials
 
@@ -57,11 +65,19 @@ server-only) — set in Vercel env + GitHub secrets, never in repos.
 Full env list (`GCP_SA_KEY` canonical; `GEE_SERVICE_ACCOUNT_KEY` fallback;
 `DATABASE_URL` for the subscriber store): `docs/DEPLOY.md`.
 
-## Replay forecast
+## Forecast & model
 
-Replay cases run on a declared **"perfect forecast"**: observed IMERG is shown
-as the D+1..D+3 forecast, labeled in the app (`forecast_source=perfect-forecast`).
-Live mode (`now/`) uses real GEOS-FP.
+Replay D+1..D+3 forecast frames are real issued forecasts: NOAA GFS 0.25
+historical forecasts issued on each day, labelled `forecast: NOAA GFS
+(issued <date>)`. GFS is the only non-NASA model input, used only for the
+replay forecast — live mode (`now/`) uses NASA GEOS-FP. Perfect-forecast
+frames (observed IMERG shown as D+1..D+3) are kept only as a labelled upper
+bound, never the headline.
+
+A local XGBoost model adds P(trigger 24/48/72 h) probability frames
+alongside TPI, which stays the headline index; longer-range horizons carry
+a visible lower-confidence label. The model is evaluated against a
+RandomForest and a TPI-threshold baseline on held-out data.
 
 ## Limitations
 
