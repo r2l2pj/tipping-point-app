@@ -11,14 +11,13 @@ import GetAlertsCard from "./GetAlertsCard";
 import LayersColumn from "./LayersColumn";
 import MapStage, { type MapFocus } from "./MapStage";
 import StartHere from "./StartHere";
-import PanelSection, { PanelNav } from "./PanelSection";
+import PanelSection from "./PanelSection";
 import { observedRows, type AlertList } from "./model/alerts";
 import { expandLayerUrls } from "./model/layerUrls";
 import { priorityAreas } from "./model/areas";
 import { availability, missingText } from "./model/availability";
 import { dataStatus, freshnessText } from "./model/dataStatus";
 import { classLabel, fmtKm2 } from "./model/format";
-import { CLASS_COLOR } from "./model/legend";
 import { layerRows, visibleLayerRows } from "./model/layerRegistry";
 import { caseDirOf, effectiveBundle, productUrl, withLazy, zonesAreTrimmed } from "./model/lazy";
 import { nightLightsCompare, radarCard } from "./model/radar";
@@ -180,7 +179,7 @@ export function CommandCenterView({
   const panelRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const insets = useInsets(stageRef, layersRef, panelRef, timelineRef);
-  const root = `cc-root flex min-h-screen flex-col min-[900px]:h-dvh min-[900px]:overflow-hidden ${fontClass}`;
+  const root = `cc-root flex min-h-screen flex-col min-[900px]:h-screen ${fontClass}`;
 
   if (!bundle || !radar) {
     return (
@@ -288,8 +287,6 @@ export function CommandCenterView({
           onToggle={(id) => dispatch({ type: "toggleLayer", id })}
           onProbHorizon={(horizon) => dispatch({ type: "setProbHorizon", horizon })}
           onClose={() => setDrawer(false)}
-          opacity={state.overlayOpacity}
-          onOpacity={(value) => dispatch({ type: "setOpacity", value })}
           className={`${drawer ? "max-[899px]:flex" : "max-[899px]:hidden"} ${state.layersOpen ? "min-[900px]:flex" : "min-[900px]:hidden"}`}
         />
 
@@ -313,37 +310,36 @@ export function CommandCenterView({
             </PublicAlertsPanel>
           ) : (
             <>
-              <PanelNav title="Situation overview" links={[
-                { id: "cc-ground", label: "On the ground" },
-                ...(areas.length > 0 ? [{ id: "cc-areas", label: "Areas" }] : []),
-                { id: "cc-forecast", label: "Forecast" },
-                ...(live ? [] : [{ id: "cc-check", label: "Check" }]),
-                { id: "cc-sources", label: "Sources" },
-              ]} />
               <StartHere cases={cases} dispatch={dispatch} />
               {/* Response first, prediction second (ruling L27). */}
-              <PanelSection id="cc-ground" label="Now on the ground" hint="What is affected, what the radar saw, where to look first">
+              <PanelSection label="Now on the ground">
+                <RadarCard
+                  radar={radar}
+                  floodOn={state.layers.includes("flood")}
+                  compareOpen={state.compareOpen === "radar"}
+                  onConfirm={() => dispatch({ type: "confirmRadar" })}
+                  onShowFlood={() => dispatch({ type: "toggleLayer", id: "flood" })}
+                  onCompare={() =>
+                    dispatch(state.compareOpen === "radar" ? { type: "closeCompare" } : { type: "openCompare", kind: "radar" })}
+                />
+
                 <div>
-                  <h3 className="m-0 mb-1.5 text-sm font-semibold">Who is affected</h3>
+                  <h3 className="m-0 mb-1 text-[13px] font-semibold text-cc-muted">Who is affected</h3>
                   <Tiles
                     area={criticalAreaTile(bundle, state.hazard, step?.date, step?.day, overlayFrame)}
                     people={peopleTile(bundle, step?.date, step?.day, overlayFrame)}
                   />
                   {classesKm2.length > 0 && (
-                    <dl className="mt-2 grid grid-cols-2 gap-x-4 text-[13px]" aria-label="Area by class">
+                    <dl className="mt-1.5 grid grid-cols-2 gap-x-4 text-xs text-cc-muted" aria-label="Area by class">
                       {classesKm2.map(([cls, km2]) => (
-                        <div key={cls} className="flex items-center gap-2 border-t border-cc-rule py-1">
-                          <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-[3px] border border-black/15"
-                            style={{ background: CLASS_COLOR[classLabel(cls)] ?? "var(--cc-line-strong)" }} />
-                          <dt className="grow text-cc-muted">class {classLabel(cls)}</dt>
-                          <dd className="font-semibold tabular-nums">{fmtKm2(km2)}</dd>
+                        <div key={cls} className="flex justify-between border-t border-cc-rule py-0.5">
+                          <dt>class {classLabel(cls)}</dt><dd>{fmtKm2(km2)}</dd>
                         </div>
                       ))}
                     </dl>
                   )}
                 </div>
 
-                <div id="cc-areas" className="scroll-mt-24">
                 <PriorityAreas
                   areas={areas}
                   missingText={missingText(availability(bundle, "priority_zones"))}
@@ -362,20 +358,9 @@ export function CommandCenterView({
                       })()
                     : undefined}
                 />
-                </div>
-
-                <RadarCard
-                  radar={radar}
-                  floodOn={state.layers.includes("flood")}
-                  compareOpen={state.compareOpen === "radar"}
-                  onConfirm={() => dispatch({ type: "confirmRadar" })}
-                  onShowFlood={() => dispatch({ type: "toggleLayer", id: "flood" })}
-                  onCompare={() =>
-                    dispatch(state.compareOpen === "radar" ? { type: "closeCompare" } : { type: "openCompare", kind: "radar" })}
-                />
               </PanelSection>
 
-              <PanelSection id="cc-forecast" label="Prediction" hint="Risk status of this step, and the rain and soil behind it">
+              <PanelSection label="Prediction">
                 <StatusBlock
                   chip={chip}
                   status={status}

@@ -148,9 +148,6 @@ const DYNAMIC_IMG: [string, string][] = [
 // hillshade demos (AWS open-data registry).
 const TERRAIN = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
 
-// A forecast frame is drawn at this share of the observed opacity.
-const FORECAST_FADE = 0.55;
-
 const EMPTY: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
 
 export function useMapLayers(
@@ -250,7 +247,7 @@ export function useMapLayers(
         paint: { "fill-pattern": "tp-hatch", "fill-opacity": 0.35 },
         layout: { visibility: "none" } },
       { id: LYR.waterFill, type: "fill", source: SRC.water,
-        paint: { "fill-color": "#4a9bd6", "fill-opacity": 0.55 },
+        paint: { "fill-color": "#9ECAE1", "fill-opacity": 0.6 },
         layout: {},
         // The live permanent_water layer (MCD12Q1 water class) carries the
         // open Atlantic as one ~212,000 km2 polygon; a reference layer
@@ -447,10 +444,6 @@ export function useMapLayers(
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
     };
 
-    // Overlay strength: the screen's opacity control when given, else the
-    // fixed defaults. Forecast frames stay fainter than observed ones.
-    const strength = options?.opacity;
-    const tpiOpacity = strength ?? 0.9;
     const tpiOn = (layers.tpiFlood || layers.tpiSlide) && plan.tpi;
     const usePng = tpiOn && !!activePng;
 
@@ -556,7 +549,7 @@ export function useMapLayers(
               id: LYR.tpiRaster,
               type: "raster",
               source: SRC.tpiImg,
-              paint: { "raster-opacity": tpiOpacity },
+              paint: { "raster-opacity": 0.9 },
               layout: { visibility: "none" },
             } as never,
             LYR.waterFill
@@ -568,7 +561,7 @@ export function useMapLayers(
         map.setPaintProperty(
           LYR.tpiRaster,
           "raster-opacity",
-          isForecast ? tpiOpacity * FORECAST_FADE : tpiOpacity
+          isForecast ? 0.5 : 0.9
         );
       } catch {
         // A throw here says nothing about the file: drop the source and try
@@ -586,14 +579,6 @@ export function useMapLayers(
         : "No TPI frames published for this case";
     }
     refreshChip(map, loading.current, chip, frameNote.current);
-
-    // The data rasters follow the opacity control, so the basemap shows
-    // through all of them alike.
-    if (strength !== undefined) {
-      for (const lyr of [LYR.imerg, LYR.hand, LYR.smap, LYR.nisar, LYR.prob, LYR.opera, LYR.nl, LYR.tml]) {
-        if (map.getLayer(lyr)) map.setPaintProperty(lyr, "raster-opacity", strength);
-      }
-    }
 
     set(
       SRC.fcast,
@@ -751,7 +736,7 @@ export function useMapLayers(
       console.warn("MapLayers update failed (map kept alive)", err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey, options?.probHorizon, options?.opacity]);
+  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey, options?.probHorizon]);
 
   // Priority-zone pins — top 20 by rank (matches the side list), anchored
   // at the polygon label point (real files are Polygons, not Points).

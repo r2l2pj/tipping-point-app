@@ -17,7 +17,7 @@ export default function ReplayCheck({
   children?: React.ReactNode;
 }) {
   return (
-    <section id="cc-check" aria-label="Replay check" className="scroll-mt-24 rounded-[10px] border border-cc-line bg-cc-well px-3.5 py-2">
+    <section aria-label="Replay check" className="rounded-[10px] border border-cc-line bg-cc-well px-3.5 py-2">
       <div className="flex flex-wrap items-baseline justify-between gap-x-2.5">
         <h2 className="m-0 font-cc-display text-[15px] font-semibold">Replay check</h2>
         <span className="text-xs text-cc-faint">Did the index get it right? Measured after the event.</span>

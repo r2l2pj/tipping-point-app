@@ -325,7 +325,7 @@ export function mapCaption(
   if (!on.includes("tpi") && on.includes("ptrigger")) {
     return { text: `Landslide likelihood (ML, experimental) · ${when} · NOAA GFS forecast`, forecast: true };
   }
-  if (!on.includes("tpi")) return { text: `TPI off · ${when}`, forecast: false };
+  if (!on.includes("tpi")) return { text: `TPI index off · ${when}`, forecast: false };
   const frame = frameFor(bundle, step.date, hazard);
   // The map hook shows its own note for a missing frame; the caption stays short.
   if (!frame) return { text: `${when} · no map frame`, forecast: false };

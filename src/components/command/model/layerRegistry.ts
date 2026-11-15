@@ -76,7 +76,7 @@ interface Def {
 }
 
 const DEFS: Def[] = [
-  { id: "tpi", group: "Analysis", short: "TPI" },
+  { id: "tpi", group: "Analysis", short: "TPI index" },
   { id: "imerg", group: "Analysis", short: "Rain" },
   { id: "hand", group: "Analysis", short: "Low ground (HAND ≤ 5 m)" },
   { id: "smap", group: "Analysis", short: "Soil moisture" },
@@ -175,7 +175,7 @@ export function layerRows(
     .filter((d): d is string => !!d).map((d) => fmtDate(d));
   const label: Record<LayerId, string> = {
     tpi: bundle.mode === "live" && hazard === "slide" && layerAvailable(bundle, "ptrigger", hazard)
-      ? "Rain index (TPI, landslide)" : `Tipping Point Index (TPI) · ${HAZARD_LABEL[hazard]}`,
+      ? "Rain index (TPI, landslide)" : `TPI index (${HAZARD_LABEL[hazard]})`,
     imerg: "Rain (GPM IMERG)",
     hand: "Low ground (HAND ≤ 5 m)",
     smap: "Soil moisture (SMAP)",

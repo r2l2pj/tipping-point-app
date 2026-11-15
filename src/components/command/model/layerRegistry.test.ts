@@ -27,7 +27,7 @@ describe("layer rows", () => {
 
   test("a row is available when the case has the raster or the product", () => {
     expect(rows.filter((r) => r.available).map((r) => r.id)).toEqual(["tpi", "flood", "catalog"]);
-    expect(row("tpi")).toMatchObject({ on: true, label: "Tipping Point Index (TPI) · Landslide", sub: "data Dec 10, 2025" });
+    expect(row("tpi")).toMatchObject({ on: true, label: "TPI index (Landslide)", sub: "data Dec 10, 2025" });
   });
 
   test("the TPI row shows the provenance of the frame when published", () => {
@@ -178,7 +178,7 @@ describe("layer budget", () => {
   test("the probability row counts toward the budget; eviction names the rain-triggered likelihood", () => {
     expect(toggleLayer(["tpi", "flood"], "ptrigger")).toEqual({
       layers: ["flood", "ptrigger"], evicted: "tpi",
-      notice: "TPI turned off to show Rain-triggered landslide likelihood",
+      notice: "TPI index turned off to show Rain-triggered landslide likelihood",
     });
     expect(toggleLayer(["ptrigger", "tpi"], "flood")).toEqual({
       layers: ["tpi", "flood"], evicted: "ptrigger",

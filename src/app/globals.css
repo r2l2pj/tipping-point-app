@@ -12,13 +12,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* No rubber-band scroll of the page past its ends, and a scroll that
-   reaches the end of a panel does not carry on into the page. */
-html,
-body {
-  overscroll-behavior: none;
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -156,7 +149,7 @@ body {
   --cc-accent: #17473f;
   --cc-accent-soft: #e8f1ee;
   --cc-accent-line: #b9d2ca;
-  --cc-map: #262b24;
+  --cc-map: #0d1f26;
   --cc-focus: #2f8fdd;
   --cc-forecast: #e6e6f5;
   --cc-forecast-ink: #2c2a66;
@@ -197,8 +190,6 @@ body {
 .cc-root button:focus-visible,
 .cc-root select:focus-visible,
 .cc-root a:focus-visible,
-.cc-root summary:focus-visible,
-.cc-root input:focus-visible,
 .cc-root [role="slider"]:focus-visible {
   outline: 3px solid var(--cc-focus);
   outline-offset: 2px;
