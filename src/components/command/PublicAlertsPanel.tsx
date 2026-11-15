@@ -1,6 +1,6 @@
 "use client";
 
-import { ALERT_FOOTER, ALERT_LEVEL_WORDS, type AlertCardData } from "@/lib/alerts";
+import { ALERT_FOOTER, ALERT_LEVEL_WORDS, EXPERIMENTAL_TEXT, type AlertCardData } from "@/lib/alerts";
 import AlertCard, { LEVEL_STYLE } from "./AlertCard";
 import {
   ALERTS_PAUSED_TEXT, ALERTS_UNAVAILABLE_TEXT, alertsByRegion, moreAlertsText, NO_ALERTS_TEXT, NO_RUN_TEXT,
@@ -49,6 +49,11 @@ export default function PublicAlertsPanel({
           Critical — max one alert every 6 h, none between 23:00 and 06:00
           unless the class is Critical.
         </p>
+        {live && (
+          <p role="note" data-experimental className="mt-2 rounded-md border border-[#e2c48a] bg-cc-warn-soft px-2.5 py-1.5 text-[13px] font-semibold text-cc-warn">
+            {EXPERIMENTAL_TEXT} (SMS 40199).
+          </p>
+        )}
       </div>
 
       {!live ? (
@@ -78,7 +83,7 @@ export default function PublicAlertsPanel({
         <>
           <ul data-alerts="alerts" className="m-0 flex list-none flex-col gap-2.5 p-0">
             {alertList.alerts.map((a) => (
-              <AlertCard key={a.id} alert={a} onViewOnMap={onViewOnMap} />
+              <AlertCard key={a.id} alert={a} onViewOnMap={onViewOnMap} experimental />
             ))}
           </ul>
           {moreAlertsText(alertList) && (

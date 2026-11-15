@@ -544,6 +544,12 @@ describe("public view (P1 to P5) and routes", () => {
     expect(html).not.toContain("Call 199");
   });
 
+  test("judge #7: live alerts say Experimental — not an official warning; follow Defesa Civil", () => {
+    const html = render(liveBundle(), {}, "public", alerts);
+    expect(html).toContain("data-experimental");
+    expect(html.split("Experimental — not an official warning; follow Defesa Civil").length - 1).toBeGreaterThanOrEqual(2);
+  });
+
   test("G4: SMAP on the card is the date plus its age, never lead-live's Portuguese label", () => {
     const g4 = buildAlertList({ now: liveBundle({ updated_at: "2026-11-15T09:00:00Z",
       data_dates: { imerg: "2026-11-14", smap: "2026-11-10T22:30:00Z", smap_age_days: 5, smap_label: "SMAP de 10/11, 5 dias" } as never,

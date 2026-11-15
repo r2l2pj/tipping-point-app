@@ -49,6 +49,8 @@ export const ALERT_LEVEL_WORDS: Record<AlertLevel, string> = {
   watch: "ELEVATED",
 };
 
+// Judge report #7 (conductor): every live alert says what it is.
+export const EXPERIMENTAL_TEXT = "Experimental — not an official warning; follow Defesa Civil";
 export const ALERT_FOOTER = "Follow Civil Defense guidance. SMS 40199.";
 
 // Candidate `class` arrives either as the 0-3 class index (2 = Alto, 3 =
