@@ -29,7 +29,7 @@
 - **TIPPING POINT REACHED** banner + ranked priority zones (TPI ≥ 0.60)
 - Side tabs ALERT / RADAR / Did we get it right? / IMPACT; "Confirm with NISAR radar →"
 - Public feed `/alerts`: Civil-Defense-style alert cards
-- Replay D+1..D+3 uses the real **NOAA GFS** forecast issued on each day, labelled "forecast · NOAA GFS (issued <date>)"; live mode uses NASA GEOS-FP
+- Forecast rain = **NOAA GFS 0.25°** in replay and live, labelled "forecast · NOAA GFS (issued <date>)"; replay D+1..D+3 uses the forecast issued on each day
 - *Visual:* 2–3 real screenshots — banner over the heated Taquari valley map, RADAR NISAR before/after swipe, /alerts card
 
 ## Slide 5 — Did it work?
@@ -51,8 +51,8 @@
 ## Slide 7 — Roadmap + credits
 - Roadmap: auto-pipeline on each IMERG update → NISAR confirmation trigger per pass → threshold calibration on the landslide catalog → WhatsApp/e-mail alerts → OPERA water integration
 - Global coverage at release — one config edit
-- NASA inputs: GPM IMERG · SMAP L4 · NASADEM · NISAR GCOV · HLS · VIIRS Black Marble · GPW · GEOS-FP · OPERA DSWx
-- One declared non-NASA input: NOAA GFS forecasts, replay D+1..D+3 only
+- NASA inputs: GPM IMERG · SMAP L4 · NASADEM · NISAR GCOV · HLS · VIIRS Black Marble · GPW · OPERA DSWx
+- Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA
 - MERIT Hydro used as a validation reference only, not a NASA input
 - Repo + live app links; built with AI assistants under human review
 - *Visual:* mission-logo strip / data-source grid + QR code to the repo

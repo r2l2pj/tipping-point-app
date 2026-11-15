@@ -46,7 +46,7 @@ primary source, Neon Object Storage is the fallback, and an explicit
 `DATA_BASE_URL` overrides both — runbook in `docs/DEPLOY.md`. Neon Postgres
 serves only the Telegram subscriber store.
 The `now.yml` live job refreshes data every 3 h: it computes TPI locally
-from IMERG Early / SMAP / GEOS-FP and publishes the result as one
+from IMERG Early / SMAP / NOAA GFS forecast rain and publishes the result as one
 force-pushed orphan commit per run (`manifest.json` last). The stale-data
 warning threshold is 6 h. Everything runs on free tiers: GitHub Actions,
 GitHub raw, Vercel Hobby, Earthdata, Telegram Bot API, Neon free.
@@ -67,10 +67,12 @@ Full env list (`GCP_SA_KEY` canonical; `GEE_SERVICE_ACCOUNT_KEY` fallback;
 
 ## Forecast & model
 
-Replay D+1..D+3 forecast frames are real issued forecasts: NOAA GFS 0.25
-historical forecasts issued on each day, labelled `forecast · NOAA GFS
-(issued <date>)`. GFS is the only non-NASA model input, used only for the
-replay forecast — live mode (`now/`) uses NASA GEOS-FP. Perfect-forecast
+Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation
+is NASA (IMERG, SMAP, NISAR, OPERA, NASADEM, GPW, Black Marble). The same
+model feeds both modes, so the replay's "how early" check measures the
+forecast the live view uses: replay D+1..D+3 frames use the GFS forecast
+issued on each day, live mode (`now/`) uses the latest GFS run, labelled
+`forecast · NOAA GFS (issued <date>)`. Perfect-forecast
 frames (observed IMERG shown as D+1..D+3) are kept only as a labelled upper
 bound, never the headline.
 

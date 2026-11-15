@@ -28,7 +28,7 @@ One page: every public-facing sentence in the pack, where it appears, and which 
 | "Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar" | slides-outline.md: slide 5; demo-script.md beat 4 on-screen (7%) | none — filled | awaiting Lucas |
 | "229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, May 2, 2024)" | slides-outline.md: slide 6 | none — filled | awaiting Lucas |
 | Limitations + roadmap + NASA-inputs lines | slides-outline.md: slides 6–7 | none | awaiting Lucas |
-| "Replay D+1..D+3 uses the real NOAA GFS forecast issued on each day …; live mode uses NASA GEOS-FP" / "One declared non-NASA input: NOAA GFS forecasts, replay D+1..D+3 only" | slides-outline.md: slides 4, 6, 7; nasa-data.md: Forecast; demo-script.md beat 2 | none (L22) | awaiting Lucas |
+| "Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA" (replay uses the GFS forecast issued each day; live uses the latest run; GEOS-FP removed) | README: Forecast & model, live job; slides-outline.md: slides 4, 6, 7; nasa-data.md: intro + Forecast; demo-script.md production note | none | **decided by Lucas 2026-11-15 (L30)** |
 | "Alongside the index, a learned XGBoost model gives P(landslide trigger in 24/48/72 h); TPI stays the headline" | slides-outline.md: slide 3 | none — no model metric quoted until published (L25) | awaiting Lucas |
 
 ## Open items
