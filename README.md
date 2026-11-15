@@ -18,6 +18,15 @@ bun run dev          # predev syncs ../tipping-point-data/data -> public/data
 
 `DATA_REPO=/path/to/tipping-point-data` overrides the sibling-repo default.
 
+## Use of AI
+
+Built with AI coding assistants (Anthropic Claude via Claude Code, Cognition
+Devin, OpenAI Codex/GPT) under human direction: they wrote and reviewed code
+and drafted docs. The idea, method and data choices come from the team's own
+project document (`docs/PLAN.md`); every source, threshold and reported number
+was reviewed by the team. AI-assisted commits carry a `Co-Authored-By` trailer.
+The app shows no AI-generated images, video or audio.
+
 ## Seams
 
 | Path | Role |
