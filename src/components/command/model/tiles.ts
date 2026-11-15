@@ -134,7 +134,9 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
 export function peopleTile(bundle: CcBundle, stepDate?: string, day?: DayPoint, frame?: ManifestLayer): Tile {
   const label = "People potentially exposed";
   if (frame && bundle.mode === "replay") {
-    return frameTile(label, frame, count(frameField(frame, "people_critical")), fmtPeople);
+    // Exact count, labelled an estimate (no silent rounding to hundreds).
+    const exact = (n: number) => `${Math.round(n).toLocaleString("en-US")} (estimate)`;
+    return frameTile(label, frame, count(frameField(frame, "people_critical")), exact);
   }
   if (bundle.mode === "live" && bundle.riskPaused) return pausedTile(label);
   // count() drops raster fill values and negatives: not data.

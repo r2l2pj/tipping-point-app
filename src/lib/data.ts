@@ -528,7 +528,11 @@ export async function getCaseBundle(
       "imerg_smap_daily",
       "series/imerg_smap_daily.json"
     ),
-    loadProduct<unknown>(ctx, canonical, rawProducts, "swot", "series/swot.json"),
+    // lead-analysis declares the WA series as products.swot_series.
+    loadProduct<unknown>(ctx, canonical,
+      typeof rawProducts?.swot_series === "string" && rawProducts?.swot === undefined
+        ? { ...rawProducts, swot: rawProducts.swot_series } : rawProducts,
+      "swot", "series/swot.json"),
     geo("priority_zones", "geojson/priority_zones.geojson"),
     geo("places", "geojson/places.geojson"),
     now
