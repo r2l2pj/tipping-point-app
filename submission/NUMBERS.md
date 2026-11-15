@@ -64,3 +64,16 @@ Pick C over A/B when the series keys land; A/B remain for the single Oct 24 → 
 
 ## Uruguaiana forecast proof (lead-ml `uruguai-forecast-proof.md`, ~14:30)
 Fill [N] (days between the GFS run that flagged extreme upstream rain and the date the river reached flood stage at Uruguaiana), the two dates, and [X] (people inside the NISAR flood candidates, from `rs_uruguai_2026` — only under version A/C). Wording: "could have given about [N] days' notice" — never "prevented" or "warned". Locations: captions-v6-draft (EN/PT), demo-script v6 beats B/C, slide 3, page lead (if the conductor moves it there).
+
+## 14:45 pick: forecast-proof version (F1) vs NISAR-first fallback (F2)
+
+Pick F1 (current page lead, slide 3, `captions-v6-draft.srt`) only if lead-ml's `uruguai-forecast-proof.md` shows the forecast flagged Uruguaiana in time AND mostly the right area (a clear [P]% of the flooded area, with lift > 1, [N] ≥ 1 day). Otherwise F2:
+
+**F2 page lead (replace the whole High-Level Summary):**
+"NISAR's L-band radar maps new flooding through cloud and darkness. Tipping Point turns each NISAR pass into a priority list for responders (a municipal Civil Defense office, for example): where it flooded, as candidates to check first, and who lives there. At Uruguaiana, on Rio Grande do Sul's border with Argentina, the Uruguay River rose above flood stage in October 2026; NISAR passes every 12 days (Sep 18 → Nov 5, 2026, provisional products) mapped [km²] km² of flood candidates through cloud, home to about [X] people. In Washington State (December 2025), clouds hid 93% of the area from optical satellites and a NISAR pass pair mapped 27.99 km² of flood candidates. What we are testing next is the forecast side: whether a Tipping Point Index of NASA rain, soil and terrain data on the NOAA GFS forecast points to the right places days ahead. At Uruguaiana it did not yet: [honest result from lead-ml, e.g. 'it flagged [P]% of the area that flooded, [N] h ahead']. We also tested why radar misses flooded towns and forests (double bounce; supported)."
+
+**F2 slide 3:** title "Radar first: where it flooded, and who lives there" — bullets: (1) NISAR every 12 days at Uruguaiana → [km²] km² of flood candidates through cloud (method line); (2) about [X] people inside, ranked for responders; (3) Washington Dec 2025: 27.99 km² under 93% cloud; (4) "Testing next: the forecast (TPI on NOAA GFS) — at Uruguaiana it did not flag the flooded area in time ([honest result])"; (5) LHASA citation + experimental ML line.
+
+**F2 video:** `captions-v6-fallback.srt` (48 words): B = Uruguaiana under cloud (NISAR stack first frame + optical cloud if available), C = NISAR flood candidates + Who is affected, D = "Next we test whether the forecast can point there days ahead." over the forecast map with no number. Without gated candidates (NISAR version B), C becomes "NISAR radar saw the river spread through it, every 12 days." and no people number.
+
+Never "prevented"; never present a forecast miss as a hit.
