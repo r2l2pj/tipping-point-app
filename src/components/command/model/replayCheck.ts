@@ -199,7 +199,11 @@ function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
   }
   return {
     placeholder: isPlaceholder(m),
-    median: `Tipping Point would have warned ${round(m.lead_time_median_h)} hours earlier`,
+    // A negative median means the index flagged AFTER the mapped damage —
+    // never phrase it as "warned earlier".
+    median: (m.lead_time_median_h as number) >= 0
+      ? `Tipping Point would have warned ${round(m.lead_time_median_h)} hours earlier`
+      : `Tipping Point flagged ${round(-(m.lead_time_median_h as number))} hours after the mapped damage`,
     iqr: `${finite(iqr[0]) && finite(iqr[1]) ? `IQR ${round(iqr[0])}–${round(iqr[1])} h · ` : ""}n = ${round(leadTimeN(m))}${precision ? ` · ${precision}` : ""}`,
     shares,
     lines,

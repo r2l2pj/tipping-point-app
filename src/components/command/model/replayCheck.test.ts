@@ -180,6 +180,9 @@ describe("evidence", () => {
     const lt = evidence(bundle({ metricsView: mv({ lead_time_median_h: 52, lead_time_n: 4 }) })).leadTime!;
     expect(lt.median).toBe("Tipping Point would have warned 52 hours earlier");
     expect(lt.iqr).toBe("n = 4");
+    // Real RS metrics: median -57 h, n 5678 -> no "warned -57 hours earlier".
+    const late = evidence(bundle({ metricsView: mv({ lead_time_median_h: -57, lead_time_iqr_h: [-57, -57], lead_time_n: 5678 }) })).leadTime!;
+    expect(late.median).toBe("Tipping Point flagged 57 hours after the mapped damage");
     expect(lt.note).toContain("IMERG Early ~4 h");
   });
 
