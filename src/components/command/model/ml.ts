@@ -40,6 +40,11 @@ export const SOURCE_LABEL: Record<string, string> = {
 export const ML_PROVISIONAL = true; // v1 card (no version key)
 export const isV2 = (card: unknown) => isRecord(card) && card.version === "v2";
 // L40 (conductor): independent audit result, shown on the v2 card.
+// "audited: no leakage; …" -> "Audited: no leakage; ….": shown as a sentence.
+const sentence = (t: string) => {
+  const x = t.trim();
+  return `${x.charAt(0).toUpperCase()}${x.slice(1)}${/[.!?]$/.test(x) ? "" : "."}`;
+};
 export const ML_AUDIT_TEXT =
   "Independent audit: no leakage found. The test events are extreme storms, so these scores overstate everyday skill; a simple rain-vs-local-extreme rule performs about as well.";
 // lead-ml (model-metrics.md v2): the no-rain/soil baseline carries terrain,
@@ -305,7 +310,7 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
     // the result; while it still says 'held / pending', the conductor's text.
     headlineHeld: v2
       ? (typeof card.headline_status === "string" && card.headline_status.trim() && !/^held|pending/i.test(card.headline_status)
-          ? card.headline_status.trim()
+          ? sentence(card.headline_status)
           : ML_AUDIT_TEXT)
       : undefined,
     valNote: typeof card.val_vs_test_note === "string" ? card.val_vs_test_note : undefined,

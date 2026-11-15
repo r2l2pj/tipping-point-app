@@ -178,8 +178,9 @@ describe("ML v2 real export (lead-ml fallback f5fbab1, trimmed fixture)", () => 
     expect(v.horizons).toEqual(["24h", "48h", "72h", "7d"]);
     // L40: 'held: … pending' in the card -> the conductor's audit text
     expect(v.headlineHeld).toBe("Independent audit: no leakage found. The test events are extreme storms, so these scores overstate everyday skill; a simple rain-vs-local-extreme rule performs about as well.");
-    expect(buildMlView({ ...card, headline_status: "Audited 2026-11-15: no leakage; scores overstate everyday skill." }, "rs_2024")!.headlineHeld)
-      .toBe("Audited 2026-11-15: no leakage; scores overstate everyday skill.");
+    // lead-ml ddd8325 wording, shown as a sentence
+    expect(buildMlView({ ...card, headline_status: "audited: no leakage; scores overstate everyday skill (extreme-storm test set); similar to a simple rain-threshold rule" }, "rs_2024")!.headlineHeld)
+      .toBe("Audited: no leakage; scores overstate everyday skill (extreme-storm test set); similar to a simple rain-threshold rule.");
     expect(v.valNote).toContain("VAL PR-AUC (24h ~0.13)");
     const rows = v.when["24h|gfs"].rows;
     expect(rows.map((r) => r.model)).toEqual(["xgb_rain_soil", "xgb_all", "rf_all", "rule_tpi", "climatology"]);
