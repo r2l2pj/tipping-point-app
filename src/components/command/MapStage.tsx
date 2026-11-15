@@ -42,6 +42,9 @@ export interface MapFocus {
 // The searched city (City search): a pin with its name.
 export interface CityPin { center: [number, number]; name: string }
 
+const CITY_OUTLINE_SRC = "tp-city-outline";
+const CITY_OUTLINE_LYR = "tp-city-outline-line";
+
 export default function MapStage({
   bundle,
   steps,
@@ -56,6 +59,7 @@ export default function MapStage({
   focus,
   featuredCase,
   cityPin,
+  cityOutline,
 }: {
   bundle: CcBundle;
   steps: Step[];
@@ -70,6 +74,9 @@ export default function MapStage({
   featuredCase?: { id: string; short: string };
   focus?: MapFocus;
   cityPin?: CityPin;
+  // L52 replay city pick: the municipality polygon, drawn as an accent
+  // outline over the frame; removed when the card closes.
+  cityOutline?: GeoJSON.Feature | null;
 }) {
   const [map, setMap] = useState<MapInstance | null>(null);
   const [bearing, setBearing] = useState(0);
@@ -177,6 +184,30 @@ export default function MapStage({
     const m = new Marker({ element: el, anchor: "top", offset: [0, -8] }).setLngLat(cityPin.center).addTo(map);
     return () => { m.remove(); };
   }, [map, cityPin]);
+
+  // The replay municipality outline: a single line layer in the accent
+  // colour, added lazily and removed on close/unmount.
+  useEffect(() => {
+    if (!map || !cityOutline) return;
+    try {
+      map.addSource(CITY_OUTLINE_SRC, {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [cityOutline] },
+      });
+      map.addLayer({
+        id: CITY_OUTLINE_LYR,
+        type: "line",
+        source: CITY_OUTLINE_SRC,
+        paint: { "line-color": "#17473f", "line-width": 2.5 },
+      });
+    } catch {
+      // map mid-teardown or a style reload: the next pass retries.
+    }
+    return () => {
+      try { if (map.getLayer(CITY_OUTLINE_LYR)) map.removeLayer(CITY_OUTLINE_LYR); } catch {}
+      try { if (map.getSource(CITY_OUTLINE_SRC)) map.removeSource(CITY_OUTLINE_SRC); } catch {}
+    };
+  }, [map, cityOutline]);
 
   useEffect(() => {
     if (!map) return;
