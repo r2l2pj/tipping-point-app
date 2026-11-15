@@ -54,6 +54,22 @@ describe("layer rows", () => {
     expect(flood).toMatchObject({ available: false, sub: "No radar for this event (before NISAR launch)" });
   });
 
+  test("a stamped data date shows the Brasília time; date-only stays date-only", () => {
+    const timed = bundle({
+      manifest: manifest([frame("imerg_x", "2025-12-10"), frame("smap_x", "2025-12-10")]),
+      data_dates: { imerg: "2025-12-10T14:00:00Z", smap: "2025-12-10" },
+    });
+    const rows = layerRows(timed, [], "slide", "2025-12-10");
+    expect(rows.find((r) => r.id === "imerg")!.sub).toBe("data Dec 10, 11:00 BRT");
+    expect(rows.find((r) => r.id === "smap")!.sub).toBe("data Dec 10, 2025");
+    // a stamped OPERA layer date gets the same treatment
+    const opera = layerRows(
+      bundle({ manifest: manifest([frame("opera_validation", "2025-12-10T14:00:00Z")]) }),
+      [], "slide", "2025-12-10"
+    );
+    expect(opera.find((r) => r.id === "opera")!.sub).toBe("data Dec 10, 11:00 BRT");
+  });
+
   test("replay evidence rows exist in Replay only", () => {
     expect(layerRows(liveBundle(), [], "slide").some((r) => r.group === "Replay evidence")).toBe(false);
     expect(rows.filter((r) => r.group === "Replay evidence").map((r) => r.id)).toEqual(["catalog", "opera"]);
@@ -241,5 +257,16 @@ describe("P(trigger) wording: relative likelihood, never a probability", () => {
     const legend = layerLegendRows(liveBundle(), ["ptrigger"]);
     expect(legend[0].label).toBe("Relative likelihood, low → high (not a percentage)");
     expect(JSON.stringify(legend)).not.toMatch(/probability|%/i);
+  });
+});
+
+describe("OPERA validation legend (lead-analysis wa_2025/opera_validation.json)", () => {
+  test("three classes in the PNG's colors, no cloud class", () => {
+    const rows = layerLegendRows({} as never, ["opera"]);
+    expect(rows.map((r) => [r.label, r.swatch])).toEqual([
+      ["New flood in both NISAR and OPERA", "#1a9850"],
+      ["NISAR only", "#f46d43"],
+      ["OPERA DSWx-S1 only", "#4575b4"],
+    ]);
   });
 });

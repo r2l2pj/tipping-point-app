@@ -62,7 +62,9 @@ export type Action =
   | { type: "toggleLayersOpen" }
   | { type: "toggleList" }
   | { type: "toggleTable" }
-  | { type: "escape" };
+  | { type: "escape" }
+  // "Start here" (judge report #6): one stop of the guided tour.
+  | { type: "goTo"; id: string; day?: number | string; hazard?: Hazard; lead?: IssueLead; layer?: LayerId; compare?: ComparePair["kind"] };
 
 const find = (cases: readonly CcBundle[], id: string) => cases.find((c) => c.id === id);
 
@@ -193,6 +195,22 @@ export function reduce(
   action: Action,
   cases: readonly CcBundle[]
 ): ScreenState {
+  if (action.type === "goTo") {
+    const target = find(cases, action.id);
+    if (!target) return state;
+    let next = reduce({ ...state, compareOpen: null, selectedArea: null }, { type: "selectCase", id: action.id }, cases);
+    // Each stop starts from the case's own opening layers, not the last stop's.
+    const hazard = action.hazard && caseHasHazard(target, action.hazard) ? action.hazard : next.hazard;
+    next = { ...next, hazard, layers: withRadarDefault(target, keepAvailable(target, DEFAULT_LAYERS, hazard), hazard), layerNotice: null };
+    const day = linkedDay(target, action.day) ?? defaultStepIndex(stepsFor(target));
+    next = reduce(next, { type: "seek", index: day }, cases);
+    next = reduce(next, { type: "setIssueLead", lead: action.lead ?? 0 }, cases);
+    if (action.layer && !next.layers.includes(action.layer) && layerAvailable(target, action.layer, next.hazard)) {
+      next = reduce(next, { type: "toggleLayer", id: action.layer }, cases);
+    }
+    if (action.compare) next = reduce(next, { type: "openCompare", kind: action.compare }, cases);
+    return next;
+  }
   const bundle = find(cases, state.activeId);
   const last = Math.max(0, stepsFor(bundle).length - 1);
   // A manual step pauses playback.

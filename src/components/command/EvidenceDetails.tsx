@@ -52,6 +52,14 @@ export default function EvidenceDetails({
         )}
       </div>
 
+      {e.hand && (
+        <div data-hand-check>
+          <h3 className={h3}>Terrain check: HAND proxy vs MERIT Hydro (reference only)</h3>
+          <p className="mt-1 text-xs font-semibold tabular-nums">{e.hand.line}</p>
+          {e.hand.definition && <p className="mt-0.5 text-xs text-cc-faint">{e.hand.definition}</p>}
+        </div>
+      )}
+
       {/* Model scores only with their n (TEST split, lead-ml ml_card.json). */}
       {ml ? (
         <MlCard ml={ml} />
@@ -94,6 +102,13 @@ export default function EvidenceDetails({
 
       {mlImportance ? <GroupImportanceChart importance={mlImportance} />
         : e.featureImportance && <FeatureImportanceChart importance={e.featureImportance} />}
+
+      {e.rainCheck && (
+        <div>
+          <h3 className={h3}>Rain check</h3>
+          <p className="mt-0.5 text-xs text-cc-muted">{e.rainCheck}</p>
+        </div>
+      )}
       <SwotChart swot={swot} />
 
       <div>

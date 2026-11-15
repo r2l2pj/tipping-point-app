@@ -1,5 +1,6 @@
 "use client";
 
+import MethodsDrawer from "./MethodsDrawer";
 import { liveClasses } from "@/lib/contract";
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from "react";
@@ -9,6 +10,7 @@ import EvidenceDetails from "./EvidenceDetails";
 import GetAlertsCard from "./GetAlertsCard";
 import LayersColumn from "./LayersColumn";
 import MapStage, { type MapFocus } from "./MapStage";
+import StartHere from "./StartHere";
 import PanelSection from "./PanelSection";
 import { observedRows, type AlertList } from "./model/alerts";
 import { expandLayerUrls } from "./model/layerUrls";
@@ -16,7 +18,7 @@ import { priorityAreas } from "./model/areas";
 import { availability, missingText } from "./model/availability";
 import { dataStatus, freshnessText } from "./model/dataStatus";
 import { classLabel, fmtKm2 } from "./model/format";
-import { layerRows } from "./model/layerRegistry";
+import { layerRows, visibleLayerRows } from "./model/layerRegistry";
 import { caseDirOf, effectiveBundle, productUrl, withLazy, zonesAreTrimmed } from "./model/lazy";
 import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
@@ -196,7 +198,7 @@ export function CommandCenterView({
   const step = steps[state.dayIndex];
   const status = dataStatus(bundle, nowMs);
   const chip = statusChip(bundle, steps, state.dayIndex, state.hazard);
-  const rows = layerRows(bundle, state.layers, state.hazard, step?.date, state.probHorizon);
+  const rows = visibleLayerRows(layerRows(bundle, state.layers, state.hazard, step?.date, state.probHorizon));
   const nightLights = nightLightsCompare(bundle);
   const comparePair =
     state.compareOpen === "radar" ? radar.compare.pair
@@ -302,6 +304,7 @@ export function CommandCenterView({
             </PublicAlertsPanel>
           ) : (
             <>
+              <StartHere cases={cases} dispatch={dispatch} />
               {/* Response first, prediction second (ruling L27). */}
               <PanelSection label="Now on the ground">
                 <RadarCard
@@ -420,9 +423,13 @@ export function CommandCenterView({
         </div>
       </main>
 
-      <footer className="shrink-0 px-5 pb-2 pt-1.5 text-xs text-cc-faint">
-        Data: NASA GPM · SMAP · NASADEM · NISAR · Basemap © CARTO © OpenStreetMap · Boundaries ©{" "}
-        {caseDirOf(bundle) === "wa_2025" ? "US Census" : "IBGE"} · Population: GPW (NASA SEDAC) / US Census
+      <footer className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 px-5 pb-2 pt-1.5 text-xs text-cc-faint">
+        <span className="min-w-0 grow">
+          Data: NASA GPM · SMAP · NASADEM · NISAR · OPERA · Forecast rain: NOAA GFS (the only non-NASA input) · Basemap © CARTO © OpenStreetMap · Boundaries ©{" "}
+          {caseDirOf(bundle) === "wa_2025" ? "US Census" : "IBGE"} · Population: GPW (NASA SEDAC) / US Census
+        </span>
+        {/* Judges (conductor): methods links, closed by default. */}
+        <MethodsDrawer />
       </footer>
     </div>
   );

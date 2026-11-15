@@ -1,0 +1,1097 @@
+{
+ "cases": {
+  "rs_2024": {
+   "slide_warned": {
+    "hazard": "landslide",
+    "unit": "% of inventory points",
+    "definition": "share of the 16027 RS 2024 inventory landslide points with TPI Alto or higher (> 0.4; Crítico > 0.6, the app class cuts) in the frames available 24-48 h before the anchor (max over window frames; observed = series bands dated anchor-2d..anchor-1d, latency ignored; forecast_gfs = L22 issued GFS 00Z runs 24-48 h before the anchor, frames depicting dates <= the anchor day); each damage location takes the ~90 m TPI cell that contains it; the inventory has no per-slide times (imagery-mapped), so every point is scored against the event onset",
+    "n_points": 16027,
+    "anchor_basis": "onset",
+    "anchor_utc": "2024-04-29T03:00:00+00:00",
+    "anchor_local": "2024-04-29 00:00 BRT (UTC-3)",
+    "anchor_label": "event onset: first deaths of the event (2 flood deaths, Paverama, 2024-04-29); heavy rain from 2024-04-27, stalled from 04-29",
+    "anchor_source": "MetSul laudo https://metsul.com/wp-content/uploads/2024/06/metsul-laudo_V4_assinado.pdf ; Jornal do Comércio 2024-04-29 https://www.jornaldocomercio.com/geral/2024/04/1152501-homem-morre-arrastado-pela-correnteza-em-paverama.html ; SGB https://rigeo.sgb.gov.br/bitstream/doc/25165/1/guimaraes_et_al_evento_catastrofico_serra_rs.pdf",
+    "observed": {
+     "frames": [
+      "20240428"
+     ],
+     "alto_or_critico_pct": 0.25,
+     "critico_pct": 0.0,
+     "no_tpi_pct": 0.75
+    },
+    "forecast_gfs": {
+     "frames": [
+      "issued 2024-04-28 d1 -> 2024-04-29"
+     ],
+     "alto_or_critico_pct": 36.45,
+     "critico_pct": 1.87,
+     "no_tpi_pct": 0.77
+    },
+    "best_issued_gfs_before_anchor": {
+     "issue": "2024-04-23",
+     "hours_before_anchor": 147.0,
+     "frames": [
+      "issued 2024-04-23 d1 -> 2024-04-24",
+      "issued 2024-04-23 d2 -> 2024-04-25",
+      "issued 2024-04-23 d3 -> 2024-04-26"
+     ],
+     "alto_or_critico_pct": 40.63,
+     "critico_pct": 10.61,
+     "no_tpi_pct": 0.77
+    },
+    "by_issue_gfs": [
+     {
+      "issue": "2024-04-23",
+      "hours_before_anchor": 147.0,
+      "frames": [
+       "issued 2024-04-23 d1 -> 2024-04-24",
+       "issued 2024-04-23 d2 -> 2024-04-25",
+       "issued 2024-04-23 d3 -> 2024-04-26"
+      ],
+      "alto_or_critico_pct": 40.63,
+      "critico_pct": 10.61,
+      "no_tpi_pct": 0.77
+     },
+     {
+      "issue": "2024-04-24",
+      "hours_before_anchor": 123.0,
+      "frames": [
+       "issued 2024-04-24 d1 -> 2024-04-25",
+       "issued 2024-04-24 d2 -> 2024-04-26",
+       "issued 2024-04-24 d3 -> 2024-04-27"
+      ],
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.77
+     },
+     {
+      "issue": "2024-04-25",
+      "hours_before_anchor": 99.0,
+      "frames": [
+       "issued 2024-04-25 d1 -> 2024-04-26",
+       "issued 2024-04-25 d2 -> 2024-04-27",
+       "issued 2024-04-25 d3 -> 2024-04-28"
+      ],
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.77
+     },
+     {
+      "issue": "2024-04-26",
+      "hours_before_anchor": 75.0,
+      "frames": [
+       "issued 2024-04-26 d1 -> 2024-04-27",
+       "issued 2024-04-26 d2 -> 2024-04-28",
+       "issued 2024-04-26 d3 -> 2024-04-29"
+      ],
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.77
+     },
+     {
+      "issue": "2024-04-27",
+      "hours_before_anchor": 51.0,
+      "frames": [
+       "issued 2024-04-27 d1 -> 2024-04-28",
+       "issued 2024-04-27 d2 -> 2024-04-29"
+      ],
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.77
+     },
+     {
+      "issue": "2024-04-28",
+      "hours_before_anchor": 27.0,
+      "frames": [
+       "issued 2024-04-28 d1 -> 2024-04-29"
+      ],
+      "alto_or_critico_pct": 36.45,
+      "critico_pct": 1.87,
+      "no_tpi_pct": 0.77
+     }
+    ],
+    "by_date_observed": [
+     {
+      "date": "2024-04-22",
+      "hours_before_anchor": 171.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-04-23",
+      "hours_before_anchor": 147.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-04-24",
+      "hours_before_anchor": 123.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-04-25",
+      "hours_before_anchor": 99.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-04-26",
+      "hours_before_anchor": 75.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-04-27",
+      "hours_before_anchor": 51.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-04-28",
+      "hours_before_anchor": 27.0,
+      "alto_or_critico_pct": 0.25,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-04-29",
+      "hours_before_anchor": 3.0,
+      "alto_or_critico_pct": 3.66,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-04-30",
+      "hours_before_anchor": -21.0,
+      "alto_or_critico_pct": 88.83,
+      "critico_pct": 73.46,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-05-01",
+      "hours_before_anchor": -45.0,
+      "alto_or_critico_pct": 90.8,
+      "critico_pct": 84.11,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-05-02",
+      "hours_before_anchor": -69.0,
+      "alto_or_critico_pct": 91.04,
+      "critico_pct": 85.1,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-05-03",
+      "hours_before_anchor": -93.0,
+      "alto_or_critico_pct": 91.05,
+      "critico_pct": 85.35,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-05-04",
+      "hours_before_anchor": -117.0,
+      "alto_or_critico_pct": 91.07,
+      "critico_pct": 85.38,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-05-05",
+      "hours_before_anchor": -141.0,
+      "alto_or_critico_pct": 91.07,
+      "critico_pct": 85.38,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-05-06",
+      "hours_before_anchor": -165.0,
+      "alto_or_critico_pct": 82.4,
+      "critico_pct": 72.86,
+      "no_tpi_pct": 0.75
+     },
+     {
+      "date": "2024-05-07",
+      "hours_before_anchor": -189.0,
+      "alto_or_critico_pct": 81.77,
+      "critico_pct": 71.87,
+      "no_tpi_pct": 0.75
+     }
+    ],
+    "by_lead": {
+     "24": {
+      "gfs": {
+       "issue": "2024-04-28",
+       "hours_before_anchor": 27.0,
+       "alto_or_critico_pct": 36.45,
+       "critico_pct": 1.87,
+       "frames": [
+        "issued 2024-04-28 d1 -> 2024-04-29"
+       ]
+      },
+      "observed": {
+       "band_date": "2024-04-28",
+       "hours_before_anchor": 27.0,
+       "alto_or_critico_pct": 0.25,
+       "critico_pct": 0.0
+      }
+     },
+     "48": {
+      "gfs": {
+       "issue": "2024-04-27",
+       "hours_before_anchor": 51.0,
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0,
+       "frames": [
+        "issued 2024-04-27 d1 -> 2024-04-28",
+        "issued 2024-04-27 d2 -> 2024-04-29"
+       ]
+      },
+      "observed": {
+       "band_date": "2024-04-27",
+       "hours_before_anchor": 51.0,
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0
+      }
+     },
+     "72": {
+      "gfs": {
+       "issue": "2024-04-26",
+       "hours_before_anchor": 75.0,
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0,
+       "frames": [
+        "issued 2024-04-26 d1 -> 2024-04-27",
+        "issued 2024-04-26 d2 -> 2024-04-28",
+        "issued 2024-04-26 d3 -> 2024-04-29"
+       ]
+      },
+      "observed": {
+       "band_date": "2024-04-26",
+       "hours_before_anchor": 75.0,
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0
+      }
+     }
+    },
+    "sensitivity": [
+     {
+      "anchor_basis": "first_landslide_deaths",
+      "anchor_utc": "2024-04-30T03:00:00+00:00",
+      "anchor_local": "2024-04-30 00:00 BRT (UTC-3)",
+      "anchor_label": "sensitivity: first landslide deaths (Itaara, Silveira Martins, 2024-04-30)",
+      "anchor_source": "MetSul laudo https://metsul.com/wp-content/uploads/2024/06/metsul-laudo_V4_assinado.pdf ; Jornal do Comércio 2024-04-29 https://www.jornaldocomercio.com/geral/2024/04/1152501-homem-morre-arrastado-pela-correnteza-em-paverama.html ; SGB https://rigeo.sgb.gov.br/bitstream/doc/25165/1/guimaraes_et_al_evento_catastrofico_serra_rs.pdf",
+      "observed": {
+       "frames": [
+        "20240429"
+       ],
+       "alto_or_critico_pct": 3.66,
+       "critico_pct": 0.0,
+       "no_tpi_pct": 0.75
+      },
+      "forecast_gfs": {
+       "frames": [
+        "issued 2024-04-29 d1 -> 2024-04-30"
+       ],
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0,
+       "no_tpi_pct": 0.77
+      },
+      "by_lead": {
+       "24": {
+        "gfs": {
+         "issue": "2024-04-29",
+         "hours_before_anchor": 27.0,
+         "alto_or_critico_pct": 0.0,
+         "critico_pct": 0.0,
+         "frames": [
+          "issued 2024-04-29 d1 -> 2024-04-30"
+         ]
+        },
+        "observed": {
+         "band_date": "2024-04-29",
+         "hours_before_anchor": 27.0,
+         "alto_or_critico_pct": 3.66,
+         "critico_pct": 0.0
+        }
+       },
+       "48": {
+        "gfs": {
+         "issue": "2024-04-28",
+         "hours_before_anchor": 51.0,
+         "alto_or_critico_pct": 36.45,
+         "critico_pct": 1.87,
+         "frames": [
+          "issued 2024-04-28 d1 -> 2024-04-29",
+          "issued 2024-04-28 d2 -> 2024-04-30"
+         ]
+        },
+        "observed": {
+         "band_date": "2024-04-28",
+         "hours_before_anchor": 51.0,
+         "alto_or_critico_pct": 0.25,
+         "critico_pct": 0.0
+        }
+       },
+       "72": {
+        "gfs": {
+         "issue": "2024-04-27",
+         "hours_before_anchor": 75.0,
+         "alto_or_critico_pct": 0.0,
+         "critico_pct": 0.0,
+         "frames": [
+          "issued 2024-04-27 d1 -> 2024-04-28",
+          "issued 2024-04-27 d2 -> 2024-04-29",
+          "issued 2024-04-27 d3 -> 2024-04-30"
+         ]
+        },
+        "observed": {
+         "band_date": "2024-04-27",
+         "hours_before_anchor": 75.0,
+         "alto_or_critico_pct": 0.0,
+         "critico_pct": 0.0
+        }
+       }
+      }
+     },
+     {
+      "anchor_basis": "fixed_dating_may1",
+      "anchor_utc": "2024-05-01T00:00:00+00:00",
+      "anchor_local": "2024-04-30 21:00 BRT",
+      "anchor_label": "sensitivity: previous fixed RS dating 2024-05-01 00Z (ML TEST set; superseded by L37)",
+      "anchor_source": "project convention (decisions L36a)",
+      "observed": {
+       "frames": [
+        "20240429",
+        "20240430"
+       ],
+       "alto_or_critico_pct": 88.83,
+       "critico_pct": 73.46,
+       "no_tpi_pct": 0.75
+      },
+      "forecast_gfs": {
+       "frames": [
+        "issued 2024-04-30 d1 -> 2024-05-01",
+        "issued 2024-04-29 d1 -> 2024-04-30",
+        "issued 2024-04-29 d2 -> 2024-05-01"
+       ],
+       "alto_or_critico_pct": 88.13,
+       "critico_pct": 69.07,
+       "no_tpi_pct": 0.77
+      },
+      "by_lead": {
+       "24": {
+        "gfs": {
+         "issue": "2024-04-30",
+         "hours_before_anchor": 24.0,
+         "alto_or_critico_pct": 88.13,
+         "critico_pct": 69.07,
+         "frames": [
+          "issued 2024-04-30 d1 -> 2024-05-01"
+         ]
+        },
+        "observed": {
+         "band_date": "2024-04-30",
+         "hours_before_anchor": 24.0,
+         "alto_or_critico_pct": 88.83,
+         "critico_pct": 73.46
+        }
+       },
+       "48": {
+        "gfs": {
+         "issue": "2024-04-29",
+         "hours_before_anchor": 48.0,
+         "alto_or_critico_pct": 0.27,
+         "critico_pct": 0.01,
+         "frames": [
+          "issued 2024-04-29 d1 -> 2024-04-30",
+          "issued 2024-04-29 d2 -> 2024-05-01"
+         ]
+        },
+        "observed": {
+         "band_date": "2024-04-29",
+         "hours_before_anchor": 48.0,
+         "alto_or_critico_pct": 3.66,
+         "critico_pct": 0.0
+        }
+       },
+       "72": {
+        "gfs": {
+         "issue": "2024-04-28",
+         "hours_before_anchor": 72.0,
+         "alto_or_critico_pct": 70.89,
+         "critico_pct": 22.01,
+         "frames": [
+          "issued 2024-04-28 d1 -> 2024-04-29",
+          "issued 2024-04-28 d2 -> 2024-04-30",
+          "issued 2024-04-28 d3 -> 2024-05-01"
+         ]
+        },
+        "observed": {
+         "band_date": "2024-04-28",
+         "hours_before_anchor": 72.0,
+         "alto_or_critico_pct": 0.25,
+         "critico_pct": 0.0
+        }
+       }
+      }
+     }
+    ]
+   },
+   "slide_warned_pct": 36.45,
+   "slide_warned_critical_pct": 1.87,
+   "slide_warned_observed_pct": 0.25,
+   "slide_warned_basis": "forecast_gfs (00Z runs issued 24-48 h before the event onset 2024-04-29 00:00 BRT (UTC-3))",
+   "flood_warned_pct": null,
+   "slide_warned_gfs_24h_pct": 36.45,
+   "slide_warned_gfs_24h_critical_pct": 1.87,
+   "slide_warned_observed_24h_pct": 0.25,
+   "slide_warned_observed_24h_critical_pct": 0.0,
+   "slide_warned_gfs_48h_pct": 0.0,
+   "slide_warned_gfs_48h_critical_pct": 0.0,
+   "slide_warned_observed_48h_pct": 0.0,
+   "slide_warned_observed_48h_critical_pct": 0.0,
+   "slide_warned_gfs_72h_pct": 0.0,
+   "slide_warned_gfs_72h_critical_pct": 0.0,
+   "slide_warned_observed_72h_pct": 0.0,
+   "slide_warned_observed_72h_critical_pct": 0.0,
+   "slide_warned_n": 16027,
+   "slide_warned_by_lead_definition": "slide_warned_{gfs|observed}_{24|48|72}h[_critical]_pct = % of the damage reference (% of inventory points) whose ~90 m TPI cell was Alto+ (> 0.4) [Crítico > 0.6] in: gfs = the NOAA GFS 00Z run issued on the UTC date of (onset - 24/48/72 h), i.e. at least that many hours before the event onset 2024-04-29 00:00 BRT (UTC-3) (max over its d1..d3 frames depicting dates <= the onset day); observed = the observed TPI band dated that day (rain ending that day 00Z, latency ignored). Onset = event onset: first deaths of the event (2 flood deaths, Paverama, 2024-04-29); heavy rain from 2024-04-27, stalled from 04-29. Locations on TPI no-data stay in the denominator. Sensitivity anchors in slide_warned.sensitivity.",
+   "slide_warned_anchor_basis": "onset",
+   "slide_warned_anchor_utc": "2024-04-29T03:00:00+00:00",
+   "slide_warned_anchor_source": "MetSul laudo https://metsul.com/wp-content/uploads/2024/06/metsul-laudo_V4_assinado.pdf ; Jornal do Comércio 2024-04-29 https://www.jornaldocomercio.com/geral/2024/04/1152501-homem-morre-arrastado-pela-correnteza-em-paverama.html ; SGB https://rigeo.sgb.gov.br/bitstream/doc/25165/1/guimaraes_et_al_evento_catastrofico_serra_rs.pdf",
+   "slide_warned_gfs_24h_issue": "2024-04-28",
+   "slide_warned_gfs_48h_issue": "2024-04-27",
+   "slide_warned_gfs_72h_issue": "2024-04-26",
+   "forecast_lead_time_onset": {
+    "anchor_utc": "2024-04-29T03:00:00+00:00",
+    "earliest_critical_issue": "2024-04-23",
+    "would_have_warned_h": 147.0,
+    "lead_h_median": 87.0,
+    "lead_h_iqr": [
+     57.0,
+     117.0
+    ],
+    "n_warned": 2,
+    "n_issue_days": 7,
+    "issue_days": [
+     {
+      "issue": "2024-04-23",
+      "warned": true,
+      "first_critical_date": "2024-04-24",
+      "hazard": "slide",
+      "lead_h": 147.0
+     },
+     {
+      "issue": "2024-04-24",
+      "warned": false,
+      "first_critical_date": null,
+      "hazard": null,
+      "lead_h": null
+     },
+     {
+      "issue": "2024-04-25",
+      "warned": false,
+      "first_critical_date": null,
+      "hazard": null,
+      "lead_h": null
+     },
+     {
+      "issue": "2024-04-26",
+      "warned": false,
+      "first_critical_date": null,
+      "hazard": null,
+      "lead_h": null
+     },
+     {
+      "issue": "2024-04-27",
+      "warned": false,
+      "first_critical_date": null,
+      "hazard": null,
+      "lead_h": null
+     },
+     {
+      "issue": "2024-04-28",
+      "warned": true,
+      "first_critical_date": "2024-04-29",
+      "hazard": "slide",
+      "lead_h": 27.0
+     },
+     {
+      "issue": "2024-04-29",
+      "warned": false,
+      "first_critical_date": null,
+      "hazard": null,
+      "lead_h": null
+     }
+    ],
+    "definition": "issue days = GFS 00Z runs before the onset; warned = any frame depicting a date <= the onset day has an AOI-max TPI (slide or flood) > 0.6 (Crítico) anywhere in the case AOI — not at the damage locations (see *_warned for that); lead_h = onset - issue 00Z",
+    "anchor_basis": "onset",
+    "anchor_local": "2024-04-29 00:00 BRT (UTC-3)",
+    "anchor_label": "event onset: first deaths of the event (2 flood deaths, Paverama, 2024-04-29); heavy rain from 2024-04-27, stalled from 04-29",
+    "anchor_source": "MetSul laudo https://metsul.com/wp-content/uploads/2024/06/metsul-laudo_V4_assinado.pdf ; Jornal do Comércio 2024-04-29 https://www.jornaldocomercio.com/geral/2024/04/1152501-homem-morre-arrastado-pela-correnteza-em-paverama.html ; SGB https://rigeo.sgb.gov.br/bitstream/doc/25165/1/guimaraes_et_al_evento_catastrofico_serra_rs.pdf",
+    "sensitivity": [
+     {
+      "anchor_basis": "first_landslide_deaths",
+      "anchor_local": "2024-04-30 00:00 BRT (UTC-3)",
+      "anchor_utc": "2024-04-30T03:00:00+00:00",
+      "earliest_critical_issue": "2024-04-23",
+      "would_have_warned_h": 171.0,
+      "lead_h_median": 63.0,
+      "lead_h_iqr": [
+       45.0,
+       99.0
+      ],
+      "n_warned": 4,
+      "n_issue_days": 8
+     },
+     {
+      "anchor_basis": "fixed_dating_may1",
+      "anchor_local": "2024-04-30 21:00 BRT",
+      "anchor_utc": "2024-05-01T00:00:00+00:00",
+      "earliest_critical_issue": "2024-04-23",
+      "would_have_warned_h": 192.0,
+      "lead_h_median": 72.0,
+      "lead_h_iqr": [
+       48.0,
+       96.0
+      ],
+      "n_warned": 5,
+      "n_issue_days": 8
+     }
+    ]
+   }
+  },
+  "wa_2025": {
+   "flood_warned": {
+    "hazard": "flood",
+    "unit": "% of confirmed flood area",
+    "definition": "share of the NISAR-confirmed new-flood AREA (GCOV, post 2025-12-16) with TPI Alto or higher (> 0.4; Crítico > 0.6, the app class cuts) in the frames available 24-48 h before the anchor (max over window frames; observed = series bands dated anchor-2d..anchor-1d, latency ignored; forecast_gfs = L22 issued GFS 00Z runs 24-48 h before the anchor, frames depicting dates <= the anchor day); each damage location takes the ~90 m TPI cell that contains it",
+    "confirmed_flood_km2": 27.921,
+    "anchor_basis": "onset",
+    "anchor_utc": "2025-12-08T08:00:00+00:00",
+    "anchor_local": "2025-12-08 00:00 PST (UTC-8)",
+    "anchor_label": "event onset day: heavy rain begins 2025-12-08; Skagit County EOC full activation 21:00 PST; damage and evacuations 12-09/10",
+    "anchor_source": "WA EMD SEOC sitrep 25-4783 (2025-12-10) https://content.govdelivery.com/attachments/WAMILITARY/2025/12/11/file_attachments/3490229/SEOC_Sitrep-25-4783_12102025.pdf",
+    "observed": {
+     "frames": [
+      "20251207"
+     ],
+     "alto_or_critico_pct": 0.0,
+     "critico_pct": 0.0,
+     "no_tpi_pct": 0.0
+    },
+    "forecast_gfs": {
+     "frames": [
+      "issued 2025-12-07 d1 -> 2025-12-08"
+     ],
+     "alto_or_critico_pct": 0.0,
+     "critico_pct": 0.0,
+     "no_tpi_pct": 0.0
+    },
+    "best_issued_gfs_before_anchor": {
+     "issue": "2025-12-05",
+     "hours_before_anchor": 80.0,
+     "frames": [
+      "issued 2025-12-05 d1 -> 2025-12-06",
+      "issued 2025-12-05 d2 -> 2025-12-07",
+      "issued 2025-12-05 d3 -> 2025-12-08"
+     ],
+     "alto_or_critico_pct": 0.14,
+     "critico_pct": 0.0,
+     "no_tpi_pct": 0.0
+    },
+    "by_issue_gfs": [
+     {
+      "issue": "2025-12-01",
+      "hours_before_anchor": 176.0,
+      "frames": [
+       "issued 2025-12-01 d1 -> 2025-12-02",
+       "issued 2025-12-01 d2 -> 2025-12-03",
+       "issued 2025-12-01 d3 -> 2025-12-04"
+      ],
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "issue": "2025-12-02",
+      "hours_before_anchor": 152.0,
+      "frames": [
+       "issued 2025-12-02 d1 -> 2025-12-03",
+       "issued 2025-12-02 d2 -> 2025-12-04",
+       "issued 2025-12-02 d3 -> 2025-12-05"
+      ],
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "issue": "2025-12-03",
+      "hours_before_anchor": 128.0,
+      "frames": [
+       "issued 2025-12-03 d1 -> 2025-12-04",
+       "issued 2025-12-03 d2 -> 2025-12-05",
+       "issued 2025-12-03 d3 -> 2025-12-06"
+      ],
+      "alto_or_critico_pct": 0.14,
+      "critico_pct": 0.14,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "issue": "2025-12-04",
+      "hours_before_anchor": 104.0,
+      "frames": [
+       "issued 2025-12-04 d1 -> 2025-12-05",
+       "issued 2025-12-04 d2 -> 2025-12-06",
+       "issued 2025-12-04 d3 -> 2025-12-07"
+      ],
+      "alto_or_critico_pct": 0.14,
+      "critico_pct": 0.14,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "issue": "2025-12-05",
+      "hours_before_anchor": 80.0,
+      "frames": [
+       "issued 2025-12-05 d1 -> 2025-12-06",
+       "issued 2025-12-05 d2 -> 2025-12-07",
+       "issued 2025-12-05 d3 -> 2025-12-08"
+      ],
+      "alto_or_critico_pct": 0.14,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "issue": "2025-12-06",
+      "hours_before_anchor": 56.0,
+      "frames": [
+       "issued 2025-12-06 d1 -> 2025-12-07",
+       "issued 2025-12-06 d2 -> 2025-12-08"
+      ],
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "issue": "2025-12-07",
+      "hours_before_anchor": 32.0,
+      "frames": [
+       "issued 2025-12-07 d1 -> 2025-12-08"
+      ],
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     }
+    ],
+    "by_date_observed": [
+     {
+      "date": "2025-11-30",
+      "hours_before_anchor": 200.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-01",
+      "hours_before_anchor": 176.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-02",
+      "hours_before_anchor": 152.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-03",
+      "hours_before_anchor": 128.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-04",
+      "hours_before_anchor": 104.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-05",
+      "hours_before_anchor": 80.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-06",
+      "hours_before_anchor": 56.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-07",
+      "hours_before_anchor": 32.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-08",
+      "hours_before_anchor": 8.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-09",
+      "hours_before_anchor": -16.0,
+      "alto_or_critico_pct": 0.01,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-10",
+      "hours_before_anchor": -40.0,
+      "alto_or_critico_pct": 41.0,
+      "critico_pct": 8.97,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-11",
+      "hours_before_anchor": -64.0,
+      "alto_or_critico_pct": 89.03,
+      "critico_pct": 41.69,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-12",
+      "hours_before_anchor": -88.0,
+      "alto_or_critico_pct": 98.94,
+      "critico_pct": 70.18,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-13",
+      "hours_before_anchor": -112.0,
+      "alto_or_critico_pct": 97.06,
+      "critico_pct": 41.23,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-14",
+      "hours_before_anchor": -136.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-15",
+      "hours_before_anchor": -160.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-16",
+      "hours_before_anchor": -184.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-17",
+      "hours_before_anchor": -208.0,
+      "alto_or_critico_pct": 1.02,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-18",
+      "hours_before_anchor": -232.0,
+      "alto_or_critico_pct": 0.14,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-19",
+      "hours_before_anchor": -256.0,
+      "alto_or_critico_pct": 0.14,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     },
+     {
+      "date": "2025-12-20",
+      "hours_before_anchor": -280.0,
+      "alto_or_critico_pct": 0.14,
+      "critico_pct": 0.0,
+      "no_tpi_pct": 0.0
+     }
+    ],
+    "by_lead": {
+     "24": {
+      "gfs": {
+       "issue": "2025-12-07",
+       "hours_before_anchor": 32.0,
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0,
+       "frames": [
+        "issued 2025-12-07 d1 -> 2025-12-08"
+       ]
+      },
+      "observed": {
+       "band_date": "2025-12-07",
+       "hours_before_anchor": 32.0,
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0
+      }
+     },
+     "48": {
+      "gfs": {
+       "issue": "2025-12-06",
+       "hours_before_anchor": 56.0,
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0,
+       "frames": [
+        "issued 2025-12-06 d1 -> 2025-12-07",
+        "issued 2025-12-06 d2 -> 2025-12-08"
+       ]
+      },
+      "observed": {
+       "band_date": "2025-12-06",
+       "hours_before_anchor": 56.0,
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0
+      }
+     },
+     "72": {
+      "gfs": {
+       "issue": "2025-12-05",
+       "hours_before_anchor": 80.0,
+       "alto_or_critico_pct": 0.14,
+       "critico_pct": 0.0,
+       "frames": [
+        "issued 2025-12-05 d1 -> 2025-12-06",
+        "issued 2025-12-05 d2 -> 2025-12-07",
+        "issued 2025-12-05 d3 -> 2025-12-08"
+       ]
+      },
+      "observed": {
+       "band_date": "2025-12-05",
+       "hours_before_anchor": 80.0,
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0
+      }
+     }
+    },
+    "sensitivity": [
+     {
+      "anchor_basis": "king_county_update",
+      "anchor_utc": "2025-12-09T00:35:00+00:00",
+      "anchor_local": "2025-12-08 16:35 PST",
+      "anchor_label": "sensitivity: previous anchor, King County Flood Warning Center update 2025-12-09 00:35Z (data/wa_2025/forecast_lead_time.json)",
+      "anchor_source": "King County Flood Warning Center (case damage anchor)",
+      "observed": {
+       "frames": [
+        "20251208"
+       ],
+       "alto_or_critico_pct": 0.0,
+       "critico_pct": 0.0,
+       "no_tpi_pct": 0.0
+      },
+      "forecast_gfs": {
+       "frames": [
+        "issued 2025-12-08 d1 -> 2025-12-09"
+       ],
+       "alto_or_critico_pct": 0.14,
+       "critico_pct": 0.0,
+       "no_tpi_pct": 0.0
+      },
+      "by_lead": {
+       "24": {
+        "gfs": {
+         "issue": "2025-12-08",
+         "hours_before_anchor": 24.6,
+         "alto_or_critico_pct": 0.14,
+         "critico_pct": 0.0,
+         "frames": [
+          "issued 2025-12-08 d1 -> 2025-12-09"
+         ]
+        },
+        "observed": {
+         "band_date": "2025-12-08",
+         "hours_before_anchor": 24.6,
+         "alto_or_critico_pct": 0.0,
+         "critico_pct": 0.0
+        }
+       },
+       "48": {
+        "gfs": {
+         "issue": "2025-12-07",
+         "hours_before_anchor": 48.6,
+         "alto_or_critico_pct": 0.14,
+         "critico_pct": 0.0,
+         "frames": [
+          "issued 2025-12-07 d1 -> 2025-12-08",
+          "issued 2025-12-07 d2 -> 2025-12-09"
+         ]
+        },
+        "observed": {
+         "band_date": "2025-12-07",
+         "hours_before_anchor": 48.6,
+         "alto_or_critico_pct": 0.0,
+         "critico_pct": 0.0
+        }
+       },
+       "72": {
+        "gfs": {
+         "issue": "2025-12-06",
+         "hours_before_anchor": 72.6,
+         "alto_or_critico_pct": 0.14,
+         "critico_pct": 0.0,
+         "frames": [
+          "issued 2025-12-06 d1 -> 2025-12-07",
+          "issued 2025-12-06 d2 -> 2025-12-08",
+          "issued 2025-12-06 d3 -> 2025-12-09"
+         ]
+        },
+        "observed": {
+         "band_date": "2025-12-06",
+         "hours_before_anchor": 72.6,
+         "alto_or_critico_pct": 0.0,
+         "critico_pct": 0.0
+        }
+       }
+      }
+     }
+    ],
+    "explanation": "TPI_flood is pixel-local: at the flooded pixels T_flood is high (HAND, mean ~0.96) but local 3-day rain stayed below the pixel's P90 (R = 0) and SMAP wetness low until the 2025-12-10 frame. The river flooding was driven by rain upstream in the Cascades, which a pixel-local R does not see; the index rose on the flooded valley floors only after the first damage report."
+   },
+   "flood_warned_pct": 0.0,
+   "flood_warned_critical_pct": 0.0,
+   "flood_warned_observed_pct": 0.0,
+   "flood_warned_basis": "forecast_gfs (00Z runs issued 24-48 h before the event onset 2025-12-08 00:00 PST (UTC-8))",
+   "flood_warned_anchor_basis": "onset",
+   "flood_warned_anchor_utc": "2025-12-08T08:00:00+00:00",
+   "flood_warned_anchor_source": "WA EMD SEOC sitrep 25-4783 (2025-12-10) https://content.govdelivery.com/attachments/WAMILITARY/2025/12/11/file_attachments/3490229/SEOC_Sitrep-25-4783_12102025.pdf",
+   "flood_warned_gfs_24h_pct": 0.0,
+   "flood_warned_gfs_24h_critical_pct": 0.0,
+   "flood_warned_gfs_24h_issue": "2025-12-07",
+   "flood_warned_observed_24h_pct": 0.0,
+   "flood_warned_observed_24h_critical_pct": 0.0,
+   "flood_warned_gfs_48h_pct": 0.0,
+   "flood_warned_gfs_48h_critical_pct": 0.0,
+   "flood_warned_gfs_48h_issue": "2025-12-06",
+   "flood_warned_observed_48h_pct": 0.0,
+   "flood_warned_observed_48h_critical_pct": 0.0,
+   "flood_warned_gfs_72h_pct": 0.14,
+   "flood_warned_gfs_72h_critical_pct": 0.0,
+   "flood_warned_gfs_72h_issue": "2025-12-05",
+   "flood_warned_observed_72h_pct": 0.0,
+   "flood_warned_observed_72h_critical_pct": 0.0,
+   "flood_warned_by_lead_definition": "flood_warned_{gfs|observed}_{24|48|72}h[_critical]_pct = % of the damage reference (% of confirmed flood area) whose ~90 m TPI cell was Alto+ (> 0.4) [Crítico > 0.6] in: gfs = the NOAA GFS 00Z run issued on the UTC date of (onset - 24/48/72 h), i.e. at least that many hours before the event onset 2025-12-08 00:00 PST (UTC-8) (max over its d1..d3 frames depicting dates <= the onset day); observed = the observed TPI band dated that day (rain ending that day 00Z, latency ignored). Onset = event onset day: heavy rain begins 2025-12-08; Skagit County EOC full activation 21:00 PST; damage and evacuations 12-09/10. Locations on TPI no-data stay in the denominator. Sensitivity anchors in flood_warned.sensitivity.",
+   "forecast_lead_time_onset": {
+    "anchor_utc": "2025-12-08T08:00:00+00:00",
+    "earliest_critical_issue": "2025-12-03",
+    "would_have_warned_h": 128.0,
+    "lead_h_median": 80.0,
+    "lead_h_iqr": [
+     56.0,
+     104.0
+    ],
+    "n_warned": 5,
+    "n_issue_days": 8,
+    "issue_days": [
+     {
+      "issue": "2025-12-01",
+      "warned": false,
+      "first_critical_date": null,
+      "hazard": null,
+      "lead_h": null
+     },
+     {
+      "issue": "2025-12-02",
+      "warned": false,
+      "first_critical_date": null,
+      "hazard": null,
+      "lead_h": null
+     },
+     {
+      "issue": "2025-12-03",
+      "warned": true,
+      "first_critical_date": "2025-12-06",
+      "hazard": "slide",
+      "lead_h": 128.0
+     },
+     {
+      "issue": "2025-12-04",
+      "warned": true,
+      "first_critical_date": "2025-12-06",
+      "hazard": "slide",
+      "lead_h": 104.0
+     },
+     {
+      "issue": "2025-12-05",
+      "warned": true,
+      "first_critical_date": "2025-12-06",
+      "hazard": "slide",
+      "lead_h": 80.0
+     },
+     {
+      "issue": "2025-12-06",
+      "warned": true,
+      "first_critical_date": "2025-12-07",
+      "hazard": "slide",
+      "lead_h": 56.0
+     },
+     {
+      "issue": "2025-12-07",
+      "warned": true,
+      "first_critical_date": "2025-12-08",
+      "hazard": "slide",
+      "lead_h": 32.0
+     },
+     {
+      "issue": "2025-12-08",
+      "warned": false,
+      "first_critical_date": null,
+      "hazard": null,
+      "lead_h": null
+     }
+    ],
+    "definition": "issue days = GFS 00Z runs before the onset; warned = any frame depicting a date <= the onset day has an AOI-max TPI (slide or flood) > 0.6 (Crítico) anywhere in the case AOI — not at the damage locations (see *_warned for that); lead_h = onset - issue 00Z",
+    "anchor_basis": "onset",
+    "anchor_local": "2025-12-08 00:00 PST (UTC-8)",
+    "anchor_label": "event onset day: heavy rain begins 2025-12-08; Skagit County EOC full activation 21:00 PST; damage and evacuations 12-09/10",
+    "anchor_source": "WA EMD SEOC sitrep 25-4783 (2025-12-10) https://content.govdelivery.com/attachments/WAMILITARY/2025/12/11/file_attachments/3490229/SEOC_Sitrep-25-4783_12102025.pdf",
+    "sensitivity": [
+     {
+      "anchor_basis": "king_county_update",
+      "anchor_local": "2025-12-08 16:35 PST",
+      "anchor_utc": "2025-12-09T00:35:00+00:00",
+      "earliest_critical_issue": "2025-12-03",
+      "would_have_warned_h": 144.6,
+      "lead_h_median": 84.6,
+      "lead_h_iqr": [
+       54.6,
+       114.6
+      ],
+      "n_warned": 6,
+      "n_issue_days": 9
+     }
+    ]
+   }
+  }
+ }
+}

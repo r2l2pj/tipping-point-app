@@ -128,6 +128,22 @@ export interface MetricsV4 {
   critical_area_km2?: number;
   critical_area_with_damage_pct?: number;
   damage_anchor?: DamageAnchor;
+  // IMERG Final daily at the station cell vs INMET rain gauges
+  // (lead-analysis, validation-only). bias_pct_median is authored as a
+  // percent already — it is printed, never multiplied by 100.
+  imerg_vs_gauge?: ImergVsGauge;
+}
+
+export interface ImergVsGauge {
+  n_stations?: number;
+  n_station_days?: number;
+  pearson_r_median?: number;
+  bias_pct_median?: number;
+  event_total_ratio_median?: number;
+  window?: string;
+  caveat?: string;
+  stations?: unknown[]; // per-station table; dropped before the browser
+  [k: string]: unknown;
 }
 
 // The UI-facing metrics view. Same keys as MetricsV4; every percent field is

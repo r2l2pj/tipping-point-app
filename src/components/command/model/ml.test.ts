@@ -2,7 +2,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildMlView, groupImportance, ML_PROVISIONAL, mlCaveats } from "./ml";
+import { buildMlView, groupImportance, ML_PROVISIONAL, mlCaveats, spreadFor, spreadLine } from "./ml";
 
 // lead-ml sample files (main 1fe4aba): the SHAPE of the export; smoke numbers.
 const read = (f: string) => JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/ml", f), "utf8"));
@@ -107,5 +107,64 @@ describe("ML v2: horizons from the export", () => {
     const v = buildMlView(v2, "rs_2024")!;
     expect(v.horizons).toEqual(["24h", "72h", "7d"]);
     expect(v.lowSkill).toEqual(["7d"]);
+  });
+});
+
+describe("ML v2 caveat wording", () => {
+  test("more TEST events than RS + WA: no 'ONE event' claim, the count instead", () => {
+    const c = mlCaveats({ testEvents: ["ev_a", "rs_2024", "wa_2025"], lowSkill: [] } as never);
+    expect(c[0]).toBe("The TEST covers 3 events the models never saw; with this few events the scores can still move.");
+    expect(c.join(" ")).not.toContain("ONE event");
+  });
+});
+
+describe("ML v2 card (data/ml/ml_card_v2.json)", () => {
+  const v1 = read("ml_card.json");
+  const g = (median: number, min: number, max: number, worst: string, n = 7) =>
+    ({ pooled: 0.5, events_n: n, event_median: median, event_min: min, event_max: max, worst_event: worst, loeo_min: 0.3, loeo_max: 0.6 });
+  const v2 = {
+    ...v1,
+    version: "v2",
+    t_ml_excludes_rs: true,
+    test_events: [
+      { id: "rs_2024", name: "Rio Grande do Sul 2024", n_pos: 900, source: "UFRGS inventory" },
+      { id: "helene_2024", name: "Helene 2024", n_pos: 120, source: "USGS" },
+      { id: "maria_2017", name: "Maria 2017", n_pos: 300, source: "USGS" },
+    ],
+    generalise: {
+      gfs: { "24h": { xgb_all: g(0.41, 0.12, 0.8, "helene_2024", 2) }, "7d": { xgb_all: g(0.2, 0.1, 0.3, "x", 0) } },
+      perfect: { "24h": { xgb_all: g(0.55, 0.2, 0.9, "maria_2017", 3) }, "7d": { xgb_all: g(0.3, 0.1, 0.5, "maria_2017", 3) } },
+    },
+  };
+
+  test("v1 stays provisional with GFS hidden; v2 lifts both", () => {
+    const a = buildMlView(v1, "rs_2024")!;
+    expect(a.provisional).toBe(true);
+    expect(a.sources).toEqual(["perfect"]);
+    const b = buildMlView(v2, "rs_2024")!;
+    expect(b.provisional).toBe(false);
+    expect(b.version).toBe("v2");
+    expect(b.sources).toEqual(["gfs", "perfect"]);
+    expect(b.tmlExcludesRs).toBe(true);
+    expect(b.testEventList.map((e) => e.name)).toEqual(["Rio Grande do Sul 2024", "Helene 2024", "Maria 2017"]);
+  });
+
+  test("caveat counts the v2 event list, never 'ONE event'", () => {
+    const c = mlCaveats(buildMlView(v2, "rs_2024")!).join(" ");
+    expect(c).toContain("The TEST covers 3 events");
+    expect(c).not.toContain("ONE event");
+  });
+
+  test("spread: GFS when events_n > 0, else observed rain; worst event by name", () => {
+    const b = buildMlView(v2, "rs_2024")!;
+    const s24 = spreadFor(b, "24h", "gfs")!;
+    expect(s24.source).toBe("gfs");
+    expect(spreadLine(s24.rows[0], s24.source))
+      .toBe("PR-AUC across 2 events (NOAA GFS forecast): median 0.41 (range 0.12–0.80; weakest: Helene 2024)");
+    const s7 = spreadFor(b, "7d", "gfs")!;
+    expect(s7.source).toBe("perfect");
+    expect(spreadLine(s7.rows[0], s7.source)).toContain("(observed rain)");
+    expect(spreadFor(b, "72h", "gfs")).toBeUndefined();
+    expect(spreadFor(buildMlView(v1, "rs_2024")!, "24h", "gfs")).toBeUndefined();
   });
 });

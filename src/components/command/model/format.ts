@@ -1,9 +1,9 @@
 // Date, hour and number text for the Command Center (took over the old
 // tabs/format.ts). It lives here because src/lib is owned by other work.
-import { fmtDataDate, fmtDate, fmtDateTime } from "@/lib/layers";
+import { fmtDataDate, fmtDataStamp, fmtDate, fmtDateTime } from "@/lib/layers";
 import { NOT_PUBLISHED } from "./types";
 
-export { fmtDataDate, fmtDate, fmtDateTime };
+export { fmtDataDate, fmtDataStamp, fmtDate, fmtDateTime };
 
 const finite = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v);

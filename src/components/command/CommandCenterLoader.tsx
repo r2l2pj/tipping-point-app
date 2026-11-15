@@ -82,6 +82,38 @@ function slimLayer(layer: NonNullable<CcBundle["manifest"]>["layers"][number]) {
 const METRICS_DROP = ["landslide_ml", "lead_time_asavail", "scar_sensitivity", "scar_sensitivity_note",
   "scar_method", "collections", "t_ml_note"];
 
+// lead-analysis "Did the alert come before?" objects carry per-issue and
+// per-date curves; the browser needs only the denominators and the text.
+const WARNED_OBJECTS = ["flood_warned", "slide_warned"];
+const WARNED_KEEP = ["n_points", "confirmed_flood_km2", "explanation", "anchor_utc", "anchor_basis", "anchor_local", "anchor_label", "anchor_short", "unit"];
+function slimWarned(v: unknown): unknown {
+  if (!isRecord(v)) return v;
+  const out: Record<string, unknown> = Object.fromEntries(Object.entries(v).filter(([k]) => WARNED_KEEP.includes(k)));
+  // The runs up to 72 h before the damage, three fields each (L36: the
+  // 24, 48 and 72 h runs side by side — single runs vary).
+  if (Array.isArray(v.by_issue_gfs)) {
+    out.by_issue_gfs = v.by_issue_gfs
+      .filter((r): r is Record<string, unknown> => isRecord(r) && typeof r.hours_before_anchor === "number" && r.hours_before_anchor < 73)
+      .map((r) => ({ issue: r.issue, hours_before_anchor: r.hours_before_anchor, alto_or_critico_pct: r.alto_or_critico_pct }));
+  }
+  // L37 by_lead {24|48|72: {gfs: {...}}}: the one run per lead the row prints.
+  if (isRecord(v.by_lead)) {
+    out.by_lead = Object.fromEntries(Object.entries(v.by_lead).map(([k, x]) => {
+      const g = isRecord(x) && isRecord(x.gfs) ? x.gfs : undefined;
+      return [k, g ? { gfs: { issue: g.issue, hours_before_anchor: g.hours_before_anchor, alto_or_critico_pct: g.alto_or_critico_pct } } : {}];
+    }));
+  }
+  return out;
+}
+
+// imerg_vs_gauge ships a per-station table (stations[]) the screen never
+// reads — the rain-check line cites only the medians, the counts and the
+// caveat.
+function slimGauge(v: unknown): unknown {
+  if (!isRecord(v)) return v;
+  return Object.fromEntries(Object.entries(v).filter(([k]) => k !== "stations"));
+}
+
 // T_ML (lead-ml ml/t_ml.json): one static layer, added as manifest layer
 // `t_ml` to every case its bounds overlap (RS Serra region). The PNG path is
 // relative to the data root, so it is resolved here to an absolute URL.
@@ -119,7 +151,9 @@ function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
     : undefined;
   const zones = slimZones(bundle.zones);
   const metricsView = bundle.metricsView
-    ? (Object.fromEntries(Object.entries(bundle.metricsView).filter(([k]) => !METRICS_DROP.includes(k))) as CcBundle["metricsView"])
+    ? (Object.fromEntries(Object.entries(bundle.metricsView)
+        .filter(([k]) => !METRICS_DROP.includes(k))
+        .map(([k, v]) => [k, k === "imerg_vs_gauge" ? slimGauge(v) : WARNED_OBJECTS.includes(k) ? slimWarned(v) : v])) as CcBundle["metricsView"])
     : bundle.metricsView;
   // The raw metrics blob duplicates metricsView; the screen reads only its
   // `_null_reasons` (availability.nullReason).

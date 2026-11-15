@@ -13,7 +13,7 @@ import {
 } from "@/lib/layers";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
 import { declared } from "./lazy";
-import { fmtDataDate, fmtDate } from "./format";
+import { fmtDataStamp, fmtDate } from "./format";
 import type { MapOverlays } from "./overlays";
 import { CANDIDATES_LABEL, floodLabels } from "./radar";
 import { frameBasis, partlyForecastText } from "./steps";
@@ -51,7 +51,7 @@ const DEFS: Def[] = [
   { id: "flood", group: "Observations", short: "Flood" },
   { id: "candidates", group: "Observations", short: "Scar candidates" },
   { id: "catalog", group: "Replay evidence", short: "Landslide catalog" },
-  { id: "opera", group: "Replay evidence", short: "OPERA water map" },
+  { id: "opera", group: "Replay evidence", short: "NISAR vs OPERA flood check" },
 ];
 
 export const LAYER_SHORT = Object.fromEntries(
@@ -140,18 +140,18 @@ export function layerRows(
     flood: floodLabels(bundle).layer,
     candidates: CANDIDATES_LABEL,
     catalog: "Landslide catalog",
-    opera: "OPERA water map",
+    opera: "NISAR vs OPERA flood check",
   };
   const okSub: Partial<Record<LayerId, string | undefined>> = {
     tpi: partlyForecastText(bundle, stepDate) ? `${partlyForecastText(bundle, stepDate)} (partly forecast)`
-      : [stepDate ? `data ${fmtDataDate(stepDate)}` : undefined, frameBasis(bundle, stepDate, hazard)]
+      : [stepDate ? `data ${fmtDataStamp(stepDate)}` : undefined, frameBasis(bundle, stepDate, hazard)]
       .filter(Boolean).join(" · ") || undefined,
-    imerg: dateOf(bundle, "imerg") ? `data ${fmtDataDate(dateOf(bundle, "imerg"))}` : undefined,
-    smap: dateOf(bundle, "smap") ? `data ${fmtDataDate(dateOf(bundle, "smap"))}` : undefined,
+    imerg: dateOf(bundle, "imerg") ? `data ${fmtDataStamp(dateOf(bundle, "imerg"))}` : undefined,
+    smap: dateOf(bundle, "smap") ? `data ${fmtDataStamp(dateOf(bundle, "smap"))}` : undefined,
     ptrigger: probLayerNote(probFrame(bundle.manifest?.layers, probHorizon, stepDate)),
     flood: passDates.length ? `NISAR passes: ${passDates.join(", ")}` : undefined,
     opera: pngLayer(bundle, "opera_validation")?.date
-      ? `data ${fmtDataDate(pngLayer(bundle, "opera_validation")?.date)}` : undefined,
+      ? `data ${fmtDataStamp(pngLayer(bundle, "opera_validation")?.date)}` : undefined,
   };
   const reason: Record<LayerId, string> = {
     tpi: bundle.riskPaused ? RISK_PAUSED_SHORT : NO_MAP_LAYER_TEXT,
@@ -179,6 +179,12 @@ export function layerRows(
     };
   });
 }
+
+// Judge report #6 (conductor): a toggle that can never turn on for this case
+// ("no map layer for this case") is hidden, not shown greyed out. Rows with
+// a reason that can change (risk paused, radar pending, pass dates) stay.
+export const visibleLayerRows = <T extends { available: boolean; sub?: string }>(rows: T[]): T[] =>
+  rows.filter((r) => r.available || r.sub !== NO_MAP_LAYER_TEXT);
 
 export interface ToggleResult {
   layers: LayerId[]; // oldest first, at most MAX_LAYERS

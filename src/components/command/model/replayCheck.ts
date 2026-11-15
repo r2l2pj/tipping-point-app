@@ -3,10 +3,12 @@
 import { count } from "@/lib/contract";
 import type { DayPoint } from "@/lib/types";
 import { availability, missingText, nullReason } from "./availability";
-import { finite, fmtDate, fmtKm2, fmtPct, fmtPeople, fmtScore } from "./format";
+import { finite, fmtDate, fmtDayShort, fmtKm2, fmtPct, fmtPeople, fmtScore } from "./format";
 import { floodLabels, swathLine } from "./radar";
 import { thresholdFor } from "./status";
 import { NOT_PUBLISHED, type CcBundle } from "./types";
+
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
 export interface CheckRow {
   id: string;
@@ -24,7 +26,7 @@ const round = (v: unknown): string => (finite(v) ? String(Math.round(v)) : "not 
 // percent. metricsView already normalizes cloud_pct to 0-1, so 1 means 100%
 // cloud here; only a value > 1 can be a raw 0-100 metrics.json number (e.g.
 // 92.9) that skipped normalization — rescale it so it can never render as
-// -9189%. Out of range -> null: no "the optical saw" sentence.
+// -9189%. Out of range -> null: no "clouds hid" sentence.
 export function opticalSeenPct(cloudPct: unknown): number | null {
   if (!finite(cloudPct)) return null;
   const frac = cloudPct > 1 ? cloudPct / 100 : cloudPct;
@@ -84,9 +86,16 @@ export function forecastLead(bundle: CcBundle): ForecastLead | undefined {
   };
 }
 
-export const hasLeadTime = (bundle: CcBundle): boolean => forecastLead(bundle) !== undefined;
+// L35 (conductor, 2026-11-15): the forecast lead-time headline (WA "median
+// 85 h") is held until lead-analysis re-scores it — WA's flooded places were
+// not flagged before the damage. Set to false once L35 publishes.
+export const LEAD_TIME_HELD = true;
+export const LEAD_TIME_REEVALUATED = "being re-evaluated";
 
-export const LEAD_TIME_PENDING = "pending: forecast rebuild";
+export const hasLeadTime = (bundle: CcBundle): boolean => !LEAD_TIME_HELD && forecastLead(bundle) !== undefined;
+
+export const LEAD_TIME_PENDING_REBUILD = "pending: forecast rebuild";
+export const LEAD_TIME_PENDING = LEAD_TIME_HELD ? LEAD_TIME_REEVALUATED : LEAD_TIME_PENDING_REBUILD;
 export const LEAD_TIME_NAME = "Lead time before the damage (NOAA GFS forecast replay)";
 
 const ofDays = (f: ForecastLead) => `${round(f.warned)} of ${round(f.scorable)} forecast days`;
@@ -104,6 +113,39 @@ export function leadTimeText(bundle: CcBundle): string {
   }
   const range = f.iqr ? `IQR ${round(f.iqr[0])}–${round(f.iqr[1])} h, ` : "";
   return `median ${hours(f.median)} (${range}${ofDays(f)})`;
+}
+
+// L37 (conductor): lead-analysis's onset-anchored lead time
+// (forecast_lead_time_onset) replaces the held 'How early?' only labelled for
+// what it measures: TPI Critical ANYWHERE in the case region before the event
+// start — not at the damage sites (the warned row covers those).
+export const ONSET_LEAD_NAME = "Critical anywhere in the region before the event start (NOAA GFS replay)";
+export const ONSET_LEAD_SCOPE = "Critical anywhere in the region — not at the damage sites (see the High-or-Critical row for those).";
+export interface OnsetLead { text: string; lines: string[] }
+export function onsetLead(m: M): OnsetLead | undefined {
+  const o = m.forecast_lead_time_onset;
+  if (!isRecord(o) || o.anchor_basis !== "onset") return undefined;
+  if (!/anywhere/i.test(String(o.definition ?? ""))) return undefined;
+  if (!finite(o.n_warned) || !finite(o.n_issue_days) || o.n_issue_days < 1) return undefined;
+  const runs = `${o.n_warned} of ${o.n_issue_days} forecast runs`;
+  const leads = (Array.isArray(o.issue_days) ? o.issue_days : [])
+    .filter((d): d is M => isRecord(d) && d.warned === true && finite(d.lead_h))
+    .map((d) => d.lead_h as number).sort((a, b) => b - a);
+  let text: string;
+  if (o.n_warned === 0) text = `none of ${o.n_issue_days} forecast runs reached Critical before the event start`;
+  else if (o.n_warned >= 3 && finite(o.lead_h_median)) {
+    const iqr = Array.isArray(o.lead_h_iqr) && o.lead_h_iqr.length === 2 && o.lead_h_iqr.every(finite)
+      ? `IQR ${round(o.lead_h_iqr[0])}–${round(o.lead_h_iqr[1])} h, ` : "";
+    text = `median ${hours(o.lead_h_median)} (${iqr}${runs})`;
+  } else text = `${runs} reached it, ${leads.map(hours).join(" and ")} ahead`;
+  const day = typeof o.anchor_local === "string" && /^\d{4}-\d{2}-\d{2}/.test(o.anchor_local)
+    ? o.anchor_local.slice(0, 10) : typeof o.anchor_utc === "string" ? o.anchor_utc.slice(0, 10) : undefined;
+  const lines = [
+    `Event start: ${anchorShort(o)}${day ? ` (${fmtDate(day)})` : ""}`,
+    typeof o.earliest_critical_issue === "string"
+      ? `Earliest forecast run that reached it: ${fmtDate(o.earliest_critical_issue)} (00Z)` : undefined,
+  ].filter((x): x is string => !!x);
+  return { text, lines };
 }
 
 const isPlaceholder = (m: M): boolean => {
@@ -136,7 +178,10 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
       missing: false,
     });
   } else {
-    rows.push({ id: "lead-time", name: LEAD_TIME_NAME, value: LEAD_TIME_PENDING, missing: true });
+    const onset = onsetLead(m);
+    rows.push(onset
+      ? { id: "lead-time", name: ONSET_LEAD_NAME, value: onset.text, detail: [ONSET_LEAD_SCOPE, ...onset.lines].join(" "), missing: false }
+      : { id: "lead-time", name: LEAD_TIME_NAME, value: LEAD_TIME_PENDING, missing: true });
   }
   // "% of zones warned first" was dropped (Lucas, 2026-11-15): no row.
   optional("flood-agreement", "Flood agreement with the reference", "iou", () => {
@@ -153,8 +198,10 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
   });
   optional("catalog-hits", "Landslide catalog hits", "landslide_hit_pct", () =>
     finite(m.landslide_hit_pct)
-      ? { id: "catalog-hits", name: "Landslide catalog hits", value: fmtPct(m.landslide_hit_pct), missing: false }
+      ? { id: "catalog-hits", name: "Landslide catalog hits", value: fmtPct(m.landslide_hit_pct), detail: catalogHitsDetail(m), missing: false }
       : undefined);
+  const warned = warnedRow(m);
+  if (warned) rows.push(warned);
   // Model scores are shown only with their n, in the 'Did we get it right?'
   // card (lead-ml ml_card.json); the bare rf_auc / rule_auc row is gone.
   optional("flooded", floodLabels(bundle).area, "flooded_km2", () =>
@@ -165,6 +212,86 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
         }
       : undefined);
   return rows;
+}
+
+// "Did the alert come before?" (lead-analysis tools/warned_before.py, SCHEMA
+// 'Did the alert come before?'): share of the damage the TPI already flagged
+// High or above in the NOAA GFS frames issued 24-48 h before the damage
+// anchor. The *_warned*_pct values are authored 0-100 and are NOT in the
+// contract's PCT_KEYS (whose >= 1 heuristic turned 0.98 into 98%): they are
+// printed as published.
+const pct100 = (v: number) => `${v < 1 && v > 0 ? v.toFixed(2) : v.toFixed(1)}%`;
+// L36 headline wording (lead-submission): "forecast as issued".
+export const WARNED_NAME = {
+  slide: "Mapped landslides in High or Critical areas (forecast as issued)",
+  flood: "Flooded area in High or Critical areas (forecast as issued)",
+};
+// L37 (conductor): the RS landslide anchor (May 1) is under review — the
+// event likely started Apr 29-30. A warned row (landslide or flood) shows its
+// numbers only when lead-analysis marks the anchor as the event onset.
+export const WARNED_REANCHOR = "being re-anchored to the event start";
+// Short name of the anchor event: lead-analysis anchor_short when present,
+// else the head of anchor_label ("event onset: first deaths of the event
+// (…)" -> "the first deaths"; "event onset day: heavy rain begins
+// 2025-12-08; …" -> "heavy rain began"), else "the event start".
+export function anchorShort(obj: M): string {
+  if (typeof obj.anchor_short === "string" && obj.anchor_short.trim()) return obj.anchor_short.trim();
+  const label = typeof obj.anchor_label === "string" ? obj.anchor_label : "";
+  const head = label.replace(/^event onset( day)?:\s*/i, "").split(/[(;]/)[0].trim()
+    .replace(/\s*\d{4}-\d{2}-\d{2}\s*$/, "").replace(/ of the event$/i, "").trim();
+  if (!head || head === label.trim()) return "the event start";
+  if (/^first /i.test(head)) return `the ${head}`;
+  return head.replace(/\bbegins$/i, "began");
+}
+export function warnedRow(m: M): CheckRow | undefined {
+  for (const hz of ["slide", "flood"] as const) {
+    const v = m[`${hz}_warned_pct`];
+    if (!finite(v)) continue;
+    const obj = (m[`${hz}_warned`] ?? {}) as M;
+    if (obj.anchor_basis !== "onset") {
+      return { id: "warned-before", name: WARNED_NAME[hz], value: WARNED_REANCHOR, missing: true };
+    }
+    const crit = m[`${hz}_warned_critical_pct`];
+    const obs = m[`${hz}_warned_observed_pct`];
+    const of = hz === "slide"
+      ? (finite(obj.n_points) ? ` of ${obj.n_points.toLocaleString("en-US")} mapped landslides` : " of mapped landslides")
+      : (finite(obj.confirmed_flood_km2) ? ` of ${fmtKm2(obj.confirmed_flood_km2)} radar-mapped flood` : " of the radar-mapped flood");
+    // L37: the anchor is the documented event start; date shown in the
+    // event's local day (anchor_local), else the UTC day.
+    const day = typeof obj.anchor_local === "string" && /^\d{4}-\d{2}-\d{2}/.test(obj.anchor_local)
+      ? obj.anchor_local.slice(0, 10)
+      : typeof obj.anchor_utc === "string" ? obj.anchor_utc.slice(0, 10) : undefined;
+    const anchor = `${anchorShort(obj)}${day ? ` (${fmtDate(day)})` : ""}`;
+    // One forecast run per lead (lead-analysis by_lead 24/48/72: the 00Z run
+    // issued at least that long before the anchor), nearest first: "27 h
+    // before the first deaths (Apr 29, 2024): 36.5%; 51 h before: 0.0%; …".
+    // Older exports: by_issue_gfs runs < 73 h. Single runs vary (L36).
+    const byLead = isRecord(obj.by_lead) ? obj.by_lead : undefined;
+    const runs = (byLead
+      ? Object.values(byLead).map((x) => (isRecord(x) && isRecord(x.gfs) ? x.gfs : undefined))
+      : (Array.isArray(obj.by_issue_gfs) ? obj.by_issue_gfs as M[] : []).filter((r) => finite(r?.hours_before_anchor) && (r.hours_before_anchor as number) < 73))
+      .filter((r): r is M => isRecord(r) && finite(r.hours_before_anchor) && finite(r.alto_or_critico_pct))
+      .sort((a, b) => (a.hours_before_anchor as number) - (b.hours_before_anchor as number));
+    const runText = runs.map((r, i) =>
+      `${Math.round(r.hours_before_anchor as number)} h before${i === 0 ? ` ${anchor}` : ""}: ${pct100(r.alto_or_critico_pct as number)}`);
+    const detail = [
+      (runText.length
+        ? `NOAA GFS forecast issued ${runText.join("; ")}${runText.length > 1 ? " — single runs vary" : ""}`
+        : `TPI High or above in the NOAA GFS forecast issued 24 h before ${anchor}`) +
+        (finite(obs) ? `; with observed rain instead: ${pct100(obs)}` : "") + ".",
+      // WA: why 27.9 km² here vs 27.99 km² flooded (lead-analysis).
+      typeof m[`${hz}_warned_denominator_label`] === "string" ? `${m[`${hz}_warned_denominator_label`]}.` : undefined,
+      typeof obj.explanation === "string" ? obj.explanation : undefined,
+    ].filter(Boolean).join(" ");
+    return {
+      id: "warned-before",
+      name: WARNED_NAME[hz],
+      value: `${pct100(v)}${of}${finite(crit) ? ` (Critical ${pct100(crit)})` : ""}`,
+      detail,
+      missing: false,
+    };
+  }
+  return undefined;
 }
 
 // --- evidence details (G4) ----------------------------------------------------
@@ -188,8 +315,24 @@ export interface LeadTimeBlock {
   note: string;
 }
 
+// Terrain check (lead-analysis fallback 80505ff): the NASADEM HAND proxy vs
+// MERIT Hydro (reference only), IoU 0-1 of the HAND < 5 m zones + Pearson r.
+// Reads hand_validation_iou (hand_validation sits in PCT_KEYS).
+export interface HandCheck { line: string; definition?: string }
+export function handCheck(m: M): HandCheck | undefined {
+  const iou = m.hand_validation_iou;
+  if (!finite(iou) || iou < 0 || iou > 1) return undefined;
+  const r = m.hand_validation_r;
+  const radius = m.hand_validation_radius_m;
+  return {
+    line: `IoU ${fmtScore(iou)}${finite(r) ? ` · r ${fmtScore(r)}` : ""}${finite(radius) ? ` · radius ${Math.round(radius)} m` : ""}`,
+    definition: typeof m.hand_validation_definition === "string" ? m.hand_validation_definition : undefined,
+  };
+}
+
 export interface Evidence {
   hasMetrics: boolean;
+  hand?: HandCheck;
   floodStats: Stat[];
   floodNote: string;
   // Secondary check: every OPERA water pixel incl. permanent water
@@ -199,22 +342,52 @@ export interface Evidence {
   modelTitle: string;
   modelStats: Stat[];
   leadTime?: LeadTimeBlock; // hidden when the case has no metrics at all
+  // "Rain check" line (metrics.imerg_vs_gauge, lead-analysis): IMERG Final
+  // daily vs INMET gauges. Hidden when the case ships no gauge check.
+  rainCheck?: string;
   whyRadar: string;
   featureImportance?: Record<string, number>;
   impactStats: Stat[];
   exposureBasis: string;
 }
 
+// QA (fresh eyes): next to the forecast row, the catalog-hit share must say
+// it is the observed-rain index after the fact, not a forecast.
+export function catalogHitsDetail(m: M): string {
+  const h = isRecord(m.landslide_hit) ? m.landslide_hit : {};
+  const n = finite(h.n_points) ? h.n_points : undefined;
+  return `Share of the ${n !== undefined ? `${n.toLocaleString("en-US")} ` : ""}mapped landslides where the index was Critical (0.60 or more) ` +
+    "with observed rain at the event peak — measured after the fact, not a forecast." +
+    (n !== undefined && n < 30 ? ` Only ${n} points: a fragile share.` : "");
+}
+
+// Flood scores: one reason for the whole block when the case has none (RS:
+// before NISAR) — precision/recall carry no own null reason.
+const FLOOD_SCORE_KEYS = ["iou", "f1", "precision", "recall"];
 const stat = (bundle: CcBundle, label: string, key: string, format: (v: unknown) => string): Stat => {
   const v = (bundle.metricsView as M | undefined)?.[key];
-  return finite(v)
-    ? { label, value: format(v), missing: false }
-    : { label, value: missingText(availability(bundle, key)), missing: true };
+  if (finite(v)) return { label, value: format(v), missing: false };
+  let reason = missingText(availability(bundle, key));
+  if (FLOOD_SCORE_KEYS.includes(key) && reason === NOT_PUBLISHED) {
+    const shared = FLOOD_SCORE_KEYS.map((k) => missingText(availability(bundle, k))).find((t) => t !== NOT_PUBLISHED);
+    if (shared) reason = shared;
+  }
+  return { label, value: reason, missing: true };
 };
 
 function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
   if (!bundle.metricsView) return undefined;
   if (!hasLeadTime(bundle)) {
+    const onset = onsetLead(m);
+    if (onset) {
+      return {
+        placeholder: false,
+        median: `Using the forecast available at the time: ${onset.text}`,
+        iqr: "", shares: [], histogram: undefined,
+        lines: [ONSET_LEAD_SCOPE, ...onset.lines],
+        note: "",
+      };
+    }
     return {
       missing: `Lead time: ${LEAD_TIME_PENDING}.`,
       placeholder: false, median: "", iqr: "", shares: [], lines: [], histogram: undefined, note: "",
@@ -251,6 +424,74 @@ function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
   };
 }
 
+// The gauge-check window ("2024-04-20..2024-05-15" or a [start, end] pair)
+// as "Apr 20 to May 15, 2024"; an unrecognized shape is printed as authored.
+const gaugeWindow = (w: unknown): string | undefined => {
+  const parts = (typeof w === "string" ? w.split("..") : Array.isArray(w) ? w : [])
+    .map((p) => (typeof p === "string" ? p.trim() : ""));
+  return parts.length === 2 && parts[0] && parts[1]
+    ? `${fmtDayShort(parts[0])} to ${fmtDate(parts[1])}`
+    : typeof w === "string" && w ? w : undefined;
+};
+
+// "Rain check" (lead-analysis imerg_vs_gauge, validation only): IMERG Final
+// daily at each station's 0.1 deg cell vs the INMET gauge in it. The line
+// always carries its n — without the counts it does not render at all.
+// bias_pct_median is authored as a percent: printed as written, never ×100.
+export function rainCheckLine(m: M): string | undefined {
+  const g = m.imerg_vs_gauge;
+  if (!isObj(g)) return undefined;
+  const { n_stations: nStations, n_station_days: nDays, pearson_r_median: r, bias_pct_median: bias } = g;
+  if (![nStations, nDays, r, bias].every(finite)) return undefined;
+  const win = gaugeWindow(g.window);
+  const caveat = typeof g.caveat === "string" && g.caveat ? g.caveat : undefined;
+  return (
+    `IMERG vs ${nStations} INMET rain gauges (${nDays} station-days${win ? `, ${win}` : ""}): ` +
+    `median r ${(r as number).toFixed(2)}, IMERG ${(bias as number) > 0 ? "+" : ""}${bias}%` +
+    `${caveat ? `; ${caveat}` : ""} (validation only)`
+  );
+}
+
+// The optical scenes the cloud share was measured on, from cloud_pct_source
+// ("… 2025-12-15/17 …", "… 20 scenes on 2024-05-01, 2024-05-02, 2024-05-03").
+export function sceneDates(source: string): string[] {
+  const out = new Set<string>();
+  for (const x of source.matchAll(/(\d{4}-\d{2})-(\d{2})((?:\/\d{2})*)/g)) {
+    out.add(`${x[1]}-${x[2]}`);
+    for (const d of x[3].split("/").filter(Boolean)) out.add(`${x[1]}-${d}`);
+  }
+  return [...out].sort();
+}
+
+const dayMs = 86_400_000;
+function fmtScenes(dates: string[]): string {
+  if (dates.length === 1) return fmtDate(dates[0]);
+  const [a, z] = [dates[0], dates[dates.length - 1]];
+  const sameMonth = a.slice(0, 7) === z.slice(0, 7);
+  const consecutive = (Date.parse(z) - Date.parse(a)) / dayMs === dates.length - 1;
+  if (sameMonth) {
+    const mon = fmtDate(a).replace(/\s*\d+,.*$/, ""); // "May"
+    const year = a.slice(0, 4);
+    const days = dates.map((d) => String(Number(d.slice(8, 10))));
+    return consecutive
+      ? `${mon} ${days[0]}–${days[days.length - 1]}, ${year}`
+      : `${mon} ${days.slice(0, -1).join(", ")} and ${days[days.length - 1]}, ${year}`;
+  }
+  return `${fmtDate(a)} to ${fmtDate(z)}`;
+}
+
+// Conductor: the cloud share is measured on the optical scenes named in
+// cloud_pct_source, never "during the event" by default. The dates are
+// named; "after the storm" only when every scene is after the case's
+// reference (event) date — WA's Dec 15/17 HLS, not RS's May 1–3.
+export function whyRadarText(cloudPct: number, source: string, referenceDate?: string): string {
+  const dates = sceneDates(source);
+  const hls = /HLS/.test(source);
+  const after = !!referenceDate && dates.length > 0 && dates.every((d) => d > referenceDate.slice(0, 10));
+  const scenes = `In the optical${hls ? " (HLS)" : ""} scenes${dates.length ? ` of ${fmtScenes(dates)}` : ""}${after ? ", after the storm" : ""}`;
+  return `${scenes}, clouds hid ${cloudPct}% of the area. Radar sees through cloud.`;
+}
+
 // `day`: the selected timeline day. People in critical areas follow it when
 // the series carries a per-day count (same rule as the tile).
 export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
@@ -267,10 +508,9 @@ export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
       stat(bundle, "Precision", "precision", fmtScore),
       stat(bundle, "Recall", "recall", fmtScore),
       stat(bundle, "Landslide catalog hits", "landslide_hit_pct", fmtPct),
-      // hand_validation is hidden (conductor, 2026-11-15): the published value
-      // is already a percent (0.98 %) and lead-analysis is re-checking what it
-      // measures (G2). Brought back once G2 settles the unit and meaning.
+      // HAND has its own card (handCheck): IoU 0-1, not a flood score.
     ],
+    hand: handCheck(m),
     floodNote:
       typeof m.validation_method === "string" && m.validation_method
         ? m.validation_method
@@ -289,8 +529,9 @@ export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
       stat(bundle, "Manual slope-rule AUC", "rule_auc", fmtScore),
     ],
     leadTime: leadTimeBlock(bundle, m),
+    rainCheck: rainCheckLine(m),
     whyRadar: optical != null
-      ? `During the event the optical saw only ${optical}% of the scene — the rest was cloud. SAR sees through.`
+      ? whyRadarText(100 - optical, String(m.cloud_pct_source ?? ""), bundle.reference_date)
       : "Cloud cover during the event is not reported for this case — SAR sees through either way.",
     featureImportance:
       m.feature_importance && typeof m.feature_importance === "object"

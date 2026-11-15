@@ -1,6 +1,6 @@
 "use client";
 
-import { ALERT_FOOTER, ALERT_LEVEL_WORDS, heldLabel, type AlertCardData } from "@/lib/alerts";
+import { ALERT_FOOTER, ALERT_LEVEL_WORDS, EXPERIMENTAL_TEXT, heldLabel, type AlertCardData } from "@/lib/alerts";
 import type { AlertLevel } from "@/lib/types";
 import { fmtBrt, fmtDate, fmtKm2 } from "./model/format";
 
@@ -16,12 +16,14 @@ export default function AlertCard({
   alert: a,
   onViewOnMap,
   noFooter = false,
+  experimental = false,
 }: {
   alert: AlertCardData;
   onViewOnMap: (alert: AlertCardData) => void;
   // Replay cards: the Civil Defense contact line (a Brazilian number) is
   // not shown — the replay may be another country and nothing was sent.
   noFooter?: boolean;
+  experimental?: boolean; // live cards: "Experimental — not an official warning"
 }) {
   const style = LEVEL_STYLE[a.level] ?? LEVEL_STYLE.watch;
   const word = ALERT_LEVEL_WORDS[a.level] ?? ALERT_LEVEL_WORDS.watch;
@@ -40,6 +42,7 @@ export default function AlertCard({
         <p className="text-[15px] font-semibold">{a.title ?? `Tipping Point: ${word} ${hazardWord} risk`}</p>
         <span className={`shrink-0 rounded-[5px] px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${style.chip}`}>{a.level}</span>
       </div>
+      {experimental && <p className="mt-1 text-xs font-semibold text-cc-warn" data-experimental-card>{EXPERIMENTAL_TEXT}</p>}
       <p className="mt-1.5 text-[13px]"><span className="text-cc-muted">Region:</span> {a.region ?? a.area}</p>
       {a.first_issued_at && (
         <p className="mt-1 text-[13px]">

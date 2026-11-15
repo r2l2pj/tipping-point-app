@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import {
-  FEW_POSITIVES, ML_PROVISIONAL, ML_PROVISIONAL_TEXT, mlCaveats, SOURCE_LABEL, TML_RETRAIN_NOTE,
+  FEW_POSITIVES, ML_PROVISIONAL_TEXT, mlCaveats, SOURCE_LABEL, spreadFor, spreadLine, TML_RETRAIN_NOTE,
   type MlTable, type MlView,
 } from "./model/ml";
 
 const caseTitle = (id?: string) => (id === "rs_2024" ? "RS 2024" : id === "wa_2025" ? "WA 2025" : id ?? "this event");
+// v2: T_ML retrained without RS (L32); its TEST changed, so no v1 comparison.
+const TML_V2_NOTE = "Retrained without any Rio Grande do Sul 2024 point. TEST = held-out Brazilian event landslides vs random land — not comparable to the earlier version.";
 
 function Table({ t, caption }: { t: MlTable; caption: string }) {
   if (t.reason) return <p className="text-xs italic text-cc-faint">{caption}: not evaluated ({t.reason}).</p>;
@@ -73,10 +75,13 @@ export default function MlCard({ ml }: { ml: MlView }) {
   return (
     <section aria-label="Did we get it right?" data-ml-card className="rounded-lg border border-cc-line p-2.5 text-xs">
       <h3 className="m-0 text-[13px] font-semibold">Did we get it right? (TEST data the models never saw)</h3>
-      {ML_PROVISIONAL && (
+      {ml.provisional && (
         <p role="status" data-ml-provisional className="mt-1 rounded-md border border-[#e2c48a] bg-cc-warn-soft px-2 py-1 text-[13px] font-semibold text-cc-warn">
           {ML_PROVISIONAL_TEXT}
         </p>
+      )}
+      {ml.version && !ml.provisional && (
+        <p data-ml-version className="mt-1 text-cc-muted">Model version {ml.version} · re-scored on {ml.testEventList.length || ml.testEvents.length} unseen events</p>
       )}
       {/* lead-ml's caveats first, in plain words. */}
       <ul className="m-0 mt-1 list-disc pl-4 text-cc-warn" data-ml-caveats>
@@ -107,12 +112,31 @@ export default function MlCard({ ml }: { ml: MlView }) {
           <div className="mt-1.5">
             {ml.when[key] && <Table t={ml.when[key]} caption={`All TEST events · ${h} · ${SOURCE_LABEL[src] ?? src}`} />}
           </div>
+          {(() => {
+            const sp = spreadFor(ml, h, src);
+            if (!sp) return null;
+            return (
+              <ul data-ml-spread className="m-0 mt-1 list-none pl-0 text-cc-muted">
+                {sp.rows.map((r) => <li key={r.model}><span className="font-medium text-cc-ink">{r.label}</span>: {spreadLine(r, sp.source)}</li>)}
+              </ul>
+            );
+          })()}
           {ml.event[key] && (
             <div className="mt-1.5">
               <Table t={ml.event[key]} caption={`This event only (${caseTitle(ml.eventId)})`} />
             </div>
           )}
           {ml.split3b && <p className="mt-1 text-cc-faint">TEST: {ml.split3b}</p>}
+          {ml.testEventList.length > 0 && (
+            <details data-ml-events className="mt-1 text-cc-muted">
+              <summary className="cursor-pointer">TEST events ({ml.testEventList.length})</summary>
+              <ul className="m-0 list-disc pl-4">
+                {ml.testEventList.map((e) => (
+                  <li key={e.id}>{e.name}{e.nPos !== undefined ? ` · ${e.nPos.toLocaleString("en-US")} positive` : ""}{e.source ? ` · ${e.source}` : ""}</li>
+                ))}
+              </ul>
+            </details>
+          )}
         </div>
       )}
 
@@ -122,7 +146,9 @@ export default function MlCard({ ml }: { ml: MlView }) {
           <div className="mt-1"><Table t={ml.where} caption="TEST blocks" /></div>
           {/* L32 (conductor): the terrain model is being retrained without the
               RS 2024 points; this table and the T_ML layer stay meanwhile. */}
-          <p className="mt-1 text-cc-warn">{TML_RETRAIN_NOTE}</p>
+          {ml.tmlExcludesRs
+            ? <p className="mt-1 text-cc-muted" data-tml-v2>{TML_V2_NOTE}</p>
+            : <p className="mt-1 text-cc-warn">{TML_RETRAIN_NOTE}</p>}
           {ml.calibrationNote && <p className="mt-1 text-cc-muted">{ml.calibrationNote}</p>}
           {ml.split3a && <p className="mt-1 text-cc-faint">TEST: {ml.split3a}</p>}
         </div>

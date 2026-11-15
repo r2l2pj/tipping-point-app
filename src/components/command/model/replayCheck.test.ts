@@ -7,7 +7,7 @@ import { bundle, liveBundle, manifest, point } from "./fixtures";
 import { toNowDist } from "../../../lib/response";
 import { nightLightsCompare, radarCard, radarCompare } from "./radar";
 import { sourceRows } from "./sources";
-import { evidence, opticalSeenPct, replayCheckRows } from "./replayCheck";
+import { evidence, LEAD_TIME_HELD, LEAD_TIME_REEVALUATED, opticalSeenPct, replayCheckRows, sceneDates, whyRadarText } from "./replayCheck";
 import type { CcBundle } from "./types";
 
 const mv = (m: Record<string, unknown>) => m as CcBundle["metricsView"];
@@ -17,7 +17,17 @@ const row = (b: CcBundle, id: string) => replayCheckRows(b).find((r) => r.id ===
 
 describe("replay check rows", () => {
   // Real files of lead-analysis (data/<case>/forecast_lead_time.json).
-  test("WA: median with IQR and 'k of n forecast days' — the submission headline words", () => {
+  test.if(LEAD_TIME_HELD)("L35: the lead-time headline is held — 'being re-evaluated', no 85 h anywhere", () => {
+    for (const b of [bundle({ forecastLeadTime: WA_LEAD, metricsView: { iou: 0.5 } as never }),
+      bundle({ id: "rs_2024", forecastLeadTime: RS_LEAD, metricsView: { iou: 0.5 } as never })]) {
+      expect(row(b, "lead-time")).toMatchObject({ value: LEAD_TIME_REEVALUATED, missing: true });
+      const e = evidence(b);
+      expect(e.leadTime?.missing).toBe(`Lead time: ${LEAD_TIME_REEVALUATED}.`);
+      expect(JSON.stringify([replayCheckRows(b), e])).not.toMatch(/\b(85|111) h\b|median \d/);
+    }
+  });
+
+  test.skipIf(LEAD_TIME_HELD)("WA: median with IQR and 'k of n forecast days' — the submission headline words", () => {
     const b = bundle({ forecastLeadTime: WA_LEAD });
     expect(row(b, "lead-time")).toMatchObject({
       name: "Lead time before the damage (NOAA GFS forecast replay)",
@@ -26,25 +36,25 @@ describe("replay check rows", () => {
     });
   });
 
-  test("RS: one flagging day is never a median", () => {
+  test.skipIf(LEAD_TIME_HELD)("RS: one flagging day is never a median", () => {
     const value = row(bundle({ id: "rs_2024", forecastLeadTime: RS_LEAD }), "lead-time")!.value;
     expect(value).toBe("1 of 4 forecast days flagged it, 111 h ahead");
     expect(value).not.toContain("median");
   });
 
-  test("two flagging days show both values", () => {
+  test.skipIf(LEAD_TIME_HELD)("two flagging days show both values", () => {
     const two = { ...WA_LEAD, n_warned: 2, issue_days: (WA_LEAD.issue_days as Record<string, unknown>[])
       .map((d, i) => (i === 2 || i === 3 ? d : { ...d, warned: false, lead_h: null })) };
     expect(row(bundle({ forecastLeadTime: two }), "lead-time")!.value)
       .toBe("2 of 8 forecast days flagged it, 145 h and 121 h ahead");
   });
 
-  test("the file wins; metrics.forecast_lead_time is the fallback", () => {
+  test.skipIf(LEAD_TIME_HELD)("the file wins; metrics.forecast_lead_time is the fallback", () => {
     expect(row(bundle({ metricsView: mv({ forecast_lead_time: WA_LEAD }) }), "lead-time")!.value)
       .toBe("median 85 h (IQR 55–115 h, 6 of 8 forecast days)");
   });
 
-  test("the older event-anchor stat never shows: absent forecast lead reads 'pending: forecast rebuild'", () => {
+  test.skipIf(LEAD_TIME_HELD)("the older event-anchor stat never shows: absent forecast lead reads 'pending: forecast rebuild'", () => {
     for (const m of [undefined, {}, { lead_time_median_h: null },
       { lead_time_median_h: -57, lead_time_iqr_h: [-57, -57], lead_time_n: 5678 },
       { lead_time_median_h: 30, lead_time_iqr_h: [18, 42], lead_time_n: 12 }]) {
@@ -100,10 +110,28 @@ describe("replay check rows", () => {
   });
 });
 
+describe("whyRadarText (scene dates from cloud_pct_source)", () => {
+  const RS = "HLS v2.0 Fmask (HLSL30 Landsat + HLSS30 Sentinel-2), cloud/adjacent/shadow/snow bits 1-4; 20 scenes on 2024-05-01, 2024-05-02, 2024-05-03 (2024-05-01..2024-05-03) over the AOI";
+  test("RS May 1–3 scenes are not 'after the storm' (event date May 2)", () => {
+    expect(sceneDates(RS)).toEqual(["2024-05-01", "2024-05-02", "2024-05-03"]);
+    expect(whyRadarText(100, RS, "2024-05-02"))
+      .toBe("In the optical (HLS) scenes of May 1–3, 2024, clouds hid 100% of the area. Radar sees through cloud.");
+  });
+  test("WA Dec 15/17 after Dec 10; no dates -> no date clause", () => {
+    expect(sceneDates("OPERA DSWx-HLS cloud class (WTR 253) 2025-12-15/17 over the AOI")).toEqual(["2025-12-15", "2025-12-17"]);
+    expect(whyRadarText(93, "", undefined)).toBe("In the optical scenes, clouds hid 93% of the area. Radar sees through cloud.");
+  });
+});
+
 describe("evidence", () => {
-  test("cloud_pct 0.95 gives 'the optical saw only 5%'", () => {
+  test("cloud_pct 0.95 gives 'clouds hid 95%'; an HLS source says 'after the storm', never 'during the event'", () => {
     expect(evidence(bundle({ metricsView: mv({ cloud_pct: 0.95 }) })).whyRadar)
-      .toContain("the optical saw only 5%");
+      .toBe("In the optical scenes, clouds hid 95% of the area. Radar sees through cloud.");
+    const wa = evidence(bundle({ metricsView: mv({ cloud_pct: 92.89292282546754,
+      cloud_pct_source: "OPERA DSWx-HLS cloud class (WTR 253) 2025-12-15/17 over the AOI" }) })).whyRadar;
+    // fixtures: reference_date 2025-12-10 -> Dec 15/17 are after the storm
+    expect(wa).toBe("In the optical (HLS) scenes of Dec 15 and 17, 2025, after the storm, clouds hid 93% of the area. Radar sees through cloud.");
+    expect(wa).not.toContain("during the event");
   });
 
   test("opticalSeenPct accepts 0-1 and 0-100 cloud_pct, never out of range", () => {
@@ -139,7 +167,7 @@ describe("evidence", () => {
       diagnosis: "raw FN 1.19M px = permanent/pre-existing water",
     });
     // a raw 0-100 cloud_pct is rescaled once, never double-scaled
-    expect(e.whyRadar).toContain("the optical saw only 7%");
+    expect(e.whyRadar).toContain("clouds hid 93%");
   });
 
   test("no *_raw keys -> no secondary block; no validation_method -> clear-sky note", () => {
@@ -150,20 +178,20 @@ describe("evidence", () => {
     expect(evidence(bundle({ metricsView: mv({ iou_raw: 0.01 }) })).floodSecondary).toBeDefined();
   });
 
-  test("out-of-range cloud_pct yields no 'optical saw' sentence", () => {
+  test("out-of-range cloud_pct yields no 'clouds hid' sentence", () => {
     for (const cloud_pct of [-3, 250]) {
       const w = evidence(bundle({ metricsView: mv({ cloud_pct }) })).whyRadar;
-      expect(w).not.toContain("the optical saw");
+      expect(w).not.toContain("clouds hid");
       expect(w).toContain("not reported");
     }
   });
 
-  test("rs_2024: cloud_pct 100 -> 'the optical saw only 0%'", () => {
+  test("rs_2024: cloud_pct 100 -> 'clouds hid 100%'", () => {
     expect(evidence(bundle({ metricsView: mv({ cloud_pct: 100 }) })).whyRadar)
-      .toContain("the optical saw only 0%");
+      .toContain("clouds hid 100% of the area");
   });
 
-  test("real public/data/metrics.json renders a sane optical % for every case", () => {
+  test("real public/data/metrics.json renders a sane cloud % for every case", () => {
     const real = JSON.parse(
       readFileSync(join(import.meta.dir, "../../../../public/data/metrics.json"), "utf8")
     ) as { cases: Record<string, Record<string, unknown>> };
@@ -171,18 +199,19 @@ describe("evidence", () => {
       if (raw.cloud_pct == null) continue;
       const cloud = Number(raw.cloud_pct);
       // metrics.json authors *_pct 0-100 (SCHEMA)
-      const expected = Math.round(100 - cloud);
+      const expected = 100 - Math.round(100 - cloud);
       // normalized path (what the loader builds via toMetricsView)
       expect(evidence(bundle({ metricsView: toMetricsView(raw) })).whyRadar)
-        .toContain(`the optical saw only ${expected}%`);
+        .toContain(`clouds hid ${expected}% of the area`);
       // raw path: an un-normalized value must not leak a negative percent
       const viaRaw = evidence(bundle({ metricsView: mv({ cloud_pct: cloud }) })).whyRadar;
-      expect(viaRaw).toContain(`the optical saw only ${expected}%`);
-      expect(viaRaw).not.toMatch(/saw only -/);
+      expect(viaRaw).toContain(`clouds hid ${expected}% of the area`);
+      expect(viaRaw).not.toMatch(/hid -/);
+      expect(viaRaw).not.toContain("during the event");
     }
   });
 
-  test("the lead-time block: hidden without metrics, pending without a forecast lead", () => {
+  test.skipIf(LEAD_TIME_HELD)("the lead-time block: hidden without metrics, pending without a forecast lead", () => {
     expect(evidence(bundle()).leadTime).toBeUndefined();
     const missing = evidence(bundle({ metricsView: mv({ lead_time_median_h: -57, lead_time_n: 5678 }) })).leadTime!;
     expect(missing.missing).toBe("Lead time: pending: forecast rebuild.");
@@ -192,6 +221,37 @@ describe("evidence", () => {
     const rs = evidence(bundle({ metricsView: mv({}), forecastLeadTime: RS_LEAD })).leadTime!;
     expect(rs.median).toBe("Using the forecast available at the time: 1 of 4 forecast days flagged it, 111 h ahead");
     expect(rs.histogram).toBeUndefined();
+  });
+
+  test("rain check: the IMERG-vs-gauges line with its n, bias printed as the authored percent", () => {
+    const e = evidence(bundle({ metricsView: mv({ imerg_vs_gauge: {
+      n_stations: 7, n_station_days: 182, pearson_r_median: 0.8874,
+      bias_pct_median: 5.5, event_total_ratio_median: 1.118,
+      window: "2024-04-20..2024-05-15", caveat: "point gauge vs 0.1 deg cell",
+      stations: [{ id: "A801" }, { id: "A813" }],
+    } }) }));
+    expect(e.rainCheck).toBe(
+      "IMERG vs 7 INMET rain gauges (182 station-days, Apr 20 to May 15, 2024): " +
+      "median r 0.89, IMERG +5.5%; point gauge vs 0.1 deg cell (validation only)"
+    );
+  });
+
+  test("rain check: hidden when absent or without its n; percent never multiplied", () => {
+    expect(evidence(bundle()).rainCheck).toBeUndefined();
+    expect(evidence(bundle({ metricsView: mv({}) })).rainCheck).toBeUndefined();
+    for (const g of [
+      { n_stations: 7, pearson_r_median: 0.9, bias_pct_median: 5.5 },        // no n_station_days
+      { n_station_days: 182, pearson_r_median: 0.9, bias_pct_median: 5.5 }, // no n_stations
+      { n_stations: 7, n_station_days: 182, bias_pct_median: 5.5 },         // no r
+      { n_stations: 7, n_station_days: 182, pearson_r_median: 0.9 },        // no bias
+      "x", 5, null,
+    ]) {
+      expect(evidence(bundle({ metricsView: mv({ imerg_vs_gauge: g }) })).rainCheck).toBeUndefined();
+    }
+    // bias_pct_median is already a percent: -16.7 stays -16.7, never -1670.
+    expect(evidence(bundle({ metricsView: mv({ imerg_vs_gauge: {
+      n_stations: 7, n_station_days: 182, pearson_r_median: 0.6002, bias_pct_median: -16.7,
+    } }) })).rainCheck).toContain("IMERG -16.7%");
   });
 
   test("people in critical areas follow the selected day", () => {
@@ -262,7 +322,7 @@ describe("radar card", () => {
     expect(card.candidates.value).toBe("2,849");
     expect(card.candidates.lines).toEqual([
       "20.0 km² · 522 people (estimate)",
-      "46% of the 16,027 inventoried landslides lie within 500 m of a candidate; 55% of candidates within 500 m of one.",
+      "46% of the 16,027 mapped landslides lie within 500 m of a candidate; 55% of candidates within 500 m of one.",
     ]);
     expect(JSON.stringify(card.candidates)).not.toMatch(/(?<!never )confirmed/);
   });
