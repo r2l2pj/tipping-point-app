@@ -68,3 +68,10 @@ Morning summary for Lucas: `submission/MORNING.md`. One page: every public-facin
 - RS people figure re-checked against tipping-point-data 5faf2bf (one definition: series peak day): 1,488,833 people is the 2024-05-03 peak row (10,870.6 km² Critical: landslide 3,223.8 / flood 7,646.8), not May 2 (May 2 row: 1,487,866 people, 10,569.8 km²). Slide 6 date corrected to "peak day May 3, 2024"; no km² figure for RS is quoted anywhere, and 430 km² never was. WA 229,782 / Dec 12 confirmed as WA's peak row (4,127.5 km²).
 - L32 (conductor, 2026-11-15): the "when × where" figures (24 h PR-AUC 0.717 vs 0.574) and every T_ML / served-score figure (ROC 0.974 vs 0.856, raw 0.548 → 0.156) are withdrawn from MORNING.md because RS points leaked into the terrain model. They stay out until lead-ml republishes. The trigger-only numbers (XGB 0.752 vs RF 0.733 vs TPI rule 0.613) and the slide 3 draft, which quotes only those, stand.
 - L33 (conductor, 2026-11-15): every v1 GFS-source ML number (slide-3 draft PR-AUC 0.75 vs 0.61; MORNING.md ML results; by-lead table) is superseded because 40% of negatives had no GFS run. Marked 'provisional — being re-scored, v2 ~12:00' in MORNING.md/REVIEW.md; slide-3 draft keeps its sentence shape with [X]/[Y]/[B] placeholders until lead-ml republishes v2.
+- Gap audit vs the official 2026 Project Submission Guide (`~/code/r2l2pj/.crew/audit/gaps-submission.md`). New drafts, all awaiting Lucas:
+  - `FORM.md`: every form field. The Detailed Project Description is new text built only from decided or awaiting sentences, with the ML numbers left as placeholders (L33).
+  - `ai-declaration.md` + README "Use of AI".
+  - `storyboard.md` + `captions.srt`: the VO verbatim, a 29.5 s cut.
+  - nasa-data.md: adds OPERA DIST-ALERT-HLS (scar candidates, live).
+  - Slides and script: member names on slide 1, no NASA or mission logos (guide rule), own app footage instead of news stills, and a title overlay on the cold open (the guide's 0:00–0:05 intro). The decided VO is unchanged.
+  - RS event facts (446/497, 185 dead, 581k, R$88.9 bn) are flagged SOURCE NEEDED.
