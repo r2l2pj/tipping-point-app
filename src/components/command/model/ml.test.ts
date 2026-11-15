@@ -99,3 +99,14 @@ describe("lead-ml ea5b2cd: served label and calibration note", () => {
     expect(v.calibrationNote).toContain("Before calibration the models rank in a different order");
   });
 });
+
+describe("ML v2: horizons from the export", () => {
+  test("three horizons (24h, 72h, 7d) are listed as published", () => {
+    const card = read("ml_card.json");
+    const t = card.trigger;
+    const v2 = { ...card, trigger: { "24h": t["24h"], "72h": t["72h"], "7d": t["7d"] }, low_skill_horizons: ["7d"] };
+    const v = buildMlView(v2, "rs_2024")!;
+    expect(v.horizons).toEqual(["24h", "72h", "7d"]);
+    expect(v.lowSkill).toEqual(["7d"]);
+  });
+});

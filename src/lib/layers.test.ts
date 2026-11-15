@@ -8,6 +8,11 @@ import {
   assetUrl,
   capToggleQueue,
   featureCenters,
+  horizonLabel,
+  horizonWords,
+  isLongRange,
+  probHorizonsAvailable,
+  probLayerTitle,
   fmtDate,
   fmtDateTime,
   isForecastLayer,
@@ -782,5 +787,19 @@ describe("probLayerNote drops lead-live's title prefix", () => {
     expect(probLayerNote({ id: "p_trigger_7d", basis_label:
       "Relative likelihood of a rain-triggered landslide within 7d (when x where) — observed IMERG to Nov 14 + NOAA GFS forecast to Nov 21 (issued 2026-11-15 00:00 UTC)" } as never))
       .toBe("observed IMERG to Nov 14 + NOAA GFS forecast to Nov 21 (issued 2026-11-15 00:00 UTC)");
+  });
+});
+
+describe("horizons from the data (ML v2)", () => {
+  test("any <n>h/<n>d key, ordered by duration; labels and long range derived", () => {
+    const layers = ["p_trigger_7d", "p_trigger_24h", "p_trigger_72h", "p_trigger_3d", "other"].map((id) => ({ id, png: "x.png" })) as never;
+    expect(probHorizonsAvailable(layers)).toEqual(["24h", "72h", "3d", "7d"]);
+    expect(horizonLabel("7d")).toBe("7 d");
+    expect(horizonWords("7d")).toBe("7 days");
+    expect(horizonWords("1d")).toBe("1 day");
+    expect(isLongRange("7d")).toBe(true);
+    expect(isLongRange("72h")).toBe(false);
+    expect(isLongRange("72h", { low_skill: true })).toBe(true);
+    expect(probLayerTitle("3d")).toBe("Relative likelihood of a rain-triggered landslide within 3 days (when × where)");
   });
 });

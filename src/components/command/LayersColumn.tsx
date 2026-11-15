@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import {
-  LONG_RANGE_HORIZONS,
+  isLongRange,
   LONG_RANGE_NOTE,
   probFrame,
-  PROB_HORIZON_LABEL,
+  horizonLabel,
   probHorizonsAvailable,
   probLayerNote,
   type ProbHorizon,
@@ -132,12 +132,12 @@ export default function LayersColumn({
                                   : "border-cc-line-strong text-cc-muted hover:text-cc-ink"
                               }`}
                             >
-                              {PROB_HORIZON_LABEL[h]}
+                              {horizonLabel(h)}
                             </button>
                           ))}
                         </span>
                       )}
-                      {prob && LONG_RANGE_HORIZONS.has(probHorizon) && (
+                      {prob && isLongRange(probHorizon, probFrame(bundle.manifest?.layers, probHorizon, stepDate) as { low_skill?: unknown } | undefined) && (
                         <span className="mt-1 block text-xs font-medium text-cc-warn">{LONG_RANGE_NOTE}</span>
                       )}
                     </span>

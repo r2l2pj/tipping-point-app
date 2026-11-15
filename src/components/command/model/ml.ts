@@ -10,6 +10,7 @@
 // roc_auc. The file is ~115 KB, so the server builds this small view per
 // case (buildMlView) and only the view reaches the browser. A metric is never
 // shown without its n.
+import { sortHorizons } from "@/lib/layers";
 import { finite } from "./format";
 
 type M = Record<string, unknown>;
@@ -147,7 +148,8 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
   const split = isRecord(card.split) ? card.split : {};
   const where = tml ? table(whereModels, labels, (m) => tml[m]) : undefined;
   const trig = isRecord(card.trigger) ? card.trigger : {};
-  const horizons = HORIZON_ORDER.filter((h) => isRecord(trig[h]));
+  // Horizons from the export itself (ML v2: 24h / 72h / 7d), by duration.
+  const horizons = sortHorizons(Object.keys(trig).filter((h) => isRecord(trig[h])));
   const sources = ["gfs", "perfect"].filter((s) => horizons.some((h) => isRecord((trig[h] as M)[s])));
   const when: Record<string, MlTable> = {};
   const event: Record<string, MlTable> = {};

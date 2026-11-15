@@ -355,26 +355,45 @@ export function layerAvailable(
 // P(trigger) is a relative likelihood (conductor): never called a
 // probability on screen, and its legend has no percentages.
 export const PROB_LAYER_TITLE = "Relative likelihood of a rain-triggered landslide (when × where)";
-const HORIZON_WORDS: Record<string, string> = { "24h": "24 h", "48h": "48 h", "72h": "72 h", "7d": "7 days", "14d": "14 days" };
 export const probLayerTitle = (h: string): string =>
-  `Relative likelihood of a rain-triggered landslide within ${HORIZON_WORDS[h] ?? h} (when × where)`;
+  `Relative likelihood of a rain-triggered landslide within ${horizonWords(h)} (when × where)`;
 export const PROB_FORECAST_DEFAULT = "NOAA GFS";
 
 // P(trigger) horizons (L27): one manifest layer family per horizon, ids
 // `p_trigger_<h>` (per-day frames repeat the id with different dates).
 // 7 d / 14 d come from the long GFS range (to 384 h) — low forecast skill,
 // so the UI always carries a visible lower-confidence note on them.
+// Horizons come from the data (ML v2 ships 24h / 72h / 7d): any key
+// "<n>h" or "<n>d", ordered by duration. The first list is only the legacy
+// order kept for older manifests and tests.
 export const PROB_HORIZONS = ["24h", "48h", "72h", "7d", "14d"] as const;
-export type ProbHorizon = (typeof PROB_HORIZONS)[number];
+export type ProbHorizon = string;
+const HORIZON_RE = /^(\d+)(h|d)$/;
+export const isHorizonKey = (h: string): boolean => HORIZON_RE.test(h);
+export const horizonHours = (h: string): number => {
+  const m = HORIZON_RE.exec(h);
+  return m ? Number(m[1]) * (m[2] === "d" ? 24 : 1) : Number.POSITIVE_INFINITY;
+};
+export const sortHorizons = (hs: Iterable<string>): string[] =>
+  [...new Set(hs)].filter(isHorizonKey).sort((a, b) => horizonHours(a) - horizonHours(b));
+// "24 h", "7 d" (chips); "24 h", "7 days" (sentences).
+export const horizonLabel = (h: string): string => {
+  const m = HORIZON_RE.exec(h);
+  return m ? `${m[1]} ${m[2]}` : h;
+};
+export const horizonWords = (h: string): string => {
+  const m = HORIZON_RE.exec(h);
+  if (!m) return h;
+  return m[2] === "h" ? `${m[1]} h` : `${m[1]} ${m[1] === "1" ? "day" : "days"}`;
+};
+// Long range: 7 days or more, or the frame says so (lead-live low_skill).
+export const isLongRange = (h: string, layer?: { low_skill?: unknown }): boolean =>
+  layer?.low_skill === true || horizonHours(h) >= 7 * 24;
 export const LONG_RANGE_HORIZONS: ReadonlySet<ProbHorizon> = new Set(["7d", "14d"]);
 export const LONG_RANGE_NOTE = "lower confidence: long-range forecast";
-export const PROB_HORIZON_LABEL: Record<ProbHorizon, string> = {
-  "24h": "24 h",
-  "48h": "48 h",
-  "72h": "72 h",
-  "7d": "7 d",
-  "14d": "14 d",
-};
+export const PROB_HORIZON_LABEL: Record<string, string> = Object.fromEntries(
+  PROB_HORIZONS.map((h) => [h, horizonLabel(h)])
+);
 
 const probId = (h: ProbHorizon) => `p_trigger_${h}`;
 const isHorizonFrame = (l: ManifestLayer, h: ProbHorizon) =>
@@ -384,7 +403,11 @@ const isHorizonFrame = (l: ManifestLayer, h: ProbHorizon) =>
 export function probHorizonsAvailable(
   layers: ManifestLayer[] | undefined
 ): ProbHorizon[] {
-  return PROB_HORIZONS.filter((h) => (layers ?? []).some((l) => isHorizonFrame(l, h)));
+  const keys = (layers ?? [])
+    .filter((l) => Boolean(l.png || l.cog))
+    .map((l) => /^p_trigger_(\d+[hd])(?:_|$)/.exec(l.id)?.[1])
+    .filter((h): h is string => !!h);
+  return sortHorizons(keys);
 }
 
 // The probability frame for a horizon, preferring the selected day. When the
