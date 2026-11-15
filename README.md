@@ -142,6 +142,12 @@ land-cover-aware detection. Data: `data/wa_2025/nisar_hypothesis.json`
   earlier May 1 anchor gave 88.13%; one forecast run carries it. Post-event OPERA DIST-ALERT-HLS scar
   candidates: 2,849 (20.0 km²); 46% of inventory points lie within 500 m of
   one.
+- Rio Grande do Sul 2024, Copernicus EMS EMSR720 landslide polygons (497,
+  Taquari valley only, undated): 81% touched a High-or-above cell in the GFS run
+  issued 27 h before the first deaths (Critical 20.7%); runs issued 51 and 75 h
+  before: 0%. A polygon counts when any ~90 m cell it touches is High+ (centroid
+  cell only: 56.9%). Scar candidates vs these polygons: 3.3× a random
+  steep-terrain baseline at 100 m, only 1.1× at 500 m.
 - Washington 2025: Washington Geological Survey landslide inventory (licence to confirm), 15 points; 66.7%
   fall in Critical cells on the peak day (Dec 12, 2025). The points are
   undated, so this is agreement after the damage, not a forecast.
