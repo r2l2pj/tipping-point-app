@@ -85,7 +85,7 @@ const METRICS_DROP = ["landslide_ml", "lead_time_asavail", "scar_sensitivity", "
 // lead-analysis "Did the alert come before?" objects carry per-issue and
 // per-date curves; the browser needs only the denominators and the text.
 const WARNED_OBJECTS = ["flood_warned", "slide_warned"];
-const WARNED_KEEP = ["n_points", "confirmed_flood_km2", "explanation", "anchor_utc", "anchor_basis", "unit"];
+const WARNED_KEEP = ["n_points", "confirmed_flood_km2", "explanation", "anchor_utc", "anchor_basis", "anchor_local", "anchor_label", "anchor_short", "unit"];
 function slimWarned(v: unknown): unknown {
   if (!isRecord(v)) return v;
   const out: Record<string, unknown> = Object.fromEntries(Object.entries(v).filter(([k]) => WARNED_KEEP.includes(k)));
@@ -95,6 +95,13 @@ function slimWarned(v: unknown): unknown {
     out.by_issue_gfs = v.by_issue_gfs
       .filter((r): r is Record<string, unknown> => isRecord(r) && typeof r.hours_before_anchor === "number" && r.hours_before_anchor < 73)
       .map((r) => ({ issue: r.issue, hours_before_anchor: r.hours_before_anchor, alto_or_critico_pct: r.alto_or_critico_pct }));
+  }
+  // L37 by_lead {24|48|72: {gfs: {...}}}: the one run per lead the row prints.
+  if (isRecord(v.by_lead)) {
+    out.by_lead = Object.fromEntries(Object.entries(v.by_lead).map(([k, x]) => {
+      const g = isRecord(x) && isRecord(x.gfs) ? x.gfs : undefined;
+      return [k, g ? { gfs: { issue: g.issue, hours_before_anchor: g.hours_before_anchor, alto_or_critico_pct: g.alto_or_critico_pct } } : {}];
+    }));
   }
   return out;
 }

@@ -8,6 +8,8 @@ import { floodLabels, swathLine } from "./radar";
 import { thresholdFor } from "./status";
 import { NOT_PUBLISHED, type CcBundle } from "./types";
 
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+
 export interface CheckRow {
   id: string;
   name: string;
@@ -192,6 +194,19 @@ export const WARNED_NAME = {
 // event likely started Apr 29-30. A warned row (landslide or flood) shows its
 // numbers only when lead-analysis marks the anchor as the event onset.
 export const WARNED_REANCHOR = "being re-anchored to the event start";
+// Short name of the anchor event: lead-analysis anchor_short when present,
+// else the head of anchor_label ("event onset: first deaths of the event
+// (…)" -> "the first deaths"; "event onset day: heavy rain begins
+// 2025-12-08; …" -> "heavy rain began"), else "the event start".
+export function anchorShort(obj: M): string {
+  if (typeof obj.anchor_short === "string" && obj.anchor_short.trim()) return obj.anchor_short.trim();
+  const label = typeof obj.anchor_label === "string" ? obj.anchor_label : "";
+  const head = label.replace(/^event onset( day)?:\s*/i, "").split(/[(;]/)[0].trim()
+    .replace(/\s*\d{4}-\d{2}-\d{2}\s*$/, "").replace(/ of the event$/i, "").trim();
+  if (!head || head === label.trim()) return "the event start";
+  if (/^first /i.test(head)) return `the ${head}`;
+  return head.replace(/\bbegins$/i, "began");
+}
 export function warnedRow(m: M): CheckRow | undefined {
   for (const hz of ["slide", "flood"] as const) {
     const v = m[`${hz}_warned_pct`];
@@ -205,18 +220,28 @@ export function warnedRow(m: M): CheckRow | undefined {
     const of = hz === "slide"
       ? (finite(obj.n_points) ? ` of ${obj.n_points.toLocaleString("en-US")} mapped landslides` : " of mapped landslides")
       : (finite(obj.confirmed_flood_km2) ? ` of ${fmtKm2(obj.confirmed_flood_km2)} radar-mapped flood` : " of the radar-mapped flood");
-    const anchor = typeof obj.anchor_utc === "string" ? fmtDate(obj.anchor_utc.slice(0, 10)) : undefined;
-    // Per forecast run up to 72 h, nearest first: "24 h before 88.1% ·
-    // 48 h before 0.27% · 72 h before 70.9%" (data-driven — the L35
-    // re-score may move it); single runs vary (L36).
-    const runs = (Array.isArray(obj.by_issue_gfs) ? obj.by_issue_gfs as M[] : [])
-      .filter((r) => finite(r.hours_before_anchor) && finite(r.alto_or_critico_pct) && r.hours_before_anchor < 73)
-      .sort((a, b) => (a.hours_before_anchor as number) - (b.hours_before_anchor as number))
-      .map((r) => `${Math.round(r.hours_before_anchor as number)} h before ${pct100(r.alto_or_critico_pct as number)}`);
+    // L37: the anchor is the documented event start; date shown in the
+    // event's local day (anchor_local), else the UTC day.
+    const day = typeof obj.anchor_local === "string" && /^\d{4}-\d{2}-\d{2}/.test(obj.anchor_local)
+      ? obj.anchor_local.slice(0, 10)
+      : typeof obj.anchor_utc === "string" ? obj.anchor_utc.slice(0, 10) : undefined;
+    const anchor = `${anchorShort(obj)}${day ? ` (${fmtDate(day)})` : ""}`;
+    // One forecast run per lead (lead-analysis by_lead 24/48/72: the 00Z run
+    // issued at least that long before the anchor), nearest first: "27 h
+    // before the first deaths (Apr 29, 2024): 36.5%; 51 h before: 0.0%; …".
+    // Older exports: by_issue_gfs runs < 73 h. Single runs vary (L36).
+    const byLead = isRecord(obj.by_lead) ? obj.by_lead : undefined;
+    const runs = (byLead
+      ? Object.values(byLead).map((x) => (isRecord(x) && isRecord(x.gfs) ? x.gfs : undefined))
+      : (Array.isArray(obj.by_issue_gfs) ? obj.by_issue_gfs as M[] : []).filter((r) => finite(r?.hours_before_anchor) && (r.hours_before_anchor as number) < 73))
+      .filter((r): r is M => isRecord(r) && finite(r.hours_before_anchor) && finite(r.alto_or_critico_pct))
+      .sort((a, b) => (a.hours_before_anchor as number) - (b.hours_before_anchor as number));
+    const runText = runs.map((r, i) =>
+      `${Math.round(r.hours_before_anchor as number)} h before${i === 0 ? ` ${anchor}` : ""}: ${pct100(r.alto_or_critico_pct as number)}`);
     const detail = [
-      (runs.length
-        ? `NOAA GFS runs before ${anchor ?? "the damage"}: ${runs.join(" · ")}${runs.length > 1 ? " — single runs vary" : ""}`
-        : `TPI High or above in the NOAA GFS forecast issued 24 h before ${anchor ?? "the damage"}`) +
+      (runText.length
+        ? `NOAA GFS forecast issued ${runText.join("; ")}${runText.length > 1 ? " — single runs vary" : ""}`
+        : `TPI High or above in the NOAA GFS forecast issued 24 h before ${anchor}`) +
         (finite(obs) ? `; with observed rain instead: ${pct100(obs)}` : "") + ".",
       typeof obj.explanation === "string" ? obj.explanation : undefined,
     ].filter(Boolean).join(" ");
