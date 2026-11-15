@@ -269,7 +269,9 @@ export function mapCaption(
   if (partly && on.includes("tpi")) {
     const f = frameFor(bundle, step.date, hazard);
     // Dashed caption = forecast content on the map (here, part of it).
-    return { text: `${HAZARD_LABEL[f?.hazard ?? hazard]} TPI · ${partly} (partly forecast)`, forecast: true };
+    // The caption sits over the map: the issue time stays in the layer row.
+    const short = partly.replace(/\s*\(issued [^)]*\)/, "");
+    return { text: `${HAZARD_LABEL[f?.hazard ?? hazard]} TPI · ${short} (partly forecast)`, forecast: true };
   }
   if (!on.includes("tpi")) return { text: `TPI index off · ${when}`, forecast: false };
   const frame = frameFor(bundle, step.date, hazard);

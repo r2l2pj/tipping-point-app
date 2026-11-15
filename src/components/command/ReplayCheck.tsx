@@ -25,8 +25,10 @@ export default function ReplayCheck({
       {rows.map((r) => (
         <div key={r.id} data-check={r.id} className="mt-0.5 border-t border-[#e3e7e1] py-0.5 text-[13px] leading-snug">
           <div className="flex gap-2.5">
-            <span className="flex-1 text-cc-muted">{r.name}</span>
-            <Value text={r.value} missing={r.missing} className="shrink-0 text-right tabular-nums" />
+            {/* Both sides wrap: a long value (the lead-time headline) must not
+                widen the panel past a 390 px phone. */}
+            <span className="min-w-0 flex-1 text-cc-muted">{r.name}</span>
+            <Value text={r.value} missing={r.missing} className="min-w-0 max-w-[62%] break-words text-right tabular-nums" />
           </div>
           {r.detail && <div className="text-right text-xs text-cc-faint">{r.detail}</div>}
         </div>

@@ -77,6 +77,19 @@ describe("Now today frame: partly forecast caption", () => {
   });
 });
 
+describe("caption keeps the issue time in the layer row only", () => {
+  test("lead-live basis_label without '(issued …)' on the map caption", () => {
+    const live = liveBundle({
+      manifest: { ...manifest([]), layers: [{ id: "tpi_flood_d0", date: "2026-11-15", png: "x.png", forecast: true, partly_forecast: true,
+        basis_label: "observed to Nov 14 + NOAA GFS forecast for Nov 15 (issued 2026-11-15 00:00 UTC)" }] } as never,
+      data_dates: { forecast_from: "2026-11-15" },
+    });
+    expect(mapCaption(live, stepsFor(live), 0, "flood", ["tpi"]).text)
+      .toBe("Flood TPI · Today · observed to Nov 14 + NOAA GFS forecast for Nov 15 (partly forecast)");
+    expect(layerRows(live, ["tpi"], "flood", "2026-11-15").find((r) => r.id === "tpi")?.sub).toContain("(issued 2026-11-15 00:00 UTC)");
+  });
+});
+
 describe("replay: forecast issued this day (beat 2)", () => {
   const gfs = (hz: string, k: number, issued: string, date: string) => ({
     id: `tpi_${hz}_gfs_d${k}`, date, issued, png: `wa_2025/png/tpi_${hz}_gfs_d${k}_${date.replace(/-/g, "")}.png`,
