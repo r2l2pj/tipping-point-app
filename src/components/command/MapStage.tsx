@@ -331,16 +331,30 @@ export default function MapStage({
       )}
 
       {!comparing && (
-        <div className="absolute z-10 flex items-end gap-2" style={{ right: R(14), bottom: B(12) }}>
-          <Legend bundle={bundle} layers={state.layers} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact
-            className={`rounded-[10px] bg-white/95 px-2.5 py-2 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)] max-[639px]:hidden ${state.layersOpen ? "min-[900px]:hidden" : ""}`} />
-          {/* Phones: the legend is collapsed by default so it does not cover
-              the map and the timeline chips; one tap opens it. */}
-          <details data-legend-phone className="min-[640px]:hidden rounded-[10px] bg-white/95 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-            <summary className="cursor-pointer list-none px-2.5 py-1.5 text-xs font-semibold">Legend</summary>
-            <Legend bundle={bundle} layers={state.layers} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact className="max-h-[50vh] overflow-y-auto px-2.5 pb-2" />
-          </details>
-          <LocatorInset bbox={bundle.bbox} className="max-[899px]:hidden" />
+        <div className="absolute z-10 flex flex-col items-end gap-1.5" style={{ right: R(14), bottom: B(12) }}>
+          {/* Basemap switcher (L52): a row above the locator inset, clear of
+              the horizon chips (left) and the City card (top-centre). */}
+          <div role="group" aria-label="Basemap" data-basemap
+            className={`flex items-center gap-1 ${chip} !py-0.5`}>
+            {BASEMAP_ORDER.map((b) => (
+              <button key={b} type="button" aria-pressed={state.basemap === b}
+                onClick={() => dispatch({ type: "setBasemap", basemap: b })}
+                className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${state.basemap === b ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`}>
+                {BASEMAP_LABEL[b]}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-end gap-2">
+            <Legend bundle={bundle} layers={state.layers} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact
+              className={`rounded-[10px] bg-white/95 px-2.5 py-2 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)] max-[639px]:hidden ${state.layersOpen ? "min-[900px]:hidden" : ""}`} />
+            {/* Phones: the legend is collapsed by default so it does not cover
+                the map and the timeline chips; one tap opens it. */}
+            <details data-legend-phone className="min-[640px]:hidden rounded-[10px] bg-white/95 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+              <summary className="cursor-pointer list-none px-2.5 py-1.5 text-xs font-semibold">Legend</summary>
+              <Legend bundle={bundle} layers={state.layers} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact className="max-h-[50vh] overflow-y-auto px-2.5 pb-2" />
+            </details>
+            <LocatorInset bbox={bundle.bbox} className="max-[899px]:hidden" />
+          </div>
         </div>
       )}
 
@@ -364,22 +378,6 @@ export default function MapStage({
             ? { lead: comparePair.lead ?? 0, leads: swipeLeads, onLead: (k) => dispatch({ type: "setIssueLead", lead: k }) }
             : undefined}
           controlsRef={compare} onClose={() => dispatch({ type: "closeCompare" })} />
-      )}
-
-      {/* Basemap switcher (L52): a compact segmented column under the map
-          tools — top-left, top-centre and the bottom row are taken. */}
-      {!comparing && (
-        <div role="group" aria-label="Basemap" data-basemap
-          className="absolute top-[152px] z-10 flex flex-col overflow-hidden rounded-[10px] bg-white/95 text-[13px] font-semibold text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
-          style={{ right: R(14) }}>
-          {BASEMAP_ORDER.map((b, i) => (
-            <button key={b} type="button" aria-pressed={state.basemap === b}
-              onClick={() => dispatch({ type: "setBasemap", basemap: b })}
-              className={`px-2.5 py-1 ${i > 0 ? "border-t border-cc-line" : ""} ${state.basemap === b ? "bg-cc-accent text-white" : ""}`}>
-              {BASEMAP_LABEL[b]}
-            </button>
-          ))}
-        </div>
       )}
 
       <MapTools

@@ -2,48 +2,55 @@
 
 ## What changed
 
-- `src/components/command/model/basemap.ts` (new): pure `basemapSources(basemap, imageryDate)`
-  returns the four raster source/layer specs — GIBS VIIRS underlay, CARTO
-  `voyager_nolabels` underlay, CARTO `dark_only_labels` and `voyager_only_labels`
-  overlay (`top: true`) — plus `parseBasemap`, `BASEMAP_ORDER`, `BASEMAP_LABEL`.
+- `src/components/command/model/basemap.ts` (new): pure `basemapPlan(basemap,
+  imageryDate)` returns the satellite raster spec + which grafted label set /
+  streets underlay shows — plus `parseBasemap`, `BASEMAP_ORDER`, `BASEMAP_LABEL`,
+  style URLs and `tp-bm-*` id prefixes.
 - `src/components/command/state.ts`: `ScreenState.basemap: 'dark'|'satellite'|'streets'`,
   action `{type:'setBasemap'}`, `DeepLink.basemap` (`?basemap=`). Case default:
   featured replay (isFeatured, rs_uruguai_2026) → satellite, else dark;
   selectCase/goTo reset to the case default. Exported `Basemap` type.
-- `src/components/MapLayers.tsx`: sources + layers added once after the app
-  layers — underlays `beforeId = tp-hillshade` (bottom of the app stack, over
-  the dark-matter vector style which stays the base), labels layers on top.
-  Update effect toggles visibility per `options.basemap`, `setTiles` re-dates
-  the satellite source when the case changes, `moveLayer` re-raises the active
-  labels layer to the top so later-added overlays can't cover it.
+- `src/components/MapLayers.tsx`: satellite raster source+layer added once
+  (`beforeId = tp-hillshade`); the two CARTO GL style JSONs fetch once and
+  their layers graft with prefixed ids — voyager nonsym below the app stack,
+  symbol label sets on top. `syncBasemap` toggles visibility per
+  `options.basemap`, `setTiles` re-dates the satellite source per case,
+  `moveLayer` re-raises the labels so later overlays can't cover them.
 - `src/components/command/model/overlays.ts`: `MapLayerOptions.basemap` +
   `imageryDate` (optional, additive).
 - `src/components/command/MapStage.tsx`: passes `basemap`/`imageryDate`
   (replay = case `reference_date`, live = undefined → GIBS `default`/latest);
-  vertical segmented chip `Dark · Satellite · Streets` under MapTools
-  (`top-[152px]`, right inset), `aria-pressed`, `role=group`, hidden while
-  comparing. Fits 390 px: top-right column is the only spot that clears the
-  N arrow, status/featured chips, horizon chips and the legend.
+  segmented row `Dark · Satellite · Streets` at bottom-right above the
+  locator inset, `aria-pressed`, `role=group`, hidden while comparing.
 - `src/components/command/CommandCenterLoader.tsx`: `?basemap=` plumbed through.
 - `src/components/Map.tsx`: `maxZoom` 13 → 17. `fitBounds maxZoom: 12` calls
   unchanged. CompareOverlay's own maxZoom 13 left as is (out of scope).
 - Attributions ride on the raster sources (`Imagery: NASA GIBS VIIRS`,
   `© CARTO © OpenStreetMap contributors`); footer line unchanged.
 
+## Fix commit e96e045 (browser-check failures)
+
+- CARTO rastertiles are the 'API KEY REQUIRED' watermark → replaced by
+  grafted keyless vector layers: the `protomaps` source + glyphs are
+  identical across CARTO GL styles, so dark-matter symbol layers (light
+  text = labels on Dark/Satellite) and voyager non-symbol + symbol layers
+  (Streets) are addLayer'ed verbatim with `tp-bm-*` prefixed ids —
+  underlays below `tp-hillshade`, labels on top + re-raised via moveLayer.
+- Satellite switched to `VIIRS_NOAA20_CorrectedReflectance_TrueColor`
+  (coverage through 2026-11-15; SNPP ended 2026-11-02 and 'default' tiles
+  were black). Verified non-black: PIL mean 67–110 at both cities, `default`
+  and 2026-10-12.
+- Chips moved to a horizontal row bottom-right, above the locator inset.
+
 ## Imagery choice (verified with curl)
 
-- HLS L30 `HLS_L30_Nadir_BRDF_Adjusted_Reflectance`: tiles over Uruguaiana /
-  Porto Alegre for 2026-10-12 return 200 but fully transparent → too patchy,
-  dropped per the plan's fallback clause.
-- VIIRS_SNPP_CorrectedReflectance_TrueColor: real jpeg tiles
-  (z9 174/300 = 4593 B, 1959 colors; 183/300 = 6188 B). TileMatrixSet
-  `GoogleMapsCompatible_Level9` (ids 0–9) → source `maxzoom: 9`, overzooms to 17.
-  URL: `…/wmts/epsg3857/best/<layer>/default/<date-or-default>/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpeg`.
-  Dates past the coverage edge (e.g. today 2026-11-15) 404 → live uses
-  `default` (latest published = 2026-11-02), replays use the case
+- HLS L30: tiles over Uruguaiana/Porto Alegre fully transparent → too patchy.
+- VIIRS NOAA-20 true colour: real jpeg tiles (z9 174/300 = 4381–9408 B).
+  TileMatrixSet `GoogleMapsCompatible_Level9` → source `maxzoom: 9`,
+  overzooms to 17. Live uses `default` (latest = today), replays the case
   `reference_date` (verified 2026-10-12 over RS).
-- CARTO raster: `voyager_nolabels`, `dark_only_labels`, `voyager_only_labels`
-  all 200 image/png; `@2x` returns the same 256 px tile → plain tiles used.
+- Style JSONs fetched once per map: dark-matter-gl-style (symbol layers) +
+  voyager-gl-style (nonsym + symbol layers).
 
 ## Commands + results (all under the systemd memory cap)
 

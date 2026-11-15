@@ -48,7 +48,7 @@ import {
   zoneMarkersOn,
   type MapLayerOptions,
 } from "./command/model/overlays";
-import { basemapSources } from "./command/model/basemap";
+import { basemapPlan, BM_PREFIX, type Basemap } from "./command/model/basemap";
 import {
   bboxPolygon,
   boundsToImageCoordinates,
@@ -188,8 +188,73 @@ export function useMapLayers(
   // Tile URL set per basemap source — the satellite date changes per case and
   // is applied with setTiles instead of rebuilding the source.
   const bmTiles = useRef<Record<string, string>>({});
+  // CARTO GL style layers fetched once per map (labels/streets grafts).
+  const bmStyle = useRef<{
+    streets: Record<string, unknown>[];
+    labelsDark: Record<string, unknown>[];
+    labelsVoy: Record<string, unknown>[];
+  } | null>(null);
+  // Latest basemap options — the graft fetch resolves after the update pass.
+  const bmOpts = useRef<{ basemap: Basemap; imageryDate?: string }>({ basemap: "dark" });
   const imgUrls = useRef<Record<string, string>>({});
   const day = bundle?.series?.days[dayIndex];
+
+  // Graft the fetched GL-style layers onto the running style (idempotent):
+  // voyager's cartography under the app layers, the symbol label sets on top.
+  const graftBasemap = (m: MapInstance) => {
+    const st = bmStyle.current;
+    if (!st) return;
+    const add = (prefix: string, specs: Record<string, unknown>[], before?: string) => {
+      for (const l of specs) {
+        const id = prefix + String(l.id);
+        if (m.getLayer(id)) continue;
+        try {
+          m.addLayer({ ...l, id } as never, before);
+        } catch {
+          // A layer the style rejects is skipped, never fatal.
+        }
+      }
+    };
+    add(BM_PREFIX.streets, st.streets, LYR.hillshade);
+    add(BM_PREFIX.labelsDark, st.labelsDark);
+    add(BM_PREFIX.labelsVoy, st.labelsVoy);
+  };
+
+  // Basemap visibility + satellite date; labels re-raised to the top so a
+  // layer added later cannot cover them.
+  const syncBasemap = (m: MapInstance) => {
+    const plan = basemapPlan(bmOpts.current.basemap, bmOpts.current.imageryDate);
+    const vis = (id: string, on: boolean) => {
+      if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+    };
+    const key = plan.satellite.tiles.join("|");
+    const src = m.getSource(plan.satellite.source) as
+      | { setTiles?: (t: string[]) => void }
+      | undefined;
+    if (src && bmTiles.current[plan.satellite.source] !== key) {
+      bmTiles.current[plan.satellite.source] = key;
+      try {
+        src.setTiles?.(plan.satellite.tiles);
+      } catch {
+        // keep the tiles it has
+      }
+    }
+    vis(plan.satellite.layer, plan.satellite.on);
+    const st = bmStyle.current;
+    if (!st) return;
+    const group = (prefix: string, specs: Record<string, unknown>[], on: boolean) => {
+      for (const l of specs) vis(prefix + String(l.id), on);
+    };
+    group(BM_PREFIX.streets, st.streets, plan.streetsOn);
+    const dark = plan.labels === "dark";
+    group(BM_PREFIX.labelsDark, st.labelsDark, dark);
+    group(BM_PREFIX.labelsVoy, st.labelsVoy, !dark);
+    const top = (dark ? st.labelsDark : st.labelsVoy).map(
+      (l) => (dark ? BM_PREFIX.labelsDark : BM_PREFIX.labelsVoy) + String(l.id)
+    );
+    for (const id of top) if (m.getLayer(id)) m.moveLayer(id);
+  };
+
 
   // Manifest asset paths resolve under /data/<canonical-case-dir>/ — the v4
   // data folders are the canonical underscore ids (rs_2024, wa_2025, now).
@@ -399,33 +464,45 @@ export function useMapLayers(
       map.addLayer(spec as never);
     }
 
-    // L52 basemap switcher: raster underlays below the app layers (beforeId
-    // tp-hillshade — now created), a labels-only raster on top. The base
-    // dark-matter style is never replaced; visibility toggles.
-    const bmSpecs = basemapSources(options?.basemap ?? "dark", options?.imageryDate);
-    for (const spec of bmSpecs) {
-      try {
-        map.addSource(spec.id, {
+    // L52 basemap switcher: the satellite raster underlay goes below the app
+    // layers; label/streets vector layers graft on once the CARTO GL styles
+    // resolve. The base dark-matter style is never replaced.
+    const plan = basemapPlan(options?.basemap ?? "dark", options?.imageryDate);
+    try {
+      map.addSource(plan.satellite.source, {
+        type: "raster",
+        tiles: plan.satellite.tiles,
+        tileSize: plan.satellite.tileSize,
+        maxzoom: plan.satellite.maxzoom,
+        attribution: plan.satellite.attribution,
+      });
+      bmTiles.current[plan.satellite.source] = plan.satellite.tiles.join("|");
+      map.addLayer(
+        {
+          id: plan.satellite.layer,
           type: "raster",
-          tiles: spec.tiles,
-          tileSize: spec.tileSize,
-          ...(spec.maxzoom ? { maxzoom: spec.maxzoom } : {}),
-          attribution: spec.attribution,
-        });
-        bmTiles.current[spec.id] = spec.tiles.join("|");
-        map.addLayer(
-          {
-            id: spec.layer,
-            type: "raster",
-            source: spec.id,
-            layout: { visibility: "none" },
-          } as never,
-          spec.top ? undefined : LYR.hillshade
-        );
-      } catch {
-        // A half-added basemap layer must not block the app layers.
-      }
+          source: plan.satellite.source,
+          layout: { visibility: "none" },
+        } as never,
+        LYR.hillshade
+      );
+    } catch {
+      // A half-added basemap layer must not block the app layers.
     }
+    void Promise.all([
+      fetch(plan.styleUrls.dark).then((r) => r.json()),
+      fetch(plan.styleUrls.voyager).then((r) => r.json()),
+    ])
+      .then(([dark, voyager]) => {
+        bmStyle.current = {
+          streets: voyager.layers.filter((l: { type: string }) => l.type !== "symbol"),
+          labelsDark: dark.layers.filter((l: { type: string }) => l.type === "symbol"),
+          labelsVoy: voyager.layers.filter((l: { type: string }) => l.type === "symbol"),
+        };
+        graftBasemap(map);
+        syncBasemap(map);
+      })
+      .catch(() => {});
 
     return () => {
       map.off("error", onMapError as never);
@@ -438,10 +515,14 @@ export function useMapLayers(
         if (map.getLayer(lyr)) map.removeLayer(lyr);
         if (map.getSource(src)) map.removeSource(src);
       }
-      for (const spec of bmSpecs) {
-        if (map.getLayer(spec.layer)) map.removeLayer(spec.layer);
-        if (map.getSource(spec.id)) map.removeSource(spec.id);
+      try {
+        for (const l of map.getStyle().layers) {
+          if (l.id.startsWith("tp-bm-")) map.removeLayer(l.id);
+        }
+      } catch {
+        // style mid-teardown
       }
+      if (map.getSource(plan.satellite.source)) map.removeSource(plan.satellite.source);
       for (const s of Object.values(SRC)) if (map.getSource(s)) map.removeSource(s);
       if (map.hasImage("tp-hatch")) map.removeImage("tp-hatch");
     };
@@ -480,19 +561,13 @@ export function useMapLayers(
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
     };
 
-    // L52 basemap: toggle the underlays + labels, re-date the satellite
-    // source per case, and raise the labels back to the top — a layer added
-    // later (dynamic image overlays) must not cover them.
-    for (const spec of basemapSources(options?.basemap ?? "dark", options?.imageryDate)) {
-      const key = spec.tiles.join("|");
-      const src = map.getSource(spec.id) as { setTiles?: (t: string[]) => void } | undefined;
-      if (src && bmTiles.current[spec.id] !== key) {
-        bmTiles.current[spec.id] = key;
-        try { src.setTiles?.(spec.tiles); } catch { /* keep the tiles it has */ }
-      }
-      vis(spec.layer, spec.on);
-      if (spec.top && spec.on && map.getLayer(spec.layer)) map.moveLayer(spec.layer);
-    }
+    // L52 basemap: toggle underlays + grafted labels, re-date the satellite
+    // source per case; labels stay on top.
+    bmOpts.current = {
+      basemap: options?.basemap ?? "dark",
+      imageryDate: options?.imageryDate,
+    };
+    syncBasemap(map);
 
     const tpiOn = (layers.tpiFlood || layers.tpiSlide) && plan.tpi;
     const usePng = tpiOn && !!activePng;
