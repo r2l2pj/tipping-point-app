@@ -17,7 +17,7 @@ Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is N
 
 ## Live response (every 3 h, Southern Brazil)
 
-- **OPERA DIST-ALERT-HLS** — landslide scar candidates (RS replay and live), from vegetation-loss alerts on HLS; always "candidates"
+- **OPERA Land Surface Disturbance Alert from HLS (DIST-ALERT-HLS) V1** (LP DAAC, `OPERA_L3_DIST-ALERT-HLS_V1`) — vegetation-loss alerts used to flag landslide scar candidates (RS replay and live); always "candidates"
 - **OPERA DSWx-S1** — near-real-time flood candidates against a 60-day water-frequency baseline (always "candidates")
 - **NISAR GCOV** — radar flood candidates on the latest pass pair over the domain, same change detection as the WA case
 - **MODIS MCD12Q1 land cover** — removes permanent wetland/water and marks cropland as lower confidence; also a feature of the trigger model, never a TPI input

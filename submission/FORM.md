@@ -76,7 +76,7 @@ Source: `nasa-data.md` (awaiting Lucas):
 
 > - **Index:** GPM IMERG V07 (Final; Early in the live view), SMAP L4 (SPL4SMGP v008, root-zone wetness), NASADEM.
 > - **Confirmation:** NISAR L2 GCOV (track 172D frame 064, BETA); HLS.
-> - **Live flood and scar candidates:** OPERA DSWx-S1 and OPERA DIST-ALERT-HLS.
+> - **Live flood and scar candidates:** OPERA DSWx-S1 and OPERA DIST-ALERT-HLS V1 (vegetation-loss alerts used to flag landslide scar candidates).
 > - **Land cover:** MODIS MCD12Q1.
 > - **Impact:** VIIRS Black Marble VNP46A2; GPW v4 (SEDAC).
 > - **Validation:** OPERA DSWx, SWOT (Hydrocron river levels), NASA Global Landslide Catalog / COOLR.
