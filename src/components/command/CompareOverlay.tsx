@@ -9,7 +9,7 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 import { boundsToImageCoordinates } from "@/lib/tpi";
 import { cameraPatch, clipPathFor, dragStep, pctFromClientX, SWIPE_MAX_PCT, SWIPE_MIN_PCT } from "@/lib/swipe";
-import type { ComparePair } from "./model/radar";
+import { FLOODED_FILL, FLOODED_OUTLINE, type ComparePair } from "./model/radar";
 
 // Same worker fix and the same dark basemap as Map.tsx.
 setWorkerUrl("/maplibre-gl-worker.js");
@@ -120,6 +120,14 @@ function CompareMaps({
         coordinates: boundsToImageCoordinates(side.bounds ?? pair.bounds),
       });
       map.addLayer({ id: "swipe-image", type: "raster", source: "swipe-image" });
+      // Flooded area (radar) in its own colour above both radar images.
+      if (pair.flood) {
+        map.addSource("swipe-flood", { type: "geojson", data: pair.flood.url });
+        map.addLayer({ id: "swipe-flood-fill", type: "fill", source: "swipe-flood",
+          paint: { "fill-color": FLOODED_FILL, "fill-opacity": 0.35 } });
+        map.addLayer({ id: "swipe-flood-line", type: "line", source: "swipe-flood",
+          paint: { "line-color": FLOODED_OUTLINE, "line-width": 1.2 } });
+      }
       // Only the first map to load fits; its moves sync the other one.
       if (!fitted) {
         fitted = true;
@@ -164,6 +172,13 @@ function CompareMaps({
       </div>
       <div className={tag} style={{ left: "calc(var(--cc-il, 0px) + 56px)", top: 44 }}>{pair.before.label}</div>
       <div className={tag} style={{ right: "calc(var(--cc-ir, 0px) + 68px)" }}>{pair.after.label}</div>
+      {pair.flood && (
+        <div data-swipe-legend className="pointer-events-none absolute bottom-12 z-10 flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1 text-xs font-semibold text-cc-ink shadow"
+          style={{ left: "calc(var(--cc-il, 0px) + 56px)" }}>
+          <span className="inline-block h-3 w-4 rounded-sm border border-white" style={{ background: FLOODED_FILL, outline: "1px solid #5b6870" }} />
+          {pair.flood.label}
+        </div>
+      )}
       <div
         role="slider"
         tabIndex={0}

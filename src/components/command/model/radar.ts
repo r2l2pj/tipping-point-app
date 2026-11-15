@@ -6,7 +6,7 @@ import { hypothesisLine, nisarSeriesView, type NisarSeriesView } from "./nisarSe
 import { NISAR_FRAMING, nextLookText } from "./nextPass";
 import type { NisarPass } from "@/lib/types";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
-import { declared } from "./lazy";
+import { declared, productUrl } from "./lazy";
 import { finite, fmtDate, fmtKm2 } from "./format";
 import type { CcBundle } from "./types";
 
@@ -66,6 +66,8 @@ export interface ComparePair {
   // L42: the HV polarization pair (lead-analysis nisar_hv_pre/post); the
   // swipe offers an HH | HV switch only when it exists.
   hv?: { before: CompareSide; after: CompareSide };
+  // Jhonatan: the radar flood polygons over the swipe, in their own colour.
+  flood?: { url: string; label: string };
 }
 
 export interface CompareOption {
@@ -117,7 +119,11 @@ export function radarCompare(bundle: CcBundle): CompareOption {
   const hh = pairFor(bundle, "radar", "nisar_pre", "nisar_post", "NISAR radar",
     hv ? { before: "NISAR radar before (HH)", after: "NISAR radar after (HH)" }
       : { before: "NISAR radar before", after: "NISAR radar after" });
-  return hh.pair && hv ? { ...hh, pair: { ...hh.pair, hv: { before: hv.before, after: hv.after } } } : hh;
+  const withHv = hh.pair && hv ? { ...hh, pair: { ...hh.pair, hv: { before: hv.before, after: hv.after } } } : hh;
+  const floodUrl = productUrl(bundle, "flood_confirmed");
+  return withHv.pair && floodUrl
+    ? { ...withHv, pair: { ...withHv.pair, flood: { url: floodUrl, label: floodLabels(bundle).layer } } }
+    : withHv;
 }
 
 export const nightLightsCompare = (bundle: CcBundle): CompareOption =>
