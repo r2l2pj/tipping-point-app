@@ -88,7 +88,7 @@ describe("candidatesToAlerts", () => {
       [
         { class: 3, label: "deslizamento", centroid: [-51.9, -29.3] },
         { class: 2, label: "flood extent", centroid: [-51.2, -30.0] },
-        { class: 2, centroid: [-51.9, -29.3] },
+        { class: 2, label: "Alto", centroid: [-51.9, -29.3] },
       ],
       { places, issuedAt: ISSUED }
     );
@@ -96,7 +96,9 @@ describe("candidatesToAlerts", () => {
     expect(slide.region).toBe("Encantado"); // nearest place; rivers excluded
     expect(flood.title).toBe("Tipping Point: HIGH flood risk");
     expect(flood.region).toBe("Porto Alegre");
-    expect(dflt.hazard).toBe("landslide"); // unknown label defaults
+    // no hazard field and no hazard word: never guessed as one hazard
+    expect(dflt.hazard).toBe("flood or landslide");
+    expect(dflt.title).toBe("Tipping Point: HIGH flood or landslide risk");
   });
 
   test("certainty follows pixel count", () => {
@@ -177,5 +179,16 @@ describe("alertDataDates", () => {
     ).toEqual({ imerg: "2026-11-14T08:00:00Z" });
     expect(alertDataDates(undefined)).toBeUndefined();
     expect(alertDataDates({ smap: null })).toBeUndefined();
+  });
+});
+
+describe("alertDataDates", () => {
+  test("run ids and granule names become calendar dates; ISO times stay", () => {
+    expect(alertDataDates({
+      imerg: "2026-11-14T00Z",
+      smap: "SMAP_L4_SM_gph_20261110T223000_Vv8013_001.h5_u9loH5HD",
+      gfs_issued: "2026-11-15T00:00:00Z",
+      nisar_passes: [] as never,
+    })).toEqual({ imerg: "2026-11-14", smap: "2026-11-10", gfs_issued: "2026-11-15T00:00:00Z" });
   });
 });
