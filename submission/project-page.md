@@ -10,12 +10,12 @@
 
 ## High-Level Project Summary (form field 2, ≤200 words)
 
-NISAR's L-band radar maps new flooding through cloud and darkness. Tipping Point turns each 12-day NISAR pass into a priority list for municipal Civil Defense: where the ground newly flooded, as candidates to check first, and who lives there. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them, home to about 950 people; our rain–soil–terrain index rated areas with 254,263 people critical at the peak. NISAR images Brazil every 12 days; the live view checks each new pass pair automatically and rejects pairs that are not comparable, as it did for the latest one (Oct 25 → Nov 6, 2026). Between passes, the forecast tells Civil Defense where risk is rising (a Tipping Point Index of NASA rain, soil and terrain data on the NOAA GFS forecast) and NISAR tells them when radar will check it. Live area alerts (experimental, not official) refresh every 3 hours; two past disasters replay with the forecast as issued. We tested why radar misses flooded towns and forests (double bounce; supported) and list what future NISAR products add.
+NISAR's L-band radar maps new flooding through cloud and darkness. Tipping Point turns each 12-day NISAR pass into a priority list for responders (a municipal Civil Defense office, for example): where the ground newly flooded, as candidates to check first, and who lives there. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them, home to about 950 people; our rain–soil–terrain index rated areas with 254,263 people critical at the peak. NISAR images Brazil every 12 days; the live view checks each new pass pair automatically and rejects pairs that are not comparable, as it did for the latest one (Oct 25 → Nov 6, 2026). Between passes, the forecast shows where risk is rising (a Tipping Point Index of NASA rain, soil and terrain data on the NOAA GFS forecast) and NISAR shows when radar will check it. Live area alerts (experimental, not official) refresh every 3 hours; two past disasters replay with the forecast as issued. We tested why radar misses flooded towns and forests (double bounce; supported) and list what future NISAR products add.
 
 ## Detailed Project Description (form field 5)
 
 ### What it does
-Tipping Point is one operations screen for municipal Civil Defense. It answers three questions in order:
+Tipping Point is one operations screen for anyone responding to floods and landslides (a municipal Civil Defense office is one example user). It answers three questions in order:
 1. Where is the ground about to fail?
 2. Where has radar seen new water (candidates)?
 3. Who is affected?

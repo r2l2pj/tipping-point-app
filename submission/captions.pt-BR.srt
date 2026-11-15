@@ -8,11 +8,11 @@ Em Washington, nuvens esconderam 93% da área dos satélites ópticos; o radar N
 
 3
 00:00:11,000 --> 00:00:17,500
-A Defesa Civil poderia ver quem é afetado, a cada 3 horas, no sul do Brasil.
+Equipes de resposta, como a Defesa Civil, poderiam ver quem é afetado, a cada 3 horas, no sul do Brasil.
 
 4
 00:00:17,500 --> 00:00:25,500
-A previsão mostra à Defesa Civil onde o risco está subindo; o NISAR mostra quando o radar vai conferir.
+A previsão mostra onde o risco está subindo; o NISAR mostra quando o radar vai conferir.
 
 5
 00:00:25,500 --> 00:00:28,500

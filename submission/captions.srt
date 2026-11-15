@@ -8,11 +8,11 @@ In Washington, clouds hid 93% of the area from optical satellites; NISAR radar m
 
 3
 00:00:11,000 --> 00:00:17,500
-Civil Defense could see who is affected, every 3 hours, across southern Brazil.
+Responders, like Civil Defense, could see who is affected, every 3 hours, across southern Brazil.
 
 4
 00:00:17,500 --> 00:00:25,500
-The forecast tells Civil Defense where risk is rising; NISAR tells when radar will check it.
+The forecast shows where risk is rising; NISAR shows when radar will check it.
 
 5
 00:00:25,500 --> 00:00:28,500
