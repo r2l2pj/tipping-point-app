@@ -70,7 +70,10 @@ export default function CompareOverlay({
     <>
       <CompareMaps key={`${pol}-${bi}-${ai}`} pair={shown} onClose={onClose} controlsRef={controlsRef} />
       {(hasHv || stack || forecastCtl) && (
-        <div className={`absolute left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1 ${forecastCtl || stack ? "top-12" : "top-3"}`}>
+        <div className={`absolute z-30 flex -translate-x-1/2 flex-col items-center gap-1 ${forecastCtl || stack ? "top-12" : "top-3"}`}
+          // Centred on the visible map, never under the floating cards.
+          style={{ left: "calc(var(--cc-il, 0px) + (100% - var(--cc-il, 0px) - var(--cc-ir, 0px)) / 2)",
+            maxWidth: "calc(100% - var(--cc-il, 0px) - var(--cc-ir, 0px) - 24px)" }}>
           {forecastCtl && (
             <div role="group" aria-label="Forecast lead" data-forecast-leads
               className="flex items-center gap-1 rounded-full border border-cc-line-strong bg-white/95 p-[3px] shadow">
@@ -127,6 +130,23 @@ function CompareMaps({
   const afterEl = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const [pct, setPct] = useState(50);
+  // QA (v6 demo): start the divider in the middle of the VISIBLE map — the
+  // floating cards cover the stage edges (--cc-il / --cc-ir insets).
+  useEffect(() => {
+    // The card insets are measured after the first paint (deep links open the
+    // swipe at once): read them once they have settled.
+    const t = setTimeout(() => {
+      const el = containerRef.current;
+      if (!el || !el.clientWidth || dragging.current) return;
+      const css = getComputedStyle(el);
+      const il = parseFloat(css.getPropertyValue("--cc-il")) || 0;
+      const ir = parseFloat(css.getPropertyValue("--cc-ir")) || 0;
+      const w = el.clientWidth;
+      const mid = ((il + (w - il - ir) / 2) / w) * 100;
+      if (Number.isFinite(mid)) setPct(Math.min(SWIPE_MAX_PCT, Math.max(SWIPE_MIN_PCT, mid)));
+    }, 700);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     if (!beforeEl.current || !afterEl.current) return;
