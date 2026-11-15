@@ -449,7 +449,8 @@ describe("pending states carried over from main (L14)", () => {
 
   test("now: an absent or pending summary shows no summary value; the source rows stay", () => {
     const html = render(liveBundle());
-    for (const name of ["IMERG rain", "SMAP soil moisture", "GEOS-FP forecast"]) expect(html).toContain(name);
+    for (const name of ["IMERG rain", "SMAP soil moisture", "NOAA GFS forecast"]) expect(html).toContain(name);
+    expect(html).not.toContain("GEOS-FP forecast");
     const tok = render(withPending(liveBundle({ summary: { people_critical: 1200, critical_km2: { any: 4 } } }), ["summary"]));
     expect(tok).toContain("No live data yet");
     expect(tok).not.toContain("1,200");

@@ -227,3 +227,12 @@ describe("lead-live alerts.json (2026-11-15): tpi candidates, observed[], paused
     expect(observedRows(bundle({ response: { source: "nisar-gcov", flooded_km2: 1 } }))).toEqual([]);
   });
 });
+
+describe("live forecast source row (L30)", () => {
+  test("NOAA GFS from gfs_issued; an old GEOS-FP run keeps its name", () => {
+    const gfs = sourceRows(liveBundle({ data_dates: { gfs_issued: "2026-11-15T00:00:00Z" } }));
+    expect(gfs.find((r) => r.id === "gfs")).toMatchObject({ name: "NOAA GFS forecast", missing: false });
+    const old = sourceRows(liveBundle({ data_dates: { geos_fp_issued: "2026-11-14T12:00:00Z" } }));
+    expect(old.find((r) => r.id === "geos")?.name).toBe("GEOS-FP forecast");
+  });
+});
