@@ -22,7 +22,14 @@ import {
   type NowSummary,
 } from "./contract";
 import type { LayerMeta } from "./ee-layers";
-import { NISAR_META, responseGeojsonPath, toNowResponse } from "./response";
+import {
+  NISAR_META,
+  placesBySource,
+  RESPONSE_SUMMARY,
+  responseGeojsonPath,
+  toNowResponse,
+  toResponseSources,
+} from "./response";
 import type {
   AlertsFile,
   CaseBundle,
@@ -511,6 +518,7 @@ export async function getCaseBundle(
     nowAlerts,
     responseRaw,
     forecastLeadTime,
+    responseSummaryRaw,
   ] = await Promise.all([
     loadMetrics(ctx, entry?.metrics ?? `metrics.json#${canonical}`, dirs),
     loadProduct<SeriesDaily>(
@@ -538,6 +546,9 @@ export async function getCaseBundle(
     now
       ? undefined
       : loadProduct<unknown>(ctx, canonical, rawProducts, "forecast_lead_time", "forecast_lead_time.json"),
+    now
+      ? loadProduct<unknown>(ctx, canonical, rawProducts, "response_summary", RESPONSE_SUMMARY)
+      : undefined,
   ]);
 
   // The response polygons ride the flood_confirmed slot the map and the
@@ -671,6 +682,9 @@ export async function getCaseBundle(
     summary,
     nowAlerts,
     response,
+    ...(now
+      ? { responseSources: toResponseSources(responseSummaryRaw), observedPlaces: placesBySource(zonesRaw) }
+      : {}),
     forecastLeadTime,
     nisarPasses: now?.nisar_passes,
     swot,

@@ -4,6 +4,9 @@ import { alertsByRegion, alertsPaused, buildAlertList, capAlertList, moreAlertsT
 import { bundle, liveBundle } from "./fixtures";
 import { ageText, classLabel, fmtBrt, fmtDate, fmtHours, sourceTime } from "./format";
 import { sourceRows } from "./sources";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { placesBySource, toResponseSources } from "../../../lib/response";
 import { chartForecastLabel, issuedForecastLabel } from "./steps";
 
 describe("alert list", () => {
@@ -212,19 +215,41 @@ describe("lead-live alerts.json (2026-11-15): tpi candidates, observed[], paused
     expect(buildAlertList({ now: live({ paused: true, paused_reason: "checks failed", candidates: [] }) }).state).toBe("paused");
   });
 
-  test("observed rows: biggest first, labelled source, exact people, no level", () => {
-    const rows = observedRows(live());
-    expect(rows.map((r) => r.place)).toEqual(["Cananéia, SP", "Iguape, SP"]);
-    expect(rows[0]).toMatchObject({ source: "NISAR radar", area: "8.5 km²", people: "343", polygons: 14 });
-    expect(JSON.stringify(rows)).not.toMatch(/emergency|critical/i);
+  test("observed[]: one card per source, top 3 places by area + 'and N more', sums", () => {
+    const more = [...file.observed,
+      { kind: "observed", source: "nisar-gcov", municipality: "Registro", uf: "SP", area_km2: 2, people: 10, polygons: 1 },
+      { kind: "observed", source: "nisar-gcov", municipality: "Pariquera-Açu", uf: "SP", area_km2: 1, people: 5, polygons: 1 },
+      { kind: "observed", source: "opera-dswx-s1", municipality: "Viamão", uf: "RS", area_km2: 7.28, people: 49, polygons: 3 }];
+    const rows = observedRows(live({ observed: more }));
+    expect(rows.map((r) => r.source)).toEqual(["NISAR radar", "OPERA DSWx-S1 radar"]);
+    expect(rows[0]).toMatchObject({
+      places: "Cananéia, SP · Iguape, SP · Registro, SP and 1 more",
+      area: "15.0 km²", people: "399", polygons: 18,
+    });
+    expect(rows[1].places).toBe("Viamão, RS");
+    expect(JSON.stringify(rows)).not.toMatch(/emergency|critical|monitored region/i);
   });
 
-  test("without observed[], the NISAR response summary is one row; replay has none", () => {
-    const rows = observedRows(liveBundle({ response: { source: "nisar-gcov", flooded_km2: 12.06, people_flooded: 384,
-      post_acquired: "2026-11-06T21:16:03Z", polygons: 16 } }));
-    expect(rows).toEqual([{ key: "response", place: "monitored region", source: "NISAR radar",
-      acquired: "Nov 6, 06:16 PM BRT", area: "12.1 km²", people: "384", polygons: 16 }]);
-    expect(observedRows(bundle({ response: { source: "nisar-gcov", flooded_km2: 1 } }))).toEqual([]);
+  test("R3 summary: per source, names from the R3 zones (real file of 8fba5e5)", () => {
+    const zones = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/lead/r3_priority_zones.geojson"), "utf8"));
+    const summary = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/lead/r3_summary.json"), "utf8"));
+    const b = liveBundle({ responseSources: toResponseSources(summary), observedPlaces: placesBySource(zones) });
+    const rows = observedRows(b);
+    expect(rows.map((r) => [r.source, r.area, r.people])).toEqual([
+      ["OPERA DSWx-S1 radar", "129.5 km²", "494"],
+      ["NISAR radar", "12.0 km²", "489"],
+    ]);
+    expect(rows[1].places).toMatch(/^São Miguel Arcanjo, SP · .+ and \d+ more$|^São Miguel Arcanjo, SP( · [^·]+){0,2}$/);
+    for (const r of rows) expect(r.places).not.toBe("municipalities not named yet");
+  });
+
+  test("NISAR meta fallback names its places; no names reads plainly; replay has none", () => {
+    const meta = { source: "nisar-gcov", flooded_km2: 12.06, people_flooded: 384, post_acquired: "2026-11-06T21:16:03Z", polygons: 16 };
+    expect(observedRows(liveBundle({ response: meta, observedPlaces: { "nisar-gcov": ["São Miguel Arcanjo, SP"] } }))[0])
+      .toMatchObject({ source: "NISAR radar", places: "São Miguel Arcanjo, SP", area: "12.1 km²", people: "384",
+        acquired: "Nov 6, 06:16 PM BRT", polygons: 16 });
+    expect(observedRows(liveBundle({ response: meta }))[0].places).toBe("municipalities not named yet");
+    expect(observedRows(bundle({ response: meta }))).toEqual([]);
   });
 });
 

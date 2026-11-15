@@ -6,7 +6,7 @@
 // and drops a key whose file is absent. A later optical source (R1) adds
 // flood_dswx + dswx_meta the same way. Polygons are radar flood candidates,
 // never "confirmed".
-import type { NowResponse } from "./types";
+import type { NowResponse, ResponseSource } from "./types";
 
 export const NISAR_META = "response/nisar_meta.json";
 export const NISAR_GEOJSON = "response/flood_nisar.geojson";
@@ -62,4 +62,52 @@ export function responseGeojsonPath(
   const meta = typeof products?.nisar_meta === "string" ? products.nisar_meta : NISAR_META;
   const dir = meta.includes("/") ? meta.slice(0, meta.lastIndexOf("/") + 1) : "";
   return `${dir}${response.geojson}`;
+}
+
+// R3 (lead-analysis): now/response/summary.json, schema
+// tipping-point/response@1. Per flood source (OPERA DSWx-S1, NISAR GCOV):
+// unioned area, people, newest pass. The TPI entry is not an observation.
+export const RESPONSE_SUMMARY = "response/summary.json";
+
+export function toResponseSources(raw: unknown): ResponseSource[] | undefined {
+  if (!isRecord(raw) || !isRecord(raw.sources)) return undefined;
+  const out: ResponseSource[] = [];
+  for (const [source, v] of Object.entries(raw.sources)) {
+    if (!isRecord(v) || /tpi/i.test(source)) continue;
+    const km2 = num(v.flooded_km2);
+    if (km2 === undefined || km2 <= 0) continue;
+    out.push({
+      source,
+      flooded_km2: km2,
+      people_flooded: num(v.people_flooded),
+      latest_acquired: str(v.latest_acquired),
+      features: num(v.features),
+    });
+  }
+  return out.length ? out : undefined;
+}
+
+// Municipality names per flood source, largest flooded area first, from the
+// full R3 priority zones (IBGE municipalities with `sources`,
+// `flooded_km2`). Computed on the server: the browser only gets the trimmed
+// zone list.
+export function placesBySource(
+  zones: GeoJSON.FeatureCollection | undefined
+): Record<string, string[]> | undefined {
+  const by: Record<string, { name: string; km2: number }[]> = {};
+  for (const f of zones?.features ?? []) {
+    const p = f.properties ?? {};
+    const km2 = num(p.flooded_km2);
+    const name = str(p.name);
+    if (!name || km2 === undefined || km2 <= 0 || !Array.isArray(p.sources)) continue;
+    const label = str(p.uf) ? `${name}, ${p.uf}` : name;
+    for (const s of p.sources) {
+      if (typeof s !== "string" || /tpi/i.test(s)) continue;
+      (by[s] ??= []).push({ name: label, km2 });
+    }
+  }
+  const out = Object.fromEntries(
+    Object.entries(by).map(([s, list]) => [s, list.sort((a, b) => b.km2 - a.km2).map((x) => x.name)])
+  );
+  return Object.keys(out).length ? out : undefined;
 }

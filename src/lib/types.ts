@@ -54,6 +54,15 @@ export type DataDates = Record<string, string | null | NisarPass[]>;
 
 // Live radar response of the Now case (now/response/nisar_meta.json,
 // normalized by src/lib/response.ts). Flood polygons are candidates.
+// One flood source of the R3 response summary.
+export interface ResponseSource {
+  source: string; // "opera-dswx-s1" | "nisar-gcov"
+  flooded_km2: number;
+  people_flooded?: number;
+  latest_acquired?: string;
+  features?: number;
+}
+
 export interface NowResponse {
   source: string;
   flooded_km2?: number;
@@ -225,6 +234,9 @@ export interface CaseBundle {
   summary?: NowSummary;
   // Live case only: the radar flood response (lead-live R2).
   response?: NowResponse;
+  // Live case only: R3 per-source totals and municipality names per source.
+  responseSources?: ResponseSource[];
+  observedPlaces?: Record<string, string[]>;
   swot?: unknown;
   catalog?: GeoJSON.FeatureCollection;
   municipalities?: GeoJSON.FeatureCollection;

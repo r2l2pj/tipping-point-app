@@ -4,7 +4,7 @@ import { ALERT_FOOTER, ALERT_LEVEL_WORDS, type AlertCardData } from "@/lib/alert
 import AlertCard, { LEVEL_STYLE } from "./AlertCard";
 import {
   ALERTS_PAUSED_TEXT, ALERTS_UNAVAILABLE_TEXT, alertsByRegion, moreAlertsText, NO_ALERTS_TEXT, NO_RUN_TEXT,
-  OBSERVED_NOTE, OBSERVED_SHOWN, OBSERVED_TITLE, REPLAY_NO_FEED_TEXT,
+  OBSERVED_NOTE, OBSERVED_TITLE, REPLAY_NO_FEED_TEXT,
   type AlertList, type ObservedRow,
 } from "./model/alerts";
 import { fmtBrt } from "./model/format";
@@ -102,24 +102,20 @@ export default function PublicAlertsPanel({
           <h2 className="m-0 text-base font-semibold">{OBSERVED_TITLE}</h2>
           <p className="mt-0.5 text-[13px] text-cc-muted">{OBSERVED_NOTE}</p>
           <ul className="m-0 mt-1.5 list-none p-0">
-            {observed.slice(0, OBSERVED_SHOWN).map((o) => (
+            {observed.map((o) => (
               <li key={o.key} className="border-t border-cc-rule py-1.5 text-[13px]">
                 <div className="flex justify-between gap-2">
-                  <span className="font-semibold">{o.place}</span>
+                  <span className="font-semibold">{o.source}</span>
                   <span>{o.area}</span>
                 </div>
+                <div>{o.places}</div>
                 <div className="text-xs text-cc-muted">
-                  {o.source}{o.acquired ? ` · pass ${o.acquired}` : ""}
-                  {o.people ? ` · ${o.people} people (estimate)` : ""}
+                  {o.acquired ? `newest pass ${o.acquired}` : ""}
+                  {o.people ? `${o.acquired ? " · " : ""}${o.people} people (estimate)` : ""}
                   {o.polygons !== undefined ? ` · ${o.polygons} ${o.polygons === 1 ? "area" : "areas"}` : ""}
                 </div>
               </li>
             ))}
-            {observed.length > OBSERVED_SHOWN && (
-              <li className="border-t border-cc-rule pt-1 text-xs text-cc-faint">
-                and {observed.length - OBSERVED_SHOWN} more places
-              </li>
-            )}
           </ul>
           {onShowObserved && (
             <button type="button" onClick={onShowObserved} aria-pressed={observedOn}

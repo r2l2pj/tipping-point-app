@@ -544,6 +544,7 @@ describe("public view (P1 to P5) and routes", () => {
     const html = render(live, {}, "public", { state: "paused", alerts: [] });
     expect(html).toContain("Observed by radar (candidates)");
     expect(html).toContain("Cananéia, SP");
+    expect(html).toContain("NISAR radar");
     expect(html).toContain("343 people (estimate)");
     expect(html).toContain("Not an alert.");
     expect(html).not.toContain("EMERGENCY");

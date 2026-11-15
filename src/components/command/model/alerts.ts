@@ -91,9 +91,9 @@ export function alertsPaused(node: Record<string, unknown> | undefined, env = pr
 // else the NISAR response summary. Observations, never alerts: no level.
 export interface ObservedRow {
   key: string;
-  place: string;
-  source: string;
-  acquired?: string; // formatted
+  source: string; // "NISAR radar"
+  places: string; // "Cananéia, SP · Iguape, SP · Registro, SP and 4 more"
+  acquired?: string; // formatted newest pass
   area: string;
   people?: string;
   polygons?: number;
@@ -102,7 +102,8 @@ export interface ObservedRow {
 export const OBSERVED_TITLE = "Observed by radar (candidates)";
 export const OBSERVED_NOTE =
   "Flood seen by satellite between two passes — candidates, not yet checked on the ground. Not an alert.";
-export const OBSERVED_SHOWN = 10;
+export const PLACES_SHOWN = 3;
+export const PLACES_UNNAMED = "municipalities not named yet";
 
 const SOURCE_LABEL: Array<[RegExp, string]> = [
   [/nisar/i, "NISAR radar"],
@@ -115,29 +116,64 @@ const sourceLabel = (s?: string): string =>
 // People counts are estimates: shown exactly, labelled by the caller.
 const people = (v: unknown) => (finite(v) ? Math.round(v).toLocaleString("en-US") : undefined);
 
+// Top places by flooded area, then how many more.
+export function placesText(names: readonly string[], shown = PLACES_SHOWN): string {
+  const unique = [...new Set(names)];
+  if (!unique.length) return PLACES_UNNAMED;
+  const more = unique.length - shown;
+  return unique.slice(0, shown).join(" · ") + (more > 0 ? ` and ${more} more` : "");
+}
+
+const sumOf = (vals: unknown[]): number | undefined => {
+  const nums = vals.filter(finite) as number[];
+  return nums.length ? nums.reduce((a, b) => a + b, 0) : undefined;
+};
+
+// One card per satellite source. Data, in order: alerts.json observed[]
+// (lead-live, per source and municipality), the R3 response summary per
+// source with municipality names from the R3 zones, the NISAR meta.
 export function observedRows(bundle: CcBundle | undefined): ObservedRow[] {
   if (!bundle || bundle.mode !== "live") return [];
-  const observed = bundle.nowAlerts?.observed;
-  if (Array.isArray(observed) && observed.length) {
-    return observed
-      .filter((o) => (o.kind === undefined || o.kind === "observed") && finite(o.area_km2))
-      .sort((a, b) => (b.area_km2 as number) - (a.area_km2 as number))
-      .map((o, i) => ({
-        key: `${o.source ?? "src"}-${o.municipality ?? i}-${i}`,
-        place: o.municipality ? `${o.municipality}${o.uf ? `, ${o.uf}` : ""}` : "monitored region",
-        source: sourceLabel(o.source),
-        acquired: o.acquired ? fmtBrt(o.acquired) : undefined,
-        area: fmtKm2(o.area_km2),
-        people: people(o.people),
-        polygons: finite(o.polygons) ? o.polygons : undefined,
+  const named = bundle.observedPlaces ?? {};
+  const observed = (bundle.nowAlerts?.observed ?? [])
+    .filter((o) => (o.kind === undefined || o.kind === "observed") && finite(o.area_km2));
+  if (observed.length) {
+    const groups = new Map<string, typeof observed>();
+    for (const o of observed) groups.set(o.source ?? "", [...(groups.get(o.source ?? "") ?? []), o]);
+    return [...groups.entries()].map(([source, items]) => {
+      const sorted = [...items].sort((a, b) => (b.area_km2 as number) - (a.area_km2 as number));
+      const newest = items.map((o) => o.acquired).filter(Boolean).sort().pop();
+      return {
+        key: `observed-${source}`,
+        source: sourceLabel(source || undefined),
+        places: placesText(sorted.filter((o) => o.municipality)
+          .map((o) => `${o.municipality}${o.uf ? `, ${o.uf}` : ""}`)),
+        acquired: newest ? fmtBrt(newest) : undefined,
+        area: fmtKm2(sumOf(items.map((o) => o.area_km2))),
+        people: people(sumOf(items.map((o) => o.people))),
+        polygons: sumOf(items.map((o) => o.polygons)),
+      };
+    }).sort((a, b) => a.source.localeCompare(b.source));
+  }
+  if (bundle.responseSources?.length) {
+    return [...bundle.responseSources]
+      .sort((a, b) => b.flooded_km2 - a.flooded_km2)
+      .map((r) => ({
+        key: `r3-${r.source}`,
+        source: sourceLabel(r.source),
+        places: placesText(named[r.source] ?? []),
+        acquired: r.latest_acquired ? fmtBrt(r.latest_acquired) : undefined,
+        area: fmtKm2(r.flooded_km2),
+        people: people(r.people_flooded),
+        polygons: r.features,
       }));
   }
   const r = bundle.response;
   if (r && finite(r.flooded_km2)) {
     return [{
       key: "response",
-      place: "monitored region",
       source: sourceLabel(r.source),
+      places: placesText(named[r.source] ?? named["nisar-gcov"] ?? []),
       acquired: r.post_acquired ? fmtBrt(r.post_acquired) : undefined,
       area: fmtKm2(r.flooded_km2),
       people: people(r.people_flooded),
