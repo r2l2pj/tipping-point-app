@@ -16,10 +16,10 @@
 - *Visual:* the Uruguaiana NISAR map from the app ([TBD] screenshot once the series is published)
 
 ## Slide 3 — Prevent the disaster, not the flood: when · where · who (Uruguaiana, Oct 2026)
-- **When:** five days before the Uruguay River reached flood stage at Uruguaiana (Oct 5), NASA satellite rain (GPM IMERG) over the upstream basin was already extreme — 5 days' notice (6 days before the second rise, Oct 29)
-- **Where:** it pointed to the low-lying river corridor, which holds 54% of the area NISAR later saw newly flooded, in 36% of the land (1.5× chance)
+- **When:** five days before the Uruguay River reached flood stage at Uruguaiana (Oct 5), NASA satellite rain (GPM IMERG) over the upstream basin was already extreme — in a post-event test, 5 days' notice was possible (6 days before the second rise, Oct 29)
+- **Where:** it pointed to the low-lying river corridor, which holds 54% of the 1.85 km² NISAR mapped as newly flooded (7 polygons, small sample), in 36% of the land (1.5× chance)
 - **Who:** about 20,900 people live in that corridor (about 29 inside the radar flood candidates)
-- **What we added:** local rain never hit its own extreme level, so a local-rain index alone would have missed it; the upstream signal is our addition (post-event test, Nov 15). NOAA GFS alone under-forecast both rises. No claim of being earlier than official warnings
+- **Tested retrospectively, adding next:** local rain never hit its own extreme level, so our live local-rain index missed it; the upstream signal is a post-event test (Nov 15), not yet live (on Washington it added 32% more false Critical area). NOAA GFS alone under-forecast both rises. No claim of being earlier than official warnings
 - **Then radar:** NISAR mapped where it flooded through cloud (HH backscatter drop > 3 dB below a per-scene threshold, low ground near rivers, ≥ 3 ha)
 - How: Tipping Point Index of NASA rain (IMERG), soil (SMAP) and terrain (NASADEM); builds on NASA's LHASA (doi:10.3389/feart.2021.640043; LHASA-F doi:10.3389/feart.2022.878996); an experimental XGBoost trigger model sits beside it
 
