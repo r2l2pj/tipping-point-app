@@ -14,6 +14,7 @@ import {
   probHorizonsAvailable,
   probLayerTitle,
   fmtDate,
+  fmtDataStamp,
   fmtDateTime,
   isForecastLayer,
   layerAvailable,
@@ -364,6 +365,15 @@ describe("BRT date formatting", () => {
     expect(fmtDate(undefined)).toBe("—");
     expect(fmtDate(null)).toBe("—");
     expect(fmtDateTime(undefined)).toBe("—");
+  });
+
+  test("fmtDataStamp: a stamp with a time gets the Brasília clock + zone, date-only stays a date", () => {
+    expect(fmtDataStamp("2026-11-15T05:00:00Z")).toBe("Nov 15, 02:00 BRT");
+    expect(fmtDataStamp("2026-11-15T02:59:00Z")).toBe("Nov 14, 23:59 BRT");
+    expect(fmtDataStamp("2026-11-15")).toBe("Nov 15, 2026");
+    expect(fmtDataStamp("2026-11-15")).not.toContain("BRT");
+    expect(fmtDataStamp(undefined)).toBe("—");
+    expect(fmtDataStamp("not a date")).toBe("not a date"); // unparseable shown as authored
   });
 });
 

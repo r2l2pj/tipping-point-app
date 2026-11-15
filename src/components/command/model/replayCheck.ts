@@ -3,7 +3,7 @@
 import { count } from "@/lib/contract";
 import type { DayPoint } from "@/lib/types";
 import { availability, missingText, nullReason } from "./availability";
-import { finite, fmtDate, fmtKm2, fmtPct, fmtPeople, fmtScore } from "./format";
+import { finite, fmtDate, fmtDayShort, fmtKm2, fmtPct, fmtPeople, fmtScore } from "./format";
 import { floodLabels, swathLine } from "./radar";
 import { thresholdFor } from "./status";
 import { NOT_PUBLISHED, type CcBundle } from "./types";
@@ -250,6 +250,9 @@ export interface Evidence {
   modelTitle: string;
   modelStats: Stat[];
   leadTime?: LeadTimeBlock; // hidden when the case has no metrics at all
+  // "Rain check" line (metrics.imerg_vs_gauge, lead-analysis): IMERG Final
+  // daily vs INMET gauges. Hidden when the case ships no gauge check.
+  rainCheck?: string;
   whyRadar: string;
   featureImportance?: Record<string, number>;
   impactStats: Stat[];
@@ -302,6 +305,34 @@ function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
   };
 }
 
+// The gauge-check window ("2024-04-20..2024-05-15" or a [start, end] pair)
+// as "Apr 20 to May 15, 2024"; an unrecognized shape is printed as authored.
+const gaugeWindow = (w: unknown): string | undefined => {
+  const parts = (typeof w === "string" ? w.split("..") : Array.isArray(w) ? w : [])
+    .map((p) => (typeof p === "string" ? p.trim() : ""));
+  return parts.length === 2 && parts[0] && parts[1]
+    ? `${fmtDayShort(parts[0])} to ${fmtDate(parts[1])}`
+    : typeof w === "string" && w ? w : undefined;
+};
+
+// "Rain check" (lead-analysis imerg_vs_gauge, validation only): IMERG Final
+// daily at each station's 0.1 deg cell vs the INMET gauge in it. The line
+// always carries its n — without the counts it does not render at all.
+// bias_pct_median is authored as a percent: printed as written, never ×100.
+export function rainCheckLine(m: M): string | undefined {
+  const g = m.imerg_vs_gauge;
+  if (!isObj(g)) return undefined;
+  const { n_stations: nStations, n_station_days: nDays, pearson_r_median: r, bias_pct_median: bias } = g;
+  if (![nStations, nDays, r, bias].every(finite)) return undefined;
+  const win = gaugeWindow(g.window);
+  const caveat = typeof g.caveat === "string" && g.caveat ? g.caveat : undefined;
+  return (
+    `IMERG vs ${nStations} INMET rain gauges (${nDays} station-days${win ? `, ${win}` : ""}): ` +
+    `median r ${(r as number).toFixed(2)}, IMERG ${(bias as number) > 0 ? "+" : ""}${bias}%` +
+    `${caveat ? `; ${caveat}` : ""} (validation only)`
+  );
+}
+
 // `day`: the selected timeline day. People in critical areas follow it when
 // the series carries a per-day count (same rule as the tile).
 export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
@@ -340,6 +371,7 @@ export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
       stat(bundle, "Manual slope-rule AUC", "rule_auc", fmtScore),
     ],
     leadTime: leadTimeBlock(bundle, m),
+    rainCheck: rainCheckLine(m),
     whyRadar: optical != null
       ? `During the event the optical saw only ${optical}% of the scene — the rest was cloud. SAR sees through.`
       : "Cloud cover during the event is not reported for this case — SAR sees through either way.",

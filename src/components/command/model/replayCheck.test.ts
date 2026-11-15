@@ -204,6 +204,37 @@ describe("evidence", () => {
     expect(rs.histogram).toBeUndefined();
   });
 
+  test("rain check: the IMERG-vs-gauges line with its n, bias printed as the authored percent", () => {
+    const e = evidence(bundle({ metricsView: mv({ imerg_vs_gauge: {
+      n_stations: 7, n_station_days: 182, pearson_r_median: 0.8874,
+      bias_pct_median: 5.5, event_total_ratio_median: 1.118,
+      window: "2024-04-20..2024-05-15", caveat: "point gauge vs 0.1 deg cell",
+      stations: [{ id: "A801" }, { id: "A813" }],
+    } }) }));
+    expect(e.rainCheck).toBe(
+      "IMERG vs 7 INMET rain gauges (182 station-days, Apr 20 to May 15, 2024): " +
+      "median r 0.89, IMERG +5.5%; point gauge vs 0.1 deg cell (validation only)"
+    );
+  });
+
+  test("rain check: hidden when absent or without its n; percent never multiplied", () => {
+    expect(evidence(bundle()).rainCheck).toBeUndefined();
+    expect(evidence(bundle({ metricsView: mv({}) })).rainCheck).toBeUndefined();
+    for (const g of [
+      { n_stations: 7, pearson_r_median: 0.9, bias_pct_median: 5.5 },        // no n_station_days
+      { n_station_days: 182, pearson_r_median: 0.9, bias_pct_median: 5.5 }, // no n_stations
+      { n_stations: 7, n_station_days: 182, bias_pct_median: 5.5 },         // no r
+      { n_stations: 7, n_station_days: 182, pearson_r_median: 0.9 },        // no bias
+      "x", 5, null,
+    ]) {
+      expect(evidence(bundle({ metricsView: mv({ imerg_vs_gauge: g }) })).rainCheck).toBeUndefined();
+    }
+    // bias_pct_median is already a percent: -16.7 stays -16.7, never -1670.
+    expect(evidence(bundle({ metricsView: mv({ imerg_vs_gauge: {
+      n_stations: 7, n_station_days: 182, pearson_r_median: 0.6002, bias_pct_median: -16.7,
+    } }) })).rainCheck).toContain("IMERG -16.7%");
+  });
+
   test("people in critical areas follow the selected day", () => {
     const day = { date: "2025-12-12", offset: 2, kind: "observed" as const, imerg_mm: 1, smap: 0.5, tpi: 0.9, people_critical: 5300 };
     const b = bundle({ metricsView: mv({ people_critical: 8400 }) });

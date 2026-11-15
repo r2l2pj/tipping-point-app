@@ -99,6 +99,14 @@ function slimWarned(v: unknown): unknown {
   return out;
 }
 
+// imerg_vs_gauge ships a per-station table (stations[]) the screen never
+// reads — the rain-check line cites only the medians, the counts and the
+// caveat.
+function slimGauge(v: unknown): unknown {
+  if (!isRecord(v)) return v;
+  return Object.fromEntries(Object.entries(v).filter(([k]) => k !== "stations"));
+}
+
 // T_ML (lead-ml ml/t_ml.json): one static layer, added as manifest layer
 // `t_ml` to every case its bounds overlap (RS Serra region). The PNG path is
 // relative to the data root, so it is resolved here to an absolute URL.
@@ -138,7 +146,7 @@ function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
   const metricsView = bundle.metricsView
     ? (Object.fromEntries(Object.entries(bundle.metricsView)
         .filter(([k]) => !METRICS_DROP.includes(k))
-        .map(([k, v]) => [k, WARNED_OBJECTS.includes(k) ? slimWarned(v) : v])) as CcBundle["metricsView"])
+        .map(([k, v]) => [k, k === "imerg_vs_gauge" ? slimGauge(v) : WARNED_OBJECTS.includes(k) ? slimWarned(v) : v])) as CcBundle["metricsView"])
     : bundle.metricsView;
   // The raw metrics blob duplicates metricsView; the screen reads only its
   // `_null_reasons` (availability.nullReason).

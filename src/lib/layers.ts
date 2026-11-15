@@ -481,6 +481,26 @@ export function fmtDataDate(iso?: string | null): string {
   return iso.includes("T") ? `${fmtDate(iso)} ${fmtDateTime(iso)}` : fmtDate(iso);
 }
 
+// A source stamp for the layer rows (rule 1): a date-only value stays a
+// calendar date in the long form; a stamp carrying a time also shows the
+// Brasília wall clock and names the zone — "Nov 15, 02:00 BRT".
+export function fmtDataStamp(iso?: string | null): string {
+  if (!iso) return "—";
+  if (!/T|\d:\d/.test(iso)) return fmtDate(iso);
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return (
+    d.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+      timeZone: BRT,
+    }) + " BRT"
+  );
+}
+
 // --- doc v4 palettes ------------------------------------------------------------
 //
 // Pre-painted PNGs already carry these colors; the consts back legends and

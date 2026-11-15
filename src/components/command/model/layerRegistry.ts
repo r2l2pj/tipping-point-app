@@ -13,7 +13,7 @@ import {
 } from "@/lib/layers";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
 import { declared } from "./lazy";
-import { fmtDataDate, fmtDate } from "./format";
+import { fmtDataStamp, fmtDate } from "./format";
 import type { MapOverlays } from "./overlays";
 import { CANDIDATES_LABEL, floodLabels } from "./radar";
 import { frameBasis, partlyForecastText } from "./steps";
@@ -144,14 +144,14 @@ export function layerRows(
   };
   const okSub: Partial<Record<LayerId, string | undefined>> = {
     tpi: partlyForecastText(bundle, stepDate) ? `${partlyForecastText(bundle, stepDate)} (partly forecast)`
-      : [stepDate ? `data ${fmtDataDate(stepDate)}` : undefined, frameBasis(bundle, stepDate, hazard)]
+      : [stepDate ? `data ${fmtDataStamp(stepDate)}` : undefined, frameBasis(bundle, stepDate, hazard)]
       .filter(Boolean).join(" · ") || undefined,
-    imerg: dateOf(bundle, "imerg") ? `data ${fmtDataDate(dateOf(bundle, "imerg"))}` : undefined,
-    smap: dateOf(bundle, "smap") ? `data ${fmtDataDate(dateOf(bundle, "smap"))}` : undefined,
+    imerg: dateOf(bundle, "imerg") ? `data ${fmtDataStamp(dateOf(bundle, "imerg"))}` : undefined,
+    smap: dateOf(bundle, "smap") ? `data ${fmtDataStamp(dateOf(bundle, "smap"))}` : undefined,
     ptrigger: probLayerNote(probFrame(bundle.manifest?.layers, probHorizon, stepDate)),
     flood: passDates.length ? `NISAR passes: ${passDates.join(", ")}` : undefined,
     opera: pngLayer(bundle, "opera_validation")?.date
-      ? `data ${fmtDataDate(pngLayer(bundle, "opera_validation")?.date)}` : undefined,
+      ? `data ${fmtDataStamp(pngLayer(bundle, "opera_validation")?.date)}` : undefined,
   };
   const reason: Record<LayerId, string> = {
     tpi: bundle.riskPaused ? RISK_PAUSED_SHORT : NO_MAP_LAYER_TEXT,

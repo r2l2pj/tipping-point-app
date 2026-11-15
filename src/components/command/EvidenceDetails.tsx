@@ -94,6 +94,13 @@ export default function EvidenceDetails({
 
       {mlImportance ? <GroupImportanceChart importance={mlImportance} />
         : e.featureImportance && <FeatureImportanceChart importance={e.featureImportance} />}
+
+      {e.rainCheck && (
+        <div>
+          <h3 className={h3}>Rain check</h3>
+          <p className="mt-0.5 text-xs text-cc-muted">{e.rainCheck}</p>
+        </div>
+      )}
       <SwotChart swot={swot} />
 
       <div>
