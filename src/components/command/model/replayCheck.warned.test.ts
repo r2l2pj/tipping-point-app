@@ -169,9 +169,9 @@ describe("RS flood vs Copernicus EMS (lead-analysis a363629)", () => {
   test("row from the real keys: scores, Taquari scope, before-onset shares, attribution", () => {
     const m = JSON.parse(readFileSync(join(import.meta.dir, "../../../../test/fixtures/rs-ems.json"), "utf8"));
     const r = emsRow(m)!;
-    expect(r.name).toBe("Flood map vs Copernicus EMS (Taquari valley only)");
+    expect(r.name).toBe("Flood map vs independent flood map (EU emergency service, Taquari valley only)");
     expect(r.value).toBe("IoU 0.18 · F1 0.31 · P 0.46 · R 0.24");
-    expect(r.detail).toBe("Flood index High or above (observed rain) vs the EMS EMSR720 flood map of May 6, 2024. EMS mapped only five Taquari-valley areas; the Porto Alegre / Guaíba flood is not in it. Before the onset (Apr 29, 2024): 0.21% of the EMS flood area was High or above with observed rain, 6.6% in the NOAA GFS forecast issued Apr 28, 2024 (Critical 0.10%). © European Union, Copernicus Emergency Management Service.");
+    expect(r.detail).toBe("Flood index High or above (observed rain) vs the EU emergency service's flood map of May 6, 2024. The EU emergency service mapped only five Taquari-valley areas; the Porto Alegre / Guaíba flood is not in it. Before the onset (Apr 29, 2024): 0.21% of the independently mapped flood area was High or above with observed rain, 6.6% in the NOAA GFS forecast issued Apr 28, 2024 (Critical 0.10%).");
     expect(emsRow({})).toBeUndefined();
   });
 });
@@ -188,7 +188,7 @@ describe("L43 lift (lead-analysis f2b7ff3)", () => {
   test("EMS row leads with its lift when published", () => {
     const m = { ...JSON.parse(readFileSync(join(import.meta.dir, "../../../../test/fixtures/rs-ems.json"), "utf8")),
       flood_ems_flagged_before_onset_lift: 2.23, flood_ems_flagged_before_onset_area_share_pct: 2.94 };
-    expect(emsRow(m)!.detail).toStartWith("Before the onset the GFS run flagged 2.9% of the mapped Taquari area as High or above but 6.6% of the EMS flood: 2.2× chance. Flood index");
+    expect(emsRow(m)!.detail).toStartWith("Before the onset the GFS run flagged 2.9% of the mapped Taquari area as High or above but 6.6% of the independently mapped flood: 2.2× chance. Flood index");
   });
 });
 
@@ -197,9 +197,9 @@ describe("RS EMS landslides row (lead-analysis f2b7ff3 keys)", () => {
     const r = emsLandslideRow({ landslide_ems_n: 497, landslide_ems_warned_gfs_24h_pct: 81.09, landslide_ems_warned_gfs_24h_lift: 3.03,
       landslide_ems_warned_gfs_24h_centroid_pct: 56.94, landslide_ems_warned_gfs_24h_centroid_area_share_pct: 26.72,
       landslide_ems_warned_gfs_24h_centroid_lift: 2.13 })!;
-    expect(r.name).toBe("Copernicus EMS landslides (Taquari valley only)");
+    expect(r.name).toBe("Independent landslide map (EU emergency service, Taquari valley only)");
     expect(r.value).toBe("57% at slide centre · 2.1× chance");
-    expect(r.detail).toBe("57% of the 497 EMS landslides had their centre inside the area the day-before NOAA GFS forecast flagged High or above, which covered 27% of the EMS area — 2.1× chance (any touched cell: 81%, 3.0×). © European Union, Copernicus Emergency Management Service.");
+    expect(r.detail).toBe("57% of the 497 independently mapped landslides had their centre inside the area the day-before NOAA GFS forecast flagged High or above, which covered 27% of the mapped area — 2.1× chance (any touched cell: 81%, 3.0×).");
     expect(emsLandslideRow({})).toBeUndefined();
   });
 });

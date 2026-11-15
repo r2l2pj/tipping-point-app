@@ -67,12 +67,12 @@ export function layerLegendRows(bundle: CcBundle, on: readonly LayerId[], probHo
   if (on.includes("flood")) rows.push({ id: "flood", label: floodLabels(bundle).layer, swatch: FLOODED_FILL });
   if (on.includes("candidates")) rows.push({ id: "candidates", label: CANDIDATES_LABEL, swatch: "#7b3294" });
   if (on.includes("catalog")) rows.push({ id: "catalog", label: "Landslide catalog point", swatch: "#ffffff", round: true });
-  if (on.includes("ems")) rows.push({ id: "ems", label: "Flooded area (Copernicus EMS; © European Union, Copernicus EMS)", swatch: FLOODED_FILL });
+  if (on.includes("ems")) rows.push({ id: "ems", label: "Independent flood map (EU emergency service)", swatch: FLOODED_FILL });
   if (on.includes("opera")) {
     rows.push(
       { id: "opera-both", label: "New flood in both NISAR and OPERA", swatch: OPERA.both },
       { id: "opera-nisar", label: "NISAR only", swatch: OPERA.nisarOnly },
-      { id: "opera-opera", label: "OPERA DSWx-S1 only", swatch: OPERA.operaOnly },
+      { id: "opera-opera", label: "NASA OPERA surface water (DSWx) only", swatch: OPERA.operaOnly },
     );
   }
   return rows;

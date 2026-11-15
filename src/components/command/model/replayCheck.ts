@@ -241,12 +241,13 @@ export function liftLine(areaShare: unknown, lift: unknown, what: string): strin
   return `That run flagged only ${pct100(areaShare)} of the case area as High or above: ${lift.toFixed(1)}× the share of ${what} expected by chance.`;
 }
 
-export const EMS_ROW_NAME = "Flood map vs Copernicus EMS (Taquari valley only)";
+export const EMS_ROW_NAME = "Flood map vs independent flood map (EU emergency service, Taquari valley only)";
+// The licence credit lives in the footer (Sources) only (L51).
 export const EMS_ATTRIBUTION = "© European Union, Copernicus Emergency Management Service";
 // Conductor (page quotes it): EMS EMSR720 landslides (Taquari) vs the
 // NOAA GFS run issued a day before the onset. The centroid share is the fair
 // headline; any-touched-cell in brackets (lead-analysis).
-export const EMS_SLIDES_NAME = "Copernicus EMS landslides (Taquari valley only)";
+export const EMS_SLIDES_NAME = "Independent landslide map (EU emergency service, Taquari valley only)";
 export function emsLandslideRow(m: M): CheckRow | undefined {
   const c = m.landslide_ems_warned_gfs_24h_centroid_pct;
   const area = m.landslide_ems_warned_gfs_24h_centroid_area_share_pct;
@@ -259,10 +260,10 @@ export function emsLandslideRow(m: M): CheckRow | undefined {
     id: "ems-slides",
     name: EMS_SLIDES_NAME,
     value: `${`${Math.round(c)}%`} at slide centre${finite(lift) && lift > 0 ? ` · ${lift.toFixed(1)}× chance` : ""}`,
-    detail: `${`${Math.round(c)}%`} of the ${n}EMS landslides had their centre inside the area the day-before NOAA GFS forecast flagged High or above, which covered ${`${Math.round(area)}%`} of the EMS area` +
+    detail: `${`${Math.round(c)}%`} of the ${n}independently mapped landslides had their centre inside the area the day-before NOAA GFS forecast flagged High or above, which covered ${`${Math.round(area)}%`} of the mapped area` +
       (finite(lift) && lift > 0 ? ` — ${lift.toFixed(1)}× chance` : "") +
       (finite(any) ? ` (any touched cell: ${`${Math.round(any)}%`}${finite(anyLift) && anyLift > 0 ? `, ${anyLift.toFixed(1)}×` : ""})` : "") +
-      `. ${EMS_ATTRIBUTION}.`,
+      ".",
     missing: false,
   };
 }
@@ -272,7 +273,7 @@ const emsLift = (m: M): string => {
   const a = m.flood_ems_flagged_before_onset_area_share_pct;
   const hit = m.flood_ems_flagged_before_onset_pct;
   return finite(l) && l > 0 && finite(a) && finite(hit)
-    ? `Before the onset the GFS run flagged ${pct100(a)} of the mapped Taquari area as High or above but ${pct100(hit)} of the EMS flood: ${l.toFixed(1)}× chance. `
+    ? `Before the onset the GFS run flagged ${pct100(a)} of the mapped Taquari area as High or above but ${pct100(hit)} of the independently mapped flood: ${l.toFixed(1)}× chance. `
     : "";
 };
 export function emsRow(m: M): CheckRow | undefined {
@@ -291,20 +292,20 @@ export function emsRow(m: M): CheckRow | undefined {
   const g = lastIssue && isRecord(gfs[lastIssue]) ? gfs[lastIssue] as M : undefined;
   const before = onset && (finite(obs) || (g && finite(g.alto_or_critico_pct)))
     ? ` Before the onset (${onset}): ${[
-        finite(obs) ? `${pct100(obs)} of the EMS flood area was High or above with observed rain` : undefined,
+        finite(obs) ? `${pct100(obs)} of the independently mapped flood area was High or above with observed rain` : undefined,
         g && finite(g.alto_or_critico_pct)
           ? `${pct100(g.alto_or_critico_pct as number)} in the NOAA GFS forecast issued ${fmtDate(lastIssue!)}${finite(g.critico_pct) ? ` (Critical ${pct100(g.critico_pct as number)})` : ""}`
           : undefined,
       ].filter(Boolean).join(", ")}.`
     : "";
   const scope = typeof e.coverage_limit === "string"
-    ? " EMS mapped only five Taquari-valley areas; the Porto Alegre / Guaíba flood is not in it."
+    ? " The EU emergency service mapped only five Taquari-valley areas; the Porto Alegre / Guaíba flood is not in it."
     : "";
   return {
     id: "ems",
     name: EMS_ROW_NAME,
     value: `IoU ${fmtScore(m.flood_ems_iou)} · F1 ${fmtScore(m.flood_ems_f1)}${pr ? ` · ${pr}` : ""}`,
-    detail: `${emsLift(m)}Flood index High or above (observed rain)${img ? ` vs the EMS ${typeof e.activation === "string" ? `${e.activation} ` : ""}flood map of ${img}` : " vs the EMS flood map"}.${scope}${before} ${EMS_ATTRIBUTION}.`,
+    detail: `${emsLift(m)}Flood index High or above (observed rain)${img ? ` vs the EU emergency service's flood map of ${img}` : " vs the EU emergency service's flood map"}.${scope}${before}`,
     missing: false,
   };
 }
@@ -597,7 +598,7 @@ export function whyRadarText(cloudPct: number, source: string, referenceDate?: s
   const dates = sceneDates(source);
   const hls = /HLS/.test(source);
   const after = !!referenceDate && dates.length > 0 && dates.every((d) => d > referenceDate.slice(0, 10));
-  const scenes = `In the optical${hls ? " (HLS)" : ""} scenes${dates.length ? ` of ${fmtScenes(dates)}` : ""}${after ? ", after the storm" : ""}`;
+  const scenes = `In the optical${hls ? " (NASA HLS)" : ""} scenes${dates.length ? ` of ${fmtScenes(dates)}` : ""}${after ? ", after the storm" : ""}`;
   return `${scenes}, clouds hid ${cloudPct}% of the area. Radar sees through cloud.`;
 }
 

@@ -245,7 +245,7 @@ describe("radar card (S13, L6, L7, L11)", () => {
 
   test("scar count labeled as candidates, never confirmed", () => {
     const html = render(b);
-    expect(html).toContain("Landslide scar candidates (OPERA DIST-ALERT-HLS, vegetation loss)");
+    expect(html).toContain("Landslide scar candidates (NASA OPERA land disturbance (DIST), vegetation loss)");
     expect(html).toContain("candidates, never confirmed");
     expect(html).toContain(">3<");
   });
@@ -473,7 +473,7 @@ describe("pending states carried over from main (L14)", () => {
   });
 
   test("radar: scars absent is 'not published yet', empty scars is a real zero, the token wins", () => {
-    const label = /Landslide scar candidates \(OPERA DIST-ALERT-HLS, vegetation loss\)<\/dt><dd[^>]*>([^<]*)</;
+    const label = /Landslide scar candidates \(NASA OPERA land disturbance \(DIST\), vegetation loss\)<\/dt><dd[^>]*>([^<]*)</;
     expect(render(bundle({ metricsView: mv({}) })).match(label)![1]).toBe("not published yet");
     expect(render(bundle({ metricsView: mv({}), scars: { type: "FeatureCollection", features: [] } })).match(label)![1]).toBe("0");
     const tok = render(withPending(bundle({

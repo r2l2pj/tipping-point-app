@@ -266,7 +266,7 @@ describe("OPERA validation legend (lead-analysis wa_2025/opera_validation.json)"
     expect(rows.map((r) => [r.label, r.swatch])).toEqual([
       ["New flood in both NISAR and OPERA", "#1a9850"],
       ["NISAR only", "#f46d43"],
-      ["OPERA DSWx-S1 only", "#4575b4"],
+      ["NASA OPERA surface water (DSWx) only", "#4575b4"],
     ]);
   });
 });
@@ -278,7 +278,7 @@ describe("Copernicus EMS flood layer (RS)", () => {
     expect(layerAvailable(rs, "ems", "flood")).toBe(true);
     expect(layerAvailable(bundle({ id: "wa_2025" }), "ems", "flood")).toBe(false);
     expect(overlaysFor(["ems"]).emsFlood).toBe(true);
-    expect(layerLegendRows(rs, ["ems"])[0].label).toBe("Flooded area (Copernicus EMS; © European Union, Copernicus EMS)");
+    expect(layerLegendRows(rs, ["ems"])[0].label).toBe("Independent flood map (EU emergency service)");
   });
 });
 

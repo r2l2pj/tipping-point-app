@@ -221,7 +221,7 @@ describe("lead-live alerts.json (2026-11-15): tpi candidates, observed[], paused
       { kind: "observed", source: "nisar-gcov", municipality: "Pariquera-Açu", uf: "SP", area_km2: 1, people: 5, polygons: 1 },
       { kind: "observed", source: "opera-dswx-s1", municipality: "Viamão", uf: "RS", area_km2: 7.28, people: 49, polygons: 3 }];
     const rows = observedRows(live({ observed: more }));
-    expect(rows.map((r) => r.source)).toEqual(["NISAR radar", "OPERA DSWx-S1 radar"]);
+    expect(rows.map((r) => r.source)).toEqual(["NISAR radar", "NASA OPERA surface water (DSWx)"]);
     expect(rows[0]).toMatchObject({
       places: "Cananéia, SP · Iguape, SP · Registro, SP and 1 more",
       area: "15.0 km²", people: "399", polygons: 18,
@@ -236,7 +236,7 @@ describe("lead-live alerts.json (2026-11-15): tpi candidates, observed[], paused
     const b = liveBundle({ responseSources: toResponseSources(summary), observedPlaces: placesBySource(zones) });
     const rows = observedRows(b);
     expect(rows.map((r) => [r.source, r.area, r.people])).toEqual([
-      ["OPERA DSWx-S1 radar", "129.5 km²", "494"],
+      ["NASA OPERA surface water (DSWx)", "129.5 km²", "494"],
       ["NISAR radar", "12.0 km²", "489"],
     ]);
     expect(rows[1].places).toMatch(/^São Miguel Arcanjo, SP · .+ and \d+ more$|^São Miguel Arcanjo, SP( · [^·]+){0,2}$/);
@@ -282,8 +282,8 @@ describe("observed: flood from R3 (standard confidence), DIST landslide in its o
     });
     const rows = observedRows(b);
     expect(rows.map((r) => [r.hazard, r.source, r.area])).toEqual([
-      ["flood", "OPERA DSWx-S1 radar", "129.5 km²"],
-      ["landslide", "OPERA DIST-ALERT-HLS (optical, vegetation loss)", "3.3 km²"],
+      ["flood", "NASA OPERA surface water (DSWx)", "129.5 km²"],
+      ["landslide", "NASA OPERA land disturbance (DIST, optical, vegetation loss)", "3.3 km²"],
     ]);
   });
 });

@@ -177,7 +177,7 @@ describe("R3 zones and DSWx in Now", () => {
   test("DSWx alone makes the flood layer available and on by default; card names it", () => {
     expect(initialState([live]).layers).toEqual(["tpi", "flood"]);
     const card = radarCard(live);
-    expect(card.others).toEqual([{ label: "Also seen by OPERA DSWx-S1 radar (candidates)",
+    expect(card.others).toEqual([{ label: "Also seen by NASA OPERA surface water (DSWx) (candidates)",
       value: "129.5 km² · 494 people (estimate) · newest pass Nov 14, 2026" }]);
     expect(card.canShowOnMap).toBe(true);
   });

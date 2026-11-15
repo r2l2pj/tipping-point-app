@@ -15,9 +15,9 @@ type BBox = [number, number, number, number];
 
 // Landslide scar candidates (lead-analysis): OPERA DIST-ALERT-HLS vegetation
 // loss on steep slopes. Candidates, never confirmed.
-export const CANDIDATES_LABEL = "Landslide scar candidates (OPERA DIST-ALERT-HLS, vegetation loss)";
+export const CANDIDATES_LABEL = "Landslide scar candidates (NASA OPERA land disturbance (DIST), vegetation loss)";
 export const CANDIDATES_NOTE =
-  "Vegetation loss on steep slopes seen by HLS optical — candidates, never confirmed.";
+  "Vegetation loss on steep slopes seen by NASA HLS optical — candidates, never confirmed.";
 
 const scarFigures = (km2: (v: unknown) => string, area: unknown, ppl: string | undefined): string => {
   const parts = [finite(area) ? km2(area) : undefined, ppl].filter(Boolean);
@@ -71,7 +71,7 @@ function candidatesBlock(bundle: CcBundle): { value: string; lines: string[] } {
 }
 export const AWAITING_PAIR_TEXT = "Awaiting a NISAR pair over the AOI.";
 export const GUNW_LIMIT_TEXT =
-  "NISAR radar maps flood candidates only in this case; scar candidates come from post-event HLS optical — the GUNW pair spanning the event is a declared limitation.";
+  "NISAR radar maps flood candidates only in this case; scar candidates come from post-event NASA HLS optical — the GUNW pair spanning the event is a declared limitation.";
 
 export interface CompareSide { url: string; label: string; bounds?: BBox }
 export interface ComparePair {
@@ -225,7 +225,7 @@ export function floodLabels(bundle: CcBundle): { area: string; layer: string } {
   if (bundle.mode === "live" && (bundle.response || hasDswx(bundle))) {
     return {
       area: RESPONSE_AREA_LABEL,
-      layer: hasDswx(bundle) ? "Flooded area (NISAR + OPERA Sentinel-1 radar, candidates)" : RESPONSE_LAYER_LABEL,
+      layer: hasDswx(bundle) ? "Flooded area (NISAR + NASA OPERA surface water (DSWx), candidates)" : RESPONSE_LAYER_LABEL,
     };
   }
   const source = bundle.metricsView?.flood_source as string | undefined;
@@ -394,7 +394,7 @@ export function radarCard(bundle: CcBundle): RadarCard {
   const others = (bundle.mode === "live" ? bundle.responseSources ?? [] : [])
     .filter((s) => !/nisar/i.test(s.source))
     .map((s) => ({
-      label: /dswx/i.test(s.source) ? "Also seen by OPERA DSWx-S1 radar (candidates)" : `Also seen by ${s.source} (candidates)`,
+      label: /dswx/i.test(s.source) ? "Also seen by NASA OPERA surface water (DSWx) (candidates)" : `Also seen by ${s.source} (candidates)`,
       value: `${fmtKm2(s.flooded_km2)}` +
         (finite(s.people_flooded) ? ` · ${Math.round(s.people_flooded).toLocaleString("en-US")} people (estimate)` : "") +
         (s.latest_acquired ? ` · newest pass ${fmtDate(s.latest_acquired)}` : ""),

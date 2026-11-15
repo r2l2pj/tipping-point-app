@@ -238,7 +238,7 @@ export function useMapLayers(
     map.addSource(SRC.muni, { type: "geojson", data: EMPTY });
     map.addSource(SRC.catalog, { type: "geojson", data: EMPTY });
     map.addSource(SRC.basin, { type: "geojson", data: EMPTY });
-    map.addSource(SRC.ems, { type: "geojson", data: EMPTY, attribution: "© European Union, Copernicus Emergency Management Service" });
+    map.addSource(SRC.ems, { type: "geojson", data: EMPTY }); // credit: footer (Sources)
     map.addSource(SRC.places, { type: "geojson", data: bundle?.places ?? EMPTY });
     map.addSource(SRC.zonePins, { type: "geojson", data: EMPTY });
 
@@ -711,7 +711,7 @@ export function useMapLayers(
     const wantBasin = !!layers.imerg && products && typeof products.upstream_basin === "string";
     if (wantBasin) loadGeo(SRC.basin, "upstream basin", url("upstream_basin", products!.upstream_basin as string));
     vis(LYR.basin, !!wantBasin);
-    if (wantEms) loadGeo(SRC.ems, "Copernicus EMS flood map", url("flood_ems", "geojson/flood_ems.geojson"));
+    if (wantEms) loadGeo(SRC.ems, "independent flood map", url("flood_ems", "geojson/flood_ems.geojson"));
     set(SRC.places, bundle.places ?? EMPTY);
 
     vis(LYR.tpiRaster, usePng && frameOk);

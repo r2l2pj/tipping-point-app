@@ -110,7 +110,7 @@ export interface ObservedRow {
 export const OBSERVED_TITLE = "Observed by radar (candidates)";
 export const OBSERVED_NOTE =
   "Flood seen by satellite between two passes — candidates, not yet checked on the ground. Not an alert.";
-export const LANDSLIDE_OBSERVED_TITLE = "Landslide scar candidates (OPERA DIST-ALERT-HLS)";
+export const LANDSLIDE_OBSERVED_TITLE = "Landslide scar candidates (NASA OPERA land disturbance (DIST))";
 export const LANDSLIDE_OBSERVED_NOTE =
   "Vegetation loss on steep slopes seen by optical satellite — candidates, never confirmed. Outside a rain event it is mostly forestry harvest or fire; the product is published 1–2 weeks after the pass. Not an alert.";
 export const PLACES_SHOWN = 3;
@@ -118,9 +118,9 @@ export const PLACES_UNNAMED = "municipalities not named yet";
 
 const SOURCE_LABEL: Array<[RegExp, string]> = [
   [/nisar/i, "NISAR radar"],
-  [/dswx[-_]?s1/i, "OPERA DSWx-S1 radar"],
-  [/dswx/i, "OPERA DSWx"],
-  [/dist/i, "OPERA DIST-ALERT-HLS (optical, vegetation loss)"],
+  [/dswx[-_]?s1/i, "NASA OPERA surface water (DSWx)"],
+  [/dswx/i, "NASA OPERA surface water (DSWx)"],
+  [/dist/i, "NASA OPERA land disturbance (DIST, optical, vegetation loss)"],
 ];
 const sourceLabel = (s?: string): string =>
   (s && SOURCE_LABEL.find(([re]) => re.test(s))?.[1]) ?? s ?? "satellite";
@@ -171,7 +171,8 @@ export function observedRows(bundle: CcBundle | undefined): ObservedRow[] {
         people: people(sumOf(group.map((o) => o.people))),
         polygons: sumOf(group.map((o) => o.polygons)),
       };
-    }).sort((a, b) => a.source.localeCompare(b.source));
+    // NISAR first (challenge core), then the others by name.
+    }).sort((a, b) => Number(/^NISAR/.test(b.source)) - Number(/^NISAR/.test(a.source)) || a.source.localeCompare(b.source));
   };
   const isLandslide = (o: { hazard?: string; source?: string }) =>
     /landslide/i.test(o.hazard ?? "") || /dist/i.test(o.source ?? "");
@@ -208,7 +209,7 @@ export function observedRows(bundle: CcBundle | undefined): ObservedRow[] {
       polygons: r.polygons,
     }];
   }
-  // Landslide scar candidates (OPERA DIST-ALERT-HLS): their own section.
+  // Landslide scar candidates (NASA OPERA land disturbance (DIST)): their own section.
   const landslide = fromObserved(observed.filter(isLandslide), "landslide");
   return [...flood, ...landslide];
 }
