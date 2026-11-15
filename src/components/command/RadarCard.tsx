@@ -43,7 +43,7 @@ export default function RadarCard({
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
         <Icon d={ICON.radar} size={30} strokeWidth={1.8} className="shrink-0" />
         <div className="shrink-0">
-          <div className="text-[15px] font-semibold leading-tight">{radar.pair ? "NISAR radar" : "Radar"}</div>
+          <div className="text-[15px] font-semibold leading-tight">{radar.pair && radar.nisar ? "NISAR radar" : "Radar"}</div>
           <div className="text-xs text-cc-muted">Post-event radar check</div>
         </div>
         <div className="min-w-0 flex-[1_1_150px] border-l border-cc-line pl-2.5">
@@ -157,7 +157,7 @@ export default function RadarCard({
       <div className="mt-2 flex flex-wrap items-center gap-2">
         {radar.pair && (
           <button type="button" onClick={onConfirm} disabled={!radar.canShowOnMap} className={primary}>
-            Check with NISAR radar <Icon d={ICON.arrowRight} size={14} strokeWidth={2.2} />
+            {radar.nisar ? "Check with NISAR radar" : "Check with radar"} <Icon d={ICON.arrowRight} size={14} strokeWidth={2.2} />
           </button>
         )}
         <button type="button" onClick={onShowFlood} aria-pressed={floodOn} disabled={!radar.canShowOnMap} className={secondary}>

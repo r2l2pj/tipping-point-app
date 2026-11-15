@@ -69,7 +69,7 @@ export default function CompareOverlay({
           )}
           {stack && (
             <div data-radar-dates className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-cc-line-strong bg-white/95 px-2.5 py-1 text-xs text-cc-ink shadow">
-              <span className="font-semibold">NISAR radar dates</span>
+              <span className="font-semibold">{stack.title}</span>
               <label className="flex items-center gap-1">Before
                 <input type="range" min={0} max={n - 1} step={1} value={bi} aria-label="Before date"
                   onChange={(e) => setBi(Math.min(Number(e.target.value), ai))} />
