@@ -10,17 +10,17 @@
 - *Visual:* our wordmark + tagline over a dark map (no NASA logos or insignia anywhere in the deck: guide rule); the header's "TIPPING POINT | Rain warns. Radar sees through." wordmark
 
 ## Slide 2 — The problem (main case: Uruguay River, Uruguaiana and Itaqui)
-- The Uruguay River floods our home state's western border towns again and again: red alerts for Itaqui and Uruguaiana on Jul 26–29, 2026 (Defesa Civil RS) and new floods in October–November 2026 (press, citing the river gauges: 9.89 m vs the 8.5 m flood level at Uruguaiana on Oct 13; 8.54 m vs 8.50 m on Oct 29)
+- The Uruguay River floods our home state's western border towns again and again: red alerts for Itaqui and Uruguaiana on Jul 26–29, 2026 (Defesa Civil RS) and new floods in October 2026: the Uruguaiana gauge (ANA) stayed above its 8.50 m flood stage Oct 5–21, crest 10.02 m on Oct 16, and again Oct 29–31; 29 people displaced in Itaqui on Oct 8 (press)
 - Clouds hide the river from optical satellites during the flood; alerts cover whole municipalities, not which streets are under water
 - Context: May 2024, Rio Grande do Sul floods — 478 municipalities affected, 185 deaths, 581,638 people displaced at the peak (Government of Rio Grande do Sul, SOS Rio Grande do Sul, updated Aug 19, 2025)
 - *Visual:* the Uruguaiana NISAR map from the app ([TBD] screenshot once the series is published)
 
 ## Slide 3 — Prevent the disaster, not the flood: when · where · who (Uruguaiana, Oct 2026)
 - **When:** five days before the Uruguay River reached flood stage at Uruguaiana (Oct 5), NASA satellite rain (GPM IMERG) over the upstream basin was already extreme — in a post-event test, 5 days' notice was possible (6 days before the second rise, Oct 29)
-- **Where:** it pointed to the low-lying river corridor, which holds 54% of the 1.85 km² NISAR mapped as newly flooded (7 polygons, small sample), in 36% of the land (1.5× chance)
-- **Who:** about 20,900 people live in that corridor (about 29 inside the radar flood candidates)
+- **Where:** it pointed to the low-lying river corridor, which holds 54% of the about 1.8 km² a teammate's NISAR change map (Sep 30 → Oct 12; 7 polygons, small sample) shows newly flooded, in 36% of the land (1.5× chance); our stricter automatic check did not reproduce that map
+- **Who:** about 20,900 people live in that corridor (about 29 inside the teammate's flood polygons)
 - **Tested retrospectively, adding next:** local rain never hit its own extreme level, so our live local-rain index missed it; the upstream signal is a post-event test (Nov 15), not yet live (on Washington it added 32% more false Critical area). NOAA GFS alone under-forecast both rises. No claim of being earlier than official warnings
-- **Then radar:** NISAR mapped where it flooded through cloud (HH backscatter drop > 3 dB below a per-scene threshold, low ground near rivers, ≥ 3 ha)
+- **Then radar:** NISAR sees the river through cloud; our automatic check (HH drop > 3 dB below a per-scene threshold, low ground near rivers, ≥ 3 ha) found darkening along the corridor (1.76 km²) but rejected every Uruguaiana pair at its threshold clamp, so no automatic flood map yet
 - How: Tipping Point Index of NASA rain (IMERG), soil (SMAP) and terrain (NASADEM); builds on NASA's LHASA (doi:10.3389/feart.2021.640043; LHASA-F doi:10.3389/feart.2022.878996); an experimental XGBoost trigger model sits beside it
 
 ## Slide 4 — The demo
