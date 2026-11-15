@@ -1,6 +1,6 @@
 # Deploy on a VPS (L39)
 
-Production moves from Vercel to our own VPS. The app is one Next.js 16
+Production runs on our VPS. The app is one Next.js 16
 server (`next start`) in a Docker image. **Data does not move**: the server
 reads the published files from the `fallback` branch of
 `r2l2pj/tipping-point-data` (GitHub raw), then the Neon bucket, then the
@@ -17,17 +17,14 @@ VPS, build on another machine and `docker save | ssh vps docker load`.
 
 ```bash
 git clone https://github.com/r2l2pj/tipping-point-app.git && cd tipping-point-app
-git checkout freeze-1300            # or main
-docker build -t tipping-point-app \
-  --build-arg NEXT_PUBLIC_TELEGRAM_BOT_URL=https://t.me/<bot> \
-  .
-docker run -d --name tp-app --restart unless-stopped \
-  -p 127.0.0.1:3000:3000 \
-  --env-file /etc/tipping-point/app.env \
-  -v tp-data:/app/.data \
+git checkout main
+docker build -t tipping-point-app .
+docker run -d --name tipping-point-app --restart unless-stopped \
+  --network caddy_proxy --memory 1g --cap-drop ALL \
+  --security-opt no-new-privileges \
+  --mount source=tipping-point-data,target=/app/.data \
   tipping-point-app
-docker ps            # STATUS shows (healthy) after ~20 s
-curl -s localhost:3000/api/health | head -c 400
+docker inspect tipping-point-app --format '{{.State.Health.Status}}'
 ```
 
 The image: bun installs and builds (same lockfile and build as Vercel, the
@@ -36,8 +33,58 @@ runs `next start` as the non-root `node` user. `HEALTHCHECK` calls
 `/api/health`, which answers 200 JSON whenever the server is up (the body is
 the report: env presence, manifest freshness), so it is a liveness check.
 
-Update: `git pull && docker build … && docker rm -f tp-app && docker run …`
-(a few seconds of downtime; fine for one instance).
+For manual updates, build and smoke-test the new image before replacing the
+running container. Preserve `tipping-point-data` and retain the previous
+container for rollback; do not remove production first.
+
+### Deploy automatically after a reviewed `main` push
+
+The app's `.github/workflows/deploy-vps.yml` updates the **same**
+`tipping-point-app` container, not a second app or Caddy route. The separate
+`tipping-point-route` keeps owning `tippingpoint.l17s.dev`. The workflow is
+opt-in: it does nothing until the repository variable
+`VPS_APP_DEPLOY_ENABLED=1` is set after host preparation and human review.
+Feature-branch pushes only run CI; deployment follows a human merge to `main`.
+The deploy job starts only after the `CI` workflow succeeds on `main`.
+
+On the VPS, an administrator must install a dedicated, non-Docker-group SSH
+user and the reviewed deploy script as a **root-owned** fixed sudo command.
+Do not grant the SSH account unrestricted `docker` or sudo access:
+
+```sh
+sudo useradd --create-home --shell /bin/bash tipping-deploy
+sudo passwd -l tipping-deploy
+sudo install -d -o root -g root -m 0700 /var/lib/tipping-point-app-deploy
+sudo install -o root -g root -m 0755 deploy/vps/deploy-app.sh \
+  /usr/local/sbin/tipping-point-app-deploy
+printf '%s\n' 'tipping-deploy ALL=(root) NOPASSWD: /usr/local/sbin/tipping-point-app-deploy' \
+  | sudo tee /etc/sudoers.d/tipping-point-app-deploy >/dev/null
+sudo chmod 0440 /etc/sudoers.d/tipping-point-app-deploy
+sudo visudo -cf /etc/sudoers.d/tipping-point-app-deploy
+```
+
+Install the public half of a **dedicated** SSH key in
+`/home/tipping-deploy/.ssh/authorized_keys` (mode 0600, owned by
+`tipping-deploy`); disable forwarding/PTY with the `restrict` key option.
+Keep the private key outside the repository. In the **app** repository, add
+Actions secrets `VPS_HOST`, `VPS_USER=tipping-deploy`, `VPS_DEPLOY_KEY`, and
+`VPS_KNOWN_HOSTS` (host key pinned and independently verified); `VPS_SSH_PORT`
+is optional. Never paste private keys or credentials in issues or logs.
+
+The fixed script verifies the requested SHA is the current `main`, builds it,
+smoke-tests a candidate **without** the production volume or Caddy labels,
+then replaces only `tipping-point-app` with the same `tipping-point-data`
+volume. It keeps the old container stopped as `tipping-point-app-previous`
+for rollback and checks the public HTTPS route. No Telegram webhook or
+subscriber migration is performed. The current app has no custom runtime
+environment variables; adding credentials later requires a separate review
+of the deploy script before activation.
+
+Only after the host account, sudo rule, key, secrets, and a manual test of the
+fixed command are verified, set `VPS_APP_DEPLOY_ENABLED=1`. A failed deploy
+attempts to restart the previous container; check health and the public site
+before considering it recovered. Do not commit another workflow for the same
+hostname or add `caddy=tippingpoint.l17s.dev` to the app.
 
 Podman works the same (`podman build --format docker …`: the default OCI
 format drops `HEALTHCHECK`).
@@ -64,8 +111,10 @@ podman rm -f tp-smoke
 
 ## 2. Environment
 
-Put runtime variables in `/etc/tipping-point/app.env` (mode 600, root-owned,
-never in the repo). `NEXT_PUBLIC_*` are inlined into the browser bundle, so
+The current app uses no custom runtime variables. If credentials are added
+later, put them in `/etc/tipping-point/app.env` (mode 600, root-owned, never
+in the repo) and review the deploy script before enabling them. `NEXT_PUBLIC_*`
+are inlined into the browser bundle, so
 they are **build** arguments, not runtime env.
 
 | Variable | When | Value |
@@ -73,16 +122,19 @@ they are **build** arguments, not runtime env.
 | `DATA_BASE_URL` | runtime | **Leave unset.** Unset already reads the GitHub raw `fallback` branch first (`https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`), then Neon, then the bundled copy. Setting it makes that URL the ONLY remote (no Neon fallback) — set it to the GitHub raw URL only if Neon must be skipped. |
 | `NEON_S3_ENDPOINT` | runtime | Optional, not a secret. Unset = built-in public bucket URL. |
 | `GEE_ENABLED` | runtime | **Unset** (L25: no Earth Engine at runtime). `GEE_PROJECT`, `GCP_SA_KEY` stay unset too. |
-| `DATABASE_URL` | runtime | Secret Neon `postgresql://…` string for the Telegram subscriber table (same value as on Vercel). Unset = SQLite file in `/app/.data` — keep the `tp-data` volume or subscribers are lost on rebuild. |
+| `DATABASE_URL` | runtime | Telegram is currently disabled. Do not configure its database or move the webhook as part of app deployment. A future subscriber cutover needs a separate reviewed migration; preserve `tipping-point-data` meanwhile. |
 | `TELEGRAM_TOKEN` | runtime | Bot token (BotFather). Secret. |
 | `TELEGRAM_SECRET` | runtime | Webhook shared secret (Telegram sends it as `X-Telegram-Bot-Api-Secret-Token`). Secret. |
 | `APP_URL` | runtime | The new public URL, e.g. `https://tipping-point.example.org` (no trailing slash). |
-| `PORT` | runtime | Default `3000`. Match the `-p` mapping and the proxy. |
+| `PORT` | runtime | Default `3000` on the private `caddy_proxy` network; do not publish it publicly. |
 | `ALERTS_PAUSED` | runtime | Optional `1` pauses the public alerts panel. |
 | `NEXT_PUBLIC_TELEGRAM_BOT_URL` | **build arg** | `https://t.me/<bot>`; unset hides the Telegram card. |
 | `NEXT_PUBLIC_REFRESH_HOURS` | **build arg** | Live-run period in hours, default 3. |
 
 ### Telegram webhook moves with the URL
+
+Not part of the current deployment. Do not enable this section until the
+subscriber migration has been separately reviewed and verified.
 
 Telegram still posts to the old Vercel URL until the webhook is re-registered
 against the VPS (after TLS works):
