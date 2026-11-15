@@ -1,12 +1,13 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
-import { overlayPlan } from "@/lib/layers";
+import { overlayPlan, type ProbHorizon } from "@/lib/layers";
 import { bundle, frame, liveBundle, manifest, point, zones } from "./fixtures";
 import {
   confirmRadarLayers, keepAvailable, layerRows, layerStateFor, MAX_LAYERS,
   overlaysFor, toggleLayer, type LayerId,
 } from "./layerRegistry";
 import { resolveFrameDate, resolveOverlays, zoneMarkersOn } from "./overlays";
+import type { CcBundle } from "./types";
 
 const fc = (n: number): GeoJSON.FeatureCollection => zones(Array.from({ length: n }, () => point()));
 
@@ -61,6 +62,49 @@ describe("layer rows", () => {
   });
 });
 
+describe("P(trigger) probability row", () => {
+  const prob = bundle({
+    manifest: manifest([
+      frame("tpi_slide", "2025-12-10"),
+      ...(["24h", "48h", "72h", "7d", "14d"] as const).map((h) => frame(`p_trigger_${h}`, "2025-12-10")),
+    ]),
+  });
+  const probRow = (b: CcBundle, h?: ProbHorizon, on: LayerId[] = ["ptrigger"]) =>
+    layerRows(b, on, "slide", "2025-12-10", h).find((r) => r.id === "ptrigger")!;
+
+  test("available when the case ships p_trigger horizon frames; the issued/forecast note is the sub", () => {
+    expect(probRow(prob)).toMatchObject({
+      available: true, on: true, label: "Model probability (XGBoost)",
+    });
+    expect(probRow(prob).sub).toBe("issued Dec 10, 2025 · forecast: NOAA GFS");
+  });
+
+  test("the sub-line is the frame of the selected horizon", () => {
+    const b = bundle({ manifest: manifest([
+      frame("p_trigger_24h", "2025-12-10"),
+      { ...frame("p_trigger_7d", "2025-12-10"), issued_at: "2025-12-09T12:00:00Z" },
+    ]) });
+    expect(probRow(b, "24h").sub).toContain("issued Dec 10, 2025");
+    expect(probRow(b, "7d").sub).toContain("issued Dec 9, 2025");
+  });
+
+  test("available on horizon ids alone (no 24h) or on a legacy p_trigger raster", () => {
+    expect(probRow(bundle({ manifest: manifest([frame("p_trigger_7d", "2025-12-10")]) })).available).toBe(true);
+    expect(probRow(bundle({ manifest: manifest([frame("p_trigger", "2025-12-10")]) })).available).toBe(true);
+  });
+
+  test("without p_trigger frames the row is unavailable with the shared reason", () => {
+    expect(probRow(bundle({ manifest: manifest([frame("tpi_slide", "2025-12-10")]) }))).toMatchObject({
+      available: false, on: false, sub: "no map layer for this case",
+    });
+  });
+
+  test("layerStateFor maps the row onto the pTrigger map toggle", () => {
+    expect(layerStateFor(["ptrigger"], "slide").pTrigger).toBe(true);
+    expect(layerStateFor(["tpi"], "slide").pTrigger).toBe(false);
+  });
+});
+
 describe("layer rows on the trimmed bundle (products by URL)", () => {
   const trimmed = bundle({
     manifest: manifest([frame("tpi_slide", "2025-12-10")]),
@@ -85,7 +129,7 @@ describe("layer rows on the trimmed bundle (products by URL)", () => {
 
 describe("layer budget", () => {
   test("at most two data layers after any sequence of toggles; the evicted layer is named", () => {
-    const ids: LayerId[] = ["tpi", "imerg", "smap", "tml", "flood", "candidates", "catalog", "opera"];
+    const ids: LayerId[] = ["tpi", "imerg", "smap", "tml", "ptrigger", "flood", "candidates", "catalog", "opera"];
     let on: LayerId[] = ["tpi"];
     let seed = 7;
     for (let i = 0; i < 500; i++) {
@@ -110,6 +154,17 @@ describe("layer budget", () => {
   test("the notice names both layers", () => {
     expect(toggleLayer(["imerg", "tpi"], "flood")).toEqual({
       layers: ["tpi", "flood"], evicted: "imerg", notice: "Rain turned off to show Flood",
+    });
+  });
+
+  test("the probability row counts toward the budget; eviction names 'Trigger probability'", () => {
+    expect(toggleLayer(["tpi", "flood"], "ptrigger")).toEqual({
+      layers: ["flood", "ptrigger"], evicted: "tpi",
+      notice: "TPI index turned off to show Trigger probability",
+    });
+    expect(toggleLayer(["ptrigger", "tpi"], "flood")).toEqual({
+      layers: ["tpi", "flood"], evicted: "ptrigger",
+      notice: "Trigger probability turned off to show Flood",
     });
   });
 

@@ -2,7 +2,15 @@
 // most two data layers at once, besides the basemap and the relief). The TPI
 // raster is a data layer and counts. Replaces the hard-coded list of the old
 // LayersPanel and toggleBudget(tab) / capToggleQueue for the new screen.
-import { manifestRaster, MAX_DATA_LAYERS } from "@/lib/layers";
+import {
+  manifestRaster,
+  MAX_DATA_LAYERS,
+  probFrame,
+  probHorizonsAvailable,
+  probLayerNote,
+  PROB_LAYER_TITLE,
+  type ProbHorizon,
+} from "@/lib/layers";
 import { availability, missingText, NO_RADAR_TEXT } from "./availability";
 import { declared } from "./lazy";
 import { fmtDataDate, fmtDate } from "./format";
@@ -12,7 +20,7 @@ import { frameBasis } from "./steps";
 import { HAZARD_LABEL, type CcBundle, type Hazard } from "./types";
 
 export type LayerId =
-  | "tpi" | "imerg" | "smap" | "tml"
+  | "tpi" | "imerg" | "smap" | "tml" | "ptrigger"
   | "flood" | "candidates"
   | "catalog" | "opera";
 
@@ -39,6 +47,7 @@ const DEFS: Def[] = [
   { id: "imerg", group: "Analysis", short: "Rain" },
   { id: "smap", group: "Analysis", short: "Soil moisture" },
   { id: "tml", group: "Analysis", short: "Modeled landslide hazard" },
+  { id: "ptrigger", group: "Analysis", short: "Trigger probability" },
   { id: "flood", group: "Observations", short: "Flood" },
   { id: "candidates", group: "Observations", short: "Scar candidates" },
   { id: "catalog", group: "Replay evidence", short: "Landslide catalog" },
@@ -76,6 +85,12 @@ export function layerAvailable(bundle: CcBundle, id: LayerId, hazard: Hazard): b
       return manifestRaster(bundle.manifest?.layers, "smap")?.png !== undefined;
     case "tml":
       return !!pngLayer(bundle, "t_ml");
+    case "ptrigger":
+      // Horizon-keyed frames (p_trigger_<h>) or the legacy single family.
+      return (
+        probHorizonsAvailable(bundle.manifest?.layers).length > 0 ||
+        probFrame(bundle.manifest?.layers, "24h")?.png !== undefined
+      );
     case "opera":
       return !!pngLayer(bundle, "opera_validation");
     case "flood":
@@ -104,7 +119,8 @@ export function layerRows(
   bundle: CcBundle,
   on: readonly LayerId[],
   hazard: Hazard,
-  stepDate?: string
+  stepDate?: string,
+  probHorizon: ProbHorizon = "24h"
 ): LayerRow[] {
   const radar = availability(bundle, "radar");
   const passDates = [dateOf(bundle, "nisar_pre"), dateOf(bundle, "nisar_post")]
@@ -114,6 +130,7 @@ export function layerRows(
     imerg: "Rain (GPM IMERG)",
     smap: "Soil moisture (SMAP)",
     tml: "Modeled landslide hazard (XGBoost)",
+    ptrigger: PROB_LAYER_TITLE,
     flood: floodLabels(bundle).layer,
     candidates: CANDIDATES_LABEL,
     catalog: "Landslide catalog",
@@ -124,6 +141,7 @@ export function layerRows(
       .filter(Boolean).join(" · ") || undefined,
     imerg: dateOf(bundle, "imerg") ? `data ${fmtDataDate(dateOf(bundle, "imerg"))}` : undefined,
     smap: dateOf(bundle, "smap") ? `data ${fmtDataDate(dateOf(bundle, "smap"))}` : undefined,
+    ptrigger: probLayerNote(probFrame(bundle.manifest?.layers, probHorizon, stepDate)),
     flood: passDates.length ? `NISAR passes: ${passDates.join(", ")}` : undefined,
     opera: pngLayer(bundle, "opera_validation")?.date
       ? `data ${fmtDataDate(pngLayer(bundle, "opera_validation")?.date)}` : undefined,
@@ -133,6 +151,7 @@ export function layerRows(
     imerg: NO_MAP_LAYER_TEXT,
     smap: NO_MAP_LAYER_TEXT,
     tml: NO_MAP_LAYER_TEXT,
+    ptrigger: NO_MAP_LAYER_TEXT,
     opera: NO_MAP_LAYER_TEXT,
     flood: radar.state === "not-applicable" ? NO_RADAR_TEXT : missingText(availability(bundle, "flood_confirmed")),
     candidates: missingText(availability(bundle, "landslide_candidates")),
@@ -210,5 +229,5 @@ export const layerStateFor = (on: readonly LayerId[], hazard: Hazard) => ({
   imerg: on.includes("imerg"),
   smap: on.includes("smap"),
   nisar: false,
-  pTrigger: false, // wired by the P(trigger) horizon unit
+  pTrigger: on.includes("ptrigger"),
 });

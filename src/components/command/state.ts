@@ -2,6 +2,7 @@
 // on a case change. Now / Replay is derived from the active case and the view
 // (command / public) from the address; neither is stored here.
 import { canonicalCaseId } from "@/lib/contract";
+import { probHorizonsAvailable, type ProbHorizon } from "@/lib/layers";
 import {
   confirmRadarLayers,
   DEFAULT_LAYERS,
@@ -24,6 +25,7 @@ export interface ScreenState {
   // calls this `extraLayers`; the TPI index is one of the counted rows.
   layers: LayerId[];
   layerNotice: string | null; // names the layer that was turned off
+  probHorizon: ProbHorizon; // P(trigger) horizon painted by the probability layer
   selectedArea: number | null; // zone rank
   calloutExpanded: boolean;
   compareOpen: ComparePair["kind"] | null;
@@ -42,6 +44,7 @@ export type Action =
   | { type: "togglePlay" }
   | { type: "tick" }
   | { type: "setHazard"; hazard: Hazard }
+  | { type: "setProbHorizon"; horizon: ProbHorizon }
   | { type: "toggleLayer"; id: LayerId }
   | { type: "confirmRadar" }
   | { type: "selectArea"; rank: number }
@@ -133,6 +136,7 @@ export function initialState(
     hazard,
     layers: first ? keepAvailable(first, DEFAULT_LAYERS, hazard) : [],
     layerNotice: null,
+    probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
     selectedArea: null,
     calloutExpanded: false,
     compareOpen: null,
@@ -159,6 +163,8 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
     // map without it when the new case has the raster.
     layers: kept.length || !layerAvailable(bundle, "tpi", hazard) ? kept : ["tpi"],
     layerNotice: null,
+    // The horizon the new case ships first (display order), else the default.
+    probHorizon: probHorizonsAvailable(bundle.manifest?.layers)[0] ?? "24h",
     selectedArea: null,
     calloutExpanded: false,
     compareOpen: null,
@@ -213,6 +219,8 @@ export function reduce(
       if (!bundle || action.hazard === state.hazard) return state;
       return { ...state, hazard: action.hazard };
     }
+    case "setProbHorizon":
+      return { ...state, probHorizon: action.horizon };
     case "toggleLayer": {
       if (!bundle) return state;
       if (!state.layers.includes(action.id) && !layerAvailable(bundle, action.id, state.hazard)) {
