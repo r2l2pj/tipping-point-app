@@ -10,7 +10,7 @@
 
 ## High-Level Project Summary (form field 2, ≤200 words)
 
-NISAR passes over Southern Brazil every 12 days, and its L-band radar sees through cloud and darkness. Tipping Point is built around that pass. Between passes, NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) feed a Tipping Point Index that maps where floods and landslides are about to happen. After each pass, NISAR shows where the ground actually flooded, as candidates for municipal Civil Defense to check first. We built it for Rio Grande do Sul, Santa Catarina and Paraná. During the May 2024 Rio Grande do Sul floods, optical satellites saw nothing: 100% cloud. A live view refreshes every 3 hours with experimental (not official) area alerts. Two past disasters replay day by day with the forecast exactly as it was issued. In Washington State (December 2025), the NISAR Dec 4 → Dec 16 pass pair maps 27.99 km² of flood candidates under 92.9% cloud, and 229,782 people were in critical areas. `[HEADLINE — ON HOLD (L35); candidate awaiting Lucas: RS 88% landslide sentence, see REVIEW.md]`
+NISAR passes over Southern Brazil every 12 days, and its L-band radar sees through cloud and darkness. Tipping Point is built around that pass. Between passes, NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) feed a Tipping Point Index that maps where floods and landslides are about to happen. After each pass, NISAR shows where the ground actually flooded, as candidates for municipal Civil Defense to check first. We built it for Rio Grande do Sul, Santa Catarina and Paraná. During the May 2024 Rio Grande do Sul floods, optical satellites saw nothing: 100% cloud. A live view refreshes every 3 hours with experimental (not official) area alerts. Two past disasters replay day by day with the forecast exactly as it was issued. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them, and 229,782 people were in critical areas. `[HEADLINE — ON HOLD (L35); candidate awaiting Lucas: RS 88% landslide sentence, see REVIEW.md]`
 
 ## Detailed Project Description (form field 5)
 
@@ -60,21 +60,22 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 | Check | Result | n / caveat |
 |---|---|---|
 | Washington: NISAR flood candidates | 27.99 km² within the NISAR swath | post pass covers 74% of the area of interest; NISAR products are BETA |
-| Washington: radar vs OPERA optical reference (new flood) | F1 0.15 · precision 0.19 · recall 0.13 · IoU 0.08 | scored only on the 7% of the scene optical could see (92.9% cloud); co-pol darkening only |
-| Cloud during the events | Washington 92.9% · Rio Grande do Sul 100% | HLS optical scenes over each event window |
+| Washington: NISAR vs OPERA DSWx-S1 (Sentinel-1 radar water maps), new flood | F1 0.15 · precision 0.19 · recall 0.13 · IoU 0.08 | like-for-like new flood (water on Dec 15/17, not water Dec 1–7); co-pol darkening only |
+| Washington: NISAR vs optical HLS water | F1 0.026 | clouds covered most of the optical scenes |
+| Optical cloud cover | Washington 92.9% (OPERA DSWx-HLS, Dec 15/17, after the storm) · Rio Grande do Sul 100% (20 HLS scenes during the event) | why radar |
 | Rio Grande do Sul: landslide scar candidates | 2,849 candidates, 20.0 km² | 46% of the 16,027 inventoried landslides lie within 500 m of a candidate; 55% of candidates lie within 500 m of one |
-| Washington: landslide catalog hits | 66.7% | only 15 dated reports, so this is indicative |
-| People in critical areas (peak day) | Washington 229,782 (Dec 12, 2025) · Rio Grande do Sul 1,488,833 (May 3, 2024) | GPW v4 counted in TPI ≥ 0.60 cells |
+| Washington: landslide catalog hits | 66.7% of 15 points | the points are undated; scored on the peak day (Dec 12, 2025), after the Dec 9 damage, so this is not a forecast |
+| People in critical areas (peak day) | Washington 229,782 (Dec 12, 2025) · Rio Grande do Sul 1,488,833 (May 3, 2024) | GPW v4 counted in Critical cells (TPI > 0.6) |
 | Night-light drop | Washington 44% · Rio Grande do Sul 33% | VIIRS Black Marble, before vs after |
 | Lead time | `[ON HOLD — L35]` | re-scored with an upstream-rain term, ~12:00 |
 | ML landslide trigger model | `[pending v2 re-score — L33]` | held-out RS 2024 + WA 2025 |
 
 ### Limitations (stated, not hidden)
-`[awaiting Lucas — honest flood result]` Our flood index did not flag the Washington river floods ahead of time. 0% of the NISAR-flooded area was High or Critical 24–48 h before the damage, because the index uses only local rain and rivers flood from rain upstream. An upstream-rain term is being tested.
+`[awaiting Lucas — honest flood result]` Our flood index did not flag the Washington river floods ahead of time. Only 0.14% of the NISAR-flooded area was High, and none Critical, in the forecast issued 24–48 h before the damage, because the index uses only local rain and rivers flood from rain upstream. An upstream-rain term is being tested.
 
 Other limits:
 - Official warnings came before the index in both replays.
-- Thresholds are calibrated on few events.
+- Thresholds have not yet been validated across many events.
 - IMERG and SMAP are about 10 km; the detail comes from terrain.
 - NISAR revisits every 12 days, so confirmation can arrive a week after the damage.
 - Landslides are always candidates, never confirmed.

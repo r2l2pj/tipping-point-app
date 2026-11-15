@@ -16,7 +16,7 @@ NISAR radar sees through the clouds: 28 square kilometers of flood candidates.
 
 5
 00:00:16,000 --> 00:00:22,000
-On the 7% optical could see, radar overlaps at F1 0.15.
+Clouds hid 93% of the area from optical satellites.
 
 6
 00:00:22,000 --> 00:00:27,000

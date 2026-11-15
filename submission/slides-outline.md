@@ -10,8 +10,8 @@
 - *Visual:* our wordmark + tagline over a dark map (no NASA logos or insignia anywhere in the deck: guide rule); the header's "TIPPING POINT | Rain warns. Radar confirms." wordmark
 
 ## Slide 2 — The problem
-- May 2024, Rio Grande do Sul: worst floods in state history — 446 of 497 municipalities hit
-- 185 dead, 581,000+ displaced, ~R$88.9 billion in damage
+- May 2024, Rio Grande do Sul: worst floods in state history — 446 of 497 municipalities hit `[SOURCE NEEDED]`
+- 185 dead, 581,000+ displaced, ~R$88.9 billion in damage `[SOURCE NEEDED]`
 - Alerts cover whole municipalities — they say where it *could* happen, not where it *did*
 - Optical satellites were blind: 100% cloud cover across 20 HLS scenes during the event
 - *Visual:* dark map (our own screen; no third-party news photos unless licensed and credited) of the Taquari valley with the cloud-cover stat
@@ -21,7 +21,7 @@
 - Three missions, three layers: GPM IMERG (rain vs climatology), SMAP (soil saturation), NASADEM (slope + drainage height)
 - Classes: Low <0.2 · Moderate · High · Critical >0.6 — Critical = the tipping point
 - Same logic family as NASA's LHASA landslide model
-- Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h); on held-out events it never saw (Rio Grande do Sul, May 2024, plus 8 Washington reports), driven by the NOAA GFS forecast, it reached PR-AUC [X] vs [Y] for the TPI > 0.6 rule (base rate [B]) [numbers pending v2 re-score, ~12:00] — TPI stays the headline
+- Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h); on held-out events it never saw ([v2 TEST events — pending re-score, L33]), driven by the NOAA GFS forecast, it reached PR-AUC [X] vs [Y] for the TPI > 0.6 rule (base rate [B]) [numbers pending v2 re-score, ~12:00] — TPI stays the headline
 - *Visual:* formula `TPI = (R·S·T)^(1/3)` with three icons (cloud/satellite, soil, terrain) feeding one gauge
 
 ## Slide 4 — The demo
@@ -33,7 +33,7 @@
 - *Visual:* 2–3 real screenshots — **Tipping point reached** over the heated Taquari valley map (RS, Apr 30), NISAR **Before / after** GCOV swipe (WA), /alerts card
 
 ## Slide 5 — Did it work?
-- WA Dec 2025: "Optical satellites were 92.9% blind under the clouds. On the 7% they could see, our radar flood map overlaps at F1 0.15 (precision 0.19, recall 0.13, new flood only). Radar maps the rest." — 27.99 km² flooded within the NISAR swath; landslides remain candidates only
+- WA Dec 2025: "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." — 27.99 km² flooded within the NISAR swath; landslides remain candidates only
 - Early warning headline: **"Using the forecast available at the time, Tipping Point flagged the area [X] hours before the damage."** (wording decided by Lucas 2026-11-15; the number is [ON HOLD — L35, re-score ~12:00])
 - "With the forecast available at the time, the index marked the area as critical before the damage, adding a map of where and who to the official warnings."
   - supporting line (footnote): "In replay with the NOAA GFS forecast issued each day (no look-ahead), Washington (Dec 2025) reached Critical a median of [X] h before the damage (IQR [IQR]; [n] of [N] forecast days flagged it); in Rio Grande do Sul (May 2024), [n] of [N] forecast days flagged it, [Y] h ahead. [ON HOLD — L35, re-score ~12:00]"
@@ -43,7 +43,7 @@
 
 ## Slide 6 — Impact + honest limitations
 - Impact numbers the demo reports: 229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, peak day May 3, 2024)
-- Limitations: thresholds calibrated on a single event; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days; lead time counts the area as flagged when any pixel crosses Critical on a D+1..D+3 forecast frame (lenient); GFS under-forecast the RS peak by about half; official warnings still came before the index
+- Limitations: thresholds not yet validated across many events; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days; lead time counts the area as flagged when any pixel crosses Critical on a D+1..D+3 forecast frame (lenient); GFS under-forecast the RS peak by about half; official warnings still came before the index
 - The video demo is a replay; the live view covers Southern Brazil every 3 h. The replay forecast is NOAA GFS as issued at the time (our only non-NASA input) — perfect-forecast frames appear only as a labelled upper bound
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event
 - *Visual:* **Impact** block (under **Show details: validation and impact**) + a short "What we don't claim" callout box

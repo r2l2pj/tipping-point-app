@@ -83,6 +83,6 @@ Source: `nasa-data.md` (awaiting Lucas):
 >
 > **Services:** Vercel, GitHub Actions, Neon, Telegram Bot API.
 >
-> **Space Agency Partners:** none used directly. The Brazilian Space Agency is a 2026 partner, and Brazil-specific data (Cemaden, IBGE) is listed above.
+> **Space Agency Partners:** ESA Sentinel-1 radar, through NASA OPERA DSWx-S1 (live flood candidates and the Washington validation reference). The Brazilian Space Agency is also a 2026 partner; Brazil-specific data (Cemaden, IBGE) is listed above.
 >
 > We used no copyrighted images; the demo shows only our own app screens.

@@ -63,7 +63,7 @@ TEST = events never seen in training: one Rio Grande do Sul storm (3,000 invento
 - **Raw vs calibrated (v1, provisional):** the trigger numbers above are calibrated scores (what is served). Raw scores rank 0.00–0.03 PR-AUC higher.
 - **Caveats (say them with any number):** one RS storm, so the effective n is small and intervals would be wide; training data is mostly 2015–2018; scores are relative rankings (case-control), not real-world probabilities; a day-of-year-only baseline looks near-perfect on RS (calendar artefact, excluded).
 
-**Draft slide 3 sentence (awaiting Lucas, also in REVIEW.md):** "Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h); on held-out events it never saw (Rio Grande do Sul, May 2024, plus 8 Washington reports), driven by the NOAA GFS forecast, it reached PR-AUC [X] vs [Y] for the TPI > 0.6 rule (base rate [B]) [numbers pending v2 re-score, ~12:00] — TPI stays the headline."
+**Draft slide 3 sentence (awaiting Lucas, also in REVIEW.md):** "Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h); on held-out events it never saw ([v2 TEST events — pending re-score, L33]), driven by the NOAA GFS forecast, it reached PR-AUC [X] vs [Y] for the TPI > 0.6 rule (base rate [B]) [numbers pending v2 re-score, ~12:00] — TPI stays the headline."
 
 ## Decided by you (2026-11-15)
 
@@ -71,8 +71,8 @@ TEST = events never seen in training: one Rio Grande do Sul storm (3,000 invento
 - "May 2024, Rio Grande do Sul. Alerts said where floods could happen, not where." — *demo-script.md: cold open VO*
 - **ON HOLD (L35)** "Flagged [X] hours before the damage." — *demo-script.md: beat 2 VO (short form; full headline on screen)*
 - "NISAR radar sees through the clouds: 28 square kilometers of flood candidates." — *demo-script.md: beat 3 VO (+ on-screen 27.99 km² within the NISAR swath)*
-- "On the 7% optical could see, radar overlaps at F1 0.15." — *demo-script.md: beat 4 VO (lead-submission's 11-word cut of Lucas's flood sentence, to fit 6 s)*
-- "Optical satellites were 92.9% blind under the clouds. On the 7% they could see, our radar flood map overlaps at F1 0.15 (precision 0.19, recall 0.13, new flood only). Radar maps the rest." — *demo-script.md: beat 4 on-screen caption; slides-outline.md: slide 5*
+- "Clouds hid 93% of the area from optical satellites." — *demo-script.md: beat 4 VO (9-word cut of Lucas's flood sentence, to fit 6 s; beat 3 already says the 28 km²)*
+- "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." — *demo-script.md: beat 4 on-screen caption; slides-outline.md: slide 5*
 - "With the forecast available at the time, the index marked the area as critical before the damage, adding a map of where and who to the official warnings." — *demo-script.md: beat 4 on-screen caption; slides-outline.md: slide 5*
 - "Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA" (replay uses the GFS forecast issued each day; live uses the latest run; GEOS-FP removed) — *README: Forecast & model, live job; slides-outline.md: slides 4, 6, 7; nasa-data.md: intro + Forecast; demo-script.md production note*
 

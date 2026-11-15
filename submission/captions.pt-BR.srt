@@ -16,7 +16,7 @@ O radar NISAR vê através das nuvens: 28 km² de candidatos a área alagada.
 
 5
 00:00:16,000 --> 00:00:22,000
-Nos 7% visíveis ao óptico, a sobreposição do radar é F1 0.15.
+As nuvens esconderam 93% da área dos satélites ópticos.
 
 6
 00:00:22,000 --> 00:00:27,000
