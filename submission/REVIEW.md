@@ -33,7 +33,7 @@ Morning summary for Lucas: `submission/MORNING.md`. One page: every public-facin
 | nasa-data.md: "Live response" section (OPERA DSWx-S1, NISAR GCOV, MODIS MCD12Q1) + "Non-NASA context and reference layers (never index inputs)": JRC GSW v1.4, IBGE outlines, UFRGS/Cemaden inventory, MERIT Hydro | nasa-data.md | none | awaiting Lucas — matches the data README (tipping-point-data 5489344) |
 | Limitations + roadmap + NASA-inputs lines | slides-outline.md: slides 6–7 | none | awaiting Lucas |
 | "Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA" (replay uses the GFS forecast issued each day; live uses the latest run; GEOS-FP removed) | README: Forecast & model, live job; slides-outline.md: slides 4, 6, 7; nasa-data.md: intro + Forecast; demo-script.md production note | none | **decided by Lucas 2026-11-15 (L30)** |
-| "Alongside the index, a learned XGBoost model gives P(landslide trigger in 24/48/72 h); TPI stays the headline" | slides-outline.md: slide 3 | none — no model metric quoted until published (L25) | awaiting Lucas |
+| "Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h); on held-out events it never saw (Rio Grande do Sul, May 2024, plus 8 Washington reports), driven by the NOAA GFS forecast, it reached PR-AUC 0.75 vs 0.61 for the TPI > 0.6 rule (base rate 0.15) — TPI stays the headline" | slides-outline.md: slide 3 | none — filled (tipping-point-data ea5b2cd, `cases.rs_2024.landslide_ml.trigger_gfs_headline.24h`: XGB 0.7517, TPI rule 0.6135, base 0.1535) | awaiting Lucas — replaces "…gives P(landslide trigger in 24/48/72 h); TPI stays the headline" |
 
 ## Open items
 

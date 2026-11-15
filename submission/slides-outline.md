@@ -21,7 +21,7 @@
 - Three missions, three layers: GPM IMERG (rain vs climatology), SMAP (soil saturation), NASADEM (slope + drainage height)
 - Classes: Low <0.2 · Moderate · High · Critical >0.6 — Critical = the tipping point
 - Same logic family as NASA's LHASA landslide model
-- Alongside the index, a learned XGBoost model gives P(landslide trigger in 24/48/72 h); TPI stays the headline
+- Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h); on held-out events it never saw (Rio Grande do Sul, May 2024, plus 8 Washington reports), driven by the NOAA GFS forecast, it reached PR-AUC 0.75 vs 0.61 for the TPI > 0.6 rule (base rate 0.15) — TPI stays the headline
 - *Visual:* formula `TPI = (R·S·T)^(1/3)` with three icons (cloud/satellite, soil, terrain) feeding one gauge
 
 ## Slide 4 — The demo
