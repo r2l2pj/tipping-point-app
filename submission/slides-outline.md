@@ -13,7 +13,7 @@
 - May 2024, Rio Grande do Sul: worst floods in state history — 446 of 497 municipalities hit
 - 185 dead, 581,000+ displaced, ~R$88.9 billion in damage
 - Alerts cover whole municipalities — they say where it *could* happen, not where it *did*
-- Optical satellites were blind: ~X% cloud cover during the event
+- Optical satellites were blind: 100% cloud cover across 20 HLS scenes during the event
 - *Visual:* RS-2024 flood photo or dark map of the Taquari valley with the cloud-cover stat
 
 ## Slide 3 — The solution
@@ -36,11 +36,11 @@
 - Early warning headline: **"Tipping Point would have warned X hours earlier"** (X = median) — P% of zones warned before the event
   - supporting line (footnote): "In replay, using only data available at the time, the index crossed Critical a median of X h (IQR A-B h) before mapped landslides (n = N)" (in replay; median, IQR A-B h, n = N)
 - RS replay (no radar — event predates NISAR; flood metrics vs OPERA/optical reference): IoU X, F1 X, median X h (IQR A-B h, n = N), P% warned
-- **Optical saw only X% of the scene in both events (X% cloud) — that is why radar**
+- **Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar**
 - *Visual:* Did we get it right? tab screenshot next to a small metrics table for both cases
 
 ## Slide 6 — Impact + honest limitations
-- Impact numbers the demo reports: X people in critical areas + night-light drop P% (WA); X + P% (RS)
+- Impact numbers the demo reports: 229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, May 2, 2024)
 - Limitations: thresholds calibrated on a single event; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days
 - Demo is a replay, not live ops; forecast in replay is a declared "perfect forecast"
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event
@@ -54,4 +54,4 @@
 - Repo + live app links; built with AI assistants under human review
 - *Visual:* mission-logo strip / data-source grid + QR code to the repo
 
-*Note: all metric numbers shown as X/A/B/N/P/D placeholders are mock-derived figures pending the real pipeline — they are not validated results.*
+*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Remaining X/A/B/N/P placeholders (IoU, F1, flooded-km² on slide 5, lead time, % warned) are held for Lucas — not validated results yet.*
