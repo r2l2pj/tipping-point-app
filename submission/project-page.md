@@ -42,6 +42,7 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 - **Impact.** GPW v4 population inside critical areas, and VIIRS Black Marble night-light loss.
 
 ### What NISAR shows, and why
+*Figure (upload as an image here): `.crew/deck/explainer/what-nisar-sees.png` — calm water reads dark, a flooded town or forest stays bright (double bounce), HH and HV.*
 - Calm floodwater acts like a mirror to radar. It reflects the L-band pulse away from the satellite, so new flooding appears as new dark patches between the before and after passes.
 - L-band (24 cm) also passes through cloud and rain, which is why it works when optical cannot.
 - Flooded towns and forests behave differently. Water under walls or trunks bounces the pulse back to the satellite (double bounce), which cancels the darkening. Our current detector reads only the darkening in co-polarization, so it misses that flooding; we tested this and it holds (see the hypothesis below). This is the main reason recall is low.
@@ -55,6 +56,7 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 - **What it does not show.** Flooded towns and forests did not turn clearly *brighter* (a +3 dB brightening rule recovers only 0.01% of the misses); the double bounce cancels the darkening rather than reversing it. Closing the gap needs the cross-polarized HV channel, texture, or land-cover-aware detection. Full numbers: [nisar_hypothesis.json](https://github.com/r2l2pj/tipping-point-data/blob/main/data/wa_2025/nisar_hypothesis.json).
 
 ### The future of NISAR for this problem
+*Figure (upload as an image here): `.crew/deck/explainer/future-of-nisar.png`.*
 - **Ground motion before failure.** Repeat-pass radar interferometry (InSAR) can measure slopes creeping by centimetres before they collapse. Today our landslide marks are only optical candidates after the fact.
 - **Soil moisture at high resolution.** NISAR's planned soil-moisture product (about 200 m) is far finer than SMAP's ~9 km, which would sharpen the "soil" part of the index.
 - **Flooding under forest canopy.** L-band passes through leaves; the double-bounce signal in the hypothesis above is also how flooded forest becomes visible.
