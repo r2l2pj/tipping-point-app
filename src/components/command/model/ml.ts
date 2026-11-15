@@ -35,8 +35,10 @@ export const SOURCE_LABEL: Record<string, string> = {
 // L33 (conductor, 2026-11-15): the NOAA GFS tables are superseded (40% of
 // the negatives had no GFS run); until lead-ml's v2 (~12:00) the card shows a
 // provisional banner and only the perfect-forecast tables (labelled upper
-// bound). Set to false when v2 is published.
-export const ML_PROVISIONAL = true;
+// bound). v2 (data/ml/ml_card_v2.json, version 'v2') lifts it: the loader
+// prefers v2 and the view carries `provisional` per card.
+export const ML_PROVISIONAL = true; // v1 card (no version key)
+export const isV2 = (card: unknown) => isRecord(card) && card.version === "v2";
 export const ML_PROVISIONAL_TEXT = "Provisional — being re-scored on more events (v2 today)";
 
 // L32: shown under the T_ML 'where' table until lead-ml's re-export.
@@ -59,7 +61,20 @@ export interface MlTable {
   reason?: string;
 }
 
+export interface MlTestEvent { id: string; name: string; nPos?: number; source?: string }
+// v2 generalise{h:{model:{pooled,event_median,event_min,event_max,worst_event}}}
+export interface MlSpread { model: string; label: string; pooled?: number; eventsN: number; median: number; min: number; max: number; worst?: string }
+export interface MlSpreadBlock { source: string; eventsN: number; rows: MlSpread[] }
+
 export interface MlView {
+  version?: string;
+  // v1 card: provisional banner, GFS tables hidden (L33).
+  provisional: boolean;
+  // v2: T_ML retrained without any RS 2024 point (L32).
+  tmlExcludesRs?: boolean;
+  testEventList: MlTestEvent[];
+  // `${horizon}|${source}`: calibrated PR-AUC across TEST events (v2)
+  spread: Record<string, MlSpreadBlock>;
   split3a?: string;
   split3b?: string;
   where?: MlTable; // T_ML susceptibility, 3a TEST
@@ -82,7 +97,7 @@ export interface MlView {
 // documented (split.3b: trained on the dated 2015-2018 catalog, TEST =
 // unseen 2024-2025 events).
 export function mlCaveats(v: MlView): string[] {
-  const ev = v.testEvents;
+  const ev = v.testEventList?.length ? v.testEventList.map((e) => e.id) : v.testEvents;
   const rs = ev.includes("rs_2024");
   const wa = ev.includes("wa_2025");
   // ML v2 re-scores on more events: the "one event" wording only fits the
@@ -101,6 +116,24 @@ export function mlCaveats(v: MlView): string[] {
   ];
   if (v.lowSkill.length) out.push(`${v.lowSkill.join(" and ")} horizons rely on long-range forecast: low skill.`);
   return out;
+}
+
+// lead-ml: prefer NOAA GFS where any event counts, else observed rain
+// (pre-2021 events have no GFS archive).
+export function spreadFor(v: MlView, h: string, src?: string): MlSpreadBlock | undefined {
+  const order = [src, "gfs", "perfect"].filter((x): x is string => !!x);
+  for (const s of order) {
+    const b = v.spread[`${h}|${s}`];
+    if (b && b.eventsN > 0) return b;
+  }
+  return undefined;
+}
+
+// "PR-AUC across 7 events (NOAA GFS forecast): median 0.41 (range 0.12–0.80; weakest: Helene 2024)"
+export function spreadLine(r: MlSpread, source: string): string {
+  const src = source === "gfs" ? "NOAA GFS forecast" : "observed rain";
+  return `PR-AUC across ${r.eventsN} event${r.eventsN === 1 ? "" : "s"} (${src}): median ${r.median.toFixed(2)} ` +
+    `(range ${r.min.toFixed(2)}–${r.max.toFixed(2)}${r.worst ? `; weakest: ${r.worst}` : ""})`;
 }
 
 const score = (v: unknown) => (finite(v) ? v.toFixed(2) : "—");
@@ -162,8 +195,9 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
   // Horizons from the export itself (ML v2: 24h / 72h / 7d), by duration.
   const horizons = sortHorizons(Object.keys(trig).filter((h) => isRecord(trig[h])));
   const published = ["gfs", "perfect"].filter((s) => horizons.some((h) => isRecord((trig[h] as M)[s])));
+  const provisional = !isV2(card);
   // L33: no GFS tables while the card is provisional.
-  const sources = ML_PROVISIONAL && published.includes("perfect") ? published.filter((s) => s !== "gfs") : published;
+  const sources = provisional && published.includes("perfect") ? published.filter((s) => s !== "gfs") : published;
   const when: Record<string, MlTable> = {};
   const event: Record<string, MlTable> = {};
   for (const h of horizons) {
@@ -184,7 +218,55 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
       }
     }
   }
+  const evNames = new Map<string, string>();
+  const testEventList: MlTestEvent[] = (Array.isArray(card.test_events) ? card.test_events : [])
+    .filter((e): e is M => isRecord(e) && typeof e.id === "string")
+    .map((e) => {
+      const name = typeof e.name === "string" ? e.name : (e.id as string);
+      evNames.set(e.id as string, name);
+      return {
+        id: e.id as string,
+        name,
+        nPos: finite(e.n_pos) ? e.n_pos : undefined,
+        source: typeof e.source === "string" ? e.source : undefined,
+      };
+    });
+  // v2 generalise.{gfs|perfect}.{h}.{model} = {pooled, events_n,
+  // event_median, event_min, event_max, worst_event (id), ...}: calibrated
+  // PR-AUC; only events with >= 20 positives count (events_n).
+  const spread: Record<string, MlSpreadBlock> = {};
+  const gen = isRecord(card.generalise) ? card.generalise : {};
+  for (const s of ["gfs", "perfect"]) {
+    const bySrc = gen[s];
+    if (!isRecord(bySrc)) continue;
+    for (const h of Object.keys(bySrc)) {
+      const g = bySrc[h];
+      if (!isRecord(g)) continue;
+      let eventsN = 0;
+      const rows = TRIGGER_MODELS.flatMap((m): MlSpread[] => {
+        const r = g[m];
+        if (!isRecord(r)) return [];
+        const n = finite(r.events_n) ? r.events_n : 0;
+        if (n < 1 || !finite(r.event_median) || !finite(r.event_min) || !finite(r.event_max)) return [];
+        eventsN = Math.max(eventsN, n);
+        return [{
+          model: m,
+          label: labels[m] ?? FALLBACK_LABEL[m] ?? m,
+          pooled: finite(r.pooled) ? r.pooled : undefined,
+          eventsN: n,
+          median: r.event_median, min: r.event_min, max: r.event_max,
+          worst: typeof r.worst_event === "string" ? evNames.get(r.worst_event) ?? r.worst_event : undefined,
+        }];
+      });
+      if (rows.length) spread[`${h}|${s}`] = { source: s, eventsN, rows };
+    }
+  }
   const view: MlView = {
+    version: typeof card.version === "string" ? card.version : undefined,
+    provisional,
+    tmlExcludesRs: card.t_ml_excludes_rs === true,
+    testEventList,
+    spread,
     split3a: typeof split["3a"] === "string" ? split["3a"] : undefined,
     split3b: typeof split["3b"] === "string" ? split["3b"] : undefined,
     where: where && where.rows.length ? where : undefined,

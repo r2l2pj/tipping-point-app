@@ -575,8 +575,11 @@ export const getMlArtifacts = async (): Promise<{
 }> => {
   await requestTime();
   const ctx = newCtx();
+  // lead-ml v2 (version 'v2', more TEST events, T_ML without RS) lands at
+  // ml/ml_card_v2.json; until then the v1 card shows, labelled provisional.
   const [card, importance, tml] = await Promise.all([
-    readData<unknown>(ctx, "", "ml/ml_card.json"),
+    readData<unknown>(newCtx(), "", "ml/ml_card_v2.json")
+      .then((v2) => v2 ?? readData<unknown>(ctx, "", "ml/ml_card.json")),
     readData<unknown>(ctx, "", "ml/feature_importance_3b.json"),
     readData<unknown>(ctx, "", "ml/t_ml.json"),
   ]);
