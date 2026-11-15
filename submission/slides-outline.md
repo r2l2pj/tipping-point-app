@@ -21,7 +21,7 @@
 - Three missions, three layers: GPM IMERG (rain vs climatology), SMAP (soil saturation), NASADEM (slope + drainage height)
 - Classes: Low <0.2 · Moderate · High · Critical >0.6 — Critical = the tipping point
 - Builds on NASA's LHASA: LHASA v2 already uses XGBoost + IMERG + SMAP (doi:10.3389/feart.2021.640043) and LHASA-F forecasts ~3 days (doi:10.3389/feart.2022.878996); new here: no-look-ahead GFS replay, 24 h/48 h/72 h/7 d horizons, held-out events with onset-anchored lead time and published misses, index + radar response on one screen
-- Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h); on held-out events it never saw ([v2 TEST events — pending re-score, L33]), driven by the NOAA GFS forecast, it reached PR-AUC [X] vs [Y] for the TPI > 0.6 rule (base rate [B]) [numbers pending v2 re-score, ~12:00] — TPI stays the headline
+- Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h), driven by the NOAA GFS forecast; its evaluation on held-out disaster events is in progress — TPI stays the headline
 - *Visual:* formula `TPI = (R·S·T)^(1/3)` with three icons (cloud/satellite, soil, terrain) feeding one gauge
 
 ## Slide 4 — The demo
@@ -44,7 +44,7 @@
 
 ## Slide 6 — Impact + honest limitations
 - Impact numbers the demo reports: 229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, peak day May 3, 2024)
-- Limitations: thresholds not yet validated across many events; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days; GFS under-forecast the RS peak by about half; official warnings still came before the index
+- Limitations: Thresholds are not yet calibrated for Brazil; validated on 2 replay events + 11 disaster events for the ML; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days; GFS under-forecast the RS peak by about half; official warnings still came before the index
 - The video demo is a replay; the live view covers Southern Brazil every 3 h. The replay forecast is NOAA GFS as issued at the time (our only non-NASA input) — perfect-forecast frames appear only as a labelled upper bound
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event
 - *Visual:* **Impact** block (under **Show details: validation and impact**) + a short "What we don't claim" callout box

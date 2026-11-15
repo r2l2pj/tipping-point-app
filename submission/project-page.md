@@ -67,19 +67,19 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 | Washington: NISAR vs optical HLS water | F1 0.026 | clouds covered most of the optical scenes |
 | Optical cloud cover | Washington 92.9% (OPERA DSWx-HLS, Dec 15/17, after the storm) · Rio Grande do Sul 100% (20 HLS scenes during the event) | why radar |
 | Rio Grande do Sul: landslide scar candidates | 2,849 candidates, 20.0 km² | 46% of the 16,027 inventoried landslides lie within 500 m of a candidate; 55% of candidates lie within 500 m of one |
-| Washington: landslide catalog hits | 66.7% of 15 points | the points are undated; scored on the peak day (Dec 12, 2025), after the Dec 9 damage, so this is not a forecast |
+| Washington: landslide inventory hits (Washington Geological Survey landslide inventory (licence to confirm)) | 66.7% of 15 points | the points are undated; scored on the peak day (Dec 12, 2025), after the Dec 9 damage, so this is not a forecast |
 | People in critical areas (peak day) | Washington 229,782 (Dec 12, 2025) · Rio Grande do Sul 1,488,833 (May 3, 2024) | GPW v4 counted in Critical cells (TPI > 0.6) |
 | Night-light drop | Washington 44% · Rio Grande do Sul 33% | VIIRS Black Marble, before vs after |
 | Rio Grande do Sul: mapped landslides in High or Critical areas, forecast as issued | Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%). Earlier runs (issued 51 and 75 hours before) showed 0%. (NOAA GFS run issued Apr 28, 2024: 36.45%, Critical 1.87%; runs issued Apr 27 and Apr 26: 0%; observed rain: 0.25%) | n = 16,027 UFRGS/Cemaden inventory points (validation only, never an input); onset = first deaths, Apr 29, 2024 00:00 BRT (MetSul report; Jornal do Comércio). Fragile: with onset Apr 30 (first landslide deaths) the 24 h run shows 0% and the 48 h run 36.45%; the old May 1 anchor gave 88.13%. One forecast run carries the result |
 | Washington: NISAR-flooded area in High or Critical areas, forecast as issued | 0% (runs issued 24 h and 48 h before onset) · 0.14% High, 0% Critical (run issued 72 h before) | onset Dec 8, 2025 00:00 PST (WA EMD situation report 25-4783); the index uses local rain only; rivers flooded from rain upstream (see Limitations) |
-| ML landslide trigger model | `[pending v2 re-score — L33]` | held-out RS 2024 + WA 2025 |
+| ML landslide trigger model | evaluation in progress | held-out disaster events the model never saw |
 
 ### Limitations (stated, not hidden)
 Our flood index did not flag the Washington river floods ahead of time. None of the NISAR-flooded area was High in the forecasts issued 24 h or 48 h before the onset (Dec 8, 2025), and only 0.14% in the run issued 72 h before, because the index uses only local rain and rivers flood from rain upstream. An upstream-rain term is being tested.
 
 Other limits:
 - Official warnings came before the index in both replays.
-- Thresholds have not yet been validated across many events.
+- Thresholds are not yet calibrated for Brazil; validated on 2 replay events + 11 disaster events for the ML.
 - IMERG and SMAP are about 10 km; the detail comes from terrain.
 - NISAR revisits every 12 days, so confirmation can arrive a week after the damage.
 - Landslides are always candidates, never confirmed.

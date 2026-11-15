@@ -118,7 +118,7 @@ bounce, brighter) are missed; that is the main reason recall is low.
   earlier May 1 anchor gave 88.13%; one forecast run carries it. Post-event OPERA DIST-ALERT-HLS scar
   candidates: 2,849 (20.0 km²); 46% of inventory points lie within 500 m of
   one.
-- Washington 2025: NASA Global Landslide Catalog / COOLR, 15 points; 66.7%
+- Washington 2025: Washington Geological Survey landslide inventory (licence to confirm), 15 points; 66.7%
   fall in Critical cells on the peak day (Dec 12, 2025). The points are
   undated, so this is agreement after the damage, not a forecast.
 
@@ -133,8 +133,7 @@ separate events: the TEST set holds out whole events the model never saw,
 including Rio Grande do Sul 2024 and Washington 2025. The susceptibility
 layer is being retrained without Rio Grande do Sul points to remove a
 leak found on Nov 15; scores that used the leaked layer are withdrawn. Scores are compared with a RandomForest and the TPI > 0.6 rule at
-the same base rate. Re-scored results (v2, Nov 15) are reported in the
-tipping-point-data repository; earlier v1 numbers are withdrawn.
+the same base rate. Evaluation in progress; earlier v1 numbers are withdrawn.
 
 **Anchor dates (L37).** "Before the damage" is measured from the documented
 start of each event (the first dated reports of landslides or flooding), not
@@ -143,7 +142,7 @@ replays; the index adds where and who, not an earlier warning.
 
 ## Limitations
 
-- Thresholds were calibrated on a single event — no broad statistical validation.
+- Thresholds are not yet calibrated for Brazil; validated on 2 replay events + 11 disaster events for the ML.
 - IMERG and SMAP inputs are ~10 km; the detail comes from terrain. The HAND
   proxy is a simplified NASADEM product validated against MERIT Hydro
   (validation reference only).

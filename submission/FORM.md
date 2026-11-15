@@ -62,7 +62,7 @@ Source: `nasa-data.md` (awaiting Lucas):
 > - **Live flood and scar candidates:** OPERA DSWx-S1 and OPERA DIST-ALERT-HLS V1 (vegetation-loss alerts used to flag landslide scar candidates).
 > - **Land cover:** MODIS MCD12Q1.
 > - **Impact:** VIIRS Black Marble VNP46A2; GPW v4 (SEDAC).
-> - **Validation:** OPERA DSWx, SWOT (Hydrocron river levels), NASA Global Landslide Catalog / COOLR.
+> - **Validation:** OPERA DSWx, SWOT (Hydrocron river levels).
 >
 > Accessed through NASA Earthdata (earthaccess), ASF (asf_search) and Google Earth Engine's NASA collections.
 
@@ -74,7 +74,7 @@ Source: `nasa-data.md` (awaiting Lucas):
 > - MERIT Hydro: validation of the HAND proxy only.
 > - IBGE country and municipality outlines.
 > - UFRGS/Cemaden landslide inventory (RS 2024): validation.
-> - NASA Global Landslide Catalog / COOLR: WA validation (also listed under NASA Data).
+> - Washington Geological Survey landslide inventory (licence to confirm): Washington validation.
 > - Basemap: CARTO Dark Matter (no labels) — © CARTO, © OpenStreetMap contributors.
 >
 > **Event facts (RS 2024):** 478 municipalities affected, 185 deaths and, at the peak (May 19, 2024), 581,638 people displaced (Government of Rio Grande do Sul, "SOS Rio Grande do Sul — Situação nos municípios", last updated Aug 19, 2025, https://sosenchentes.rs.gov.br/situacao-nos-municipios). No other event figures are used.

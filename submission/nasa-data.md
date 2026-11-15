@@ -35,9 +35,9 @@ Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is N
 
 - **OPERA DSWx** — surface water product used for validation
 - **SWOT Hydrocron** — river levels for the "Did we get it right?" river chart
-- **GLC (Global Landslide Catalog / COOLR)** — validation reference for the landslide-hit metric (WA case)
 
 ## Non-NASA context and reference layers (never index inputs)
+- **Washington Geological Survey landslide inventory (licence to confirm)** — validation reference for the landslide-hit metric (Washington case)
 
 - **JRC Global Surface Water v1.4** — marks seasonal water as lower confidence in the live flood candidates
 - **IBGE country and municipality outlines** — Brazil clip, municipality ranking of priority zones
