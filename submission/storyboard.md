@@ -1,6 +1,6 @@
 # Tipping Point — video storyboard + recording plan (≤30 s)
 
-> **DRAFT — decided by conductor (delegated), L38 (2026-11-15).** Built from `demo-script.md` (response-first VO, 54 words with the team placeholder). The final cut is recorded from a **local build of `freeze-1300`** (no prod dependency; Vercel is capped).
+> **DRAFT — decided by conductor (delegated), L38 (2026-11-15).** Built from `demo-script.md` (response-first VO, 55 words, L43 forecast beat). The final cut is recorded from a **local build of `freeze-1300`** (no prod dependency; Vercel is capped).
 
 **Rules (official 2026 Project Submission Guide):**
 - Video 30 seconds or less; over the limit means ineligible for Global Judging. The target is **29.5 s**.
@@ -16,11 +16,11 @@ Frame: 1920×1080 at 30 fps, desktop layout, browser chrome hidden. Each shot is
 
 | Shot | In–out | URL + actions | Must read | Overlay (burned, not the subtitle) |
 |---|---|---|---|---|
-| A Title | 0.0–3.0 | `/?case=wa_2025`, map only, dark 40% scrim, slow push-in | — | top-left "TIPPING POINT · Rain warns. Radar sees through."; bottom-left "Team [TEAM NAME] · NASA Space Apps 2026 · Challenge: Dancing with the SARs" |
-| B NISAR radar (WA) | 3.0–12.0 | Right panel **NISAR radar** card → **Check with NISAR radar →**, then **Before / after**, drag the divider left to right | "NISAR radar before — Dec 4, 2025", "NISAR radar after — Dec 16, 2025", "within the NISAR swath" | corner "Washington · Dec 2025"; "Flood candidates · 27.99 km² within the NISAR swath"; lower third "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." |
-| C Live view + who | 12.0–19.0 | `/` (Now). **NISAR radar** card with its pass status (3 s; no click, no zoom) → **Who is affected** / **Priority areas** (2 s) → top bar **Public Alerts** (2 s) | "NISAR radar" card; "Updated" in the header; must NOT read "2.3 km²" or "82" people | "NISAR passes over Brazil every 12 days · each new pair is checked automatically" (0–5 s); "Experimental — not an official warning" (5–7 s, only if the card lacks it) |
-| D Prediction (RS replay) | 19.0–25.5 | `/?case=rs_2024&day=-10` (Apr 22). Press **Play**; the TPI heats up over the Taquari valley. If 6 s of play does not reach Apr 28+, start at `&day=-6` | "Tipping point reached" (Situation overview chip) by the end | corner "Rio Grande do Sul · May 2024 · replay" (no forecast number) |
-| E Close | 25.5–28.5 | Static wordmark card over the darkened shot-D frame | — | "TIPPING POINT · Rain warns. Radar sees through."; "Data: NASA GPM IMERG · SMAP · NASADEM · NISAR · HLS · VIIRS Black Marble · GPW · forecast: NOAA GFS" (text, no logos); "[APP URL]" |
+| A Title | 0.0–2.5 | `/?case=wa_2025`, map only, dark 40% scrim, slow push-in | — | top-left "TIPPING POINT · Rain warns. Radar sees through."; bottom-left "Team [TEAM NAME] · NASA Space Apps 2026 · Challenge: Dancing with the SARs" |
+| B NISAR radar (WA) | 2.5–11.0 | Right panel **NISAR radar** card → **Check with NISAR radar →**, then **Before / after**, drag the divider left to right | "NISAR radar before — Dec 4, 2025", "NISAR radar after — Dec 16, 2025", "within the NISAR swath" | corner "Washington · Dec 2025"; "Flood candidates · 27.99 km² within the NISAR swath"; lower third "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." |
+| C Live view + who | 11.0–17.5 | `/` (Now). **NISAR radar** card with its pass status (3 s; no click, no zoom) → **Who is affected** / **Priority areas** (2 s) → top bar **Public Alerts** (2 s) | "NISAR radar" card; "Updated" in the header; must NOT read "2.3 km²" or "82" people | "NISAR passes over Brazil every 12 days · each new pair is checked automatically" (0–5 s); "Experimental — not an official warning" (5–7 s, only if the card lacks it) |
+| D Forecast proof (WA) | 17.5–25.5 | `/?case=wa_2025&day=-7`. **Layers → Hazards → Landslide risk**; **Forecast issued this day: +3 d** (5.5 s); then the **NISAR radar** card (1.5 s) | "issued Dec 3, 2025" and "Dec 6" in the map label | "Forecast issued Dec 3, 2025 → Critical landslide risk for Dec 6 · damage began Dec 9" |
+| E Close | 25.5–28.5 | Static wordmark card over the darkened shot-D frame (WA forecast map) | — | "TIPPING POINT · Rain warns. Radar sees through."; "Data: NASA GPM IMERG · SMAP · NASADEM · NISAR · HLS · VIIRS Black Marble · GPW · forecast: NOAA GFS" (text, no logos); "[APP URL]" |
 
 Landslide scar candidates are live on RS and Now. If WA has no scar candidates at the freeze, shot 3 shows none. Never caption anything stronger than "candidates".
 

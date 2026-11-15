@@ -1,18 +1,18 @@
 1
-00:00:00,000 --> 00:00:03,000
+00:00:00,000 --> 00:00:02,500
 Team [TEAM NAME], Brazil.
 
 2
-00:00:03,000 --> 00:00:12,000
+00:00:02,500 --> 00:00:11,000
 In Washington, clouds hid 93% of the area from optical satellites; NISAR radar mapped flood candidates through them.
 
 3
-00:00:12,000 --> 00:00:19,000
-Civil Defense could see who is affected, ranked, refreshed every 3 hours across southern Brazil.
+00:00:11,000 --> 00:00:17,500
+Civil Defense could see who is affected, every 3 hours, across southern Brazil.
 
 4
-00:00:19,000 --> 00:00:25,500
-Tipping Point maps where NASA rain, soil and slope data tip toward failure.
+00:00:17,500 --> 00:00:25,500
+The forecast tells Civil Defense where risk is rising; NISAR tells when radar will check it.
 
 5
 00:00:25,500 --> 00:00:28,500

@@ -34,7 +34,7 @@
 ## Slide 5 — Did it work?
 - **NISAR, Washington Dec 2025:** "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them" — home to about 1,150 people. Sentinel-1 radar sees open flood through cloud too (our reference); NISAR's L-band also reaches water under vegetation
 - **Radar physics checked:** candidates stable Nov 10 → Dec 4 (−9.7 dB), then −6.5 dB by Dec 16; double-bounce hypothesis supported — 45% of the missed flood is in towns or forest (vs 5% of what we caught), recall 25% open land vs 3% towns, 1% forest
-- **Prediction (supporting, honest):** "Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%)." Earlier runs (issued 51 and 75 hours before) showed 0%; Washington's flooded places were not flagged ahead (upstream rain)
+- **Prediction, tied to NISAR:** the forecast tells Civil Defense where risk is rising; NISAR tells when radar will check it. Washington: the GFS run issued Dec 3, 2025 showed Critical landslide risk for Dec 6. Rio Grande do Sul: [X]% of the 16,027 mapped landslides fell in the High/Critical area the day-before forecast flagged, which covered only [Y]% of the land ([Z]× better than chance); runs issued 51 and 75 h before: 0%; Washington's flooded places were not flagged ahead (upstream rain)
 - **Official warnings came first** in both replays; the index adds where and who. RS flood index vs Copernicus EMS maps during the flood: F1 0.31 (Taquari valley)
 - *Visual:* NISAR before/after swipe still + a 4-row metrics table
 
