@@ -39,6 +39,55 @@ the report: env presence, manifest freshness), so it is a liveness check.
 Update: `git pull && docker build … && docker rm -f tp-app && docker run …`
 (a few seconds of downtime; fine for one instance).
 
+### Deploy automatically after a reviewed `main` push
+
+The app's `.github/workflows/deploy-vps.yml` updates the **same**
+`tipping-point-app` container, not a second app or Caddy route. The separate
+`tipping-point-route` keeps owning `tippingpoint.l17s.dev`. The workflow is
+opt-in: it does nothing until the repository variable
+`VPS_APP_DEPLOY_ENABLED=1` is set after host preparation and human review.
+Feature-branch pushes only run CI; deployment follows a human merge to `main`.
+The deploy job starts only after the `CI` workflow succeeds on `main`.
+
+On the VPS, an administrator must install a dedicated, non-Docker-group SSH
+user and the reviewed deploy script as a **root-owned** fixed sudo command.
+Do not grant the SSH account unrestricted `docker` or sudo access:
+
+```sh
+sudo useradd --create-home --shell /bin/bash tipping-deploy
+sudo passwd -l tipping-deploy
+sudo install -d -o root -g root -m 0700 /var/lib/tipping-point-app-deploy
+sudo install -o root -g root -m 0755 deploy/vps/deploy-app.sh \
+  /usr/local/sbin/tipping-point-app-deploy
+printf '%s\n' 'tipping-deploy ALL=(root) NOPASSWD: /usr/local/sbin/tipping-point-app-deploy' \
+  | sudo tee /etc/sudoers.d/tipping-point-app-deploy >/dev/null
+sudo chmod 0440 /etc/sudoers.d/tipping-point-app-deploy
+sudo visudo -cf /etc/sudoers.d/tipping-point-app-deploy
+```
+
+Install the public half of a **dedicated** SSH key in
+`/home/tipping-deploy/.ssh/authorized_keys` (mode 0600, owned by
+`tipping-deploy`); disable forwarding/PTY with the `restrict` key option.
+Keep the private key outside the repository. In the **app** repository, add
+Actions secrets `VPS_HOST`, `VPS_USER=tipping-deploy`, `VPS_DEPLOY_KEY`, and
+`VPS_KNOWN_HOSTS` (host key pinned and independently verified); `VPS_SSH_PORT`
+is optional. Never paste private keys or credentials in issues or logs.
+
+The fixed script verifies the requested SHA is the current `main`, builds it,
+smoke-tests a candidate **without** the production volume or Caddy labels,
+then replaces only `tipping-point-app` with the same `tipping-point-data`
+volume. It keeps the old container stopped as `tipping-point-app-previous`
+for rollback and checks the public HTTPS route. No Telegram webhook or
+subscriber migration is performed. The current app has no custom runtime
+environment variables; adding credentials later requires a separate review
+of the deploy script before activation.
+
+Only after the host account, sudo rule, key, secrets, and a manual test of the
+fixed command are verified, set `VPS_APP_DEPLOY_ENABLED=1`. A failed deploy
+attempts to restart the previous container; check health and the public site
+before considering it recovered. Do not commit another workflow for the same
+hostname or add `caddy=tippingpoint.l17s.dev` to the app.
+
 Podman works the same (`podman build --format docker …`: the default OCI
 format drops `HEALTHCHECK`).
 
