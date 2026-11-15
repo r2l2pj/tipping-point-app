@@ -1,8 +1,9 @@
 // Server-side loader for the v4 data contract (SCHEMA.md).
-// Remote read order: explicit DATA_BASE_URL wins alone; otherwise the public
-// Neon Object Storage bucket (NEON_S3_ENDPOINT) then the raw GitHub fallback
-// branch (force-pushed each pipeline run). The bundled public/data copy synced
-// by `bun run sync:data` is always the last resort.
+// Remote read order (L26): explicit DATA_BASE_URL wins alone; otherwise the
+// public GitHub data branch (raw.githubusercontent, force-pushed each pipeline
+// run — the primary store) then the Neon Object Storage bucket
+// (NEON_S3_ENDPOINT) as fallback. The bundled public/data copy synced by
+// `bun run sync:data` is always the last resort.
 // Any remote miss falls back to the bundled copy and flags the bundle.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -131,13 +132,19 @@ const trimZones = (
 interface ReadCtx {
   bases: string[];
   fellBack: boolean;
+  // Base that answered the most recent remote hit (undefined = disk). The
+  // case bundle pins browser asset URLs (PNG/COG) to the base that served
+  // its root manifest, so frames come from the same store as the manifest.
+  lastBase?: string;
   // Remote-attempt budget (Cache Components forbids Date.now() during
   // prerender, so the budget is counted, not timed): after this many misses
   // no new remote request starts — the bundled copy answers instead.
   remoteTries: number;
 }
 
-const GITHUB_FALLBACK_BASE =
+// L26: the public GitHub data branch is the PRIMARY store (branch name kept
+// as `fallback` to avoid churn).
+const GITHUB_DATA_BASE =
   "https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data";
 // Public-read bucket URL — not a secret. Built-in default so the app works
 // on a host with no data env configured at all.
@@ -149,18 +156,18 @@ const NEON_PUBLIC_BASE =
 const maxRemoteTries = () =>
   Number(process.env.DATA_MAX_REMOTE_TRIES) || 60;
 
-// Remote bases in priority order (L17). An explicit DATA_BASE_URL is the sole
-// remote source (override semantics — tests pin it unreachable to force the
-// bundled copy). Unset, the default is the public Neon bucket (env endpoint
-// if set, else the built-in public URL), then the GitHub fallback branch;
-// disk is always last.
+// Remote bases in priority order (L26, supersedes L17). An explicit
+// DATA_BASE_URL is the sole remote source (override semantics — tests pin it
+// unreachable to force the bundled copy). Unset, the default is the GitHub
+// data branch, then the public Neon bucket (env endpoint if set, else the
+// built-in public URL); disk is always last.
 const remoteBases = (): string[] => {
   const explicit = process.env.DATA_BASE_URL;
   if (explicit) return [explicit.replace(/\/+$/, "")];
   const neon = process.env.NEON_S3_ENDPOINT
     ? `${process.env.NEON_S3_ENDPOINT.replace(/\/+$/, "")}/tipping-point-data/data`
     : NEON_PUBLIC_BASE;
-  return [...new Set([neon, GITHUB_FALLBACK_BASE])];
+  return [...new Set([GITHUB_DATA_BASE, neon])];
 };
 
 const newCtx = (): ReadCtx => ({
@@ -223,8 +230,9 @@ async function readFs<T>(key: string): Promise<T | undefined> {
   }
 }
 
-// One logical file: raw fallback branch or DATA_BASE_URL override first,
-// then the last-resort bundled copy under public/data. `p` is
+// One logical file: each remote base in order (GitHub data branch, then
+// Neon — or the DATA_BASE_URL override alone), then the last-resort bundled
+// copy under public/data. `p` is
 // data-root-relative ("rs_2024/geojson/...") or dir-relative ("geojson/..."),
 // per resolveAsset.
 async function readData<T>(
@@ -235,18 +243,25 @@ async function readData<T>(
   // Try each remote base in order (absolute p resolves identically on every
   // base — dedupe so it isn't fetched once per base). Once the attempt
   // budget is spent no new remote request starts — straight to disk.
-  const urls = ctx.bases.map((b) => resolveAsset(b, dir, p));
-  if (urls[0] === undefined) return undefined;
-  for (const url of new Set(urls as string[])) {
+  const seen = new Set<string>();
+  for (const base of ctx.bases) {
+    const url = resolveAsset(base, dir, p);
+    if (url === undefined) return undefined;
+    if (seen.has(url)) continue;
+    seen.add(url);
     if (ctx.remoteTries >= maxRemoteTries()) {
       ctx.fellBack = true;
       break;
     }
     ctx.remoteTries++;
     const remote = await fetchJson<T>(url).catch(() => undefined);
-    if (remote !== undefined) return remote;
+    if (remote !== undefined) {
+      ctx.lastBase = base;
+      return remote;
+    }
     ctx.fellBack = true;
   }
+  ctx.lastBase = undefined;
   const key = resolveAsset("", dir, p);
   return key === undefined || /^https?:\/\//i.test(key)
     ? undefined
@@ -378,6 +393,9 @@ export async function getCaseBundle(
   // L14: the root manifest is the one file a bundle cannot be built
   // without — everything else absent degrades to `pending`, never throws.
   if (root === undefined) throw new Error("data: manifest.json not found");
+  // Browser asset base: the remote that served the root manifest (GitHub
+  // normally, Neon when GitHub missed); first base when disk answered.
+  const assetBase = ctx.lastBase ?? ctx.bases[0];
   const entry = root?.cases?.[canonical] ?? root?.cases?.[id];
   // missing pieces the merge falls back on.
   const needPerCase =
@@ -420,11 +438,10 @@ export async function getCaseBundle(
         }
       : perCase;
 
-  // In remote mode layer png/cog paths resolve to the first remote base (the
-  // browser cannot fall back across bases); on disk they
+  // In remote mode layer png/cog paths resolve to the base that served the
+  // root manifest (the browser cannot fall back across bases); on disk they
   // stay data-root-relative (/data/... via resolveDataUrl).
-  if (ctx.bases.length > 0 && manifest?.layers) {
-    const assetBase = ctx.bases[0];
+  if (assetBase !== undefined && manifest?.layers) {
     manifest.layers = manifest.layers.map((l) => ({
       ...l,
       png: resolveAsset(assetBase, canonical, l.png) ?? l.png,
@@ -621,7 +638,7 @@ export async function getCaseBundle(
     tpiCuts: manifest?.tpi_cuts ?? TPI_CUTS,
     zones,
     places,
-    assetBase: ctx.bases[0],
+    assetBase,
     fallback: ctx.fellBack,
   };
 

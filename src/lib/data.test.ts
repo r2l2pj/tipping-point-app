@@ -3,6 +3,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from "bun:test";
 import { createServer } from "node:http";
 
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import realMetrics from "../../test/fixtures/metrics-19c56df.json";
@@ -431,18 +432,18 @@ describe("default remote bases (no DATA_BASE_URL)", () => {
       expect(b.dataSource).toBeUndefined();
       expect(b.liveLayers).toBeUndefined();
       expect(b.dataDate).toBeUndefined();
-      // Built-in public Neon bucket first, GitHub fallback branch second.
-      expect(requested[0]).toContain("/tipping-point-data/data/manifest.json");
-      expect(requested[0]).toContain("aws.neon.tech");
-      expect(requested[1]).toBe("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/manifest.json");
+      // L26: GitHub data branch first, built-in public Neon bucket second.
+      expect(requested[0]).toBe("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/manifest.json");
+      expect(requested[1]).toContain("/tipping-point-data/data/manifest.json");
+      expect(requested[1]).toContain("aws.neon.tech");
     } finally {
       remote.mockRestore();
     }
   });
 
-  // L17: with no explicit DATA_BASE_URL the public Neon bucket is tried first;
-  // a Neon miss falls through to the GitHub fallback branch, then disk.
-  test("NEON_S3_ENDPOINT default: bucket first, github next", async () => {
+  // L26: with no explicit DATA_BASE_URL the GitHub data branch is tried
+  // first; a GitHub miss falls through to the Neon bucket, then disk.
+  test("NEON_S3_ENDPOINT set: github first, bucket next", async () => {
     delete process.env.DATA_BASE_URL;
     process.env.NEON_S3_ENDPOINT = "https://neon-s3.example.com";
     const requested: string[] = [];
@@ -452,8 +453,65 @@ describe("default remote bases (no DATA_BASE_URL)", () => {
     });
     try {
       await getRootManifest();
-      expect(requested[0]).toBe("https://neon-s3.example.com/tipping-point-data/data/manifest.json");
-      expect(requested[1]).toBe("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/manifest.json");
+      expect(requested[0]).toBe("https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/manifest.json");
+      expect(requested[1]).toBe("https://neon-s3.example.com/tipping-point-data/data/manifest.json");
+    } finally {
+      remote.mockRestore();
+    }
+  });
+
+  // GitHub answers: Neon is never asked, frames resolve to GitHub raw.
+  test("github hit: neon untouched, layer PNGs point at github", async () => {
+    delete process.env.DATA_BASE_URL;
+    process.env.NEON_S3_ENDPOINT = "https://neon-s3.example.com";
+    const GH = "https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/";
+    const fixtures = path.join(process.cwd(), "test/fixtures/public-data");
+    const requested: string[] = [];
+    const remote = spyOn(globalThis, "fetch").mockImplementation(async (input: string | URL | Request) => {
+      const url = String(input);
+      requested.push(url);
+      if (!url.startsWith(GH)) return new Response("not found", { status: 404 });
+      try {
+        return new Response(await readFile(path.join(fixtures, url.slice(GH.length)), "utf-8"));
+      } catch {
+        return new Response("not found", { status: 404 });
+      }
+    });
+    try {
+      const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02");
+      expect(b.manifest?.event_id).toBe("rs-2024-05");
+      expect(requested[0]).toBe(`${GH}manifest.json`);
+      expect(requested.filter((u) => u.startsWith("https://neon-s3.example.com/") && u.endsWith("/manifest.json"))).toEqual([]);
+      expect(b.assetBase).toBe(GH.replace(/\/$/, ""));
+      const png = b.manifest?.layers.find((l) => l.png)?.png;
+      expect(png?.startsWith(GH)).toBe(true);
+    } finally {
+      remote.mockRestore();
+    }
+  });
+
+  // GitHub down, Neon up: data AND browser frames come from Neon.
+  test("github miss, neon hit: assetBase follows the base that answered", async () => {
+    delete process.env.DATA_BASE_URL;
+    process.env.NEON_S3_ENDPOINT = "https://neon-s3.example.com";
+    const NEON = "https://neon-s3.example.com/tipping-point-data/data/";
+    const fixtures = path.join(process.cwd(), "test/fixtures/public-data");
+    const remote = spyOn(globalThis, "fetch").mockImplementation(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (!url.startsWith(NEON)) return new Response("down", { status: 503 });
+      try {
+        return new Response(await readFile(path.join(fixtures, url.slice(NEON.length)), "utf-8"));
+      } catch {
+        return new Response("not found", { status: 404 });
+      }
+    });
+    try {
+      const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02");
+      expect(b.manifest?.event_id).toBe("rs-2024-05");
+      expect(b.assetBase).toBe(NEON.replace(/\/$/, ""));
+      const png = b.manifest?.layers.find((l) => l.png)?.png;
+      expect(png?.startsWith(NEON)).toBe(true);
+      expect(b.fallback).toBe(true);
     } finally {
       remote.mockRestore();
     }
