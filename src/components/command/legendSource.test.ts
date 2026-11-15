@@ -26,7 +26,7 @@ import { bundle, liveBundle } from "./model/fixtures";
 describe("Start here stops", () => {
   test("event ids or canonical ids both resolve; live last", () => {
     const stops = tourStops([bundle({ id: "wa-2025-12" }), bundle({ id: "rs_2024" }), liveBundle()]);
-    expect(stops.map((s) => s.key)).toEqual(["wa", "rs", "now"]);
+    expect(stops.map((s) => s.key)).toEqual(["wa", "wa-radar", "rs", "now"]);
     expect(stops[0].action).toMatchObject({ id: "wa-2025-12", day: -7, hazard: "slide", lead: 3 });
   });
 });

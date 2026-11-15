@@ -7,6 +7,14 @@ import { Icon, ICON } from "./ui";
 // Radar confirmation. "NISAR" is only said for a real pair; scars are always
 // "candidates". "Confirm with NISAR radar" opens the confirmation on the map
 // and does not move the timeline.
+// Judge report #3: the physical drivers behind the radar layer, in plain words.
+export const NISAR_WHY = [
+  "NISAR's L-band radar sees through cloud and at night: the flood is mapped even when optical satellites see only cloud.",
+  "Open water is smooth and reflects the radar away, so it turns dark. We map water that turned dark between two passes, on low ground near rivers.",
+  "Flooded towns and forests can turn bright instead (the radar bounces between water and walls or trunks), so a dark-water map can miss them.",
+  "NISAR passes over the same place every 12 days; the map updates with each new pass.",
+];
+
 export default function RadarCard({
   radar,
   floodOn,
@@ -72,6 +80,15 @@ export default function RadarCard({
       {radar.note && <p className="mt-1 text-xs text-cc-muted">{radar.note}</p>}
       <p className="mt-1 text-xs text-cc-faint">{radar.candidates.note}</p>
       {radar.limitation && <p className="mt-1 text-xs text-cc-muted">{radar.limitation}</p>}
+
+      {radar.pair && (
+        <details className="mt-1.5 text-xs" data-nisar-why>
+          <summary className="cursor-pointer font-semibold">What NISAR sees and why</summary>
+          <ul className="m-0 mt-1 list-disc pl-4 text-cc-muted">
+            {NISAR_WHY.map((l) => <li key={l}>{l}</li>)}
+          </ul>
+        </details>
+      )}
 
       {radar.passes.length > 0 && (
         <div className="mt-2 border-t border-cc-rule pt-1.5">

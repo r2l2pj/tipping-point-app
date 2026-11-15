@@ -130,6 +130,8 @@ describe("replay: forecast issued this day (beat 2)", () => {
     const back = reduce(reduce(s, { type: "toggleLayer", id: "flood" }, c), { type: "goTo", id: "now" }, c);
     expect(back).toMatchObject({ activeId: "now", issueLead: 0, layers: initialState(c).layers });
     expect(reduce(s, { type: "goTo", id: "nope" }, c)).toBe(s);
+    // A stop without a day opens the case's own default step, even on the same case.
+    expect(reduce(s, { type: "goTo", id: "wa_2025" }, c).dayIndex).toBe(initialState(c, "wa_2025").dayIndex);
   });
 
   test("choosing a lead turns the TPI index on; a case change resets it", () => {

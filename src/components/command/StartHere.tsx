@@ -27,13 +27,18 @@ export function tourStops(cases: readonly CcBundle[]): TourStop[] {
     what: "Replay: the landslide-risk forecast issued Dec 3 for Dec 6, as it was available then",
     action: { type: "goTo", id: wa, day: -7, hazard: "slide", lead: 3 },
   });
+  if (wa) out.push({
+    key: "wa-radar", title: "2 · Washington — NISAR radar",
+    what: "Swipe the NISAR radar images from before and after the flood",
+    action: { type: "goTo", id: wa, hazard: "flood", compare: "radar" },
+  });
   if (rs) out.push({
-    key: "rs", title: "2 · Rio Grande do Sul, May 2024",
+    key: "rs", title: "3 · Rio Grande do Sul, May 2024",
     what: "Landslide risk on the event day, with landslide scar candidates seen from space",
     action: { type: "goTo", id: rs, hazard: "slide", layer: "candidates" },
   });
   if (live) out.push({
-    key: "now", title: "3 · Now — Southern Brazil",
+    key: "now", title: "4 · Now — Southern Brazil",
     what: "Today's run: NISAR radar flood candidates, risk and public alerts",
     action: { type: "goTo", id: live.id },
   });
@@ -62,7 +67,7 @@ export default function StartHere({ cases, dispatch }: { cases: readonly CcBundl
     return (
       <button type="button" onClick={() => close(true)} data-start-here="closed"
         className="self-start rounded-md border border-cc-line-strong px-2 py-0.5 text-xs font-semibold">
-        Start here: 3-stop tour
+        Start here: guided tour
       </button>
     );
   }
