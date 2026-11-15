@@ -60,6 +60,11 @@ export default function RadarCard({
           <dd className="font-semibold">{radar.candidates.value}</dd>
         </div>
       </dl>
+      {radar.others?.map((o) => (
+        <p key={o.label} className="mt-1 text-[13px]">
+          <span className="text-xs text-cc-muted">{o.label}:</span> <span className="font-semibold">{o.value}</span>
+        </p>
+      ))}
       {radar.note && <p className="mt-1 text-xs text-cc-muted">{radar.note}</p>}
       <p className="mt-1 text-xs text-cc-faint">{radar.candidates.note}</p>
       {radar.limitation && <p className="mt-1 text-xs text-cc-muted">{radar.limitation}</p>}

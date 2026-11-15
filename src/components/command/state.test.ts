@@ -7,6 +7,8 @@ import { layerRows } from "./model/layerRegistry";
 import { statusChip } from "./model/status";
 import { mapCaption, stepsFor } from "./model/steps";
 import { criticalAreaTile, peopleTile } from "./model/tiles";
+import { priorityAreas } from "./model/areas";
+import { radarCard } from "./model/radar";
 
 const fc = (n: number) => zones(Array.from({ length: n }, () => point()));
 const wa = bundle({
@@ -48,6 +50,36 @@ describe("Now radar default (L27)", () => {
     const c = [nowPair];
     const s = reduce(initialState(c), { type: "toggleLayer", id: "flood" }, c);
     expect(s.layers).toEqual(["tpi"]);
+  });
+});
+
+describe("R3 zones and DSWx in Now", () => {
+  const zoneFc = zones([
+    { ...point(), properties: { name: "São Miguel Arcanjo", rank: 1, class: "High", tpi: null, sources: ["nisar-gcov"], area_km2: 7.5, people: 474 } },
+    { ...point(), properties: { name: "Itaporanga", rank: 2, class: "Critical", tpi: 0.6, sources: ["tpi-critical"], area_km2: 30.2, people: 152 } },
+  ] as never);
+  const live = liveBundle({ zones: zoneFc, manifest: manifest([frame("tpi_slide", "2026-11-15")]),
+    products: { flood_dswx: "response/flood_dswx.geojson" },
+    responseSources: [{ source: "opera-dswx-s1", flooded_km2: 129.497, people_flooded: 494, latest_acquired: "2026-11-14T09:06:12Z" }] });
+
+  test("observed-only municipalities read 'Observed flood', never a risk class", () => {
+    const areas = priorityAreas(live);
+    expect(areas.map((a) => [a.name, a.cls, a.tpi])).toEqual([
+      ["São Miguel Arcanjo", "Observed flood", null],
+      ["Itaporanga", "Critical", 0.6],
+    ]);
+  });
+
+  test("paused: TPI-only municipalities are held back", () => {
+    expect(priorityAreas({ ...live, riskPaused: true }).map((a) => a.name)).toEqual(["São Miguel Arcanjo"]);
+  });
+
+  test("DSWx alone makes the flood layer available and on by default; card names it", () => {
+    expect(initialState([live]).layers).toEqual(["tpi", "flood"]);
+    const card = radarCard(live);
+    expect(card.others).toEqual([{ label: "Also seen by OPERA DSWx-S1 radar (candidates)",
+      value: "129.5 km² · 494 people (estimate) · newest pass Nov 14, 2026" }]);
+    expect(card.canShowOnMap).toBe(true);
   });
 });
 

@@ -40,6 +40,7 @@ import {
   type TabKey,
   type ToggleLayerKey,
   featureCenters,
+  standardFlood,
 } from "@/lib/layers";
 import {
   resolveFrameDate,
@@ -264,13 +265,25 @@ export function useMapLayers(
       // fill (top-10 get HTML label markers — see rankedZonePoints).
       { id: LYR.zonesFill, type: "fill", source: SRC.zones,
         paint: {
-          "fill-color": ["match", ["get", "class"],
-            "Critical", "#B2182B", "High", "#EF8A62", "#999999"],
+          // R3 Now zones seen only by satellite (sources without
+          // "tpi-critical") are observations: neutral blue, never a class
+          // color. Replay zones have no `sources`.
+          "fill-color": ["case",
+            ["all", ["has", "sources"],
+              ["!", ["in", "tpi", ["to-string", ["get", "sources"]]]]], "#4B93C5",
+            ["match", ["get", "class"],
+              "Critical", "#B2182B", "High", "#EF8A62", "#999999"]],
           "fill-opacity": 0.18,
         },
         layout: {} },
       { id: LYR.zonesLine, type: "line", source: SRC.zones,
-        paint: { "line-color": "#B2182B", "line-width": 0.7, "line-opacity": 0.6 },
+        paint: {
+          "line-color": ["case",
+            ["all", ["has", "sources"],
+              ["!", ["in", "tpi", ["to-string", ["get", "sources"]]]]], "#4B93C5",
+            "#B2182B"],
+          "line-width": 0.7, "line-opacity": 0.6,
+        },
         layout: {} },
       // Municipal boundaries: thin white reference lines (0.5 px, 40%).
       { id: LYR.muni, type: "line", source: SRC.muni,
@@ -562,6 +575,24 @@ export function useMapLayers(
       (map.getSource(src) as GeoSrc)?.setData?.(fc);
       if (src === SRC.flood) (map.getSource(SRC.floodPts) as GeoSrc)?.setData?.(featureCenters(fc));
     };
+    // Several flood files in one source; the cache key is the URL list.
+    const loadMergedFlood = (urls: (string | undefined)[]) => {
+      const list = urls.filter((u): u is string => !!u);
+      const key = list.join("|");
+      const hit = geoData.current[SRC.flood];
+      if (hit?.url === key) {
+        if (hit.fc) setGeo(SRC.flood, hit.fc);
+        return;
+      }
+      geoData.current[SRC.flood] = { url: key, fc: null };
+      markLoading(SRC.flood, "flood extent", true);
+      Promise.all(list.map(fetchGeo)).then((parts) => {
+        const fc = standardFlood(parts);
+        geoData.current[SRC.flood] = { url: key, fc };
+        if (map.getSource(SRC.flood)) setGeo(SRC.flood, fc);
+        markLoading(SRC.flood, "flood extent", false);
+      });
+    };
     const loadGeo = (src: string, label: string, url: string | undefined) => {
       if (!map.getSource(src)) return;
       if (!url) {
@@ -595,6 +626,21 @@ export function useMapLayers(
     // Map chrome loads eagerly; overlays only when their tab/toggle asks.
     loadGeo(SRC.water, "permanent water", chrome("permanent_water", "geojson/permanent_water.geojson"));
     loadGeo(SRC.zones, "priority zones", chrome("priority_zones", "geojson/priority_zones.geojson"));
+    // Unverified live run: municipalities flagged only by the TPI are held
+    // back with the other risk outputs (observations stay).
+    const zoneFilter = bundle.riskPaused
+      ? ["!", ["all", ["has", "sources"],
+          ["in", "tpi", ["to-string", ["get", "sources"]]],
+          ["!", ["in", "dswx", ["to-string", ["get", "sources"]]]],
+          ["!", ["in", "nisar", ["to-string", ["get", "sources"]]]]]]
+      : null;
+    for (const id of [LYR.zonesFill, LYR.zonesLine]) {
+      try {
+        if (map.getLayer(id)) map.setFilter(id, zoneFilter as never);
+      } catch {
+        // layer mid-teardown: nothing to filter
+      }
+    }
     loadGeo(SRC.muni, "boundaries", chrome("municipal_boundaries", "geojson/municipal_boundaries.geojson"));
     // With no tab context the caller drives flood/scars via showFlood (and
     // the nisar toggle); with a tab the overlayPlan decides; explicit
@@ -602,7 +648,16 @@ export function useMapLayers(
     const wantFlood = overlay.flood;
     const wantScars = overlay.scars;
     const wantCatalog = overlay.catalog;
-    if (wantFlood) loadGeo(SRC.flood, "flood extent", url("flood_confirmed", "geojson/flood_confirmed.geojson"));
+    if (wantFlood) {
+      // Now: the OPERA DSWx-S1 candidates (products.flood_dswx) join the
+      // NISAR ones in the same layer; "lower" confidence polygons (cropland,
+      // seasonal water) are left out, as in the headline numbers.
+      const dswx = products && typeof products.flood_dswx === "string"
+        ? url("flood_dswx", products.flood_dswx as string) : undefined;
+      const nisar = url("flood_confirmed", "geojson/flood_confirmed.geojson");
+      if (dswx) loadMergedFlood([nisar, dswx]);
+      else loadGeo(SRC.flood, "flood extent", nisar);
+    }
     if (wantScars) loadGeo(SRC.scars, "landslide candidates", url("landslide_candidates", "geojson/landslide_candidates.geojson"));
     if (wantCatalog) loadGeo(SRC.catalog, "landslide catalog", url("landslide_catalog", "geojson/landslide_catalog.geojson"));
     set(SRC.places, bundle.places ?? EMPTY);

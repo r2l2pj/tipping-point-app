@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Marker, type Map as MapInstance } from "maplibre-gl";
+import { OBSERVED_CLASS } from "@/lib/zones";
 import type { PriorityArea } from "./model/areas";
 
 // Numbered pins of the priority areas: one marker layer owned by the new
@@ -32,6 +33,12 @@ export default function AreaPins({
       el.type = "button";
       el.className = "cc-pin";
       el.dataset.class = a.cls;
+      // Satellite-observed municipality (R3): an observation, never a risk
+      // color.
+      if (a.cls === OBSERVED_CLASS) {
+        el.style.background = "#4b93c5";
+        el.style.color = "#ffffff";
+      }
       el.textContent = String(a.rank);
       el.setAttribute(
         "aria-label",

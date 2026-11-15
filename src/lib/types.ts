@@ -236,6 +236,9 @@ export interface CaseBundle {
   response?: NowResponse;
   // Live case only: R3 per-source totals and municipality names per source.
   responseSources?: ResponseSource[];
+  // Live case: the run is not marked verified; risk outputs are held back
+  // (set by the Command Center loader).
+  riskPaused?: boolean;
   observedPlaces?: Record<string, string[]>;
   swot?: unknown;
   catalog?: GeoJSON.FeatureCollection;

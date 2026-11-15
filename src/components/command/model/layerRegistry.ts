@@ -98,7 +98,9 @@ export function layerAvailable(bundle: CcBundle, id: LayerId, hazard: Hazard): b
     case "opera":
       return !!pngLayer(bundle, "opera_validation");
     case "flood":
-      return hasProduct(bundle, bundle.flood, "flood_confirmed");
+      // Live: the OPERA DSWx-S1 candidates draw in the same layer.
+      return hasProduct(bundle, bundle.flood, "flood_confirmed") ||
+        (bundle.mode === "live" && declared(bundle, "flood_dswx"));
     case "candidates":
       return hasProduct(bundle, bundle.scars, "landslide_candidates");
     case "catalog":
@@ -222,7 +224,8 @@ export const keepAvailable = (
 // (L27: what is on the ground first), next to the TPI index. Replay cases and
 // a Now without a pair keep the layers they were given.
 export function withRadarDefault(bundle: CcBundle, on: readonly LayerId[], hazard: Hazard): LayerId[] {
-  if (bundle.mode !== "live" || on.includes("flood") || !hasNisarPair(bundle)) return [...on];
+  if (bundle.mode !== "live" || on.includes("flood")) return [...on];
+  if (!hasNisarPair(bundle) && !declared(bundle, "flood_dswx")) return [...on];
   if (!layerAvailable(bundle, "flood", hazard)) return [...on];
   return toggleLayer(on, "flood").layers;
 }
