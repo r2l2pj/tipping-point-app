@@ -31,7 +31,7 @@ export const DEFAULT_LAYERS: LayerId[] = ["tpi"];
 export const NO_MAP_LAYER_TEXT = "no map layer for this case";
 
 export const BUDGET_RULE_TEXT =
-  `At most ${MAX_LAYERS} data layers at once, the TPI index included. Turning on another one turns off the oldest.`;
+  `Up to ${MAX_LAYERS} data layers (TPI included); a new one turns off the oldest.`;
 
 export const REFERENCE_TEXT =
   "Always on: municipal boundaries, city labels, permanent water, relief.";

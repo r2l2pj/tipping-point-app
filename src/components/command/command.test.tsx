@@ -546,7 +546,7 @@ describe("new assertions of the checklist", () => {
 
   test("the layer rule names the limit, and a named eviction is shown", () => {
     const html = render(bundle(), { layerNotice: "Rain turned off to show Flood" });
-    expect(html).toContain("At most 2 data layers at once");
+    expect(html).toContain("Up to 2 data layers (TPI included)");
     expect(html).toContain("Rain turned off to show Flood");
   });
 });

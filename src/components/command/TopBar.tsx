@@ -75,7 +75,7 @@ export default function TopBar({
             aria-label="Past event"
             value={bundle.id}
             onChange={(e) => onSelectCase(e.target.value)}
-            className="h-[38px] max-w-[200px] border-0 bg-cc-surface px-1 text-sm font-semibold text-cc-ink"
+            className="h-[38px] max-w-[290px] border-0 bg-cc-surface px-1 text-sm font-semibold text-cc-ink"
           >
             {replays.map((c) => (
               <option key={c.id} value={c.id}>{c.title}</option>
