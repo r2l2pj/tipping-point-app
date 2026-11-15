@@ -34,16 +34,18 @@ Open https://tipping-point-app.vercel.app on a real phone: the headless capture 
 19. Limitations + roadmap + NASA-inputs lines — *slides-outline.md: slides 6–7*
 20. The ML sentence on slide 3 — see the draft at the end of "ML results" above — *slides-outline.md: slide 3*
 
-## ML results (final: data ea5b2cd, `.crew/research/model-metrics.md`)
+## ML results (**provisional — being re-scored, v2 ~12:00**; v1 = data ea5b2cd, `.crew/research/model-metrics.md`)
+
+**L33: every number below is v1 and superseded — 40% of the GFS-source negatives had no GFS run. Do not quote any of them; v2 re-scored numbers ~12:00.**
 
 TEST = events never seen in training: one Rio Grande do Sul storm (3,000 inventory points, May 2024) + 8 dated Washington reports. Thresholds and calibration from VAL only; TEST read once.
 
-- **Trigger, P(landslide within 24 h) with the NOAA GFS forecast:** PR-AUC XGBoost **0.752** vs RandomForest 0.733 vs TPI > 0.6 rule 0.613 (base rate 0.154; ROC 0.934 / 0.900 / 0.808). XGBoost leads at 24/48/72 h; 7 d and 14 d are labelled low skill.
-- **Withdrawn (L32):** the "when × where" figures (trigger × T_ML, what the live map serves) and the T_ML terrain-model figures are pulled: RS points leaked into the terrain model. Do not quote any of them until lead-ml republishes. The trigger-only numbers above stand.
-- **Raw vs calibrated:** the trigger numbers above are calibrated scores (what is served). Raw scores rank 0.00–0.03 PR-AUC higher.
+- **Trigger, P(landslide within 24 h) with the NOAA GFS forecast (provisional — being re-scored, v2 ~12:00):** v1 PR-AUC XGBoost **0.752** vs RandomForest 0.733 vs TPI > 0.6 rule 0.613 (base rate 0.154; ROC 0.934 / 0.900 / 0.808). XGBoost leads at 24/48/72 h; 7 d and 14 d are labelled low skill.
+- **Withdrawn (L32):** the "when × where" figures (trigger × T_ML, what the live map serves) and the T_ML terrain-model figures are pulled: RS points leaked into the terrain model. Do not quote any of them until lead-ml republishes. The trigger-only v1 numbers are now also provisional (L33).
+- **Raw vs calibrated (v1, provisional):** the trigger numbers above are calibrated scores (what is served). Raw scores rank 0.00–0.03 PR-AUC higher.
 - **Caveats (say them with any number):** one RS storm, so the effective n is small and intervals would be wide; training data is mostly 2015–2018; scores are relative rankings (case-control), not real-world probabilities; a day-of-year-only baseline looks near-perfect on RS (calendar artefact, excluded).
 
-**Draft slide 3 sentence (awaiting Lucas, also in REVIEW.md):** "Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h); on held-out events it never saw (Rio Grande do Sul, May 2024, plus 8 Washington reports), driven by the NOAA GFS forecast, it reached PR-AUC 0.75 vs 0.61 for the TPI > 0.6 rule (base rate 0.15) — TPI stays the headline."
+**Draft slide 3 sentence (awaiting Lucas, also in REVIEW.md):** "Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h); on held-out events it never saw (Rio Grande do Sul, May 2024, plus 8 Washington reports), driven by the NOAA GFS forecast, it reached PR-AUC [X] vs [Y] for the TPI > 0.6 rule (base rate [B]) [numbers pending v2 re-score, ~12:00] — TPI stays the headline."
 
 ## Decided by you (2026-11-15)
 
