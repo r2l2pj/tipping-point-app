@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { canonicalCaseId } from "@/lib/contract";
 import { getAlerts, getCaseBundle, getDataJson, getEventsIndex, getMlArtifacts, getRootManifest } from "@/lib/data";
-import { slimNisarSeries } from "./model/nisarSeries";
+import { slimHypothesis, slimNisarSeries } from "./model/nisarSeries";
 import { resolveAsset } from "@/lib/contract";
 import type { ManifestLayer } from "@/lib/types";
 import { buildMlView, groupImportance } from "./model/ml";
@@ -212,9 +212,18 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
       ? getDataJson(p, canonicalCaseId(b.id)).then(slimNisarSeries).catch(() => undefined)
       : Promise.resolve(undefined);
   }));
+  // L42: the double-bounce test next to the series (listed, or the agreed
+  // <case>/nisar_hypothesis.json) — only for cases with a NISAR series.
+  const hypotheses = await Promise.all(eventBundles.map((b, i) => {
+    if (!b || !series[i]) return Promise.resolve(undefined);
+    const p = (b.products as Record<string, unknown> | undefined)?.nisar_hypothesis;
+    const dir = canonicalCaseId(b.id);
+    return getDataJson(typeof p === "string" ? p : "nisar_hypothesis.json", dir).then(slimHypothesis).catch(() => undefined);
+  }));
   const cases: CcBundle[] = [];
   eventBundles.forEach((bundle, i) => {
-    if (bundle) cases.push({ ...bundle, nullReasons: nullReasons(root, events[i].id), ...(series[i] ? { nisarSeries: series[i] } : {}) });
+    if (bundle) cases.push({ ...bundle, nullReasons: nullReasons(root, events[i].id),
+      ...(series[i] ? { nisarSeries: series[i] } : {}), ...(hypotheses[i] ? { nisarHypothesis: hypotheses[i] } : {}) });
   });
   // Run time of the live case: the `updated_at` of the live node itself. The
   // loader falls back to the root manifest time, which is the time of the

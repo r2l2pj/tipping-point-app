@@ -5,7 +5,7 @@ import { createElement } from "react";
 import NisarSeriesChart from "../NisarSeriesChart";
 import { bundle, liveBundle, manifest } from "./fixtures";
 import { radarCompare } from "./radar";
-import { nisarSeriesView, slimNisarSeries } from "./nisarSeries";
+import { hypothesisLine, nisarSeriesView, slimHypothesis, slimNisarSeries } from "./nisarSeries";
 import { radarCard } from "./radar";
 
 // lead-analysis L42 schema (data/wa_2025/nisar_timeseries.json)
@@ -88,4 +88,14 @@ test("t19n contract: reading_line wins, passes from other orbits are flagged", (
   const html = renderToStaticMarkup(createElement(NisarSeriesChart, { s: v }));
   expect(html).toContain("Hollow points: passes from another orbit");
   expect(html).toContain("Oct 29/Nov 1 from other tracks");
+});
+
+test("L42 hypothesis line from lead-analysis nisar_hypothesis.json (supported only)", () => {
+  const raw = { verdict: "supported", enrichment: { enrichment_missed_vs_detected: 8.562 },
+    recall_by_group: { open: { recall: 0.2471 }, urban: { recall: 0.0343 }, forest: { recall: 0.0127 } } };
+  const wa = bundle({ id: "wa_2025", nisarHypothesis: slimHypothesis(raw) } as never);
+  expect(hypothesisLine(wa)).toBe("Test (WA Dec 2025): our misses are 8.6× more likely in towns and forest, where water doesn't turn dark — recall 25% in open fields vs 3% in towns.");
+  expect(radarCard(wa).hypothesisLine).toBe(hypothesisLine(wa));
+  expect(hypothesisLine(bundle({ nisarHypothesis: slimHypothesis({ ...raw, verdict: "not supported" }) } as never))).toBeUndefined();
+  expect(hypothesisLine(bundle())).toBeUndefined();
 });

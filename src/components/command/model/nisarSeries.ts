@@ -117,3 +117,29 @@ export function nisarSeriesView(bundle: CcBundle): NisarSeriesView | undefined {
     status: s.status,
   };
 }
+
+// L42: lead-analysis's double-bounce test (data/wa_2025/nisar_hypothesis.json).
+export interface NisarHypothesis { verdict: string; enrichment?: number; recallOpen?: number; recallUrban?: number }
+export function slimHypothesis(raw: unknown): NisarHypothesis | undefined {
+  if (!isRecord(raw) || typeof raw.verdict !== "string") return undefined;
+  const e = isRecord(raw.enrichment) ? raw.enrichment : {};
+  const r = isRecord(raw.recall_by_group) ? raw.recall_by_group : {};
+  const rec = (g: string) => (isRecord(r[g]) && typeof (r[g] as M).recall === "number" ? (r[g] as M).recall as number : undefined);
+  return {
+    verdict: raw.verdict,
+    enrichment: typeof e.enrichment_missed_vs_detected === "number" ? e.enrichment_missed_vs_detected : undefined,
+    recallOpen: rec("open"),
+    recallUrban: rec("urban"),
+  };
+}
+// "Test (WA Dec 2025): our misses are 8.6× more likely in towns and forest,
+// where water doesn't turn dark — recall 25% in open fields vs 3% in towns."
+export function hypothesisLine(bundle: CcBundle): string | undefined {
+  const h = bundle.nisarHypothesis;
+  if (!h || h.verdict !== "supported" || h.enrichment === undefined) return undefined;
+  const where = canonicalCaseId(bundle.manifest?.event ?? bundle.id) === "wa_2025" ? "Test (WA Dec 2025)" : "Test (this event)";
+  const recall = h.recallOpen !== undefined && h.recallUrban !== undefined
+    ? ` — recall ${Math.round(h.recallOpen * 100)}% in open fields vs ${Math.round(h.recallUrban * 100)}% in towns`
+    : "";
+  return `${where}: our misses are ${h.enrichment.toFixed(1)}× more likely in towns and forest, where water doesn't turn dark${recall}.`;
+}

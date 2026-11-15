@@ -700,7 +700,8 @@ describe("no 'confirm' on screen except the tagline (candidates rule)", () => {
     const html = render(wa);
     expect(html).toContain("Rain warns. Radar sees through.");
     expect(html).toContain("What the radar sees");
-    expect(html).toContain("Flooded towns and forests can turn BRIGHT (double bounce), so this map may miss them.");
+    expect(html).toContain("Flooded towns and forests stay or turn BRIGHT (double bounce), so this map may miss them.");
+    expect(html).toContain('src="/explainer/what-nisar-sees.png"');
     expect(html).not.toContain("GCOV");
   });
 });

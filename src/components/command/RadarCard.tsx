@@ -12,7 +12,7 @@ import { Icon, ICON } from "./ui";
 // L42 (conductor): two visible lines, the rest stays in "What NISAR sees and why".
 export const RADAR_SEES = [
   "Dark = open water: smooth water reflects the radar away from the satellite.",
-  "Flooded towns and forests can turn BRIGHT (double bounce), so this map may miss them.",
+  "Flooded towns and forests stay or turn BRIGHT (double bounce), so this map may miss them.",
 ];
 export const NISAR_WHY = [
   "NISAR's L-band radar sees through cloud and at night: the flood is mapped even when optical satellites see only cloud.",
@@ -91,12 +91,17 @@ export default function RadarCard({
         <div className="mt-1.5 rounded-md bg-cc-well px-2 py-1 text-xs" data-radar-sees>
           <p className="m-0 font-semibold">What the radar sees</p>
           {RADAR_SEES.map((l) => <p key={l} className="m-0 text-cc-muted">{l}</p>)}
+          {radar.hypothesisLine && <p className="m-0 mt-0.5 font-semibold" data-radar-test>{radar.hypothesisLine}</p>}
         </div>
       )}
       {radar.series && <NisarSeriesChart s={radar.series} />}
       {radar.pair && (
         <details className="mt-1.5 text-xs" data-nisar-why>
           <summary className="cursor-pointer font-semibold">What NISAR sees and why</summary>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static explainer in public/ */}
+          <img src="/explainer/what-nisar-sees.png" width={1600} height={900} loading="lazy" data-explainer
+            alt="What NISAR radar sees: calm open water reflects the pulse away and looks dark; a flooded town or forest bounces it back twice (water, then wall or trunk) and looks bright, so a dark-means-water rule can miss it; L-band sees through cloud and rain, day and night; HH sees surface and double bounce, HV sees volume scatter in vegetation."
+            className="mt-1 h-auto w-full rounded border border-cc-line" />
           <ul className="m-0 mt-1 list-disc pl-4 text-cc-muted">
             {NISAR_WHY.map((l) => <li key={l}>{l}</li>)}
           </ul>

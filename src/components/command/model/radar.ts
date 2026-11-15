@@ -2,7 +2,7 @@
 // "NISAR" label needs a real pair, scars are always "candidates".
 import { canonicalCaseId } from "@/lib/contract";
 import { assetUrl } from "@/lib/layers";
-import { nisarSeriesView, type NisarSeriesView } from "./nisarSeries";
+import { hypothesisLine, nisarSeriesView, type NisarSeriesView } from "./nisarSeries";
 import type { NisarPass } from "@/lib/types";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
 import { declared } from "./lazy";
@@ -208,6 +208,7 @@ export interface RadarCard {
   canShowOnMap: boolean;
   compare: CompareOption;
   series?: NisarSeriesView; // L42, WA replay
+  hypothesisLine?: string; // L42: lead-analysis double-bounce test, when supported
 }
 
 // Live case with a published radar response (lead-live R2).
@@ -291,5 +292,6 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
       : declared(bundle, "flood_confirmed"),
     compare: radarCompare(bundle),
     series: nisarSeriesView(bundle),
+    hypothesisLine: hypothesisLine(bundle),
   };
 }
