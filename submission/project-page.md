@@ -44,7 +44,7 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 ### What NISAR shows, and why
 - Calm floodwater acts like a mirror to radar. It reflects the L-band pulse away from the satellite, so new flooding appears as new dark patches between the before and after passes.
 - L-band (24 cm) also passes through cloud and rain, which is why it works when optical cannot.
-- Flooded towns and forests can do the opposite. Water under walls or trunks bounces the pulse straight back (double bounce), so they turn bright. Our current detector reads only the darkening in co-polarization, so it misses that flooding. This is a main reason recall is low (see Validation).
+- Flooded towns and forests behave differently. Water under walls or trunks bounces the pulse back to the satellite (double bounce), which cancels the darkening. Our current detector reads only the darkening in co-polarization, so it misses that flooding; we tested this and it holds (see the hypothesis below). This is the main reason recall is low.
 - Landslide scars need a coherence (InSAR) pair spanning the event. No public NISAR pair spans the Washington storm, so scars stay optical candidates.
 
 ### Hypothesis: why radar misses flooded towns and forests — tested, supported
