@@ -189,15 +189,15 @@ export const WARNED_NAME = {
   flood: "Flooded area in High or Critical areas (forecast as issued)",
 };
 // L37 (conductor): the RS landslide anchor (May 1) is under review — the
-// event likely started Apr 29-30. The slide row shows its numbers only when
-// lead-analysis marks the anchor as the event onset.
+// event likely started Apr 29-30. A warned row (landslide or flood) shows its
+// numbers only when lead-analysis marks the anchor as the event onset.
 export const WARNED_REANCHOR = "being re-anchored to the event start";
 export function warnedRow(m: M): CheckRow | undefined {
   for (const hz of ["slide", "flood"] as const) {
     const v = m[`${hz}_warned_pct`];
     if (!finite(v)) continue;
     const obj = (m[`${hz}_warned`] ?? {}) as M;
-    if (hz === "slide" && obj.anchor_basis !== "onset") {
+    if (obj.anchor_basis !== "onset") {
       return { id: "warned-before", name: WARNED_NAME[hz], value: WARNED_REANCHOR, missing: true };
     }
     const crit = m[`${hz}_warned_critical_pct`];

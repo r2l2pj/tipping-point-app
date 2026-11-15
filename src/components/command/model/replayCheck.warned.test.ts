@@ -25,7 +25,7 @@ describe("warned before the damage (lead-analysis)", () => {
   test("WA: 0.14 is 0.14 %, never 14 %; the explanation rides along", () => {
     const r = warnedRow({
       flood_warned_pct: 0.14, flood_warned_critical_pct: 0, flood_warned_observed_pct: 0,
-      flood_warned: { confirmed_flood_km2: 27.921, explanation: "TPI_flood is pixel-local." },
+      flood_warned: { anchor_basis: "onset", confirmed_flood_km2: 27.921, explanation: "TPI_flood is pixel-local." },
     })!;
     expect(r.value).toMatch(/^0\.14% of 27\.9 km² radar-mapped flood \(Critical 0\.0%\)$/);
     expect(r.name).toBe("Flooded area in High or Critical areas (forecast as issued)");
@@ -46,7 +46,7 @@ describe("warned before the damage (lead-analysis)", () => {
     // no anchor in the data: no date at all
     expect(warnedRow({ slide_warned_pct: 50, slide_warned: { anchor_basis: "onset", by_issue_gfs: [] } })!.detail).toContain("before the damage");
   });
-  test("L37 guard: no anchor_basis 'onset' -> no slide numbers, 're-anchored' note; flood unaffected", () => {
+  test("L37 guard: no anchor_basis 'onset' -> no slide numbers, 're-anchored' note; flood too", () => {
     for (const basis of [undefined, "reported_damage", "ONSET"]) {
       const r = warnedRow({
         slide_warned_pct: 88.13, slide_warned_critical_pct: 69.07, slide_warned_observed_pct: 88.83,
@@ -60,9 +60,13 @@ describe("warned before the damage (lead-analysis)", () => {
       expect(r.detail).toBeUndefined();
       expect(JSON.stringify(r)).not.toMatch(/88|May 1/);
     }
-    // WA flood row has no anchor_basis and still shows its numbers
+    // flood row: same guard (conductor)
     const wa = warnedRow({ flood_warned_pct: 0.14, flood_warned: { confirmed_flood_km2: 27.921 } })!;
-    expect(wa.value).toContain("0.14%");
+    expect(wa.name).toBe("Flooded area in High or Critical areas (forecast as issued)");
+    expect(wa.value).toBe("being re-anchored to the event start");
+    expect(JSON.stringify(wa)).not.toContain("0.14");
+    expect(warnedRow({ flood_warned_pct: 0.14, flood_warned: { anchor_basis: "onset", confirmed_flood_km2: 27.921 } })!.value)
+      .toContain("0.14%");
   });
   test("no published value: no row", () => {
     expect(warnedRow({ flood_warned_pct: null })).toBeUndefined();
