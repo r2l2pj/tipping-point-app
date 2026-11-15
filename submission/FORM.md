@@ -63,6 +63,7 @@ Source: `nasa-data.md` (awaiting Lucas):
 > - **Land cover:** MODIS MCD12Q1.
 > - **Impact:** VIIRS Black Marble VNP46A2; GPW v4 (SEDAC).
 > - **Validation:** OPERA DSWx, SWOT (Hydrocron river levels).
+> - **Landslide labels:** NASA Global Landslide Catalog / COOLR (ML training labels: 2,348+ dated landslide points worldwide; NASA event inventories for the Petrópolis, Angra dos Reis and São Sebastião TEST events).
 >
 > Accessed through NASA Earthdata (earthaccess), ASF (asf_search) and Google Earth Engine's NASA collections.
 

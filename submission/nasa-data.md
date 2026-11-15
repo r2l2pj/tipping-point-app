@@ -35,6 +35,7 @@ Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is N
 
 - **OPERA DSWx** — surface water product used for validation
 - **SWOT Hydrocron** — river levels for the "Did we get it right?" river chart
+- **GLC (Global Landslide Catalog / COOLR)** — ML training labels (2,348+ dated points worldwide) and NASA event inventories for the Petrópolis, Angra dos Reis and São Sebastião TEST events. Not used for the Washington replay points (Washington Geological Survey).
 
 ## Non-NASA context and reference layers (never index inputs)
 - **Washington Geological Survey landslide inventory (licence to confirm)** — validation reference for the landslide-hit metric (Washington case)
