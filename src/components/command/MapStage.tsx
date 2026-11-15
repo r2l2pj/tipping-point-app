@@ -179,7 +179,10 @@ export default function MapStage({
   // Prod regression: the ML forecast horizon must be on the map, not only in
   // the Layers panel (closed on phones).
   const probHorizons = useMemo(() => probHorizonsAvailable(bundle.manifest?.layers), [bundle]);
-  const showHorizons = state.layers.includes("ptrigger") && probHorizons.length > 0;
+  // Now + landslide: the chips stay on the map (picking one returns to the ML
+  // view even when a forecast day put the TPI on).
+  const showHorizons = probHorizons.length > 0 && (state.layers.includes("ptrigger") || (bundle.mode === "live" && state.hazard === "slide"));
+  const mlOn = state.layers.includes("ptrigger");
   const chip =
     "rounded-lg bg-white/95 px-2.5 py-1 text-[13px] font-semibold text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]";
 
@@ -229,11 +232,11 @@ export default function MapStage({
       {!comparing && showHorizons && (
         <div role="radiogroup" aria-label="Forecast horizon" data-horizons
           className={`absolute z-10 flex flex-wrap items-center gap-1 ${chip} !py-0.5 max-[639px]:!bottom-auto max-[639px]:top-12 max-[639px]:!left-12`} style={{ left: L(14), bottom: B(70) }}>
-          <span className="pr-1 text-xs font-semibold"><span className="max-[639px]:hidden">Landslide likelihood, </span>next:</span>
+          <span className="pr-1 text-xs font-semibold"><span className="max-[639px]:hidden">Landslide likelihood within </span>next:</span>
           {probHorizons.map((h) => (
-            <button key={h} type="button" role="radio" aria-checked={state.probHorizon === h}
+            <button key={h} type="button" role="radio" aria-checked={mlOn && state.probHorizon === h}
               onClick={() => dispatch({ type: "setProbHorizon", horizon: h })}
-              className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${state.probHorizon === h ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`}>
+              className={`rounded-md px-1.5 py-0.5 text-xs font-semibold ${mlOn && state.probHorizon === h ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`}>
               {horizonLabel(h)}
             </button>
           ))}

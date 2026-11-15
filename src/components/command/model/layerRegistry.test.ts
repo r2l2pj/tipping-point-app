@@ -342,3 +342,36 @@ test("'Low everywhere today' follows the selected horizon (lead-ml 15:11Z: 24h p
   expect(layerLegendRows(live, ["ptrigger"], "24h").map((r) => r.label)).toContain("Low everywhere today (top 1% of land ≤ 0.02)");
   expect(layerLegendRows(live, ["ptrigger"], "7d").some((r) => r.label.startsWith("Low everywhere"))).toBe(false);
 });
+
+test("URGENT #2: in Now, stepping to a forecast day shows that day's TPI frame; today brings the ML layer back", async () => {
+  const { initialState, reduce } = await import("../state");
+  const L = [{ id: "p_trigger_24h", date: "2026-11-15", png: "p.png", kind: "forecast" },
+    ...[0, 1, 2, 3].map((k) => ({ id: `tpi_slide_d${k}`, date: `2026-11-1${5 + k}`, png: `png/tpi_slide_d${k}.png`, forecast: k > 0 })),
+    ...[0, 1, 2, 3].map((k) => ({ id: `tpi_flood_d${k}`, date: `2026-11-1${5 + k}`, png: `png/tpi_flood_d${k}.png`, forecast: k > 0 }))];
+  const live = liveBundle({ manifest: { layers: L } } as never);
+  let s = initialState([live]);
+  expect(s.layers[0]).toBe("ptrigger");
+  const today = s.dayIndex;
+  s = reduce(s, { type: "next" } as never, [live]);
+  expect(s.dayIndex).toBe(today + 1);
+  expect(s.layers).toContain("tpi");
+  expect(s.layers).not.toContain("ptrigger");
+  s = reduce(s, { type: "prev" } as never, [live]);
+  expect(s.layers).toContain("ptrigger");
+});
+
+test("conductor: Now forecast day caption 'Rain index forecast for <day>'; an ML chip returns to the ML view on today", async () => {
+  const { initialState, reduce } = await import("../state");
+  const { mapCaption } = await import("./steps");
+  const { stepsFor } = await import("./steps");
+  const L = [{ id: "p_trigger_24h", date: "2026-11-15", png: "p.png", kind: "forecast" }, { id: "p_trigger_72h", date: "2026-11-15", png: "p3.png", kind: "forecast" },
+    ...[0, 1, 2, 3].map((k) => ({ id: `tpi_slide_d${k}`, date: `2026-11-1${5 + k}`, png: `png/tpi_slide_d${k}.png`, forecast: k > 0 }))];
+  const live = liveBundle({ manifest: { layers: L } } as never);
+  let s = reduce(initialState([live]), { type: "next" } as never, [live]);
+  const cap = mapCaption(live, stepsFor(live), s.dayIndex, s.hazard, s.layers).text;
+  expect(cap).toStartWith("Rain index forecast for Nov 16, 2026");
+  s = reduce(s, { type: "setProbHorizon", horizon: "72h" } as never, [live]);
+  expect(s.layers).toContain("ptrigger");
+  expect(s.probHorizon).toBe("72h");
+  expect(s.dayIndex).toBe(initialState([live]).dayIndex);
+});

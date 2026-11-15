@@ -304,6 +304,14 @@ export function mapCaption(
       : { text: `No NOAA GFS forecast issued ${fmtDate(step.date)} for ${ahead}`, forecast: false };
   }
   if (bundle.riskPaused) return { text: `${RISK_PAUSED_TEXT} · ${when}`, forecast: false };
+  // Conductor: in Now a forecast day of the timeline reads as the rain-index
+  // forecast (the ML chips name the likelihood).
+  if (bundle.mode === "live" && on.includes("tpi") && step.forecast && !on.includes("ptrigger")) {
+    const f = frameFor(bundle, step.date, hazard);
+    if (f && f.forecast && !/_d0$/.test(f.layer.id)) {
+      return { text: `Rain index forecast for ${fmtDate(step.date)} · ${HAZARD_LABEL[f.hazard]} · NOAA GFS`, forecast: true };
+    }
+  }
   const partly = partlyForecastText(bundle, step.date);
   if (partly && on.includes("tpi")) {
     const f = frameFor(bundle, step.date, hazard);

@@ -42,6 +42,7 @@ export interface ScreenState {
   compareOpen: ComparePair["kind"] | null;
   compareInit?: { before?: string; after?: string; pol?: "HH" | "HV" }; // deep link, first open only
   fitTo?: [number, number, number, number]; // deep link ?fit=<layer>: initial map bounds
+  autoTpi?: boolean; // Now: TPI stood in for the ML layer on a forecast day
   detailsOpen: boolean;
   layersOpen: boolean;
   listExpanded: boolean;
@@ -269,11 +270,24 @@ export function reduce(
   const bundle = find(cases, state.activeId);
   const last = Math.max(0, stepsFor(bundle).length - 1);
   // A manual step pauses playback.
-  const manualSeek = (index: number): ScreenState => ({
-    ...state,
-    dayIndex: Math.min(last, Math.max(0, index)),
-    playing: false,
-  });
+  // URGENT #2 (Lucas): in Now the ML layer is per-horizon, not per-day —
+  // stepping to a forecast day must change the map. Off today, the ML layer
+  // gives way to that day's TPI forecast frame; back on today it returns.
+  const dayLayers = (index: number): Pick<ScreenState, "layers" | "autoTpi"> => {
+    if (!bundle || bundle.mode !== "live") return { layers: state.layers, autoTpi: state.autoTpi };
+    const today = defaultStepIndex(stepsFor(bundle));
+    if (index !== today && state.layers.includes("ptrigger") && layerAvailable(bundle, "tpi", state.hazard)) {
+      return { layers: state.layers.map((id) => (id === "ptrigger" ? "tpi" : id)).filter((id, i, a) => a.indexOf(id) === i), autoTpi: true };
+    }
+    if (index === today && state.autoTpi && state.layers.includes("tpi") && layerAvailable(bundle, "ptrigger", state.hazard)) {
+      return { layers: state.layers.map((id) => (id === "tpi" ? "ptrigger" : id)), autoTpi: false };
+    }
+    return { layers: state.layers, autoTpi: state.autoTpi };
+  };
+  const manualSeek = (index: number): ScreenState => {
+    const dayIndex = Math.min(last, Math.max(0, index));
+    return { ...state, ...dayLayers(dayIndex), dayIndex, playing: false };
+  };
 
   switch (action.type) {
     case "selectCase":
@@ -302,14 +316,22 @@ export function reduce(
     case "tick": {
       if (!state.playing) return state;
       const dayIndex = Math.min(last, state.dayIndex + 1);
-      return { ...state, dayIndex, playing: dayIndex < last };
+      return { ...state, ...dayLayers(dayIndex), dayIndex, playing: dayIndex < last };
     }
     case "setHazard": {
       if (!bundle || action.hazard === state.hazard) return state;
       return { ...state, hazard: action.hazard, layers: swapForHazard(bundle, state.layers, action.hazard) };
     }
-    case "setProbHorizon":
+    case "setProbHorizon": {
+      // Conductor: picking a horizon chip returns to the ML view (today).
+      if (bundle?.mode === "live" && !state.layers.includes("ptrigger") && layerAvailable(bundle, "ptrigger", state.hazard)) {
+        const layers = state.layers.includes("tpi")
+          ? state.layers.map((id) => (id === "tpi" ? "ptrigger" : id))
+          : [...state.layers, "ptrigger" as LayerId].slice(-2);
+        return { ...state, probHorizon: action.horizon, layers, autoTpi: false, dayIndex: defaultStepIndex(stepsFor(bundle)), playing: false };
+      }
       return { ...state, probHorizon: action.horizon };
+    }
     case "setOpacity":
       return Number.isFinite(action.value)
         ? { ...state, overlayOpacity: Math.min(1, Math.max(OPACITY_MIN, action.value)) }
