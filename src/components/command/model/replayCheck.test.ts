@@ -415,8 +415,8 @@ describe("radar card", () => {
     const option = radarCompare(b);
     expect(option.pair).toMatchObject({
       bounds: [-122.5, 47, -121, 48.5],
-      before: { url: "/data/wa_2025/png/nisar_pre.png", label: "pre-event GCOV — Dec 4, 2025" },
-      after: { label: "post-event GCOV — Dec 16, 2025" },
+      before: { url: "/data/wa_2025/png/nisar_pre.png", label: "pre-event NISAR radar backscatter — Dec 4, 2025" },
+      after: { label: "post-event NISAR radar backscatter — Dec 16, 2025" },
     });
     expect(nightLightsCompare(b).reason).toBe("images not published yet");
   });

@@ -44,7 +44,7 @@ export default function TopBar({
       </svg>
       <span className="font-cc-display text-[22px] font-bold tracking-[0.04em]">TIPPING POINT</span>
       <span className="hidden border-l border-cc-line-strong pl-3.5 text-[15px] text-cc-muted min-[1500px]:inline">
-        Rain warns. Radar confirms.
+        Rain warns. Radar sees through.
       </span>
       <div className="grow" />
 

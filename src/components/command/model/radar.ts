@@ -104,7 +104,7 @@ function pairFor(
 export const radarCompare = (bundle: CcBundle): CompareOption =>
   availability(bundle, "radar").state === "not-applicable"
     ? { kind: "radar", reason: NO_RADAR_TEXT }
-    : pairFor(bundle, "radar", "nisar_pre", "nisar_post", "GCOV");
+    : pairFor(bundle, "radar", "nisar_pre", "nisar_post", "NISAR radar backscatter");
 
 export const nightLightsCompare = (bundle: CcBundle): CompareOption =>
   pairFor(bundle, "night-lights", "night_lights_pre", "night_lights_post", "night lights");

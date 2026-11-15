@@ -689,10 +689,19 @@ describe("no 'confirm' on screen except the tagline (candidates rule)", () => {
       data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" },
       products: { flood_confirmed: "wa_2025/geojson/flood_confirmed.geojson" } });
     // Allowed: the tagline (Lucas) and the rule itself ("never confirmed").
-    const html = render(wa).replace("Rain warns. Radar confirms.", "").replaceAll("never confirmed", "");
+    const html = render(wa).replace("Rain warns. Radar sees through.", "").replaceAll("never confirmed", "");
     expect(html.match(/.{60}confirm.{40}/gi) ?? []).toEqual([]);
     expect(html).toContain("Check with NISAR radar");
     expect(html).toContain("NISAR radar maps flood candidates only in this case");
+  });
+  test("L42: tagline 'Rain warns. Radar sees through.', the radar note, no 'GCOV' jargon", () => {
+    const wa = bundle({ metricsView: { flooded_km2: 28 } as never,
+      data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" } });
+    const html = render(wa);
+    expect(html).toContain("Rain warns. Radar sees through.");
+    expect(html).toContain("What the radar sees");
+    expect(html).toContain("Flooded towns and forests can turn BRIGHT (double bounce), so this map may miss them.");
+    expect(html).not.toContain("GCOV");
   });
 });
 

@@ -8,6 +8,11 @@ import { Icon, ICON } from "./ui";
 // "candidates". "Confirm with NISAR radar" opens the confirmation on the map
 // and does not move the timeline.
 // Judge report #3: the physical drivers behind the radar layer, in plain words.
+// L42 (conductor): two visible lines, the rest stays in "What NISAR sees and why".
+export const RADAR_SEES = [
+  "Dark = open water: smooth water reflects the radar away from the satellite.",
+  "Flooded towns and forests can turn BRIGHT (double bounce), so this map may miss them.",
+];
 export const NISAR_WHY = [
   "NISAR's L-band radar sees through cloud and at night: the flood is mapped even when optical satellites see only cloud.",
   "Open water is smooth and reflects the radar away, so it turns dark. We map water that turned dark between two passes, on low ground near rivers.",
@@ -81,6 +86,12 @@ export default function RadarCard({
       <p className="mt-1 text-xs text-cc-faint">{radar.candidates.note}</p>
       {radar.limitation && <p className="mt-1 text-xs text-cc-muted">{radar.limitation}</p>}
 
+      {radar.pair && (
+        <div className="mt-1.5 rounded-md bg-cc-well px-2 py-1 text-xs" data-radar-sees>
+          <p className="m-0 font-semibold">What the radar sees</p>
+          {RADAR_SEES.map((l) => <p key={l} className="m-0 text-cc-muted">{l}</p>)}
+        </div>
+      )}
       {radar.pair && (
         <details className="mt-1.5 text-xs" data-nisar-why>
           <summary className="cursor-pointer font-semibold">What NISAR sees and why</summary>
