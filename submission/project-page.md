@@ -48,11 +48,14 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 - Landslide scars need a coherence (InSAR) pair spanning the event. No public NISAR pair spans the Washington storm, so scars stay optical candidates.
 
 ### What's new compared with existing NASA tools
-- **vs LHASA (NASA's landslide nowcast):** same family of idea (rain plus susceptibility). We add:
-  - soil moisture and a flood hazard in the same index;
-  - a replay that uses each forecast as it was issued;
-  - municipality-level priority lists with people exposed;
-  - a NISAR radar response layer on the same screen.
+- **vs LHASA v2 and LHASA-F (NASA's landslide nowcast and forecast):** NASA already does the core of the landslide side. LHASA v2 uses XGBoost with IMERG rain and SMAP soil moisture (Stanley et al. 2021, doi:10.3389/feart.2021.640043). LHASA-F forecasts about 3 days ahead from GEOS-FP rain (Khan et al. 2022, doi:10.3389/feart.2022.878996). So a machine-learning, soil-moisture or forecast-driven landslide model is **not** new here. What we add:
+  - past disasters replayed with the NOAA GFS forecast exactly as issued each day (no look-ahead);
+  - explicit horizons: landslide trigger probability within 24 h, 48 h, 72 h and 7 days;
+  - "when × where": the trigger probability multiplied by a regional susceptibility model;
+  - evaluation on held-out disaster events the model never saw, with lead time measured from the documented onset and the misses published;
+  - the index (rain · soil · terrain, landslide and flood) next to the NISAR/OPERA radar response and the people exposed, on one screen.
+
+  We have not run LHASA on our events, so we make no better-or-worse claim.
 - **vs OPERA DSWx-S1 (operational water maps):** we use it as one live input. We add NISAR L-band, the pre-event risk map and the population, so the output is a ranked list of where to go rather than a water mask.
 - **vs GFMS (global flood model driven by IMERG):** we do not route water downstream. That is our main known gap; see Limitations. In exchange, the map gives local terrain detail plus a radar check and alerts.
 

@@ -79,6 +79,8 @@ Source: `nasa-data.md` (awaiting Lucas):
 >
 > **Event facts (RS 2024):** 478 municipalities affected, 185 deaths and, at the peak (May 19, 2024), 581,638 people displaced (Government of Rio Grande do Sul, "SOS Rio Grande do Sul — Situação nos municípios", last updated Aug 19, 2025, https://sosenchentes.rs.gov.br/situacao-nos-municipios). No other event figures are used.
 >
+> **Related NASA work (cited, not reused):** LHASA v2 — Stanley, T. A., et al. (2021), *Frontiers in Earth Science*, doi:10.3389/feart.2021.640043; LHASA-F — Khan, S., et al. (2022), *Frontiers in Earth Science*, doi:10.3389/feart.2022.878996.
+>
 > **Code and tools (open source):** Next.js, React, MapLibre GL, Recharts, Tailwind CSS, geotiff/georaster, the Google Earth Engine API, earthaccess, asf_search, xarray, rioxarray, rasterio, h5py, NumPy, SciPy, pandas, geopandas, scikit-image, scikit-learn, XGBoost, SHAP, cfgrib/ecCodes, Playwright (demo recording) and ffmpeg.
 >
 > **Services:** our own VPS (hosting), GitHub Actions, Neon, Telegram Bot API.
