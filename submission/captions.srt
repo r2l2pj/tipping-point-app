@@ -8,7 +8,7 @@ Tipping Point replays it: extreme rain, saturated soil —
 
 3
 00:00:08,000 --> 00:00:11,000
-Flagged 85 hours before the damage.
+Flagged [X] hours before the damage.
 
 4
 00:00:11,000 --> 00:00:16,000

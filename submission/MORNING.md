@@ -28,7 +28,7 @@ Open https://tipping-point-app.vercel.app on a real phone: the headless capture 
 2. "Rain warns. Radar confirms." — *summary.md: tagline; demo-script.md: close VO + on-screen; slides-outline.md: slide 1*
 3. "Three NASA missions, three layers, one tipping point." — *summary.md: one-liner; slides-outline.md: slide 1*
 4. "In May 2024, Rio Grande do Sul suffered the worst floods in state history — 446 of 497 municipalities hit, hundreds of thousands displaced." — *summary.md: Summary ¶*
-5. "In replay with the NOAA GFS forecast issued each day (no look-ahead), Washington (Dec 2025) reached Critical a median of 85 h before the damage (IQR 55–115 h; 6 of 8 forecast days flagged it); in Rio Grande do Sul (May 2024), 1 of 4 forecast days flagged it, 111 h ahead." — *summary.md: Summary ¶ (supporting); demo-script.md: beat 2 sub-caption + production note; slides-outline.md: slide 5 footnote*
+5. "In replay with the NOAA GFS forecast issued each day (no look-ahead), Washington (Dec 2025) reached Critical a median of [X] h before the damage (IQR [IQR]; [n] of [N] forecast days flagged it); in Rio Grande do Sul (May 2024), [n] of [N] forecast days flagged it, [Y] h ahead. [ON HOLD — L35, re-score ~12:00]" — *summary.md: Summary ¶ (supporting); demo-script.md: beat 2 sub-caption + production note; slides-outline.md: slide 5 footnote*
 6. "Tipping Point replays it: extreme rain, saturated soil —" — *demo-script.md: beat 1 VO*
 7. "230,000 people in critical areas, prioritized for Civil Defense." — *demo-script.md: beat 5 VO (+ on-screen 229,782, night-light drop 44%)*
 8. "May 2024, Rio Grande do Sul: worst floods in state history — 446 of 497 municipalities hit / 185 dead, 581,000+ displaced, ~R$88.9 billion in damage" — *slides-outline.md: slide 2*
@@ -37,7 +37,7 @@ Open https://tipping-point-app.vercel.app on a real phone: the headless capture 
 11. "Optical satellites were blind: 100% cloud cover across 20 HLS scenes during the event" — *slides-outline.md: slide 2*
 12. "TPI = geometric mean of Rain · Soil · Terrain scores, each in [0,1]" + class bands — *slides-outline.md: slide 3*
 13. "WA Dec 2025: <flood sentence> — 27.99 km² flooded within the NISAR swath; landslides remain candidates only" — *slides-outline.md: slide 5*
-14. "RS replay (no radar — event predates NISAR, so no flood-overlap score): 111 h ahead on the one forecast day (of 4) that flagged it — too few to call a median" — *slides-outline.md: slide 5*
+14. "RS replay (no radar — event predates NISAR, so no flood-overlap score): [Y] h ahead on [n] of [N] forecast days [ON HOLD — L35, re-score ~12:00] — too few to call a median" — *slides-outline.md: slide 5*
 15. "lead time counts the area as flagged when any pixel crosses Critical on a D+1..D+3 forecast frame (lenient); GFS under-forecast the RS peak by about half; official warnings still came before the index" — *slides-outline.md: slide 6 limitations* — new honesty caveats; "official warnings still came before the index" is the comparison you had kept out — keep or cut
 16. "Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar" — *slides-outline.md: slide 5; demo-script.md beat 4 on-screen (7%)*
 17. "229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, peak day May 3, 2024)" — *slides-outline.md: slide 6*
@@ -60,9 +60,9 @@ TEST = events never seen in training: one Rio Grande do Sul storm (3,000 invento
 
 ## Decided by you (2026-11-15)
 
-- "Using the forecast available at the time, Tipping Point flagged the area 85 hours before the damage." — *summary.md: Summary ¶; demo-script.md: beat 2 on-screen caption + production notes; slides-outline.md: slide 5 headline*
+- **ON HOLD (L35)** "Using the forecast available at the time, Tipping Point flagged the area [X] hours before the damage." — *summary.md: Summary ¶; demo-script.md: beat 2 on-screen caption + production notes; slides-outline.md: slide 5 headline*
 - "May 2024, Rio Grande do Sul. Alerts said where floods could happen, not where." — *demo-script.md: cold open VO*
-- "Flagged 85 hours before the damage." — *demo-script.md: beat 2 VO (short form; full headline on screen)*
+- **ON HOLD (L35)** "Flagged [X] hours before the damage." — *demo-script.md: beat 2 VO (short form; full headline on screen)*
 - "NISAR radar sees through the clouds: 28 square kilometers of flood candidates." — *demo-script.md: beat 3 VO (+ on-screen 27.99 km² within the NISAR swath)*
 - "On the 7% optical could see, radar overlaps at F1 0.15." — *demo-script.md: beat 4 VO (lead-submission's 11-word cut of Lucas's flood sentence, to fit 6 s)*
 - "Optical satellites were 92.9% blind under the clouds. On the 7% they could see, our radar flood map overlaps at F1 0.15 (precision 0.19, recall 0.13, new flood only). Radar maps the rest." — *demo-script.md: beat 4 on-screen caption; slides-outline.md: slide 5*
