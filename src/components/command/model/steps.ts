@@ -291,7 +291,7 @@ export function mapCaption(
     const calm = calmToday(bundle, f?.hazard ?? hazard, f?.layer.id) ? ` · ${CALM_TODAY}` : "";
     return { text: `${HAZARD_LABEL[f?.hazard ?? hazard]} TPI · ${short} (partly forecast)${calm}`, forecast: true };
   }
-  if (!on.includes("tpi")) return { text: `TPI index off · ${when}`, forecast: false };
+  if (!on.includes("tpi")) return { text: `TPI off · ${when}`, forecast: false };
   const frame = frameFor(bundle, step.date, hazard);
   // The map hook shows its own note for a missing frame; the caption stays short.
   if (!frame) return { text: `${when} · no map frame`, forecast: false };

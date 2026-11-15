@@ -29,6 +29,9 @@ export interface ScreenState {
   layers: LayerId[];
   layerNotice: string | null; // names the layer that was turned off
   probHorizon: ProbHorizon; // P(trigger) horizon painted by the probability layer
+  // Opacity of the data rasters over the basemap (OPACITY_MIN to 1). Kept
+  // across cases: it is a viewing preference, not case state.
+  overlayOpacity: number;
   // Replay: 0 paints the day's own frame; k paints the NOAA GFS forecast
   // issued that day for D+k. Kept while stepping so a demo can walk the
   // issue days at a fixed lead.
@@ -52,6 +55,7 @@ export type Action =
   | { type: "tick" }
   | { type: "setHazard"; hazard: Hazard }
   | { type: "setProbHorizon"; horizon: ProbHorizon }
+  | { type: "setOpacity"; value: number }
   | { type: "setIssueLead"; lead: IssueLead }
   | { type: "toggleLayer"; id: LayerId }
   | { type: "confirmRadar" }
@@ -67,6 +71,11 @@ export type Action =
   | { type: "escape" }
   // "Start here" (judge report #6): one stop of the guided tour.
   | { type: "goTo"; id: string; day?: number | string; hazard?: Hazard; lead?: IssueLead; layer?: LayerId; compare?: ComparePair["kind"] };
+
+// The data rasters open see-through, so rivers, coast and relief of the
+// basemap stay readable under them; the Layers column has the control.
+export const OPACITY_DEFAULT = 0.65;
+export const OPACITY_MIN = 0.2;
 
 const find = (cases: readonly CcBundle[], id: string) => cases.find((c) => c.id === id);
 
@@ -157,6 +166,7 @@ export function initialState(
     layers: first ? withRadarDefault(first, keepAvailable(first, defaultLayersFor(first, hazard), hazard), hazard) : [],
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
+    overlayOpacity: OPACITY_DEFAULT,
     issueLead: 0,
     selectedArea: null,
     calloutExpanded: false,
@@ -267,6 +277,10 @@ export function reduce(
     }
     case "setProbHorizon":
       return { ...state, probHorizon: action.horizon };
+    case "setOpacity":
+      return Number.isFinite(action.value)
+        ? { ...state, overlayOpacity: Math.min(1, Math.max(OPACITY_MIN, action.value)) }
+        : state;
     case "setIssueLead": {
       // A forecast lead needs the TPI index on the map.
       const tpiOn = state.layers.includes("tpi");

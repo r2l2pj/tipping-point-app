@@ -9,16 +9,29 @@ import {
   type Map as MapInstance,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { geoPaint, type StyleLayer } from "./mapColors";
 
 // Turbopack can't resolve maplibre-gl v6's default worker import; the worker
 // bundle is copied to public/ and wired up explicitly.
 setWorkerUrl("/maplibre-gl-worker.js");
 
-// Dark basemap without labels (project doc v3) so the TPI reds and water blues
-// stand out; city labels go in a separate layer on top. CARTO basemaps are
-// free with attribution.
+// Dark basemap without labels (project doc v3) so the TPI reds stand out;
+// city labels go in a separate layer on top. CARTO basemaps are free with
+// attribution.
 const BASEMAP =
   "https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json";
+
+function applyGeoColors(map: MapInstance) {
+  for (const layer of map.getStyle()?.layers ?? []) {
+    const paint = geoPaint(layer as StyleLayer);
+    if (!paint) continue;
+    try {
+      map.setPaintProperty(layer.id, paint[0] as never, paint[1] as never);
+    } catch {
+      // a layer that refuses the colour keeps the style's own
+    }
+  }
+}
 
 export default function Map({
   bounds,
@@ -57,6 +70,8 @@ export default function Map({
     });
     map.addControl(new NavigationControl(), "top-right");
     map.addControl(new ScaleControl({ unit: "metric" }), "bottom-left");
+    // Before the first tiles are drawn, so the grey style never flashes.
+    map.once("style.load", () => applyGeoColors(map));
     map.on("load", () => {
       mapRef.current = map;
       // Debug/introspection handle — lets headless QA inspect layer state.

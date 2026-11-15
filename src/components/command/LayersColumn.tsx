@@ -17,6 +17,7 @@ import { classRows, HATCH_SWATCH, layerLegendRows } from "./model/legend";
 import { fmtDataDate } from "./model/format";
 import { caseHasHazard } from "./model/steps";
 import { HAZARD_LABEL, type CcBundle, type Hazard } from "./model/types";
+import { OPACITY_DEFAULT, OPACITY_MIN } from "./state";
 import { Icon, ICON } from "./ui";
 
 const GROUPS: LayerGroup[] = ["Analysis", "Observations", "Replay evidence"];
@@ -33,6 +34,8 @@ export default function LayersColumn({
   onToggle,
   onProbHorizon,
   onClose,
+  opacity = OPACITY_DEFAULT,
+  onOpacity,
   className = "",
 }: {
   bundle: CcBundle;
@@ -46,6 +49,10 @@ export default function LayersColumn({
   onToggle: (id: LayerId) => void;
   onProbHorizon: (h: ProbHorizon) => void;
   onClose: () => void;
+  // Opacity of the data rasters (0 to 1) and its control; without the
+  // handler the control is not drawn.
+  opacity?: number;
+  onOpacity?: (value: number) => void;
   className?: string;
 }) {
   // Collapsing hides the rows only; the legend stays visible (rule 3).
@@ -73,7 +80,7 @@ export default function LayersColumn({
       </div>
 
       {open && (
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1">
           <div className="mt-1 border-t border-cc-rule pb-1.5 pt-3 text-sm font-semibold">Hazards</div>
           <div role="radiogroup" aria-label="Hazard" className="flex flex-col gap-1">
             {(["slide", "flood"] as Hazard[]).map((h) => {
@@ -99,6 +106,26 @@ export default function LayersColumn({
               );
             })}
           </div>
+
+          {onOpacity && (
+            <label className="mt-1 block border-t border-cc-rule pb-1 pt-3 text-[13px]" data-opacity>
+              <span className="flex items-baseline justify-between">
+                <span className="text-sm font-semibold">Layer opacity</span>
+                <span className="tabular-nums text-cc-muted">{Math.round(opacity * 100)}%</span>
+              </span>
+              <input
+                type="range"
+                min={OPACITY_MIN * 100}
+                max={100}
+                step={5}
+                value={Math.round(opacity * 100)}
+                onChange={(e) => onOpacity(Number(e.target.value) / 100)}
+                aria-valuetext={`${Math.round(opacity * 100)} percent`}
+                className="mt-1 block w-full accent-cc-accent"
+              />
+              <span className="block text-xs text-cc-faint">Lower it to see the map under the data.</span>
+            </label>
+          )}
 
           {GROUPS.map((group) => {
             const groupRows = rows.filter((r) => r.group === group);
@@ -204,7 +231,7 @@ export function Legend({
   const swatch = "inline-block h-4 w-[22px] shrink-0 rounded-[3px]";
   return (
     <div className={className} data-legend={compact ? "compact" : "full"}>
-      <div className={`mb-1.5 font-semibold ${compact ? "text-xs" : "text-sm"}`}>TPI - {HAZARD_LABEL[hazard]} risk class</div>
+      <div className={`mb-1.5 font-semibold ${compact ? "text-xs" : "text-sm"}`}>{legendTitle(hazard, compact)}</div>
       <div className={`flex flex-col gap-1 ${compact ? "text-xs" : "text-[13px]"}`}>
         {classRows(bundle).map((c) => (
           <span key={c.key} className="inline-flex items-center gap-2.5">
@@ -230,6 +257,13 @@ export function Legend({
     </div>
   );
 }
+
+// "TPI" is the Tipping Point Index: the full legend spells it out once, and
+// never says "TPI index". The compact legend on the map keeps the short form.
+export const legendTitle = (hazard: Hazard, compact = false) =>
+  compact
+    ? `TPI · ${HAZARD_LABEL[hazard]} risk class`
+    : `Tipping Point Index (TPI) · ${HAZARD_LABEL[hazard]} risk class`;
 
 export const legendSource = (stepDate?: string) =>
   `TPI 0–1 from NASA GPM IMERG rain, SMAP soil moisture and NASADEM terrain${stepDate ? ` · ${fmtDataDate(stepDate)}` : ""}`;

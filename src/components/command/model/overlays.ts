@@ -27,6 +27,9 @@ export interface MapLayerOptions {
   // When given, this TPI frame is painted instead of the one picked for the
   // date (replay "forecast issued this day": the GFS frame for D+k).
   frameLayer?: ManifestLayer;
+  // Opacity (0 to 1) of the data rasters, set by the screen's opacity
+  // control so the basemap shows through. Without it: the fixed defaults.
+  opacity?: number;
 }
 
 export interface OverlayVisibility {
