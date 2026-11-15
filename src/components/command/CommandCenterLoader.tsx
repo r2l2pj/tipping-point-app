@@ -167,7 +167,12 @@ function withMl(bundle: CcBundle, ml: Awaited<ReturnType<typeof getMlArtifacts>>
 // The bundle as the browser needs it (A10 page budget).
 function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
   const manifest = bundle.manifest
-    ? { ...bundle.manifest, layers: bundle.manifest.layers.map(slimLayer) }
+    // Experimental layers (lead-analysis tpi_flood_upstream, kind
+    // 'experimental') stay off the screen: not part of the live method, and
+    // their ids would compete with the TPI frames of the same date.
+    ? { ...bundle.manifest, layers: bundle.manifest.layers
+        .filter((l) => (l as unknown as { kind?: unknown }).kind !== "experimental" && !l.id.includes("_upstream"))
+        .map(slimLayer) }
     : undefined;
   const zones = slimZones(bundle.zones);
   const metricsView = bundle.metricsView
