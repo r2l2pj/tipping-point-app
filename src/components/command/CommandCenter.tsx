@@ -344,6 +344,7 @@ export function CommandCenterView({
                   onToggleAll={() => dispatch({ type: "toggleList" })}
                   onSelect={(rank) => dispatch({ type: "selectArea", rank })}
                   lowerBound={bundle.mode === "replay"}
+                  partsNote={bundle.mode === "live"}
                 />
               </PanelSection>
 

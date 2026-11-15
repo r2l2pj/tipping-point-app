@@ -14,6 +14,9 @@ export interface PriorityArea {
   hazard: string;
   areaKm2: number | null;
   people: number | null; // null: not published. Never read as 0.
+  // Conductor guard: a published but impossible count (negative, raster fill
+  // like -1e40, above world population) renders as "—", never as a number.
+  peopleInvalid?: boolean;
   at: [number, number] | null; // pin position: center of the zone polygon
 }
 
@@ -45,7 +48,8 @@ export function priorityAreas(bundle: CcBundle | undefined): PriorityArea[] {
       tpi: observedOnlyZone(p) ? null : finite(p.tpi) ? p.tpi : null,
       hazard: typeof p.hazard === "string" ? p.hazard : "",
       areaKm2: finite(p.area_km2) ? p.area_km2 : null,
-      people: finite(p.people) ? p.people : null,
+      people: finite(p.people) && p.people >= 0 && p.people <= 8e9 ? p.people : null,
+      ...(p.people != null && !(finite(p.people) && p.people >= 0 && p.people <= 8e9) ? { peopleInvalid: true } : {}),
       at,
     };
   });

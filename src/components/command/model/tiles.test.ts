@@ -134,3 +134,26 @@ describe("Priority areas people: replay lower bound (conductor)", () => {
     expect(live).not.toContain("≥");
   });
 });
+
+describe("people audit (conductor): at-risk part label + impossible values", () => {
+  test("Now zone: 'X people in the at-risk part (Y km²) of <municipality>'; −1e40 renders '—'", async () => {
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { createElement } = await import("react");
+    const PriorityAreas = (await import("../PriorityAreas")).default;
+    const { AreaCard } = await import("../AreaCallout");
+    const { priorityAreas } = await import("./areas");
+    const b = liveBundle({ zones: zones([
+      zone(1, { name: "Florianópolis", people: 29306, area_km2: 38.631 }),
+      zone(2, { name: "Bad", people: -1.2e40, area_km2: 3 }),
+    ]) });
+    const areas = priorityAreas(b);
+    expect(areas[1].people).toBeNull();
+    expect(areas[1].peopleInvalid).toBe(true);
+    const props = { areas, missingText: "", expanded: true, selected: null, dimmed: false, onToggleAll: () => {}, onSelect: () => {}, partsNote: true };
+    const html = renderToStaticMarkup(createElement(PriorityAreas, props));
+    expect(html).toContain("29,306 people in the at-risk part (38.6 km²) of Florianópolis");
+    expect(html).not.toMatch(/e\+40|-1[.,]2/);
+    const card = renderToStaticMarkup(createElement(AreaCard, { area: areas[1], partsNote: true, expanded: false, onToggle: () => {}, onClose: () => {} }));
+    expect(card).toContain("People: —");
+  });
+});

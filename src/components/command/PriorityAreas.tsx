@@ -1,7 +1,7 @@
 "use client";
 
 import { LIST_COLLAPSED, type PriorityArea } from "./model/areas";
-import { fmtPeople } from "./model/format";
+import { fmtKm2, fmtPeople } from "./model/format";
 import { PEOPLE_LOWER_BOUND_TITLE } from "./model/tiles";
 import { NOT_PUBLISHED } from "./model/types";
 import { ClassChip, Icon, ICON } from "./ui";
@@ -18,6 +18,7 @@ export default function PriorityAreas({
   onToggleAll,
   onSelect,
   lowerBound = false,
+  partsNote = false,
 }: {
   areas: PriorityArea[];
   missingText: string; // shown when the case has no zones
@@ -29,6 +30,8 @@ export default function PriorityAreas({
   onSelect: (rank: number) => void;
   // Replay (conductor): GPW ~1 km counts are ~12% low -> "≥ 7,700".
   lowerBound?: boolean;
+  // Now: zones are whole municipalities; people/area cover the at-risk part.
+  partsNote?: boolean;
 }) {
   const rows = expanded ? areas : areas.slice(0, LIST_COLLAPSED);
   return (
@@ -59,12 +62,23 @@ export default function PriorityAreas({
               className={`flex min-h-9 w-full items-center gap-x-2 border-t border-cc-rule px-1.5 py-0.5 text-left text-sm ${selected === a.rank ? "bg-cc-accent-soft" : "hover:bg-cc-well"}`}
             >
               <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] bg-cc-ink text-[13px] font-bold text-white">{a.rank}</span>
-              <span className="min-w-0 flex-1 truncate font-semibold">{a.label}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-semibold">{a.label}</span>
+                {/* Conductor: the zone is drawn as the whole municipality while the
+                    count covers only its at-risk part — say so. */}
+                {partsNote && a.people !== null && a.areaKm2 !== null && (
+                  <span className="block truncate text-[11px] font-normal text-cc-muted" data-zone-part>
+                    {Math.round(a.people).toLocaleString("en-US")} people in the at-risk part ({fmtKm2(a.areaKm2)}) of {a.name}
+                  </span>
+                )}
+              </span>
               <ClassChip cls={a.cls} className="w-[72px] shrink-0" />
               <span className="shrink-0 whitespace-nowrap">TPI {a.tpi === null ? "—" : a.tpi.toFixed(2)}</span>
               <span className="inline-flex shrink-0 items-center justify-end gap-1 whitespace-nowrap">
                 <Icon d={ICON.people} size={16} strokeWidth={1.8} className="text-cc-muted" />
-                {a.people === null
+                {a.peopleInvalid
+                  ? <span className="text-cc-faint" title="value not valid">—</span>
+                  : a.people === null
                   ? <span className="text-xs italic text-cc-faint">{NOT_PUBLISHED}</span>
                   : lowerBound
                     ? <span title={PEOPLE_LOWER_BOUND_TITLE}>≥ {Math.floor(a.people).toLocaleString("en-US")}</span>
