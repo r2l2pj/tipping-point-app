@@ -422,6 +422,51 @@ describe("now@2 bundle", () => {
       "tpi_flood_d2",
     ]);
   });
+
+  // lead-live R2 contract: products.nisar_meta + products.flood_nisar.
+  const NISAR_META_FILE = {
+    source: "nisar-gcov",
+    latest_acquired: "2026-11-06T21:16:03Z",
+    latency_h: 99.7,
+    pairs: [
+      { pre_acquired: "2026-10-25T21:16:03Z", post_acquired: "2026-11-06T21:16:03Z", track: 24 },
+    ],
+    flooded_km2: 12.06,
+    new_km2: 12.06,
+    receded_km2: 0,
+    people_flooded: 384,
+    _null_reasons: {},
+    n_polygons: 16,
+    geojson: "flood_nisar.geojson",
+  };
+
+  test("radar response: meta read server-side, polygons ride flood_confirmed, pair fills nisar dates", async () => {
+    stageNow();
+    files.set("now/response/nisar_meta.json", NISAR_META_FILE);
+    process.env.DATA_BASE_URL = base;
+
+    const b = await getCaseBundle("now", "Now", [-58, -34, -48, -22.5], "2026-11-14");
+
+    expect(b.response).toMatchObject({ flooded_km2: 12.06, people_flooded: 384, latency_h: 99.7,
+      pre_acquired: "2026-10-25T21:16:03Z", post_acquired: "2026-11-06T21:16:03Z" });
+    expect(b.products?.flood_confirmed).toBe("response/flood_nisar.geojson");
+    expect(b.data_dates?.nisar_pre).toBe("2026-10-25T21:16:03Z");
+    expect(b.data_dates?.nisar_post).toBe("2026-11-06T21:16:03Z");
+    // polygons are a browser load, never inlined
+    expect(hits).not.toContain("now/response/flood_nisar.geojson");
+  });
+
+  test("no radar response published -> no response, no flood product, no nisar dates", async () => {
+    stageNow();
+    process.env.DATA_BASE_URL = base;
+    process.env.DATA_FS_DIR = EMPTY_DATA;
+
+    const b = await getCaseBundle("now", "Now", [-58, -34, -48, -22.5], "2026-11-14");
+
+    expect(b.response).toBeUndefined();
+    expect(b.products?.flood_confirmed).toBeUndefined();
+    expect(b.data_dates?.nisar_pre).toBeUndefined();
+  });
 });
 
 describe("default remote bases (no DATA_BASE_URL)", () => {

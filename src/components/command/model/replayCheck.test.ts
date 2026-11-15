@@ -252,6 +252,33 @@ describe("radar card", () => {
     expect(radarCard(liveBundle()).headline).toBe("Awaiting a NISAR pair over the AOI.");
   });
 
+  test("live radar response: candidates wording, area, people, pass age, no replay limitation", () => {
+    const live = liveBundle({
+      response: { source: "nisar-gcov", flooded_km2: 12.06, people_flooded: 384, latency_h: 99.7,
+        pre_acquired: "2026-10-25T21:16:03Z", post_acquired: "2026-11-06T21:16:03Z" },
+      data_dates: { nisar_pre: "2026-10-25T21:16:03Z", nisar_post: "2026-11-06T21:16:03Z" },
+      products: { flood_confirmed: "response/flood_nisar.geojson" },
+    });
+    const card = radarCard(live);
+    expect(card.pair).toBe(true);
+    expect(card.headline).toBe("NISAR pair available");
+    expect(card.dates).toBe("Oct 25, 2026 → Nov 6, 2026");
+    expect(card.flooded).toEqual({ label: "Flooded area (NISAR radar, candidates)", value: "12.1 km²" });
+    expect(card.people).toEqual({ label: "People in the flooded area", value: "400" });
+    expect(card.note).toContain("not yet checked on the ground");
+    expect(card.note).toContain("100 h after the radar pass");
+    expect(card.limitation).toBeUndefined();
+    expect(card.canShowOnMap).toBe(true);
+    expect(JSON.stringify([card.flooded, card.note, card.headline])).not.toMatch(/confirmed/i);
+  });
+
+  test("live response with a null area shows the short reason, never the raw note", () => {
+    const card = radarCard(liveBundle({
+      response: { source: "nisar-gcov", null_reasons: { flooded_km2: "No local labeled feature for x" } },
+    }));
+    expect(card.flooded!.value).not.toContain("labeled feature");
+  });
+
   test("the pass list comes from data_dates", () => {
     const passes = [{ date: "2025-11-10", track: "T048", note: "no-event reference" }];
     expect(radarCard(bundle({ data_dates: { nisar_passes: passes } })).passes).toEqual(passes);
