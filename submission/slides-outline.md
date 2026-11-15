@@ -33,10 +33,10 @@
 - *Visual:* 2–3 real screenshots — **Tipping point reached** over the heated Taquari valley map (RS, Apr 30), NISAR radar **Before / after** swipe (WA), /alerts card
 
 ## Slide 5 — Did it work?
-- **NISAR, Washington Dec 2025:** "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them" — home to about 950 people. Sentinel-1 radar sees open flood through cloud too (our reference); NISAR's L-band also reaches water under vegetation
+- **NISAR, Washington Dec 2025:** "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them" — home to about 950 people. C-band radar (NASA OPERA surface water, our reference) sees open flood through cloud too; NISAR's L-band also reaches water under vegetation
 - **Radar physics checked:** candidates stable Nov 10 → Dec 4 (−9.7 dB), then −6.5 dB by Dec 16; double-bounce hypothesis supported — 45% of the missed flood is in towns or forest (vs 5% of what we caught), recall 25% open land vs 3% towns, 1% forest
 - **Prediction, tied to NISAR:** the forecast shows where risk is rising; NISAR shows when radar will check it. Washington: the GFS run issued Dec 3, 2025 showed Critical landslide risk for Dec 6. Rio Grande do Sul: scored consistently, 5.8% of the 16,027 landslides were already High or Critical in the forecast issued 27 h before the first deaths, while it flagged only 2.1% of the area (2.7× better than chance); runs issued 51 and 75 h before: 0%; Washington's flooded places were not flagged ahead (upstream rain)
-- **Official warnings came first** in both replays; the index adds where and who. RS flood index vs Copernicus EMS maps during the flood: F1 0.33 (Taquari valley)
+- **Official warnings came first** in both replays; the index adds where and who. RS flood index vs independent EU emergency maps during the flood: F1 0.33 (Taquari valley)
 - *Visual:* NISAR before/after swipe still + a 4-row metrics table
 
 ## Slide 6 — Impact + honest limitations

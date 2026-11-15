@@ -99,7 +99,7 @@ as model inputs.
 NISAR radar pass pair (GCOV backscatter product) Dec 4 → Dec 16, 2025 (track 172D, frame 064, BETA
 products) mapped 27.99 km² of new-flood candidates within the swath (the post
 pass covers 74% of the area of interest). Scored against OPERA DSWx-S1
-(Sentinel-1 radar water) on the same footing: new flood only (water on
+(NASA OPERA surface water, C-band radar) on the same footing: new flood only (water on
 Dec 15/17, minus water on Dec 1–7), permanent water removed.
 Result: F1 0.15, precision 0.19, recall 0.13, IoU 0.08. Against optical
 OPERA DSWx-HLS the overlap is F1 0.026 because clouds covered 92.9% of the
@@ -107,8 +107,8 @@ scene (Rio Grande do Sul, May 2024: 100% across 20 HLS scenes). The detector
 reads co-polarized darkening only, so flooded towns and forests (double
 bounce, brighter) are missed; that is the main reason recall is low.
 
-**Flood index vs Copernicus EMS (Rio Grande do Sul, May 2024).** Against the
-Copernicus Emergency Management Service EMSR720 flood maps (© European Union;
+**Flood index vs independent EU emergency maps (Rio Grande do Sul, May 2024).**
+Against the EMSR720 emergency flood maps (© European Union, credited in References;
 Taquari valley only, 5 map areas, 32 km²; Porto Alegre was not mapped by EMS),
 the flood index at High or above with observed rain on May 6, 2024 scores
 IoU 0.20, F1 0.33, precision 0.75, recall 0.21. That is agreement during the
@@ -143,9 +143,9 @@ land-cover-aware detection. Data: `data/wa_2025/nisar_hypothesis.json`
   Final on Apr 27, against a Final climatology; it is an as-available
   sensitivity only (tipping-point-data `docs/replay-v2.md`). Post-event OPERA
   DIST-ALERT-HLS scar candidates: 2,849 (20.0 km²); 17.5% of inventory points
-  lie within 100 m of one (vs the EMS slides below: 3.3× a random
+  lie within 100 m of one (vs the EMSR720 slides below: 3.3× a random
   steep-terrain baseline at 100 m, only 1.1× at 500 m).
-- Rio Grande do Sul 2024, Copernicus EMS EMSR720 landslide polygons (497,
+- Rio Grande do Sul 2024, EMSR720 independent EU emergency-map landslide polygons (497,
   Taquari valley only, 258 km², undated): 0% fell in High-or-above cells of
   the GFS run issued 27 h before the first deaths — an honest miss for this
   sub-area.
