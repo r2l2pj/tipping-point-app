@@ -120,6 +120,16 @@ export function linkParams(
   };
 }
 
+// Lucas (2026-11-15): the Uruguay River flood is the main case — when it is
+// loaded it is listed first and the screen opens on it (a ?case= link still
+// wins). Without it: Now when a live case is loaded, else the first case.
+export const FEATURED_CASE = "rs_uruguai_2026";
+export const isFeatured = (c: CcBundle): boolean =>
+  canonicalCaseId(c.manifest?.event ?? c.id) === FEATURED_CASE || canonicalCaseId(c.id) === FEATURED_CASE;
+export function featuredFirst<T extends CcBundle>(cases: readonly T[]): T[] {
+  return [...cases.filter(isFeatured), ...cases.filter((c) => !isFeatured(c))];
+}
+
 // The screen opens on Now when a live case is loaded, else on the first case.
 // `initialCase` (the `?case=<id|alias>` deep link of the old screen) opens
 // that case when it is loaded.
@@ -134,7 +144,7 @@ export function initialState(
         c.id === initialCase || canonicalCaseId(c.id) === want ||
         canonicalCaseId(c.manifest?.event ?? c.id) === want)
     : undefined;
-  const first = linked ?? cases.find((c) => c.mode === "live") ?? cases[0];
+  const first = linked ?? cases.find(isFeatured) ?? cases.find((c) => c.mode === "live") ?? cases[0];
   const hazard = hazardFor(first, "slide");
   return {
     activeId: first?.id ?? "",

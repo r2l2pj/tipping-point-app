@@ -1,3 +1,4 @@
+import { featuredFirst } from "./state";
 import { Suspense } from "react";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { canonicalCaseId } from "@/lib/contract";
@@ -288,7 +289,7 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
 
   return (
     <CommandCenter
-      cases={slim}
+      cases={featuredFirst(slim)}
       alertList={alertList}
       botUrl={process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || undefined}
       fontClass={fontClass}

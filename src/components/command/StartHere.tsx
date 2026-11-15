@@ -5,6 +5,7 @@ import { canonicalCaseId } from "@/lib/contract";
 import type { Action } from "./state";
 import type { CcBundle } from "./model/types";
 import { nisarNoCandidates } from "./model/radar";
+import { isFeatured } from "./state";
 
 // "Start here" (judge report #6, conductor): four stops that show the
 // project in under a minute. Each one sets case, day, hazard and layers in
@@ -31,8 +32,16 @@ export function tourStops(cases: readonly CcBundle[]): TourStop[] {
   const extras = [hasHv ? "switch HH | HV" : undefined, waCase?.nisarSeries ? "see the radar time series" : undefined]
     .filter(Boolean).join(", then ");
   const stops: Omit<TourStop, "title">[] = [];
+  // Lucas: the Uruguay River flood (rs_uruguai_2026) is the main case —
+  // when loaded, its NISAR stop is #1 and the largest.
+  const uy = cases.find((c) => c.mode !== "live" && isFeatured(c));
+  if (uy) stops.push({
+    key: "uy-radar", primary: true,
+    what: "NISAR radar maps the river flood through cloud: swipe before / after and step through the radar dates",
+    action: { type: "goTo", id: uy.id, hazard: "flood", compare: "radar" },
+  });
   if (wa) stops.push({
-    key: "wa-radar", primary: true,
+    key: "wa-radar", primary: !uy,
     what: `NISAR radar sees the flood through cloud: swipe before / after${extras ? `, ${extras}` : ""}`,
     action: { type: "goTo", id: wa, hazard: "flood", compare: "radar" },
   });
@@ -54,6 +63,7 @@ export function tourStops(cases: readonly CcBundle[]): TourStop[] {
     action: { type: "goTo", id: wa, day: -7, hazard: "slide", lead: 3 },
   });
   const titles: Record<string, string> = {
+    "uy-radar": `${uy?.title ?? "Uruguay River flood"} — NISAR radar`,
     "wa-radar": "Washington, Dec 2025 — NISAR radar",
     // R2: no live NISAR candidates -> the stop is not billed as NISAR.
     now: live && nisarNoCandidates(live) ? "Now — Southern Brazil" : "Now — Southern Brazil, NISAR radar",

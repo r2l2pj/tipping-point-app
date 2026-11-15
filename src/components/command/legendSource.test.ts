@@ -39,3 +39,21 @@ describe("Start here stops", () => {
     expect(tourStops([wa])[0].what).toBe("NISAR radar sees the flood through cloud: swipe before / after, switch HH | HV, then see the radar time series");
   });
 });
+
+describe("Uruguay River flood as the main case (rs_uruguai_2026)", () => {
+  test("listed first, opened by default (before Now), tour stop #1; ?case= still wins", async () => {
+    const { featuredFirst, initialState } = await import("./state");
+    const uy = bundle({ id: "rs_uruguai_2026", title: "Uruguay River flood, Oct–Nov 2026", manifest: { event: "rs_uruguai_2026", layers: [] } } as never);
+    const wa = bundle({ id: "wa_2025" });
+    const live = liveBundle();
+    const cases = featuredFirst([wa, live, uy]);
+    expect(cases.map((c) => c.id)).toEqual(["rs_uruguai_2026", "wa_2025", "now"]);
+    expect(initialState(cases).activeId).toBe("rs_uruguai_2026");
+    expect(initialState(cases, "wa_2025").activeId).toBe("wa_2025");
+    const stops = tourStops(cases);
+    expect(stops[0]).toMatchObject({ key: "uy-radar", primary: true, title: "1 · Uruguay River flood, Oct–Nov 2026 — NISAR radar" });
+    expect(stops.find((s) => s.key === "wa-radar")!.primary).toBe(false);
+    // without it: unchanged (Now first, WA radar primary)
+    expect(initialState(featuredFirst([wa, live])).activeId).toBe("now");
+  });
+});

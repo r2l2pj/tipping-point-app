@@ -3,7 +3,8 @@
   "git": {
     "deploymentEnabled": {
       "**": false,
-      "main": true
+      "main": true,
+      "feat/uruguai-case": true
     }
   },
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)submission' ':(exclude)docs' ':(exclude)*.md' ':(exclude).crew' ':(exclude).herdr'"
