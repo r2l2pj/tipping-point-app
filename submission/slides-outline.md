@@ -33,13 +33,14 @@
 - *Visual:* 2–3 real screenshots — **Tipping point reached** over the heated Taquari valley map (RS, Apr 30), NISAR **Before / after** GCOV swipe (WA), /alerts card
 
 ## Slide 5 — Did it work?
-- WA Dec 2025: "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." — 27.99 km² flooded within the NISAR swath; landslides remain candidates only
-- Headline (L36): **"Using the forecast available at the time, [X]% of the 16,027 landslides mapped in Rio Grande do Sul were already in High or Critical areas [H] h before [ONSET]."**
-  - footnote (required): "Single forecast runs vary: [per-run values — ON HOLD, L37]. n = 16,027 UFRGS/Cemaden inventory points; anchor = documented onset [ONSET]."
-- WA flood, honestly: 0.14% of the NISAR-flooded area was High (none Critical) in the forecasts issued 24–48 h before — the index uses local rain only; rivers flood from rain upstream
+- Headline (decided by conductor (delegated), L38): **"Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them."** — WA Dec 2025, 27.99 km² within the NISAR swath; landslides remain candidates only
+- Who is affected: 229,782 people in critical areas (WA, Dec 12, 2025), ranked by priority area for Civil Defense; live view every 3 h over Southern Brazil
+- Prediction (supporting): "Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%)."
+  - footnote (required): "Earlier runs (issued 51 and 75 hours before) showed 0%. Onset = first deaths, Apr 29, 2024 00:00 BRT. Anchor-sensitive: with onset Apr 30 the 24 h run shows 0%; the earlier May 1 anchor gave 88%. n = 16,027 UFRGS/Cemaden inventory points."
+- WA flood, honestly: none of the NISAR-flooded area was High in the forecasts issued 24 h or 48 h before onset (Dec 8, 2025); 0.14% in the run issued 72 h before — the index uses local rain only; rivers flood from rain upstream
 - Official warnings came before the index in both replays: the index adds where and who, not an earlier warning
 - **Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar**
-- *Visual:* **Replay check** panel (with **Show details: validation and impact** open) screenshot next to a small metrics table for both cases
+- *Visual:* NISAR **Before / after** swipe still + **Replay check** panel (with **Show details: validation and impact** open) next to a small metrics table for both cases
 
 ## Slide 6 — Impact + honest limitations
 - Impact numbers the demo reports: 229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, peak day May 3, 2024)
@@ -57,4 +58,4 @@
 - Repo + live app links; built with AI assistants under human review
 - *Visual:* data-source grid as plain text (no mission or agency logos: the 2026 guide forbids NASA branding in team-made content) + QR code to the app/repo
 
-*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Slide 5 flood score is from the published `metrics.json` (tipping-point-data 864cf95, GitHub `fallback` branch) (Lucas's wording, 2026-11-15); "% warned" is dropped. RS headline numbers ON HOLD (L37): recomputed by lead-analysis from the documented onset (the May 1 anchor was likely after onset). The WA lead-time median is retired (L35/L36).*
+*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Slide 5 flood score is from the published `metrics.json` (tipping-point-data 864cf95, GitHub `fallback` branch) (Lucas's wording, 2026-11-15); "% warned" is dropped. RS forecast result from the published `metrics.json` (tipping-point-data b5c21df): `cases.rs_2024.slide_warned_gfs_24h_pct` 36.45 (Critical 1.87; run issued 2024-04-28), `_48h_pct` 0, `_72h_pct` 0, anchor onset 2024-04-29 03Z; WA `flood_warned_gfs_{24,48,72}h_pct` 0 / 0 / 0.14, onset 2025-12-08 08Z. The WA lead-time median is retired (L35).*

@@ -1,19 +1,19 @@
 1
-00:00:00,000 --> 00:00:05,500
-Team [TEAM NAME], Brazil. May 2024: Rio Grande do Sul floods.
+00:00:00,000 --> 00:00:03,000
+Team [TEAM NAME], Brazil.
 
 2
-00:00:05,500 --> 00:00:12,500
-With the forecast available then, [X]% of mapped landslides were already high-risk [H] hours ahead.
-
-3
-00:00:12,500 --> 00:00:21,500
+00:00:03,000 --> 00:00:12,000
 In Washington, clouds hid 93% of the area from optical satellites; NISAR radar mapped flood candidates through them.
 
+3
+00:00:12,000 --> 00:00:19,000
+Civil Defense sees who is affected, ranked, live across southern Brazil every 3 hours.
+
 4
-00:00:21,500 --> 00:00:26,000
-People at risk, ranked for Civil Defense.
+00:00:19,000 --> 00:00:25,500
+Tipping Point maps where NASA rain, soil and slope data tip toward failure.
 
 5
-00:00:26,000 --> 00:00:28,500
+00:00:25,500 --> 00:00:28,500
 Rain warns. Radar confirms.

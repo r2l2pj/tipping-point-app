@@ -4,7 +4,15 @@
 
 Morning summary for Lucas: `submission/MORNING.md`. One page: every public-facing sentence in the pack, where it appears, and which placeholders still need real values. All sentences below are **awaiting Lucas** (copy review 2026-11-15 morning, per L18).
 
-## L37 — 2026-11-15 (Lucas, via conductor): the 88% / 24 h-before-May-1 numbers are ON HOLD
+## L38 — decided by conductor (delegated), 2026-11-15
+
+- **Spine = response.** Headline = the NISAR line: "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." Beat order: NISAR through cloud → who is affected, live every 3 h → prediction (supporting, no number) → tagline.
+- **VO (53 words incl. team placeholder):** "Team [TEAM NAME], Brazil. / In Washington, clouds hid 93% of the area from optical satellites; NISAR radar mapped flood candidates through them. / Civil Defense sees who is affected, ranked, live across southern Brazil every 3 hours. / Tipping Point maps where NASA rain, soil and slope data tip toward failure. / Rain warns. Radar confirms." `captions.srt` / `captions.pt-BR.srt` rewritten; demo-script.md and storyboard.md re-cut to 5 cues.
+- **RS forecast result (validation only — validation table, README #validation, slide-5 footnote; never headline or VO):** "Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%)." + "Earlier runs (issued 51 and 75 hours before) showed 0%." Source: `metrics.json` (tipping-point-data b5c21df) `cases.rs_2024.slide_warned_gfs_24h_pct` 36.45 (Critical 1.87, run issued 2024-04-28), 48 h 0, 72 h 0, observed 0.25; onset 2024-04-29 00:00 BRT (first deaths; MetSul report, Jornal do Comércio). Anchor sensitivity stated: onset Apr 30 → 24 h run 0%; old May 1 anchor 88.13%.
+- **WA flood:** 0% at 24 h and 48 h, 0.14% High (0% Critical) at 72 h before onset (Dec 8, 2025 00:00 PST, WA EMD sitrep 25-4783). "Washington's flooded places were not flagged ahead" (upstream rain).
+- **Superseded:** the L36 88% headline and the L36 4-beat VO; the L37 placeholders are filled. The AOI-wide lead-time medians (`forecast_lead_time_onset`: RS 87 h, 2 of 7 runs; WA 80 h, driven by landslide cells, not the flooded places) are not used in copy: they count Critical anywhere in the AOI, not at the damage.
+
+## L37 — 2026-11-15 (superseded by L38) (Lucas, via conductor): the 88% / 24 h-before-May-1 numbers are ON HOLD
 
 May 1 is likely after the RS landslides started (~Apr 29–30). lead-analysis recomputes from the documented onset. Until then the headline sentence keeps its wording with `[X]`% / `[H]` h / `[ONSET]` and the per-run caveat is `[per-run values — ON HOLD, L37]` everywhere (copy, captions, storyboard, blurb). The video beat B day/deep link is re-set once the onset is fixed.
 

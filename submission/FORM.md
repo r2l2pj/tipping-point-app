@@ -16,13 +16,13 @@ Tipping Point
 
 ## 2. High-Level Project Summary
 
-Paste from `project-page.md` → "High-Level Project Summary". That is the NISAR-led version plus the RS landslide headline and its per-run caveat (L36; numbers ON HOLD, L37). The older 240-word version in `summary.md` is kept as an alternative (awaiting Lucas).
+Paste from `project-page.md` → "High-Level Project Summary". That is the NISAR-led version with the NISAR response line as the headline (decided by conductor (delegated), L38). The older 240-word version in `summary.md` is kept as an alternative (awaiting Lucas).
 
 ## 3. Link to Project Demo
 
 `[VIDEO LINK — YouTube Unlisted/Public or Google Drive "anyone with the link"; ≤30 s; test it in a private window]`
 
-The video is built from `storyboard.md` + `captions.srt` (L36 4-beat VO, EN; PT-BR track `captions.pt-BR.srt`). The backup is the 7-slide PDF (`slides.pdf`), linked from GitHub; use it only if the video is missing. A video longer than 30 s, or a deck longer than 7 slides, is not eligible for Global Judging.
+The video is built from `storyboard.md` + `captions.srt` (L38 response-first VO, EN; PT-BR track `captions.pt-BR.srt`). The backup is the 7-slide PDF (`slides.pdf`), linked from GitHub; use it only if the video is missing. A video longer than 30 s, or a deck longer than 7 slides, is not eligible for Global Judging.
 
 ## 4. Link to Final Project
 

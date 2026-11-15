@@ -109,18 +109,23 @@ bounce, brighter) are missed; that is the main reason recall is low.
 
 **Landslides: inventories.**
 - Rio Grande do Sul 2024: UFRGS/Cemaden inventory, 16,027 mapped landslide
-  points. Share of points in High or Critical cells with the NOAA GFS
-  forecast issued before the event: `[X]`% `[ON HOLD — being re-anchored to
-  the documented event start, L37]`. Post-event OPERA DIST-ALERT-HLS scar
+  points. Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%). Earlier runs (issued 51 and 75 hours before) showed 0%.
+  The run issued Apr 28, 2024 put 36.45% of points in High or Critical
+  cells (Critical 1.87%); the runs issued Apr 27 and Apr 26 put 0%; observed
+  rain on Apr 28 put 0.25%. Onset = the first deaths, Apr 29, 2024 00:00 BRT
+  (MetSul report; Jornal do Comércio). The result is fragile: with the
+  onset on Apr 30 (first landslide deaths) the 24 h run shows 0%, and the
+  earlier May 1 anchor gave 88.13%; one forecast run carries it. Post-event OPERA DIST-ALERT-HLS scar
   candidates: 2,849 (20.0 km²); 46% of inventory points lie within 500 m of
   one.
 - Washington 2025: NASA Global Landslide Catalog / COOLR, 15 points; 66.7%
   fall in Critical cells on the peak day (Dec 12, 2025). The points are
   undated, so this is agreement after the damage, not a forecast.
 
-**Flood forecast (Washington).** Only 0.14% of the NISAR-mapped flood area
-was High (none Critical) in the GFS forecasts issued 24–48 h before the
-damage: the index uses local rain only, and these rivers flooded from rain
+**Flood forecast (Washington).** None of the NISAR-mapped flood area was
+High in the GFS forecasts issued 24 h or 48 h before the onset (Dec 8, 2025
+00:00 PST, WA EMD situation report), and 0.14% (none Critical) in the run
+issued 72 h before: the index uses local rain only, and these rivers flooded from rain
 upstream. An upstream-rain term is being tested.
 
 **Machine-learning trigger model.** XGBoost is trained and tested on

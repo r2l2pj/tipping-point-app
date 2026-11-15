@@ -2,7 +2,7 @@
 
 > **DRAFT — pending approval.** The 2026 guide says "the majority of judges' evaluation will be based on your project submission" (the project page), so this file is the full text. Paste each section into the form field named in its heading.
 >
-> Every number is traced to the published `metrics.json` (tipping-point-data `origin/main` d04ecab). The headline is the RS landslide result (L36); its numbers are ON HOLD (L37) until lead-analysis recomputes them from the documented onset; the WA lead-time median is retired (L35), and the ML skill numbers are pending re-score (L33). `[…]` marks a gap; nothing in brackets ships.
+> Every number is traced to the published `metrics.json` (tipping-point-data `origin/main` d04ecab). The headline is the NISAR response line (decided by conductor (delegated), L38); the RS forecast result is reported only in the validation table, with its anchor sensitivity; the WA lead-time median is retired (L35), and the ML skill numbers are pending re-score (L33). `[…]` marks a gap; nothing in brackets ships.
 >
 > NISAR is the spine of the copy, by request of the conductor (win-odds #3).
 
@@ -10,7 +10,7 @@
 
 ## High-Level Project Summary (form field 2, ≤200 words)
 
-NISAR passes over Southern Brazil every 12 days, and its L-band radar sees through cloud and darkness. Tipping Point is built around that pass. Between passes, NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) feed a Tipping Point Index that maps where floods and landslides are about to happen. After each pass, NISAR shows where the ground actually flooded, as candidates for municipal Civil Defense to check first. Built for Southern Brazil, a live view refreshes every 3 hours with experimental (not official) area alerts, and two past disasters replay day by day with the forecast as it was issued. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them. Using the forecast available at the time, [X]% of the 16,027 landslides mapped in Rio Grande do Sul were already in High or Critical areas [H] h before [ONSET]. Single forecast runs vary: [per-run values — ON HOLD, L37].
+NISAR passes over Southern Brazil every 12 days, and its L-band radar sees through cloud and darkness. Tipping Point is built around that pass. Between passes, NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) feed a Tipping Point Index that maps where floods and landslides are about to happen. After each pass, NISAR shows where the ground actually flooded, as candidates for municipal Civil Defense to check first. Built for Southern Brazil, a live view refreshes every 3 hours with experimental (not official) area alerts, and two past disasters replay day by day with the forecast as it was issued. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them, and 229,782 people were in critical areas.
 
 ## Detailed Project Description (form field 5)
 
@@ -67,12 +67,12 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 | Washington: landslide catalog hits | 66.7% of 15 points | the points are undated; scored on the peak day (Dec 12, 2025), after the Dec 9 damage, so this is not a forecast |
 | People in critical areas (peak day) | Washington 229,782 (Dec 12, 2025) · Rio Grande do Sul 1,488,833 (May 3, 2024) | GPW v4 counted in Critical cells (TPI > 0.6) |
 | Night-light drop | Washington 44% · Rio Grande do Sul 33% | VIIRS Black Marble, before vs after |
-| Rio Grande do Sul: mapped landslides in High or Critical areas, forecast as issued | [X]% (Critical [C]%) with the NOAA GFS run issued [H] h before [ONSET] · other runs [per-run values] · [O]% with observed rain — **ON HOLD (L37): being recomputed from the documented onset** | n = 16,027 UFRGS/Cemaden inventory points (validation only, never an input); anchor = documented onset; single runs vary |
-| Washington: NISAR-flooded area in High or Critical areas, forecast as issued | 0.14% High, 0% Critical (runs issued 24–48 h before the damage) | the index uses local rain only; rivers flooded from rain upstream (see Limitations) |
+| Rio Grande do Sul: mapped landslides in High or Critical areas, forecast as issued | Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%). Earlier runs (issued 51 and 75 hours before) showed 0%. (NOAA GFS run issued Apr 28, 2024: 36.45%, Critical 1.87%; runs issued Apr 27 and Apr 26: 0%; observed rain: 0.25%) | n = 16,027 UFRGS/Cemaden inventory points (validation only, never an input); onset = first deaths, Apr 29, 2024 00:00 BRT (MetSul report; Jornal do Comércio). Fragile: with onset Apr 30 (first landslide deaths) the 24 h run shows 0% and the 48 h run 36.45%; the old May 1 anchor gave 88.13%. One forecast run carries the result |
+| Washington: NISAR-flooded area in High or Critical areas, forecast as issued | 0% (runs issued 24 h and 48 h before onset) · 0.14% High, 0% Critical (run issued 72 h before) | onset Dec 8, 2025 00:00 PST (WA EMD situation report 25-4783); the index uses local rain only; rivers flooded from rain upstream (see Limitations) |
 | ML landslide trigger model | `[pending v2 re-score — L33]` | held-out RS 2024 + WA 2025 |
 
 ### Limitations (stated, not hidden)
-Our flood index did not flag the Washington river floods ahead of time. Only 0.14% of the NISAR-flooded area was High, and none Critical, in the forecast issued 24–48 h before the damage, because the index uses only local rain and rivers flood from rain upstream. An upstream-rain term is being tested.
+Our flood index did not flag the Washington river floods ahead of time. None of the NISAR-flooded area was High in the forecasts issued 24 h or 48 h before the onset (Dec 8, 2025), and only 0.14% in the run issued 72 h before, because the index uses only local rain and rivers flood from rain upstream. An upstream-rain term is being tested.
 
 Other limits:
 - Official warnings came before the index in both replays.

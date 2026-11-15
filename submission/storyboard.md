@@ -1,6 +1,6 @@
 # Tipping Point — video storyboard + recording plan (≤30 s)
 
-> **DRAFT — L36 (2026-11-15).** Built from `demo-script.md` (4-beat VO, 54 words; captions `captions.srt` 55 incl. team placeholder). The final cut is recorded from a **local build of `freeze-1300`** (L34/L36: no prod dependency, Vercel is capped).
+> **DRAFT — decided by conductor (delegated), L38 (2026-11-15).** Built from `demo-script.md` (response-first VO, 53 words with the team placeholder). The final cut is recorded from a **local build of `freeze-1300`** (no prod dependency; Vercel is capped).
 
 **Rules (official 2026 Project Submission Guide):**
 - Video 30 seconds or less; over the limit means ineligible for Global Judging. The target is **29.5 s**.
@@ -16,16 +16,17 @@ Frame: 1920×1080 at 30 fps, desktop layout, browser chrome hidden. Each shot is
 
 | Shot | In–out | URL + actions | Must read | Overlay (burned, not the subtitle) |
 |---|---|---|---|---|
-| A Title + RS replay | 0.0–5.5 | `/?case=rs_2024&day=-10` (Apr 22). Press **Play**; the TPI heats up over the Taquari valley. If 5 s of play does not reach Apr 28+, start at `&day=-6` | "Tipping point reached" (Situation overview chip) by the end | 0–3 s: top-left "TIPPING POINT · Rain warns. Radar confirms."; bottom-left "Team [TEAM NAME] · NASA Space Apps 2026 · Challenge: Dancing with the SARs"; centre "May 2024 · Rio Grande do Sul, Brazil" |
-| B RS forecast as issued | 5.5–12.5 | `/?case=rs_2024&day=[D]` (day before [ONSET], L37). **Layers → Hazards → Landslide risk**; landslide catalog layer on; **Forecast issued this day: +1 d**. Last ~1.5 s: **Replay check** row **Mapped landslides in High or Critical areas (forecast as issued)** (lead-app dc08551) | "issued <day before onset>" in the map label; Replay-check row value "[X]% of 16,027 mapped landslides" and its per-run detail (ON HOLD, L37 — fill from the recomputed metrics) | Lower third: "Using the forecast available at the time, [X]% of the 16,027 landslides mapped in Rio Grande do Sul were already in High or Critical areas [H] h before [ONSET]." + small line "Single forecast runs vary: [per-run values — ON HOLD, L37]." |
-| C NISAR radar (WA) | 12.5–21.5 | `/?case=wa_2025`. Right panel **NISAR radar** card → **Check with NISAR radar →**, then **Before / after**, drag the divider left to right | "pre-event GCOV — Dec 4, 2025", "post-event GCOV — Dec 16, 2025", "within the NISAR swath" | "Washington · Dec 2025" corner tag; "Flood candidates · 27.99 km² within the NISAR swath"; "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." |
-| D Who + public feed + close | 21.5–28.5 | **Close compare** → timeline **Dec 12 / D+2** → **Impact** + **Priority areas** (2.5 s); top bar **Public Alerts** (2 s); static wordmark card from 26.5 s | "229,8" (People in critical areas), "Replay: what would have been sent" | "229,782 people in critical areas · night lights −44%"; on the alert card "Experimental — not an official warning" if the card lacks it; close: "TIPPING POINT · Rain warns. Radar confirms." + "Data: NASA GPM IMERG · SMAP · NASADEM · NISAR · HLS · VIIRS Black Marble · GPW · forecast: NOAA GFS" (text, no logos) + "tipping-point-app.vercel.app" |
+| A Title | 0.0–3.0 | `/?case=wa_2025`, map only, dark 40% scrim, slow push-in | — | top-left "TIPPING POINT · Rain warns. Radar confirms."; bottom-left "Team [TEAM NAME] · NASA Space Apps 2026 · Challenge: Dancing with the SARs" |
+| B NISAR radar (WA) | 3.0–12.0 | Right panel **NISAR radar** card → **Check with NISAR radar →**, then **Before / after**, drag the divider left to right | "pre-event GCOV — Dec 4, 2025", "post-event GCOV — Dec 16, 2025", "within the NISAR swath" | corner "Washington · Dec 2025"; "Flood candidates · 27.99 km² within the NISAR swath"; lower third "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." |
+| C Who + live | 12.0–19.0 | **Close compare** → timeline **Dec 12 / D+2** → **Impact** + **Priority areas** (3 s) → top bar **Now** (2 s) → **Public Alerts** (2 s) | "229,8" (People in critical areas); "Updated" in the Now header; "Experimental" or the overlay below on the alert card | "229,782 people in critical areas (WA, Dec 12, 2025)"; on Now "Live · Southern Brazil · every 3 h"; on the alert card "Experimental — not an official warning" if the card lacks it |
+| D Prediction (RS replay) | 19.0–25.5 | `/?case=rs_2024&day=-10` (Apr 22). Press **Play**; the TPI heats up over the Taquari valley. If 6 s of play does not reach Apr 28+, start at `&day=-6` | "Tipping point reached" (Situation overview chip) by the end | corner "Rio Grande do Sul · May 2024 · replay" (no forecast number) |
+| E Close | 25.5–28.5 | Static wordmark card over the darkened shot-D frame | — | "TIPPING POINT · Rain warns. Radar confirms."; "Data: NASA GPM IMERG · SMAP · NASADEM · NISAR · HLS · VIIRS Black Marble · GPW · forecast: NOAA GFS" (text, no logos); "tipping-point-app.vercel.app" |
 
 Landslide scar candidates are live on RS and Now. If WA has no scar candidates at the freeze, shot 3 shows none. Never caption anything stronger than "candidates".
 
 ## Subtitles
 
-`captions.srt` holds the L36 VO verbatim, one cue per beat (beat D split into two cues). It is burned in. `captions.pt-BR.srt` is a separate (not burned) PT-BR track.
+`captions.srt` holds the L38 VO verbatim, one cue per beat. It is burned in. `captions.pt-BR.srt` is a separate (not burned) PT-BR track.
 
 ## Recording plan
 
