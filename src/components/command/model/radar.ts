@@ -306,6 +306,8 @@ export interface RadarCard {
   nisar: boolean; // the pair is NISAR data (sensor field)
   headline: string; // status line of the card
   dates?: string; // "Dec 4, 2025 → Dec 16, 2025"
+  preIso?: string; // the pair's own pass dates (default of the swipe date chips)
+  postIso?: string;
   flooded?: { label: string; value: string; swath?: string };
   people?: { label: string; value: string };
   // Live: other satellite flood sources of the R3 summary (OPERA DSWx-S1).
@@ -442,6 +444,8 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
           : `Radar pair available — sensor ${radarSensor(bundle).note}`)
       : bundle.mode === "live" ? AWAITING_PAIR_TEXT : `${NO_RADAR_TEXT}.`,
     dates: pre && post ? `${fmtDate(pre)} → ${fmtDate(post)}` : undefined,
+    preIso: pre ? pre.slice(0, 10) : undefined,
+    postIso: post ? post.slice(0, 10) : undefined,
     flooded: pair || finite(flooded)
       ? {
           label: labels.area,

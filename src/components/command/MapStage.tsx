@@ -23,6 +23,8 @@ import { caseDirOf } from "./model/lazy";
 import { preloadFrames } from "./model/preload";
 import { floodCaptionNote, frameFor, issuedFrame, issueLeadsFor, mapCaption, type IssueLead, type Step } from "./model/steps";
 import type { CcBundle } from "./model/types";
+import { hourLabel } from "./model/hours";
+import type { ManifestLayer } from "@/lib/types";
 import type { Action, ScreenState } from "./state";
 import type { Insets } from "./useInsets";
 
@@ -60,6 +62,8 @@ export default function MapStage({
   featuredCase,
   cityPin,
   cityOutline,
+  compareDefaults,
+  hourFrame,
 }: {
   bundle: CcBundle;
   steps: Step[];
@@ -77,6 +81,10 @@ export default function MapStage({
   // L52 replay city pick: the municipality polygon, drawn as an accent
   // outline over the frame; removed when the card closes.
   cityOutline?: GeoJSON.Feature | null;
+  // The radar pair's own pass dates: where the swipe date chips start.
+  compareDefaults?: { before?: string; after?: string };
+  // Lucas: a 6-hourly TPI frame picked with the timeline hour chips.
+  hourFrame?: ManifestLayer;
 }) {
   const [map, setMap] = useState<MapInstance | null>(null);
   const [bearing, setBearing] = useState(0);
@@ -103,7 +111,7 @@ export default function MapStage({
       frameDate: step?.date,
       overlays: overlaysFor(state.layers),
       probHorizon: state.probHorizon,
-      frameLayer: issued,
+      frameLayer: issued ?? hourFrame,
       // L52: the satellite underlay is dated by the case (its reference day);
       // live gets the latest imagery GIBS published.
       basemap: state.basemap,
@@ -112,7 +120,7 @@ export default function MapStage({
           ? undefined
           : (bundle.series?.reference_date ?? bundle.reference_date)?.slice(0, 10),
     }),
-    [step?.date, state.layers, state.probHorizon, issued, state.basemap, bundle]
+    [step?.date, state.layers, state.probHorizon, issued, hourFrame, state.basemap, bundle]
   );
   useMapLayers(map, bundle, state.dayIndex, layerState, false, undefined, options);
 
@@ -359,7 +367,7 @@ export default function MapStage({
 
       {!comparing && (
         <span data-caption className={`absolute z-10 max-w-[46%] ${chip} ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`} style={{ left: L(14), bottom: B(36) }}>
-          {caption.text}{captionNote}
+          {caption.text}{hourFrame && !issued ? ` · 72 h rain until ${hourLabel(hourFrame)}` : ""}{captionNote}
         </span>
       )}
 
@@ -406,7 +414,8 @@ export default function MapStage({
       )}
 
       {comparePair && (
-        <CompareOverlay key={`${bundle.id}-${comparePair.kind}-${comparePair.before.url}-${comparePair.after.url}`} pair={comparePair} init={state.compareInit}
+        <CompareOverlay key={`${bundle.id}-${comparePair.kind}-${comparePair.before.url}-${comparePair.after.url}`} pair={comparePair}
+          init={{ ...state.compareInit, before: state.compareInit?.before ?? compareDefaults?.before, after: state.compareInit?.after ?? compareDefaults?.after }}
           forecastCtl={comparePair.kind === "forecast"
             ? { lead: comparePair.lead ?? 0, leads: swipeLeads, onLead: (k) => dispatch({ type: "setIssueLead", lead: k }) }
             : undefined}

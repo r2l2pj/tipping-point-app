@@ -71,6 +71,8 @@ export type Action =
   | { type: "toggleCallout" }
   | { type: "openCompare"; kind: ComparePair["kind"] }
   | { type: "closeCompare" }
+  // Lucas: NISAR swipe dates are chips in the Radar card.
+  | { type: "setCompareDates"; before?: string; after?: string }
   | { type: "toggleDetails" }
   | { type: "toggleLayersOpen" }
   | { type: "toggleList" }
@@ -384,6 +386,8 @@ export function reduce(
       return { ...state, compareOpen: action.kind, playing: false };
     case "closeCompare":
       return { ...state, compareOpen: null };
+    case "setCompareDates":
+      return { ...state, compareInit: { ...state.compareInit, before: action.before, after: action.after } };
     case "toggleDetails":
       return { ...state, detailsOpen: !state.detailsOpen };
     case "toggleLayersOpen":

@@ -46,6 +46,7 @@ import SourceAges from "./SourceAges";
 import { initialState, linkParams, PLAYBACK_MS, reduce, type Action, type ScreenState, type DeepLink, isFeatured } from "./state";
 import StatusBlock from "./StatusBlock";
 import { hideMissingFor } from "./model/sparse";
+import { hasHourFrames, hourFrameFor, hoursOn } from "./model/hours";
 import { plainText } from "./model/plain";
 import Tiles from "./Tiles";
 import TimelineBar from "./TimelineBar";
@@ -135,6 +136,8 @@ export function CommandCenterView({
     ? geoUrl(liveCase, caseDirOf(liveCase), "places", "places.json")
     : undefined;
   const [city, setCity] = useState<{ place: Place; dates: string[] }>();
+  // Lucas: hour chips (6-hourly frames) — kept per case, cleared on a case change.
+  const [hourPick, setHourPick] = useState<{ caseId: string; hour: string | null }>({ caseId: "", hour: null });
   const [replayCity, setReplayCity] = useState<ReplayPlace>();
   // L52 U1: right-panel tabs (content moved, nothing deleted).
   // Lucas: every case lands on the map + Overview; only a radar swipe link
@@ -292,6 +295,7 @@ export function CommandCenterView({
   }
 
   const live = bundle.mode === "live";
+  const hour = hourPick.caseId === bundle.id ? hourPick.hour : null;
   const step = steps[state.dayIndex];
   // Keyed read: a stale places_daily while a new case's is in flight.
   const dailyRaw = daily && daily.url === dailyUrl ? daily.raw : undefined;
@@ -387,6 +391,8 @@ export function CommandCenterView({
           stageRef={stageRef}
           focus={focus}
           cityPin={cityPin}
+          compareDefaults={{ before: radar.preIso, after: radar.postIso }}
+          hourFrame={hourFrameFor(bundle, state.hazard, step?.date, hour)}
           cityOutline={!live ? replayCity?.outline : undefined}
           featuredCase={(() => {
             const f = cases.find((c) => c.mode === "replay" && isFeatured(c));
@@ -489,6 +495,12 @@ export function CommandCenterView({
                 <PanelSection label="Now on the ground">
                 <RadarCard
                   hideMissing={sparse}
+                  swipeDates={state.compareOpen === "radar" && radar.compare.pair?.stack ? {
+                    dates: radar.compare.pair.stack.dates,
+                    before: state.compareInit?.before ?? radar.preIso ?? radar.compare.pair.stack.dates[0],
+                    after: state.compareInit?.after ?? radar.postIso ?? radar.compare.pair.stack.dates[radar.compare.pair.stack.dates.length - 1],
+                    onPick: (before, after) => dispatch({ type: "setCompareDates", before, after }),
+                  } : undefined}
                   radar={radar}
                   floodOn={state.layers.includes("flood")}
                   compareOpen={state.compareOpen === "radar"}
@@ -600,6 +612,7 @@ export function CommandCenterView({
         onPrev={() => dispatch({ type: "prev" })}
         onNext={() => dispatch({ type: "next" })}
         onPlayToggle={() => dispatch({ type: "togglePlay" })}
+        hours={hasHourFrames(bundle, state.hazard) ? { available: hoursOn(bundle, state.hazard, step?.date), hour, onHour: (h) => setHourPick({ caseId: bundle.id, hour: h }) } : undefined}
       />
         </div>
         </div>
