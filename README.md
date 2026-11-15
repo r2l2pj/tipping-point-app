@@ -111,7 +111,7 @@ bounce, brighter) are missed; that is the main reason recall is low.
 Copernicus Emergency Management Service EMSR720 flood maps (© European Union;
 Taquari valley only, 5 map areas, 32 km²; Porto Alegre was not mapped by EMS),
 the flood index at High or above with observed rain on May 6, 2024 scores
-IoU 0.19, F1 0.31, precision 0.46, recall 0.24. That is agreement during the
+IoU 0.18, F1 0.31, precision 0.46, recall 0.24. That is agreement during the
 flood, not a warning: before the onset only 0.21% (observed rain) / 6.6% (NOAA
 GFS forecast) of that flooded area was flagged.
 
