@@ -16,10 +16,10 @@
 - *Visual:* the Uruguaiana NISAR map from the app ([TBD] screenshot once the series is published)
 
 ## Slide 3 — Prevent the disaster, not the flood: when · where · who (Uruguaiana, Oct 2026)
-- **When:** five days before the Uruguay River reached flood stage at Uruguaiana (Oct 5), NASA satellite rain (GPM IMERG) over the upstream basin was already extreme — in a post-event test, 5 days' notice was possible (6 days before the second rise, Oct 29)
-- **Where:** it pointed to the low-lying river corridor, which holds 54% of the about 1.8 km² a teammate's NISAR change map (Sep 30 → Oct 12; 7 polygons, small sample) shows newly flooded, in 36% of the land (1.5× chance); our stricter automatic check did not reproduce that map
+- **When:** our index, fed by NASA satellite rain (GPM IMERG), turned the Uruguay River corridor Critical on Sep 30, five days before Uruguaiana reached flood stage (Oct 5); NOAA's forecast the day before already showed High. Caveat: the near-real-time rain runs wetter than the final product, so this may be optimistic
+- **Where:** it flagged the low-lying river corridor, which holds 54% of the about 1.8 km² a teammate's NISAR change map (Sep 30 → Oct 12; 7 polygons, small sample) shows newly flooded, in 36% of the land (1.5× chance); our stricter automatic check did not reproduce that map
 - **Who:** about 20,900 people live in that corridor (about 29 inside the teammate's flood polygons)
-- **Tested retrospectively, adding next:** local rain never hit its own extreme level, so our live local-rain index missed it; the upstream signal is a post-event test (Nov 15), not yet live (on Washington it added 32% more false Critical area). NOAA GFS alone under-forecast both rises. No claim of being earlier than official warnings
+- **Also tested (post-event):** upstream-basin rain was above its 99th percentile on Sep 30; the upstream term is not yet live (on Washington it added 32% more false Critical area); an experimental upstream-aware model adds lead time, not location (it flags 82–88% of the area). No claim of being earlier than official warnings
 - **Then radar:** NISAR sees the river through cloud; our automatic check (HH drop > 3 dB below a per-scene threshold, low ground near rivers, ≥ 3 ha) found darkening along the corridor (1.76 km²) but rejected every Uruguaiana pair at its threshold clamp, so no automatic flood map yet
 - How: Tipping Point Index of NASA rain (IMERG), soil (SMAP) and terrain (NASADEM); builds on NASA's LHASA (doi:10.3389/feart.2021.640043; LHASA-F doi:10.3389/feart.2022.878996); an experimental XGBoost trigger model sits beside it
 
