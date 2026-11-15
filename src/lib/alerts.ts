@@ -51,6 +51,14 @@ export const ALERT_LEVEL_WORDS: Record<AlertLevel, string> = {
   watch: "ELEVATED",
 };
 
+// External review: the card badge never says "EMERGENCY" (an experimental
+// index is not an emergency declaration) — it names the risk level.
+export const ALERT_BADGE: Record<AlertLevel, string> = {
+  emergency: "Critical risk",
+  warning: "High risk",
+  watch: "Elevated risk",
+};
+
 // Judge report #7 (conductor): every live alert says what it is.
 export const EXPERIMENTAL_TEXT = "Experimental — not an official warning; follow Defesa Civil";
 export const ALERT_FOOTER = "Follow Civil Defense guidance. SMS 40199.";

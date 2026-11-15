@@ -40,3 +40,24 @@ describe("L43 next NISAR look", () => {
     expect(html).toContain("Next NISAR look (expected): Nov 18, 06:37 AM BRT (track 132)");
   });
 });
+
+describe("external review: badge + calm day", () => {
+  test("alert badge says 'Critical risk', never 'emergency'", async () => {
+    const AlertCard = (await import("../AlertCard")).default;
+    const html = renderToStaticMarkup(createElement(AlertCard, {
+      alert: { level: "emergency", area: "X", guidance: "g", certainty: "medium", hazard: "flood" } as never, onViewOnMap: () => {} }));
+    expect(html).toContain(">Critical risk<");
+    expect(html.toLowerCase()).not.toContain(">emergency<");
+  });
+  test("live today frame with 0 km² High+ -> caption says no High or Critical areas today", async () => {
+    const { mapCaption, CALM_TODAY } = await import("./steps");
+    const live = liveBundle({
+      manifest: { layers: [{ id: "tpi_flood_d0", date: "2026-11-15", png: "png/tpi_flood_d0.png", kind: "observed" }] },
+      summary: { alert_km2: { slide: 0, flood: 0 }, critical_km2: { slide: 0, flood: 0 } },
+    } as never);
+    const steps = [{ date: "2026-11-15", day: true }] as never;
+    expect(mapCaption(live, steps, 0, "flood", ["tpi"]).text).toContain(CALM_TODAY);
+    const busy = liveBundle({ manifest: live.manifest, summary: { alert_km2: { flood: 12 } } } as never);
+    expect(mapCaption(busy, steps, 0, "flood", ["tpi"]).text).not.toContain(CALM_TODAY);
+  });
+});
