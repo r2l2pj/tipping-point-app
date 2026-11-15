@@ -2,11 +2,11 @@
 
 > **DRAFT — pending approval.**
 
-Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA (see Forecast).
+Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA (see Forecast). A few non-NASA context and reference layers are shown or used for checks but never enter the index (see the last section).
 
 ## Index inputs (Rain · Soil · Terrain)
 
-- **GPM IMERG V07** — 3-day accumulated rain vs per-pixel P90/P95/P99 climatology (Rain score)
+- **GPM IMERG V07** — 3-day accumulated rain vs per-pixel P90/P95/P99 climatology (Rain score); IMERG Early in the live view
 - **SMAP L4 SPL4SMGP/008** — root-zone soil moisture (`sm_rootzone_wetness`, Soil score)
 - **NASADEM** — slope + HAND proxy (Terrain score)
 
@@ -14,6 +14,12 @@ Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is N
 
 - **NISAR GCOV** — flood confirmation, before/after backscatter (track 172D frame 064, BETA products)
 - **HLS (Harmonized Landsat Sentinel-2)** — post-event landslide *candidates* when clouds clear
+
+## Live response (every 3 h, Southern Brazil)
+
+- **OPERA DSWx-S1** — near-real-time flood candidates against a 60-day water-frequency baseline (always "candidates")
+- **NISAR GCOV** — radar flood candidates on the latest pass pair over the domain, same change detection as the WA case
+- **MODIS MCD12Q1 land cover** — removes permanent wetland/water and marks cropland as lower confidence; also a feature of the trigger model, never a TPI input
 
 ## Impact
 
@@ -30,4 +36,9 @@ Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is N
 - **SWOT Hydrocron** — river levels for the "Did we get it right?" river chart
 - **GLC (Global Landslide Catalog / COOLR)** — validation reference for the landslide-hit metric (WA case)
 
-*MERIT Hydro is used as a validation reference for the HAND proxy only — it is not a NASA input.*
+## Non-NASA context and reference layers (never index inputs)
+
+- **JRC Global Surface Water v1.4** — marks seasonal water as lower confidence in the live flood candidates
+- **IBGE country and municipality outlines** — Brazil clip, municipality ranking of priority zones
+- **UFRGS/Cemaden landslide inventory** — validation reference for the RS case
+- **MERIT Hydro** — validation reference for the HAND proxy only
