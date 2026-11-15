@@ -134,6 +134,7 @@ const sumOf = (vals: unknown[]): number | undefined => {
 // source with municipality names from the R3 zones, the NISAR meta.
 export function observedRows(bundle: CcBundle | undefined): ObservedRow[] {
   if (!bundle || bundle.mode !== "live") return [];
+  if (bundle.observedSummary) return bundle.observedSummary;
   const named = bundle.observedPlaces ?? {};
   const observed = (bundle.nowAlerts?.observed ?? [])
     .filter((o) => (o.kind === undefined || o.kind === "observed") && finite(o.area_km2));

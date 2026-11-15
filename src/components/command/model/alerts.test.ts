@@ -262,3 +262,10 @@ describe("live forecast source row (L30)", () => {
     expect(JSON.stringify(old)).not.toContain("GEOS");
   });
 });
+
+describe("observed cards precomputed on the server", () => {
+  test("a bundle carrying observedSummary uses it as-is (the raw list is not sent)", () => {
+    const rows = [{ key: "k", source: "NISAR radar", places: "Iguape, SP", area: "1.0 km²" }];
+    expect(observedRows(liveBundle({ observedSummary: rows }))).toBe(rows);
+  });
+});

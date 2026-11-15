@@ -3,7 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import { canonicalCaseId } from "@/lib/contract";
 import { getAlerts, getCaseBundle, getEventsIndex, getRootManifest } from "@/lib/data";
 import CommandCenter from "./CommandCenter";
-import { alertsPaused, buildAlertList, capAlertList, pausedAlertList, runVerified } from "./model/alerts";
+import { alertsPaused, buildAlertList, capAlertList, observedRows, pausedAlertList, runVerified } from "./model/alerts";
 import { nisarPasses, PASSES_SHOWN } from "./model/radar";
 import type { CcBundle } from "./model/types";
 
@@ -45,17 +45,36 @@ function liveRunTime(root: unknown): string | undefined {
   return isRecord(node) && typeof node.updated_at === "string" ? node.updated_at : undefined;
 }
 
+// Zone properties the screen never reads (R3 municipalities carry the IBGE
+// licence and source URL on every feature).
+const ZONE_DROP = ["license", "url", "source", "code"];
+const slimZones = (fc: CcBundle["zones"]): CcBundle["zones"] =>
+  fc && {
+    ...fc,
+    features: fc.features.map((f) => ({
+      ...f,
+      properties: Object.fromEntries(
+        Object.entries(f.properties ?? {}).filter(([k]) => !ZONE_DROP.includes(k))
+      ),
+    })),
+  };
+
 // The bundle as the browser needs it (A10 page budget).
 function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
   const manifest = bundle.manifest
     ? { ...bundle.manifest, layers: bundle.manifest.layers.map(({ legend: _legend, ...l }) => l) }
     : undefined;
-  if (!isLive) return { ...bundle, manifest };
+  const zones = slimZones(bundle.zones);
+  if (!isLive) return { ...bundle, manifest, zones };
   const passes = nisarPasses(bundle);
   return {
     ...bundle,
     manifest,
-    nowAlerts: bundle.nowAlerts ? { ...bundle.nowAlerts, candidates: [] } : undefined,
+    zones,
+    // The observed list (97 entries on 2026-11-15) is reduced here to the
+    // per-source cards the public view shows; the raw list stays server-side.
+    observedSummary: observedRows(bundle),
+    nowAlerts: bundle.nowAlerts ? { ...bundle.nowAlerts, candidates: [], observed: undefined } : undefined,
     nisarPasses: passes.slice(0, PASSES_SHOWN),
     nisarPassCount: passes.length,
   };
