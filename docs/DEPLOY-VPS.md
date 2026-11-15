@@ -27,14 +27,17 @@ docker run -d --name tp-app --restart unless-stopped \
   -v tp-data:/app/.data \
   tipping-point-app
 docker ps            # STATUS shows (healthy) after ~20 s
-curl -s localhost:3000/api/health | head -c 400
+curl -s localhost:3000/api/health      # {"ok":true}
 ```
 
 The image: bun installs and builds (same lockfile and build as Vercel, the
 data sync step skips and keeps the committed `public/data`), then Node 24
 runs `next start` as the non-root `node` user. `HEALTHCHECK` calls
-`/api/health`, which answers 200 JSON whenever the server is up (the body is
-the report: env presence, manifest freshness), so it is a liveness check.
+`/api/health`, which answers 200 `{"ok":true}` whenever the server is up — a
+liveness check, nothing else in the body. GitHub Actions
+(`.github/workflows/keepalive.yml`) pings
+`https://tippingpoint.l17s.dev/api/health` every 10 minutes; a failed ping
+fails the run and GitHub emails the repo owner.
 
 Update: `git pull && docker build … && docker rm -f tp-app && docker run …`
 (a few seconds of downtime; fine for one instance).
@@ -54,7 +57,7 @@ podman rm -f tp-smoke
 
 | Check | Result |
 | --- | --- |
-| `/api/health` | 200, 523 B, up 2 s after start; `ok: true`, GEE disabled, manifest read from GitHub raw (cases updated 13:08Z) |
+| `/api/health` | 200 `{"ok":true}`, up 2 s after start (liveness only since 2026-11-15) |
 | `/` | 200, 282 KB (first request 2.8 s, cold cache) |
 | `/alerts` | 200, 280 KB |
 | `/?case=rs_2024`, `/?case=wa_2025` | 200, 291 KB / 297 KB; RS page shows the onset row ("36.5% of 16,027") |
