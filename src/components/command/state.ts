@@ -87,6 +87,8 @@ export function caseHazard(bundle: CcBundle | undefined): Hazard | undefined {
 }
 
 const hazardFor = (bundle: CcBundle | undefined, kept: Hazard): Hazard => {
+  // L48: in Now the ML landslide likelihood is the primary view when published.
+  if (bundle?.mode === "live" && layerAvailable(bundle, "ptrigger", "slide")) return "slide";
   const current = caseHazard(bundle) ?? kept;
   if (!bundle || caseHasHazard(bundle, current)) return current;
   const other: Hazard = current === "slide" ? "flood" : "slide";

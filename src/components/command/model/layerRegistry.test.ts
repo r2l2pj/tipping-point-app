@@ -1,7 +1,7 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
 import { overlayPlan, type ProbHorizon } from "@/lib/layers";
-import { bundle, frame, liveBundle, manifest, point, zones } from "./fixtures";
+import { bundle, frame, liveBundle, manifest, point, zone, zones } from "./fixtures";
 import {
   confirmRadarLayers, keepAvailable, layerRows, layerStateFor, MAX_LAYERS,
   overlaysFor, toggleLayer, type LayerId,
@@ -298,4 +298,14 @@ describe("L48: ML likelihood is the Now landslide default", () => {
     expect(mlHorizonTip("24h", "2026-11-14", "2026-11-15T00:00:00Z")).toContain("observed IMERG to Nov 14, 2026 and the NOAA GFS run of Nov 15, 2026");
     expect(mlHorizonTip("7d")).toContain("never as a warning");
   });
+});
+
+test("L48: Now opens on Landslide + ML even when most zones are flood", async () => {
+  const { initialState } = await import("../state");
+  const live = liveBundle({ manifest: { layers: [{ id: "p_trigger_24h", date: "2026-11-15", png: "png/p_trigger_24h.png", kind: "forecast" },
+    { id: "tpi_slide_d0", date: "2026-11-15", png: "png/tpi_slide_d0.png" }, { id: "tpi_flood_d0", date: "2026-11-15", png: "png/tpi_flood_d0.png" }] },
+    zones: zones([zone(1, { hazard: "flood" }), zone(2, { hazard: "flood" })]) } as never);
+  const s = initialState([live]);
+  expect(s.hazard).toBe("slide");
+  expect(s.layers[0]).toBe("ptrigger");
 });

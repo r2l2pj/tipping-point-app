@@ -61,3 +61,11 @@ describe("external review: badge + calm day", () => {
     expect(mapCaption(busy, steps, 0, "flood", ["tpi"]).text).not.toContain(CALM_TODAY);
   });
 });
+
+test("L48 caption: ML layer on, TPI off -> names the ML likelihood, not 'TPI index off'", async () => {
+  const { mapCaption } = await import("./steps");
+  const live = liveBundle({ manifest: { layers: [{ id: "p_trigger_24h", date: "2026-11-15", png: "png/p.png", kind: "forecast" }] } } as never);
+  const text = mapCaption(live, [{ date: "2026-11-15", day: true }] as never, 0, "slide", ["ptrigger", "flood"]).text;
+  expect(text).toStartWith("Landslide likelihood (ML, experimental) · Nov 15, 2026");
+  expect(text).not.toContain("TPI index off");
+});
