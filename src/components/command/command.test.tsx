@@ -123,7 +123,7 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
   });
 
   const metrics = (extra: Record<string, unknown> = {}) => mv({
-    lead_time_median_h: 30, lead_time_iqr_h: [18, 42], n_points: 12,
+    lead_time_median_h: 30, lead_time_iqr_h: [18, 42], lead_time_n: 12,
     warned_before_pct: 0.8, warned_24h_pct: 0.6, never_critical_pct: 0.2, ...extra,
   });
 

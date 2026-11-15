@@ -14,7 +14,7 @@ const row = (b: CcBundle, id: string) => replayCheckRows(b).find((r) => r.id ===
 
 describe("replay check rows", () => {
   test("lead time shows median with IQR and n together, never alone", () => {
-    const b = bundle({ metricsView: mv({ lead_time_median_h: 30, lead_time_iqr_h: [18, 42], n_points: 12, never_critical_pct: 0.2 }) });
+    const b = bundle({ metricsView: mv({ lead_time_median_h: 30, lead_time_iqr_h: [18, 42], lead_time_n: 12, never_critical_pct: 0.2 }) });
     expect(row(b, "lead-time")).toMatchObject({
       value: "Median 30 h · IQR 18–42 h · n = 12",
       detail: "20% never crossed Critical",
@@ -36,9 +36,12 @@ describe("replay check rows", () => {
     }
   });
 
-  test("n comes from lead_time_n, else n_points; IQR is dropped when absent", () => {
+  test("n comes from lead_time_n only; IQR is dropped when absent", () => {
     expect(row(bundle({ metricsView: mv({ lead_time_median_h: 12, lead_time_n: 7 }) }), "lead-time")!.value)
       .toBe("Median 12 h · n = 7");
+    // the legacy n_points of the old run does not qualify a stat (real RS metrics)
+    expect(row(bundle({ metricsView: mv({ lead_time_median_h: -57, lead_time_iqr_h: [-57, -57], lead_time_n: null, n_points: 5678 }) }), "lead-time")!.value)
+      .toBe("pending: forecast rebuild");
   });
 
   test("'% warned first' is dropped: no row even when the metric is present", () => {

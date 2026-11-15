@@ -33,12 +33,12 @@ export function opticalSeenPct(cloudPct: unknown): number | null {
 }
 
 // Lead time is never shown alone: median with IQR and n in one value.
-// Number of damage points behind the lead-time stat (metrics `lead_time_n`,
-// legacy `n_points`). Undefined when not a positive count.
-export const leadTimeN = (m: M): number | undefined => {
-  const n = finite(m.lead_time_n) ? m.lead_time_n : finite(m.n_points) ? m.n_points : undefined;
-  return n !== undefined && n > 0 ? n : undefined;
-};
+// Number of damage points behind the lead-time stat: metrics `lead_time_n`
+// only. The legacy `n_points` belongs to the old event-anchor run (RS:
+// median -57 h, IQR -57–-57, n_points 5678) and does not qualify a stat —
+// until the forecast rebuild publishes lead_time_n the stat is pending.
+export const leadTimeN = (m: M): number | undefined =>
+  finite(m.lead_time_n) && m.lead_time_n > 0 ? m.lead_time_n : undefined;
 
 // A lead-time stat is shown only with its n (conductor ruling): a median
 // without the number of points behind it is not a result.
