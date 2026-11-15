@@ -19,6 +19,7 @@ export default function PriorityAreas({
   onSelect,
   lowerBound = false,
   partsNote = false,
+  onJumpToSnapshot,
 }: {
   areas: PriorityArea[];
   missingText: string; // shown when the case has no zones
@@ -32,6 +33,9 @@ export default function PriorityAreas({
   lowerBound?: boolean;
   // Now: zones are whole municipalities; people/area cover the at-risk part.
   partsNote?: boolean;
+  // Replay, off the snapshot day: the list is one snapshot (the event day) —
+  // say so and offer to move the timeline there (external review).
+  onJumpToSnapshot?: () => void;
 }) {
   const rows = expanded ? areas : areas.slice(0, LIST_COLLAPSED);
   return (
@@ -48,6 +52,12 @@ export default function PriorityAreas({
           </button>
         )}
       </div>
+      {dimmed && asOf && areas.length > 0 && onJumpToSnapshot && (
+        <p className="m-0 mb-1 text-xs text-cc-muted" data-zone-snapshot>
+          These areas are the {asOf} snapshot and do not follow the timeline.{" "}
+          <button type="button" onClick={onJumpToSnapshot} className="font-semibold text-cc-accent underline">Go to {asOf}</button>
+        </p>
+      )}
       {areas.length === 0 ? (
         <p className="border-t border-cc-rule py-2 text-[13px] italic text-cc-faint">Priority areas: {missingText}</p>
       ) : (

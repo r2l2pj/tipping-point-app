@@ -345,6 +345,12 @@ export function CommandCenterView({
                   onSelect={(rank) => dispatch({ type: "selectArea", rank })}
                   lowerBound={bundle.mode === "replay"}
                   partsNote={bundle.mode === "live"}
+                  onJumpToSnapshot={bundle.mode === "replay" && snap.iso
+                    ? (() => {
+                        const i = steps.findIndex((st) => st.date.slice(0, 10) === snap.iso!.slice(0, 10));
+                        return i >= 0 ? () => seek(i) : undefined;
+                      })()
+                    : undefined}
                 />
               </PanelSection>
 

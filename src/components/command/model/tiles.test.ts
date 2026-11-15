@@ -175,3 +175,17 @@ describe("Jhonatan: people read against their area", () => {
     expect(html).not.toContain("900,000");
   });
 });
+
+describe("external review: replay priority areas off their snapshot day", () => {
+  test("says it's the May 2 snapshot and offers 'Go to May 2'", async () => {
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { createElement } = await import("react");
+    const PriorityAreas = (await import("../PriorityAreas")).default;
+    const { priorityAreas } = await import("./areas");
+    const areas = priorityAreas(bundle({ zones: zones([zone(1, { name: "Caxias do Sul", people: 7700, area_km2: 12 })]) }));
+    const html = renderToStaticMarkup(createElement(PriorityAreas, { areas, missingText: "", expanded: true, selected: null,
+      dimmed: true, asOf: "May 2, 2024", onToggleAll: () => {}, onSelect: () => {}, onJumpToSnapshot: () => {} }));
+    expect(html).toContain("These areas are the May 2, 2024 snapshot and do not follow the timeline.");
+    expect(html).toContain("Go to May 2, 2024");
+  });
+});

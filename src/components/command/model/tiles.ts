@@ -177,10 +177,11 @@ function peopleTileRaw(bundle: CcBundle, stepDate: string | undefined, day: DayP
 }
 
 // The zone snapshot has one date. Off that day the list is dimmed.
-export function zoneSnapshot(bundle: CcBundle, stepDate?: string): { asOf?: string; dimmed: boolean } {
+export function zoneSnapshot(bundle: CcBundle, stepDate?: string): { asOf?: string; dimmed: boolean; iso?: string } {
   const snap = snapshot(bundle);
   return {
     asOf: snap.text,
+    iso: snap.iso,
     dimmed: !!stepDate && !!snap.iso && stepDate.slice(0, 10) !== snap.iso.slice(0, 10),
   };
 }
