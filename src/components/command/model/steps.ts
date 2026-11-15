@@ -1,7 +1,12 @@
 // Timeline steps: from the daily series, or from the dates of the manifest
 // TPI frames when the case has no series (the live case has none).
 import { forecastSourceLabel } from "@/lib/contract";
-import { isForecastLayer } from "@/lib/layers";
+import {
+  forecastChip,
+  isForecastLayer,
+  isGfsFrame,
+  pickTpiFrame,
+} from "@/lib/layers";
 import type { DayPoint, ManifestLayer } from "@/lib/types";
 import { fmtDate, fmtDayShort } from "./format";
 import { reaches, thresholdFor } from "./status";
@@ -18,11 +23,21 @@ export interface Step {
   top: string; // "Dec 10"
   sub: string; // "EVENT", "D-3", "D+2", "NOW" or ""
   day?: DayPoint; // present only when the step comes from the series
+  // The TPI frame the map paints for this step — pickTpiFrame, any hazard
+  // family (the timeline has no hazard). L22: an issued NOAA GFS frame on
+  // a forecast day.
+  layer?: ManifestLayer;
 }
 
 const tpiFrames = (bundle: CcBundle): ManifestLayer[] =>
   (bundle.manifest?.layers ?? []).filter(
-    (l) => l.id.startsWith("tpi_") && l.png && typeof l.date === "string"
+    (l) =>
+      l.id.startsWith("tpi_") &&
+      l.png &&
+      typeof l.date === "string" &&
+      // An issued GFS frame never creates a step of its own (L22): it
+      // depicts the same day as the regular frame family.
+      !isGfsFrame(l)
   );
 
 const offsetLabel = (offset: number, live: boolean): string =>
@@ -31,6 +46,11 @@ const offsetLabel = (offset: number, live: boolean): string =>
 export function stepsFor(bundle: CcBundle | undefined): Step[] {
   if (!bundle) return [];
   const live = bundle.mode === "live";
+  const reference = bundle.series?.reference_date ?? bundle.reference_date;
+  // The frame the map hook paints for a day — same pick and same kind the
+  // hook passes (a series day's kind, none when the case has no series).
+  const painted = (date: string, kind?: string): ManifestLayer | undefined =>
+    pickTpiFrame(bundle.manifest?.layers, { date, kind }, null, reference);
   const days = bundle.series?.days;
   if (days?.length) {
     return days.map((day, index) => ({
@@ -42,6 +62,7 @@ export function stepsFor(bundle: CcBundle | undefined): Step[] {
       top: fmtDayShort(day.date),
       sub: offsetLabel(day.offset, live),
       day,
+      layer: painted(day.date, day.kind),
     }));
   }
   const frames = tpiFrames(bundle);
@@ -55,6 +76,7 @@ export function stepsFor(bundle: CcBundle | undefined): Step[] {
       kind: forecast ? "forecast" : "observed",
       top: fmtDayShort(date),
       sub: "",
+      layer: painted(date),
     };
   });
 }
@@ -116,20 +138,25 @@ export interface Frame {
   forecast: boolean;
 }
 
-// The TPI frame the map hook draws for a date and a hazard choice. Mirrors
-// the pick in useMapLayers: frames of that date, the wanted hazard first,
-// else the first frame of the date. `hazard` is the hazard of the frame that
-// is really drawn, so the caption never names the wrong one.
+// The TPI frame the map hook draws for a date and a hazard choice — the
+// hook's own pick (pickTpiFrame): on a forecast day the latest GFS run
+// issued on or before the reference date wins over the perfect-forecast
+// upper bound, and a run issued after it is never shown. The kind is the
+// series day's, none for a case without a series — as the hook passes it.
+// `hazard` is the hazard of the frame that is really drawn, so the caption
+// never names the wrong one.
 export function frameFor(
   bundle: CcBundle,
   date: string | undefined,
   wanted: Hazard
 ): Frame | undefined {
   if (!date) return undefined;
-  const candidates = (bundle.manifest?.layers ?? []).filter(
-    (l) => l.png && l.date === date
+  const layer = pickTpiFrame(
+    bundle.manifest?.layers,
+    { date, kind: bundle.series?.days.find((d) => d.date === date)?.kind },
+    wanted,
+    bundle.series?.reference_date ?? bundle.reference_date
   );
-  const layer = candidates.find((l) => l.id.includes(wanted)) ?? candidates[0];
   if (!layer || !layer.id.startsWith("tpi_")) return undefined;
   return {
     layer,
@@ -160,18 +187,32 @@ export function mapCaption(
   // The map hook shows its own note for a missing frame; the caption stays short.
   if (!frame) return { text: `${when} · no map frame`, forecast: false };
   const forecast = frame.forecast || step.forecast;
+  // L22: an issued GFS frame names its issue day; anything else keeps the
+  // case-level source wording.
+  const tag = isGfsFrame(frame.layer)
+    ? forecastChip(frame.layer, undefined)
+    : forecastTag(bundle).toLowerCase();
   return {
     text: `${HAZARD_LABEL[frame.hazard]} TPI · ${when}` +
-      (forecast ? ` · ${forecastTag(bundle).toLowerCase()}` : ""),
+      (forecast ? ` · ${tag}` : ""),
     forecast,
   };
 }
+
+// The chip name an issued GFS frame gives a step ("NOAA GFS (issued May 2,
+// 2024)") — forecastChip without its "forecast · " lead, for spots whose
+// text already says "forecast".
+export const gfsChipSource = (l: ManifestLayer): string =>
+  forecastChip(l, undefined).slice("forecast · ".length);
 
 // Step line of the panel. Rule 2: observed and forecast are never confused.
 // The forecast source is named on forecast days only; an observed day
 // (the event day included) reads "observed", never "perfect forecast".
 export function stepLabel(bundle: CcBundle, step: Step): string {
-  const source = forecastSource(bundle);
+  const gfs = step.forecast && step.layer && isGfsFrame(step.layer)
+    ? step.layer
+    : undefined;
+  const source = gfs ? gfsChipSource(gfs) : forecastSource(bundle);
   const kind = step.kind === "observed" ? "observed"
     : `${step.kind}${source ? ` · ${source}` : ""}`;
   return `${step.top}${step.sub ? ` (${step.sub})` : ""} · ${kind}`;

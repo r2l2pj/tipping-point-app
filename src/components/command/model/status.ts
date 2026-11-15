@@ -1,10 +1,12 @@
 // Status chip of the Situation panel. Reads the series (replay) or the
 // summary (live). The browser computes no TPI and no class.
 import { forecastSourceLabel } from "@/lib/contract";
+import { forecastChip, isGfsFrame, pickTpiFrame } from "@/lib/layers";
 import { cutsFor } from "@/lib/tpi";
 import { finite, fmtDate } from "./format";
 import type { Step } from "./steps";
 import type { CcBundle, Hazard } from "./types";
+import type { ManifestLayer } from "@/lib/types";
 
 // Threshold of the tipping point: the series value, else the upper class cut.
 export function thresholdFor(bundle: CcBundle | undefined): number {
@@ -44,6 +46,22 @@ export function statusChip(
     bundle.manifest?.forecast_source ?? bundle.summary?.forecast_source ??
       bundle.metricsView?.forecast_source
   );
+
+  // L22: when the frame the map paints for a forecast step is an issued
+  // NOAA GFS run, the chip names it ("NOAA GFS (issued <date>)"); anything
+  // else keeps the case/run source. Same pick as the map hook — the series
+  // day's kind (none without a series) and this hazard's family.
+  const gfsSource = (s: Step | undefined): string | undefined => {
+    const l: ManifestLayer | undefined = s && pickTpiFrame(
+      bundle.manifest?.layers,
+      { date: s.date, kind: s.day?.kind },
+      hazard,
+      bundle.series?.reference_date ?? bundle.reference_date
+    );
+    return l?.id.startsWith("tpi_") && isGfsFrame(l)
+      ? forecastChip(l, undefined).slice("forecast · ".length)
+      : undefined;
+  };
 
   // An output the loader lists as pending is never read as a result.
   const pending = (key: string) => bundle.pending?.includes(key) === true;
@@ -96,7 +114,7 @@ export function statusChip(
   if (reaches(day.tpi, threshold)) {
     return day.kind === "observed"
       ? { kind: "reached", label: "Tipping point reached", sentence: `${REACHED_SENTENCE} ${line}` }
-      : { kind: "forecast", label: "Tipping point forecast", source, sentence: `${WATCH_SENTENCE} ${line}` };
+      : { kind: "forecast", label: "Tipping point forecast", source: gfsSource(steps[dayIndex]) ?? source, sentence: `${WATCH_SENTENCE} ${line}` };
   }
   // The next day that reaches the threshold. Only a forecast day makes a
   // forecast; an observed day ahead in a replay is not a forecast.
@@ -107,7 +125,7 @@ export function statusChip(
     return {
       kind: "forecast-later",
       label: `Tipping point forecast for ${fmtDate(later.date)}`,
-      source,
+      source: gfsSource(later) ?? source,
       sentence: `${WATCH_SENTENCE} ${line}`,
     };
   }

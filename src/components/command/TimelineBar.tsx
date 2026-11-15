@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { forecastChip, isGfsFrame } from "@/lib/layers";
 import { NO_STEPS_TEXT, type Step, type StepMark } from "./model/steps";
 import { Icon, ICON } from "./ui";
 
@@ -49,6 +50,12 @@ export default function TimelineBar({
     }
   }, [dayIndex, n]);
   const firstFc = steps.findIndex((s) => s.forecast);
+  // The source named for a forecast step: an issued NOAA GFS frame names
+  // its issue day (L22); anything else keeps the case-level tag.
+  const stepTag = (s: Step) =>
+    s.forecast && s.layer && isGfsFrame(s.layer)
+      ? forecastChip(s.layer, undefined)
+      : forecastTag;
   // A long case (Washington has 21 steps) keeps every step and its offset in
   // view, and prints the date of every second step. The selected step and
   // the event day always show their date; the full date is in the title and
@@ -89,7 +96,7 @@ export default function TimelineBar({
             {firstFc >= 0 && (
               <span className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-md bg-cc-forecast px-3 py-px text-xs font-semibold text-cc-forecast-ink"
                 style={{ left: `${((firstFc + (n - firstFc) / 2) / n) * 100}%` }}>
-                {forecastTag}
+                {stepTag(steps[firstFc])}
               </span>
             )}
             {steps.map((s) => {
@@ -101,7 +108,7 @@ export default function TimelineBar({
                   type="button"
                   onClick={() => onSeek(s.index)}
                   aria-pressed={on}
-                  aria-label={`${s.top}${s.sub ? `, ${s.sub}` : ""}${s.forecast ? `, ${forecastTag}` : ""}`}
+                  aria-label={`${s.top}${s.sub ? `, ${s.sub}` : ""}${s.forecast ? `, ${stepTag(s)}` : ""}`}
                   title={`${s.date}${s.day && typeof s.day.tpi === "number" ? ` — TPI ${s.day.tpi.toFixed(2)}` : ""}`}
                   className="relative flex min-h-[60px] min-w-0 flex-1 flex-col items-center"
                 >

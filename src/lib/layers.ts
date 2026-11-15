@@ -75,16 +75,17 @@ export function pickTpiFrame(
 }
 
 // Forecast chip text. A GFS frame names its issue day —
-// "forecast · GFS (issued Apr 22, 2024)"; otherwise the case/run source:
-// "forecast · perfect" (replay upper bound), "forecast · GEOS-FP" (live).
+// "forecast · NOAA GFS (issued Apr 22, 2024)"; otherwise the case/run
+// source: "forecast · perfect" (replay upper bound), "forecast · GEOS-FP"
+// (live).
 export function forecastChip(
   frame: ManifestLayer | undefined,
   sourceLabel: string | undefined
 ): string {
   if (frame && isGfsFrame(frame)) {
     return frame.issued
-      ? `forecast · GFS (issued ${fmtDate(frame.issued)})`
-      : "forecast · GFS";
+      ? `forecast · NOAA GFS (issued ${fmtDate(frame.issued)})`
+      : "forecast · NOAA GFS";
   }
   return `forecast · ${sourceLabel === "perfect forecast" ? "perfect" : (sourceLabel ?? "day")}`;
 }
