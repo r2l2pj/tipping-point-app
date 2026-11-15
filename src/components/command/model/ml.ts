@@ -20,6 +20,8 @@ const FALLBACK_LABEL: Record<string, string> = {
   rf_all: "Random forest",
   rule_slope: "Slope rule",
   rule_tpi: "TPI > 0.6 rule",
+  // The served T_ML model (lead-ml has no display name for it in models{}).
+  xgb_terrain_landcover: "XGBoost (terrain + land cover)",
 };
 const T_ML_MODELS = ["xgb_all", "rf_all", "rule_slope"];
 const TRIGGER_MODELS = ["xgb_all", "rf_all", "rule_tpi"];
