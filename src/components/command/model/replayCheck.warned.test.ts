@@ -32,6 +32,20 @@ describe("warned before the damage (lead-analysis)", () => {
     expect(r.detail).toContain("TPI_flood is pixel-local.");
     expect(r.detail).not.toContain("single runs vary");
   });
+  test("L37: the anchor date and the hours come from metrics, never a fixed 'May 1'", () => {
+    const r = warnedRow({
+      slide_warned_pct: 61.2,
+      slide_warned: { n_points: 16027, anchor_utc: "2024-04-30T00:00:00+00:00", by_issue_gfs: [
+        { issue: "2024-04-29", hours_before_anchor: 24, alto_or_critico_pct: 61.2 },
+        { issue: "2024-04-28", hours_before_anchor: 48, alto_or_critico_pct: 12.5 },
+      ] },
+    })!;
+    expect(r.detail).toStartWith("NOAA GFS runs before Apr 30, 2024: 24 h before 61.2% · 48 h before 12.5%");
+    expect(r.detail).not.toContain("May 1");
+    expect(r.name).not.toMatch(/May|Apr|\d/);
+    // no anchor in the data: no date at all
+    expect(warnedRow({ slide_warned_pct: 50, slide_warned: { by_issue_gfs: [] } })!.detail).toContain("before the damage");
+  });
   test("no published value: no row", () => {
     expect(warnedRow({ flood_warned_pct: null })).toBeUndefined();
   });
