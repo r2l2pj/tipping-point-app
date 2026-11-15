@@ -96,7 +96,7 @@ describe("status chip and contract values (S1, L9)", () => {
       series: series([0.2, 0.9], ["observed", "forecast"]),
       manifest: manifest([], { forecast_source: "perfect-forecast" }),
     }));
-    expect(replayHtml).toContain("Forecast (perfect forecast)");
+    expect(replayHtml).toContain("Forecast (perfect forecast · upper bound)"); // never the bare source (L22)
     expect(replayHtml).not.toContain("GEOS-FP)");
     // Rule 2: an observed day (the event day too) reads "observed"; the
     // forecast source is named on forecast days only.
@@ -211,7 +211,7 @@ describe("radar card (S13, L6, L7, L11)", () => {
 
   test("scar count labeled as candidates, never confirmed", () => {
     const html = render(b);
-    expect(html).toContain("Landslide scar candidates (HLS optical)");
+    expect(html).toContain("Landslide scar candidates (OPERA DIST-ALERT-HLS, vegetation loss)");
     expect(html).toContain("candidates, never confirmed");
     expect(html).toContain(">3<");
   });
@@ -439,7 +439,7 @@ describe("pending states carried over from main (L14)", () => {
   });
 
   test("radar: scars absent is 'not published yet', empty scars is a real zero, the token wins", () => {
-    const label = /Landslide scar candidates \(HLS optical\)<\/dt><dd[^>]*>([^<]*)</;
+    const label = /Landslide scar candidates \(OPERA DIST-ALERT-HLS, vegetation loss\)<\/dt><dd[^>]*>([^<]*)</;
     expect(render(bundle({ metricsView: mv({}) })).match(label)![1]).toBe("not published yet");
     expect(render(bundle({ metricsView: mv({}), scars: { type: "FeatureCollection", features: [] } })).match(label)![1]).toBe("0");
     const tok = render(withPending(bundle({
@@ -640,5 +640,20 @@ describe("no 'confirm' on screen except the tagline (candidates rule)", () => {
     expect(html.match(/.{60}confirm.{40}/gi) ?? []).toEqual([]);
     expect(html).toContain("Check with NISAR radar");
     expect(html).toContain("NISAR radar maps flood candidates only in this case");
+  });
+});
+
+
+describe("timeline chip never shows a bare 'perfect forecast'", () => {
+  test("a case with GFS frames names NOAA GFS; a perfect-forecast-only case says upper bound", () => {
+    const withGfs = bundle({ series: series([0.2, 0.9], ["observed", "forecast"]),
+      manifest: { ...manifest([], { forecast_source: "perfect-forecast" }),
+        layers: [{ id: "tpi_flood_gfs_d1", date: "2025-12-11", issued: "2025-12-10", png: "x.png", forecast_source: "noaa-gfs" }] } as never });
+    expect(render(withGfs, { dayIndex: 0, layers: [] })).toContain(">Forecast (NOAA GFS)<");
+    const pfOnly = bundle({ series: series([0.2, 0.9], ["observed", "forecast"]),
+      manifest: manifest([], { forecast_source: "perfect-forecast" }) });
+    const html = render(pfOnly, { dayIndex: 0, layers: [] });
+    expect(html).toContain(">Forecast (perfect forecast · upper bound)<");
+    expect(html).not.toContain(">Forecast (perfect forecast)<");
   });
 });

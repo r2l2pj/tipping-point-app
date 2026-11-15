@@ -10,9 +10,47 @@ import type { CcBundle } from "./types";
 
 type BBox = [number, number, number, number];
 
-export const CANDIDATES_LABEL = "Landslide scar candidates (HLS optical)";
+// Landslide scar candidates (lead-analysis): OPERA DIST-ALERT-HLS vegetation
+// loss on steep slopes. Candidates, never confirmed.
+export const CANDIDATES_LABEL = "Landslide scar candidates (OPERA DIST-ALERT-HLS, vegetation loss)";
 export const CANDIDATES_NOTE =
-  "Landslide scar candidates (HLS optical) — candidates, never confirmed.";
+  "Vegetation loss on steep slopes seen by HLS optical — candidates, never confirmed.";
+
+// Figures and context lines of the candidates block: the Now meta
+// (dist_meta.json), else the replay metrics scar_*, else the fetched count.
+function candidatesBlock(bundle: CcBundle): { value: string; lines: string[] } {
+  const people = (n: unknown) => finite(n) ? `${Math.round(n).toLocaleString("en-US")} people (estimate)` : undefined;
+  const d = bundle.mode === "live" ? bundle.dist : undefined;
+  if (d) {
+    return {
+      value: d.features.toLocaleString("en-US"),
+      lines: [
+        [finite(d.km2) ? fmtKm2(d.km2) : undefined, people(d.people)].filter(Boolean).join(" · "),
+        d.latest_acquired ? `Newest image ${fmtDate(d.latest_acquired)} — the product is published 1–2 weeks after the pass.` : "",
+        d.caveat ? `Caveat: ${d.caveat.charAt(0).toUpperCase()}${d.caveat.slice(1)}.` : "",
+      ].filter(Boolean),
+    };
+  }
+  const m = (bundle.metricsView ?? {}) as Record<string, unknown>;
+  if (finite(m.scar_candidates_n)) {
+    const pct = (v: unknown) => (finite(v) ? `${Math.round(v)}%` : undefined);
+    const inv = finite(m.scar_inventory_n) ? m.scar_inventory_n.toLocaleString("en-US") : undefined;
+    const hit = pct(m.scar_hit_500m_pct);
+    const prec = pct(m.scar_precision_500m_pct);
+    return {
+      value: m.scar_candidates_n.toLocaleString("en-US"),
+      lines: [
+        [finite(m.scar_candidates_km2) ? fmtKm2(m.scar_candidates_km2) : undefined, people(m.scar_people)].filter(Boolean).join(" · "),
+        hit && inv ? `${hit} of the ${inv} inventoried landslides lie within 500 m of a candidate${prec ? `; ${prec} of candidates within 500 m of one` : ""}.` : "",
+      ].filter(Boolean),
+    };
+  }
+  const scars = bundle.scars?.features.length;
+  return {
+    value: scars == null ? missingText(availability(bundle, "landslide_candidates")) : String(scars),
+    lines: [],
+  };
+}
 export const AWAITING_PAIR_TEXT = "Awaiting a NISAR pair over the AOI.";
 export const GUNW_LIMIT_TEXT =
   "NISAR radar maps flood candidates only in this case; scar candidates come from post-event HLS optical — the GUNW pair spanning the event is a declared limitation.";
@@ -150,7 +188,7 @@ export interface RadarCard {
   // Live: other satellite flood sources of the R3 summary (OPERA DSWx-S1).
   others?: { label: string; value: string }[];
   note?: string; // live response: candidates + how old the radar pass is
-  candidates: { label: string; value: string; note: string };
+  candidates: { label: string; value: string; note: string; lines?: string[] };
   limitation?: string;
   passes: NisarPass[];
   passCount: number; // all passes, also those not sent to the browser
@@ -208,7 +246,7 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
   const pair = hasNisarPair(bundle);
   const flooded = bundle.metricsView?.flooded_km2;
   const labels = floodLabels(bundle);
-  const scars = bundle.scars?.features.length;
+  const cand = candidatesBlock(bundle);
   return {
     pair,
     headline: pair
@@ -224,8 +262,9 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
       : undefined,
     candidates: {
       label: CANDIDATES_LABEL,
-      value: scars == null ? missingText(availability(bundle, "landslide_candidates")) : String(scars),
+      value: cand.value,
       note: CANDIDATES_NOTE,
+      lines: cand.lines,
     },
     limitation: pair ? GUNW_LIMIT_TEXT : undefined,
     passes: nisarPasses(bundle),

@@ -60,6 +60,10 @@ export default function RadarCard({
           <dd className="font-semibold">{radar.candidates.value}</dd>
         </div>
       </dl>
+      {/* Scar candidates: figures, lag and caveat right under the count. */}
+      {radar.candidates.lines?.map((l) => (
+        <p key={l} className={`mt-1 text-xs ${l.startsWith("Caveat:") ? "text-cc-warn" : "text-cc-muted"}`}>{l}</p>
+      ))}
       {radar.others?.map((o) => (
         <p key={o.label} className="mt-1 text-[13px]">
           <span className="text-xs text-cc-muted">{o.label}:</span> <span className="font-semibold">{o.value}</span>

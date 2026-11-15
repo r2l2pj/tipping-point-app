@@ -23,11 +23,14 @@ import {
 } from "./contract";
 import type { LayerMeta } from "./ee-layers";
 import {
+  DIST_GEOJSON,
+  DIST_META,
   NISAR_META,
   placesBySource,
   RESPONSE_SUMMARY,
   responseGeojsonPath,
   toNowResponse,
+  toNowDist,
   toResponseSources,
 } from "./response";
 import type {
@@ -519,6 +522,7 @@ export async function getCaseBundle(
     responseRaw,
     forecastLeadTime,
     responseSummaryRaw,
+    distRaw,
   ] = await Promise.all([
     loadMetrics(ctx, entry?.metrics ?? `metrics.json#${canonical}`, dirs),
     loadProduct<SeriesDaily>(
@@ -553,7 +557,11 @@ export async function getCaseBundle(
     now
       ? loadProduct<unknown>(ctx, canonical, rawProducts, "response_summary", RESPONSE_SUMMARY)
       : undefined,
+    now
+      ? loadProduct<unknown>(ctx, canonical, rawProducts, "dist_meta", DIST_META)
+      : undefined,
   ]);
+  const dist = now ? toNowDist(distRaw) : undefined;
 
   // The response polygons ride the flood_confirmed slot the map and the
   // radar card already read, at the declared path (no request when absent).
@@ -561,6 +569,12 @@ export async function getCaseBundle(
   const response = now ? toNowResponse(responseRaw) : undefined;
   let bundleProducts = manifest?.products;
   let bundleDates = manifest?.data_dates;
+  // Now scar candidates ride the landslide_candidates slot the map and the
+  // card already read (declared landslide_dist, else the fixed file name).
+  if (dist && typeof bundleProducts?.landslide_candidates !== "string") {
+    const path = typeof rawProducts?.landslide_dist === "string" ? rawProducts.landslide_dist : DIST_GEOJSON;
+    bundleProducts = { ...bundleProducts, landslide_candidates: path };
+  }
   if (response) {
     const floodPath = responseGeojsonPath(rawProducts, response);
     if (floodPath && typeof bundleProducts?.flood_confirmed !== "string") {
@@ -687,7 +701,7 @@ export async function getCaseBundle(
     nowAlerts,
     response,
     ...(now
-      ? { responseSources: toResponseSources(responseSummaryRaw), observedPlaces: placesBySource(zonesRaw) }
+      ? { responseSources: toResponseSources(responseSummaryRaw), observedPlaces: placesBySource(zonesRaw), dist }
       : {}),
     forecastLeadTime,
     nisarPasses: now?.nisar_passes,

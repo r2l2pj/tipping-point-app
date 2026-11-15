@@ -59,10 +59,21 @@ const slimZones = (fc: CcBundle["zones"]): CcBundle["zones"] =>
     })),
   };
 
+// Layer fields the screen never reads: the per-layer legend, `kind`, and
+// `forecast_source` on GFS frames (isGfsFrame knows them by id).
+const GFS_ID = /_gfs_d[1-3]$/;
+function slimLayer(layer: NonNullable<CcBundle["manifest"]>["layers"][number]) {
+  const { legend: _legend, ...rest } = layer as typeof layer & { kind?: unknown };
+  const out = { ...rest } as Record<string, unknown>;
+  delete out.kind;
+  if (GFS_ID.test(layer.id)) delete out.forecast_source;
+  return out as unknown as typeof layer;
+}
+
 // The bundle as the browser needs it (A10 page budget).
 function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
   const manifest = bundle.manifest
-    ? { ...bundle.manifest, layers: bundle.manifest.layers.map(({ legend: _legend, ...l }) => l) }
+    ? { ...bundle.manifest, layers: bundle.manifest.layers.map(slimLayer) }
     : undefined;
   const zones = slimZones(bundle.zones);
   if (!isLive) return { ...bundle, manifest, zones };

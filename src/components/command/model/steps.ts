@@ -141,6 +141,17 @@ export function forecastTag(bundle: CcBundle): string {
   return label ? `Forecast (${label})` : "Forecast";
 }
 
+// Timeline chip when the map shows no forecast frame: the source of the
+// case's forecast days. A case with issued NOAA GFS frames names NOAA GFS;
+// "perfect forecast" (copied observation) is only ever the labelled upper
+// bound (L22), never the bare source.
+export function timelineForecastTag(bundle: CcBundle): string {
+  if ((bundle.manifest?.layers ?? []).some((l) => isGfsFrame(l))) return "Forecast (NOAA GFS)";
+  const label = forecastSource(bundle);
+  if (label === "perfect forecast") return `Forecast (${UPPER_BOUND_TEXT})`;
+  return label ? `Forecast (${label})` : "Forecast";
+}
+
 export interface StepMark {
   index: number;
   label: "first Critical" | "first damage";

@@ -54,6 +54,16 @@ export type DataDates = Record<string, string | null | NisarPass[]>;
 
 // Live radar response of the Now case (now/response/nisar_meta.json,
 // normalized by src/lib/response.ts). Flood polygons are candidates.
+// Now landslide scar candidates (OPERA DIST-ALERT-HLS), dist_meta.json.
+export interface NowDist {
+  features: number;
+  km2?: number;
+  people?: number;
+  latest_acquired?: string;
+  caveat?: string;
+  latency_note?: string;
+}
+
 // One flood source of the R3 response summary.
 export interface ResponseSource {
   source: string; // "opera-dswx-s1" | "nisar-gcov"
@@ -240,6 +250,8 @@ export interface CaseBundle {
   // (set by the Command Center loader).
   riskPaused?: boolean;
   observedPlaces?: Record<string, string[]>;
+  // Live case only: landslide scar candidates meta (DIST-ALERT-HLS).
+  dist?: NowDist;
   swot?: unknown;
   catalog?: GeoJSON.FeatureCollection;
   municipalities?: GeoJSON.FeatureCollection;
