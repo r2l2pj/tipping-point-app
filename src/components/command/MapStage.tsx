@@ -13,6 +13,7 @@ import { Legend } from "./LayersColumn";
 import LocatorInset from "./LocatorInset";
 import MapTools from "./MapTools";
 import { pinAreas, type PriorityArea } from "./model/areas";
+import { BASEMAP_LABEL, BASEMAP_ORDER } from "./model/basemap";
 import { STATUS_WORD, type DataStatus } from "./model/dataStatus";
 import { forecastCompare, hasGfsFrames, swipeLeadsFor } from "./model/forecastCompare";
 import { layerStateFor, overlaysFor } from "./model/layerRegistry";
@@ -96,8 +97,15 @@ export default function MapStage({
       overlays: overlaysFor(state.layers),
       probHorizon: state.probHorizon,
       frameLayer: issued,
+      // L52: the satellite underlay is dated by the case (its reference day);
+      // live gets the latest imagery GIBS published.
+      basemap: state.basemap,
+      imageryDate:
+        bundle.mode === "live"
+          ? undefined
+          : (bundle.series?.reference_date ?? bundle.reference_date)?.slice(0, 10),
     }),
-    [step?.date, state.layers, state.probHorizon, issued]
+    [step?.date, state.layers, state.probHorizon, issued, state.basemap, bundle]
   );
   useMapLayers(map, bundle, state.dayIndex, layerState, false, undefined, options);
 
@@ -356,6 +364,22 @@ export default function MapStage({
             ? { lead: comparePair.lead ?? 0, leads: swipeLeads, onLead: (k) => dispatch({ type: "setIssueLead", lead: k }) }
             : undefined}
           controlsRef={compare} onClose={() => dispatch({ type: "closeCompare" })} />
+      )}
+
+      {/* Basemap switcher (L52): a compact segmented column under the map
+          tools — top-left, top-centre and the bottom row are taken. */}
+      {!comparing && (
+        <div role="group" aria-label="Basemap" data-basemap
+          className="absolute top-[152px] z-10 flex flex-col overflow-hidden rounded-[10px] bg-white/95 text-[13px] font-semibold text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+          style={{ right: R(14) }}>
+          {BASEMAP_ORDER.map((b, i) => (
+            <button key={b} type="button" aria-pressed={state.basemap === b}
+              onClick={() => dispatch({ type: "setBasemap", basemap: b })}
+              className={`px-2.5 py-1 ${i > 0 ? "border-t border-cc-line" : ""} ${state.basemap === b ? "bg-cc-accent text-white" : ""}`}>
+              {BASEMAP_LABEL[b]}
+            </button>
+          ))}
+        </div>
       )}
 
       <MapTools

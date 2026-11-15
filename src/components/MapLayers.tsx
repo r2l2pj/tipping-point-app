@@ -48,6 +48,7 @@ import {
   zoneMarkersOn,
   type MapLayerOptions,
 } from "./command/model/overlays";
+import { basemapSources } from "./command/model/basemap";
 import {
   bboxPolygon,
   boundsToImageCoordinates,
@@ -184,6 +185,9 @@ export function useMapLayers(
   // failure is not kept here (see isPermanentFrameFailure).
   const frameFailed = useRef<Set<string>>(new Set());
   const frameNote = useRef<string | null>(null);
+  // Tile URL set per basemap source — the satellite date changes per case and
+  // is applied with setTiles instead of rebuilding the source.
+  const bmTiles = useRef<Record<string, string>>({});
   const imgUrls = useRef<Record<string, string>>({});
   const day = bundle?.series?.days[dayIndex];
 
@@ -395,6 +399,34 @@ export function useMapLayers(
       map.addLayer(spec as never);
     }
 
+    // L52 basemap switcher: raster underlays below the app layers (beforeId
+    // tp-hillshade — now created), a labels-only raster on top. The base
+    // dark-matter style is never replaced; visibility toggles.
+    const bmSpecs = basemapSources(options?.basemap ?? "dark", options?.imageryDate);
+    for (const spec of bmSpecs) {
+      try {
+        map.addSource(spec.id, {
+          type: "raster",
+          tiles: spec.tiles,
+          tileSize: spec.tileSize,
+          ...(spec.maxzoom ? { maxzoom: spec.maxzoom } : {}),
+          attribution: spec.attribution,
+        });
+        bmTiles.current[spec.id] = spec.tiles.join("|");
+        map.addLayer(
+          {
+            id: spec.layer,
+            type: "raster",
+            source: spec.id,
+            layout: { visibility: "none" },
+          } as never,
+          spec.top ? undefined : LYR.hillshade
+        );
+      } catch {
+        // A half-added basemap layer must not block the app layers.
+      }
+    }
+
     return () => {
       map.off("error", onMapError as never);
       fcastMarker.current?.remove();
@@ -405,6 +437,10 @@ export function useMapLayers(
       for (const [lyr, src] of DYNAMIC_IMG) {
         if (map.getLayer(lyr)) map.removeLayer(lyr);
         if (map.getSource(src)) map.removeSource(src);
+      }
+      for (const spec of bmSpecs) {
+        if (map.getLayer(spec.layer)) map.removeLayer(spec.layer);
+        if (map.getSource(spec.id)) map.removeSource(spec.id);
       }
       for (const s of Object.values(SRC)) if (map.getSource(s)) map.removeSource(s);
       if (map.hasImage("tp-hatch")) map.removeImage("tp-hatch");
@@ -443,6 +479,20 @@ export function useMapLayers(
     const vis = (id: string, on: boolean) => {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
     };
+
+    // L52 basemap: toggle the underlays + labels, re-date the satellite
+    // source per case, and raise the labels back to the top — a layer added
+    // later (dynamic image overlays) must not cover them.
+    for (const spec of basemapSources(options?.basemap ?? "dark", options?.imageryDate)) {
+      const key = spec.tiles.join("|");
+      const src = map.getSource(spec.id) as { setTiles?: (t: string[]) => void } | undefined;
+      if (src && bmTiles.current[spec.id] !== key) {
+        bmTiles.current[spec.id] = key;
+        try { src.setTiles?.(spec.tiles); } catch { /* keep the tiles it has */ }
+      }
+      vis(spec.layer, spec.on);
+      if (spec.top && spec.on && map.getLayer(spec.layer)) map.moveLayer(spec.layer);
+    }
 
     const tpiOn = (layers.tpiFlood || layers.tpiSlide) && plan.tpi;
     const usePng = tpiOn && !!activePng;
@@ -736,7 +786,7 @@ export function useMapLayers(
       console.warn("MapLayers update failed (map kept alive)", err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey, options?.probHorizon]);
+  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey, options?.probHorizon, options?.basemap, options?.imageryDate]);
 
   // Priority-zone pins — top 20 by rank (matches the side list), anchored
   // at the polygon label point (real files are Polygons, not Points).

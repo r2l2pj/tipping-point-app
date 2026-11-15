@@ -444,3 +444,38 @@ test("L52 setView: one tap sets the view's layer set; a view without data change
   // no flood layer in this fixture: unchanged
   expect(s1.layers).toEqual(s0.layers);
 });
+
+describe("basemap (L52)", () => {
+  const uy = bundle({ id: "rs_uruguai_2026" }); // the featured replay
+
+  test("Dark by default; the featured replay opens on Satellite", () => {
+    expect(initialState([wa]).basemap).toBe("dark");
+    expect(initialState([uy]).basemap).toBe("satellite");
+    // Now stays the opening screen when loaded — on Dark.
+    expect(initialState([uy, now]).basemap).toBe("dark");
+    expect(initialState([uy, now], "rs_uruguai_2026").basemap).toBe("satellite");
+  });
+
+  test("the ?basemap= deep link wins over the case default", () => {
+    expect(initialState([uy], "rs_uruguai_2026", undefined, { basemap: "streets" }).basemap).toBe("streets");
+    expect(initialState([wa], undefined, undefined, { basemap: "satellite" }).basemap).toBe("satellite");
+    expect(initialState([wa], undefined, undefined, { basemap: "bogus" }).basemap).toBe("dark");
+  });
+
+  test("setBasemap switches; a case change resets to the case default", () => {
+    const c = [uy, wa];
+    let s = initialState(c, "rs_uruguai_2026");
+    s = reduce(s, { type: "setBasemap", basemap: "streets" }, c);
+    expect(s.basemap).toBe("streets");
+    s = reduce(s, { type: "selectCase", id: "wa_2025" }, c);
+    expect(s.basemap).toBe("dark");
+    s = reduce(s, { type: "selectCase", id: "rs_uruguai_2026" }, c);
+    expect(s.basemap).toBe("satellite");
+  });
+
+  test("a goTo stop lands on the case default too", () => {
+    const c = [uy, wa];
+    const s = reduce(initialState(c, "wa_2025"), { type: "goTo", id: "rs_uruguai_2026" }, c);
+    expect(s.basemap).toBe("satellite");
+  });
+});

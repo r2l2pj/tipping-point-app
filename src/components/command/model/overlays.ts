@@ -1,5 +1,6 @@
 import type { ManifestLayer } from "@/lib/types";
 import type { ProbHorizon } from "@/lib/layers";
+import type { Basemap } from "./basemap";
 // Pure part of the additive `options` argument of useMapLayers. Without
 // options the result equals what the hook computed before (tab plan, or
 // showFlood when there is no tab), so the old screen is not affected.
@@ -27,6 +28,10 @@ export interface MapLayerOptions {
   // When given, this TPI frame is painted instead of the one picked for the
   // date (replay "forecast issued this day": the GFS frame for D+k).
   frameLayer?: ManifestLayer;
+  // L52: which basemap paints ('dark' default). `imageryDate` (YYYY-MM-DD)
+  // dates the satellite tiles — the case reference day; undefined = latest.
+  basemap?: Basemap;
+  imageryDate?: string;
 }
 
 export interface OverlayVisibility {

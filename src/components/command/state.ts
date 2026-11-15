@@ -3,6 +3,7 @@ import { manifestRaster } from "@/lib/layers";
 // on a case change. Now / Replay is derived from the active case and the view
 // (command / public) from the address; neither is stored here.
 import { canonicalCaseId } from "@/lib/contract";
+import { parseBasemap, type Basemap } from "./model/basemap";
 import { probHorizonsAvailable, type ProbHorizon } from "@/lib/layers";
 import {
   confirmRadarLayers,
@@ -40,6 +41,9 @@ export interface ScreenState {
   compareOpen: ComparePair["kind"] | null;
   compareInit?: { before?: string; after?: string; pol?: "HH" | "HV" }; // deep link, first open only
   fitTo?: [number, number, number, number]; // deep link ?fit=<layer>: initial map bounds
+  // L52: Dark / Satellite / Streets chip on the map. The featured replay
+  // opens on Satellite (case default); a ?basemap= link wins.
+  basemap: Basemap;
   autoTpi?: boolean; // Now: TPI stood in for the ML layer on a forecast day
   detailsOpen: boolean;
   layersOpen: boolean;
@@ -71,6 +75,7 @@ export type Action =
   | { type: "toggleLayersOpen" }
   | { type: "toggleList" }
   | { type: "toggleTable" }
+  | { type: "setBasemap"; basemap: Basemap }
   | { type: "escape" }
   // "Start here" (judge report #6): one stop of the guided tour.
   | { type: "goTo"; id: string; day?: number | string; hazard?: Hazard; lead?: IssueLead; layer?: LayerId; compare?: ComparePair["kind"] };
@@ -144,7 +149,7 @@ export function featuredFirst<T extends CcBundle>(cases: readonly T[]): T[] {
 // The screen opens on Now when a live case is loaded, else on the first case.
 // `initialCase` (the `?case=<id|alias>` deep link of the old screen) opens
 // that case when it is loaded.
-export interface DeepLink { lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string }
+export interface DeepLink { lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string; basemap?: string }
 
 // ?layers=imerg,hand5 → layer ids ("hand5"/"hand" = low ground); ?fit=<key>
 // → the map opens on that layer's bounds (the upstream basin for imerg).
@@ -191,6 +196,7 @@ export function initialState(
       ? (linkLayers(first, link, hazard) ?? withRadarDefault(first, keepAvailable(first, Number(link.lead) > 0 ? ["tpi"] : defaultLayersFor(first, hazard), hazard), hazard))
       : [],
     fitTo: first ? linkFit(first, link) : undefined,
+    basemap: parseBasemap(link.basemap) ?? (first && isFeatured(first) ? "satellite" : "dark"),
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
     issueLead: [1, 2, 3].includes(Number(link.lead)) && first && layerAvailable(first, "tpi", hazard) ? Number(link.lead) as 1 | 2 | 3 : 0,
@@ -229,6 +235,9 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
       hazard
     ),
     layerNotice: null,
+    // A case change resets the basemap to the case default (the featured
+    // replay opens on Satellite).
+    basemap: isFeatured(bundle) ? "satellite" : "dark",
     // The horizon the new case ships first (display order), else the default.
     probHorizon: probHorizonsAvailable(bundle.manifest?.layers)[0] ?? "24h",
     issueLead: 0,
@@ -378,6 +387,8 @@ export function reduce(
       return { ...state, listExpanded: !state.listExpanded };
     case "toggleTable":
       return { ...state, chartAsTable: !state.chartAsTable };
+    case "setBasemap":
+      return { ...state, basemap: action.basemap };
     case "escape":
       if (state.compareOpen) return { ...state, compareOpen: null };
       return state.selectedArea === null
