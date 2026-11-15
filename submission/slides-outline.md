@@ -21,6 +21,7 @@
 - Three missions, three layers: GPM IMERG (rain vs climatology), SMAP (soil saturation), NASADEM (slope + drainage height)
 - Classes: Low <0.2 · Moderate · High · Critical >0.6 — Critical = the tipping point
 - Same logic family as NASA's LHASA landslide model
+- Alongside the index, a learned XGBoost model gives P(landslide trigger in 24/48/72 h); TPI stays the headline
 - *Visual:* formula `TPI = (R·S·T)^(1/3)` with three icons (cloud/satellite, soil, terrain) feeding one gauge
 
 ## Slide 4 — The demo
@@ -28,8 +29,8 @@
 - **TIPPING POINT REACHED** banner + ranked priority zones (TPI ≥ 0.60)
 - Side tabs ALERT / RADAR / Did we get it right? / IMPACT; "Confirm with NISAR radar →"
 - Public feed `/alerts`: Civil-Defense-style alert cards
-- Replay runs on a declared **perfect forecast** (observed IMERG as D+1..D+3); forecast frames carry a source label
-- *Visual:* 2–3 real screenshots — banner over the heated Taquari valley map, RADAR before/after swipe (needs U5), /alerts card
+- Replay D+1..D+3 uses the real **NOAA GFS** forecast issued on each day, labelled "forecast: NOAA GFS (issued <date>)"; live mode uses NASA GEOS-FP
+- *Visual:* 2–3 real screenshots — banner over the heated Taquari valley map, RADAR NISAR before/after swipe, /alerts card
 
 ## Slide 5 — Did it work?
 - WA Dec 2025 replay vs NISAR GCOV reference: **IoU X, F1 X** over **X km²** confirmed flooded
@@ -42,14 +43,15 @@
 ## Slide 6 — Impact + honest limitations
 - Impact numbers the demo reports: 229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, May 2, 2024)
 - Limitations: thresholds calibrated on a single event; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days
-- Demo is a replay, not live ops; forecast in replay is a declared "perfect forecast"
+- Demo is a replay, not live ops; the replay forecast is NOAA GFS as issued at the time (our only non-NASA input) — perfect-forecast frames appear only as a labelled upper bound
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event
 - *Visual:* IMPACT tab cards + a short "What we don't claim" callout box
 
 ## Slide 7 — Roadmap + credits
 - Roadmap: auto-pipeline on each IMERG update → NISAR confirmation trigger per pass → threshold calibration on the landslide catalog → WhatsApp/e-mail alerts → OPERA water integration
 - Global coverage at release — one config edit
-- NASA inputs only: GPM IMERG · SMAP L4 · NASADEM · NISAR GCOV · HLS · VIIRS Black Marble · GPW · GEOS-FP · OPERA DSWx
+- NASA inputs: GPM IMERG · SMAP L4 · NASADEM · NISAR GCOV · HLS · VIIRS Black Marble · GPW · GEOS-FP · OPERA DSWx
+- One declared non-NASA input: NOAA GFS forecasts, replay D+1..D+3 only
 - MERIT Hydro used as a validation reference only, not a NASA input
 - Repo + live app links; built with AI assistants under human review
 - *Visual:* mission-logo strip / data-source grid + QR code to the repo

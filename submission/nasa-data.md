@@ -2,7 +2,7 @@
 
 > **DRAFT — pending approval.**
 
-Every model input is a NASA mission dataset.
+Every model input is a NASA mission dataset, with one declared exception: NOAA GFS forecasts for the replay forecast (see Forecast).
 
 ## Index inputs (Rain · Soil · Terrain)
 
@@ -22,7 +22,8 @@ Every model input is a NASA mission dataset.
 
 ## Forecast
 
-- **GEOS-FP (GMAO)** — forecast rain for live mode (replay cases run on a declared perfect forecast)
+- **GEOS-FP (GMAO)** — forecast rain for live mode
+- **NOAA GFS 0.25 (non-NASA, declared)** — historical forecasts issued on each replay day, used ONLY as the replay D+1..D+3 forecast and labelled "forecast: NOAA GFS (issued <date>)". No NASA archived forecast was reachable for Apr–May 2024 / Dec 2025 (L22). Perfect-forecast frames (observed IMERG as D+1..D+3) are kept only as a labelled upper bound.
 
 ## Validation references
 
