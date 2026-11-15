@@ -394,7 +394,9 @@ export function resolveAsset(
 
 export const FORECAST_SOURCE_LABELS: Record<string, string> = {
   "perfect-forecast": "perfect forecast", // replay cases
-  "geos-fp": "GEOS-FP", // live now/ runs
+  // Live runs before L30 (2026-11-15). The only forecast input now is NOAA
+  // GFS; the old source is not named on screen.
+  "geos-fp": "older forecast run",
   "noaa-gfs": "NOAA GFS", // L22 issued-forecast replay frames
 };
 

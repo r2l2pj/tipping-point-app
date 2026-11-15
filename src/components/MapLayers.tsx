@@ -620,7 +620,7 @@ export function useMapLayers(
 
     // Forecast label — pinned to the top edge of the frame on any forecast
     // day (v4: previsão sempre rotulada). The text names the
-    // forecast source: "previsão perfeita" on replay, "GEOS-FP" live.
+    // forecast source: "previsão perfeita" on replay, "NOAA GFS" live.
     if (!fcastMarker.current) {
       const el = document.createElement("div");
       el.className = "tp-forecast-label";

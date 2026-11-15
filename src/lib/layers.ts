@@ -76,7 +76,7 @@ export function pickTpiFrame(
 
 // Forecast chip text. A GFS frame names its issue day —
 // "forecast · NOAA GFS (issued Apr 22, 2024)"; otherwise the case/run
-// source: "forecast · perfect" (replay upper bound), "forecast · GEOS-FP"
+// source: "forecast · perfect" (replay upper bound), "forecast · NOAA GFS"
 // (live).
 export function forecastChip(
   frame: ManifestLayer | undefined,

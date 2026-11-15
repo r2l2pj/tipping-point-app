@@ -110,7 +110,8 @@ describe("status chip and contract values (S1, L9)", () => {
       summary: { forecast_source: "geos-fp" },
       series: series([0.2, 0.9], ["observed", "forecast"]),
     }), { dayIndex: 1 });
-    expect(live).toContain("forecast · GEOS-FP");
+    expect(live).toContain("forecast · older forecast run");
+    expect(live).not.toContain("GEOS");
   });
 });
 
@@ -355,7 +356,7 @@ describe("response-first section order (L27)", () => {
     expect(at("Model probabilities (24 h–14 d) are in the Layers column.")).toBeGreaterThan(at("Rain, Soil Moisture and TPI"));
     // Replay check and the source ages keep their place at the end.
     expect(at("Replay check")).toBeGreaterThan(at("Prediction"));
-    expect(at("Data sources (NASA)")).toBeGreaterThan(at("Replay check"));
+    expect(at("Data sources - dates in BRT")).toBeGreaterThan(at("Replay check"));
   });
 
   test("the sections belong to the command view only", () => {

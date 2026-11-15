@@ -93,7 +93,7 @@ export function defaultStepIndex(steps: Step[]): number {
 export const NO_STEPS_TEXT = "No frames published yet";
 
 // Forecast source named by the data ("perfect forecast" in Replay,
-// "GEOS-FP" in Now). Never a fixed name.
+// "NOAA GFS" in Now). Never a fixed name.
 export const forecastSource = (bundle: CcBundle): string | undefined =>
   forecastSourceLabel(
     bundle.manifest?.forecast_source ?? bundle.summary?.forecast_source ??

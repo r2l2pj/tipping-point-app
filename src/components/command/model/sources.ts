@@ -37,11 +37,8 @@ export function sourceRows(bundle: CcBundle, nowMs?: number): SourceRow[] {
     row("smap", "SMAP soil moisture", "smap"),
   ];
   if (live) {
-    // L30: the live forecast is NOAA GFS (data_dates.gfs_issued). Runs
-    // from before the switch carry geos_fp_issued and keep their name.
-    rows.push(typeof dd.gfs_issued !== "string" && typeof dd.geos_fp_issued === "string"
-      ? row("geos", "GEOS-FP forecast", "geos_fp_issued")
-      : row("gfs", "NOAA GFS forecast", "gfs_issued"));
+    // L30: the live forecast is NOAA GFS (data_dates.gfs_issued).
+    rows.push(row("gfs", "NOAA GFS forecast", "gfs_issued"));
   } else {
     // L22: the map's forecast frames are an issued NOAA GFS run; perfect
     // forecast (copied observation) appears only as a labelled upper bound.
