@@ -590,9 +590,11 @@ export const getMlArtifacts = async (): Promise<{
 
 // A small per-case JSON product (path relative to the data root, as the
 // manifest's products map gives it), e.g. wa_2025/nisar_timeseries.json.
-export const getDataJson = async (p: string): Promise<unknown> => {
+// `dir`: the case folder a case-relative path resolves under ("now" for
+// the live manifest's "response/…" products).
+export const getDataJson = async (p: string, dir = ""): Promise<unknown> => {
   await requestTime();
-  return readData<unknown>(newCtx(), "", p);
+  return readData<unknown>(newCtx(), dir, p);
 };
 
 // One case = one entry in the root manifest's `cases` map (canonical

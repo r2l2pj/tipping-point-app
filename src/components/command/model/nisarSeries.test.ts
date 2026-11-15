@@ -3,7 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 import NisarSeriesChart from "../NisarSeriesChart";
-import { bundle, manifest } from "./fixtures";
+import { bundle, liveBundle, manifest } from "./fixtures";
+import { radarCompare } from "./radar";
 import { nisarSeriesView, slimNisarSeries } from "./nisarSeries";
 import { radarCard } from "./radar";
 
@@ -54,5 +55,25 @@ describe("NISAR time series (L42)", () => {
     expect(html.match(/<img /g)).toHaveLength(3);
     expect(radarCard(bundle()).series).toBeUndefined();
     expect(slimNisarSeries({ dates: ["x"] })).toBeUndefined();
+  });
+});
+
+describe("NISAR on the live Southern Brazil card (worker nisar-now-ts)", () => {
+  test("series frames resolve under now/; HH | HV swipe from the now manifest layers", () => {
+    const live = liveBundle({
+      nisarSeries: slimNisarSeries({ ...raw, frames: [{ date: "2026-10-25", png: "response/png/nisar_pre.png" }, { date: "2026-11-06", png: "now/response/png/nisar_post.png" }] }),
+      manifest: manifest([
+        { id: "nisar_pre", date: "2026-10-25", png: "response/png/nisar_pre.png", bounds: [-58, -34, -48, -22.5] },
+        { id: "nisar_post", date: "2026-11-06", png: "response/png/nisar_post.png", bounds: [-58, -34, -48, -22.5] },
+        { id: "nisar_hv_pre", date: "2026-10-25", png: "response/png/nisar_hv_pre.png", bounds: [-58, -34, -48, -22.5] },
+        { id: "nisar_hv_post", date: "2026-11-06", png: "response/png/nisar_hv_post.png", bounds: [-58, -34, -48, -22.5] },
+      ], { event: undefined }), // the real now/manifest.json has no `event`
+    } as never);
+    const v = nisarSeriesView(live)!;
+    expect(v.frames.map((f) => f.url)).toEqual(["/data/now/response/png/nisar_pre.png", "/data/now/response/png/nisar_post.png"]);
+    const p = radarCompare(live).pair!;
+    expect(p.before.url).toBe("/data/now/response/png/nisar_pre.png");
+    expect(p.hv!.after.label).toBe("NISAR radar after (HV) — Nov 6, 2026");
+    expect(radarCard(live).series).toBeDefined();
   });
 });

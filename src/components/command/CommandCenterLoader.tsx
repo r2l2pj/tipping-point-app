@@ -208,7 +208,9 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
   // L42: NISAR time series product, only where the case lists it.
   const series = await Promise.all(eventBundles.map((b) => {
     const p = (b?.products as Record<string, unknown> | undefined)?.nisar_timeseries;
-    return typeof p === "string" ? getDataJson(p).then(slimNisarSeries).catch(() => undefined) : Promise.resolve(undefined);
+    return typeof p === "string" && b
+      ? getDataJson(p, canonicalCaseId(b.id)).then(slimNisarSeries).catch(() => undefined)
+      : Promise.resolve(undefined);
   }));
   const cases: CcBundle[] = [];
   eventBundles.forEach((bundle, i) => {
@@ -217,8 +219,15 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
   // Run time of the live case: the `updated_at` of the live node itself. The
   // loader falls back to the root manifest time, which is the time of the
   // data snapshot and would make an empty live seed read as a fresh run.
+  // L42: the live NISAR time series (worker nisar-now-ts), same contract as
+  // WA; listed in products or at the agreed path, hidden when absent.
+  const nowSeriesPath = (now?.products as Record<string, unknown> | undefined)?.nisar_timeseries;
+  const nowSeries = now?.manifest
+    ? await getDataJson(typeof nowSeriesPath === "string" ? nowSeriesPath : "response/nisar_timeseries.json", "now")
+        .then(slimNisarSeries).catch(() => undefined)
+    : undefined;
   const live: CcBundle | null = now?.manifest
-    ? { ...now, updated_at: liveRunTime(root), nullReasons: nullReasons(root, "now") }
+    ? { ...now, updated_at: liveRunTime(root), nullReasons: nullReasons(root, "now"), ...(nowSeries ? { nisarSeries: nowSeries } : {}) }
     : null;
   if (live) cases.push(live);
 
