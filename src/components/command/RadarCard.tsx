@@ -42,6 +42,18 @@ export default function RadarCard({
   const noCandidates = hideMissing && isMissingText(radar.candidates.value) && !radar.candidates.lines?.length;
   const primary = "inline-flex items-center gap-1.5 rounded-lg bg-cc-accent px-2.5 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50";
   const secondary = "inline-flex items-center rounded-lg border border-cc-line-strong bg-cc-surface px-2.5 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60";
+  // The value is drawn above its label (order-first); the markup keeps the
+  // term before its value.
+  const cell = "flex flex-col rounded-lg border border-cc-line bg-cc-well px-2.5 py-1.5";
+  const big = "text-[17px] font-semibold leading-tight tabular-nums";
+  const lines = radar.candidates.lines ?? [];
+  const caveats = lines.filter((l) => l.startsWith("Caveat:"));
+  const notes = [
+    ...lines.filter((l) => !l.startsWith("Caveat:")),
+    radar.note,
+    noCandidates ? undefined : radar.candidates.note,
+    radar.limitation,
+  ].filter((l): l is string => !!l);
   return (
     <section aria-label="Radar check" className="rounded-[10px] border border-cc-line px-3 py-2">
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
@@ -59,39 +71,64 @@ export default function RadarCard({
         </div>
       </div>
 
-      <dl className="mt-2 grid grid-cols-2 gap-2 text-[13px]">
+      {/* The figures, one per cell: value first, then what it measures. */}
+      <dl className="mt-2 grid grid-cols-2 gap-2" data-radar-stats>
         {radar.flooded && (
-          <div>
-            <dt className="text-xs text-cc-muted">{radar.flooded.label}</dt>
-            <dd className="font-semibold">{radar.flooded.value}</dd>
-            {radar.flooded.swath && <dd className="text-xs text-cc-faint">{radar.flooded.swath}</dd>}
+          <div className={cell}>
+            <dt className="text-xs leading-tight text-cc-muted">{radar.flooded.label}</dt>
+            <dd className={`${big} order-first`}>{radar.flooded.value}</dd>
+            {radar.flooded.swath && <dd className="mt-0.5 text-[11px] leading-tight text-cc-faint">{radar.flooded.swath}</dd>}
           </div>
         )}
         {radar.people && (
-          <div>
-            <dt className="text-xs text-cc-muted">{radar.people.label}</dt>
-            <dd className="font-semibold">{radar.people.value}</dd>
+          <div className={cell}>
+            <dt className="text-xs leading-tight text-cc-muted">{radar.people.label}</dt>
+            <dd className={`${big} order-first`}>{radar.people.value}</dd>
           </div>
         )}
         {!noCandidates && (
-          <div>
-            <dt className="text-xs text-cc-muted">{radar.candidates.label}</dt>
-            <dd className="font-semibold">{radar.candidates.value}</dd>
+          <div className={cell}>
+            <dt className="text-xs leading-tight text-cc-muted">{radar.candidates.label}</dt>
+            <dd className={`${big} order-first`}>{radar.candidates.value}</dd>
           </div>
         )}
+        {radar.others?.map((o) => (
+          <div key={o.label} className={cell}>
+            <dt className="text-xs leading-tight text-cc-muted">{o.label}</dt>
+            <dd className="order-first text-[15px] font-semibold leading-tight">{o.value}</dd>
+          </div>
+        ))}
       </dl>
-      {/* Scar candidates: figures, lag and caveat right under the count. */}
-      {radar.candidates.lines?.map((l) => (
-        <p key={l} className={`mt-1 text-xs ${l.startsWith("Caveat:") ? "text-cc-warn" : "text-cc-muted"}`}>{l}</p>
-      ))}
-      {radar.others?.map((o) => (
-        <p key={o.label} className="mt-1 text-[13px]">
-          <span className="text-xs text-cc-muted">{o.label}:</span> <span className="font-semibold">{o.value}</span>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {radar.pair && (
+          <button type="button" onClick={onConfirm} disabled={!radar.canShowOnMap} className={primary}>
+            {radar.nisar ? "Check with NISAR radar" : "Check with radar"} <Icon d={ICON.arrowRight} size={14} strokeWidth={2.2} />
+          </button>
+        )}
+        <button type="button" onClick={onShowFlood} aria-pressed={floodOn} disabled={!radar.canShowOnMap} className={secondary}>
+          {floodOn ? "Hide on map" : "Show on map"}
+        </button>
+        <button type="button" onClick={onCompare} aria-pressed={compareOpen} disabled={!radar.compare.pair} className={secondary}>
+          Before / after
+        </button>
+        {!radar.compare.pair && radar.compare.reason && (
+          <span className="text-xs italic text-cc-faint">Before / after: {radar.compare.reason}</span>
+        )}
+      </div>
+
+      {/* A caveat stays in view; the method notes fold away. */}
+      {caveats.map((l) => (
+        <p key={l} className="mt-1.5 flex gap-1.5 rounded-md bg-cc-warn-soft px-2 py-1 text-xs text-cc-warn">
+          <Icon d={ICON.warn} size={14} className="mt-px shrink-0" /> <span>{l}</span>
         </p>
       ))}
-      {radar.note && <p className="mt-1 text-xs text-cc-muted">{radar.note}</p>}
-      {!noCandidates && <p className="mt-1 text-xs text-cc-faint">{radar.candidates.note}</p>}
-      {radar.limitation && <p className="mt-1 text-xs text-cc-muted">{radar.limitation}</p>}
+      <details className="mt-1.5 text-xs" data-radar-notes>
+        <summary className="cursor-pointer font-semibold">About these numbers</summary>
+        <ul className="m-0 mt-1 list-disc pl-4 text-cc-muted">
+          {notes.map((l) => <li key={l}>{l}</li>)}
+        </ul>
+      </details>
 
       {radar.pair && (
         <div className="mt-1.5 rounded-md bg-cc-well px-2 py-1 text-xs" data-radar-sees>
@@ -142,40 +179,23 @@ export default function RadarCard({
       )}
 
       {radar.passes.length > 0 && (
-        <div className="mt-2 border-t border-cc-rule pt-1.5">
-          <p className="text-xs font-semibold">Recent NISAR passes over the area</p>
-          <ul>
+        <details className="mt-1.5 text-xs" data-radar-passes>
+          <summary className="cursor-pointer font-semibold">Recent NISAR passes over the area ({radar.passCount})</summary>
+          <ul className="m-0 mt-1 list-none p-0">
             {radar.passes.slice(0, PASSES_SHOWN).map((p, i) => (
-              <li key={i} className="flex justify-between text-xs text-cc-muted">
-                <span>{fmtBrt(p.date)}{p.track ? ` · track ${p.track}` : ""}</span>
+              <li key={i} className="flex justify-between border-t border-cc-rule py-0.5 text-cc-muted first:border-t-0">
+                <span className="tabular-nums">{fmtBrt(p.date)}{p.track ? ` · track ${p.track}` : ""}</span>
                 {p.note && <span className="text-cc-faint">{p.note}</span>}
               </li>
             ))}
             {radar.passCount > PASSES_SHOWN && (
-              <li className="text-xs text-cc-faint">
+              <li className="text-cc-faint">
                 and {radar.passCount - PASSES_SHOWN} older passes
               </li>
             )}
           </ul>
-        </div>
+        </details>
       )}
-
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        {radar.pair && (
-          <button type="button" onClick={onConfirm} disabled={!radar.canShowOnMap} className={primary}>
-            {radar.nisar ? "Check with NISAR radar" : "Check with radar"} <Icon d={ICON.arrowRight} size={14} strokeWidth={2.2} />
-          </button>
-        )}
-        <button type="button" onClick={onShowFlood} aria-pressed={floodOn} disabled={!radar.canShowOnMap} className={secondary}>
-          {floodOn ? "Hide on map" : "Show on map"}
-        </button>
-        <button type="button" onClick={onCompare} aria-pressed={compareOpen} disabled={!radar.compare.pair} className={secondary}>
-          Before / after
-        </button>
-        {!radar.compare.pair && radar.compare.reason && (
-          <span className="text-xs italic text-cc-faint">Before / after: {radar.compare.reason}</span>
-        )}
-      </div>
     </section>
   );
 }

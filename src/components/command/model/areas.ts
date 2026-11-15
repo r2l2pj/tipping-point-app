@@ -1,5 +1,5 @@
-// Priority areas: the zone snapshot sorted by rank. Class, TPI and people
-// come from the data; nothing is recomputed here.
+// Priority areas: the zone snapshot, most severe first. Class, TPI and
+// people come from the data; only the order and the list number are set here.
 import { zoneLabelPoint } from "@/lib/layers";
 import { OBSERVED_CLASS, observedOnlyZone, tpiOnlyZone } from "@/lib/zones";
 import { classLabel, finite } from "./format";
@@ -7,9 +7,12 @@ import { nextLookText, nextPassOf } from "./nextPass";
 import type { CcBundle } from "./types";
 
 export interface PriorityArea {
+  // Position in the list, 1 = most severe. It is the number on the row and
+  // on the map pin, and the id of a selection.
   rank: number;
+  dataRank: number; // `rank` of the data file (the pipeline ranks by people)
   name: string;
-  label: string; // name, plus the rank when several zones share the name
+  label: string; // name, plus the list number when several zones share the name
   cls: string;
   tpi: number | null;
   hazard: string;
@@ -35,6 +38,13 @@ function peopleOk(p: Record<string, unknown>): boolean {
 }
 export const MAX_PINS = 10;
 
+// Order of the list: an observed flood first (it is on the ground already),
+// then the risk classes from Critical down. The data file ranks by people,
+// which put a High area above a Critical one and left the TPI column
+// jumping up and down the list.
+const SEVERITY: Record<string, number> = { [OBSERVED_CLASS]: 5, Critical: 4, High: 3, Moderate: 2, Low: 1 };
+export const severityOf = (cls: string): number => SEVERITY[cls] ?? 0;
+
 export function priorityAreas(bundle: CcBundle | undefined): PriorityArea[] {
   const features = bundle?.zones?.features ?? [];
   const rows = features
@@ -46,26 +56,35 @@ export function priorityAreas(bundle: CcBundle | undefined): PriorityArea[] {
     .sort((a, b) => (a.p.rank as number) - (b.p.rank as number));
   const count = new Map<string, number>();
   for (const { p } of rows) {
-    const name = String(p.name ?? "");
+    const name = String(p.name ?? "") || `Area ${p.rank}`;
     count.set(name, (count.get(name) ?? 0) + 1);
   }
-  return rows.map(({ p, at }) => {
-    const name = String(p.name ?? "") || `Area ${p.rank}`;
-    return {
-      rank: p.rank as number,
-      name,
-      label: (count.get(String(p.name ?? "")) ?? 0) > 1 ? `${name} #${p.rank}` : name,
-      // Seen only by satellite: an observation, never a risk class.
-      cls: observedOnlyZone(p) ? OBSERVED_CLASS : typeof p.class === "string" ? classLabel(p.class) : "",
-      tpi: observedOnlyZone(p) ? null : finite(p.tpi) ? p.tpi : null,
-      hazard: typeof p.hazard === "string" ? p.hazard : "",
-      areaKm2: finite(p.area_km2) ? p.area_km2 : null,
-      people: peopleOk(p) ? (p.people as number) : null,
-      ...(p.people != null && !peopleOk(p) ? { peopleInvalid: true } : {}),
-      ...(nextLookText(nextPassOf(p)) ? { nextLook: nextLookText(nextPassOf(p)) } : {}),
-      at,
-    };
-  });
+  const classOf = (p: Record<string, unknown>) =>
+    // Seen only by satellite: an observation, never a risk class.
+    observedOnlyZone(p) ? OBSERVED_CLASS : typeof p.class === "string" ? classLabel(p.class) : "";
+  const tpiOf = (p: Record<string, unknown>) =>
+    observedOnlyZone(p) ? null : finite(p.tpi) ? p.tpi : null;
+  return rows
+    .map(({ p, at }) => {
+      const name = String(p.name ?? "") || `Area ${p.rank}`;
+      return {
+        dataRank: p.rank as number,
+        name,
+        label: name,
+        cls: classOf(p),
+        tpi: tpiOf(p),
+        hazard: typeof p.hazard === "string" ? p.hazard : "",
+        areaKm2: finite(p.area_km2) ? p.area_km2 : null,
+        people: peopleOk(p) ? (p.people as number) : null,
+        ...(p.people != null && !peopleOk(p) ? { peopleInvalid: true } : {}),
+        ...(nextLookText(nextPassOf(p)) ? { nextLook: nextLookText(nextPassOf(p)) } : {}),
+        at,
+      };
+    })
+    // Class, then TPI, then the data rank (already ascending: the sort is stable).
+    .sort((a, b) => severityOf(b.cls) - severityOf(a.cls) || (b.tpi ?? -1) - (a.tpi ?? -1))
+    .map((a, i) => ({ rank: i + 1, ...a }))
+    .map((a) => ({ ...a, label: (count.get(a.name) ?? 0) > 1 ? `${a.name} #${a.rank}` : a.name }));
 }
 
 export const pinAreas = (areas: PriorityArea[]): PriorityArea[] =>

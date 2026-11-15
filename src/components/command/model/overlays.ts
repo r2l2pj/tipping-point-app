@@ -32,6 +32,9 @@ export interface MapLayerOptions {
   // dates the satellite tiles — the case reference day; undefined = latest.
   basemap?: Basemap;
   imageryDate?: string;
+  // Opacity (0 to 1) of the data rasters, set by the screen's opacity
+  // control so the basemap shows through. Without it: the fixed defaults.
+  opacity?: number;
 }
 
 export interface OverlayVisibility {

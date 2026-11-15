@@ -26,6 +26,7 @@ import { priorityAreas } from "./model/areas";
 import { availability, missingText } from "./model/availability";
 import { dataStatus, freshnessText } from "./model/dataStatus";
 import { classLabel, fmtKm2 } from "./model/format";
+import { CLASS_COLOR } from "./model/legend";
 import { layerRows, visibleLayerRows } from "./model/layerRegistry";
 import { caseDirOf, declared, effectiveBundle, productUrl, withLazy, zonesAreTrimmed } from "./model/lazy";
 import { forecastCompare } from "./model/forecastCompare";
@@ -274,7 +275,7 @@ export function CommandCenterView({
   const panelRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const insets = useInsets(stageRef, layersRef, panelRef, timelineRef);
-  const root = `cc-root flex min-h-screen flex-col min-[900px]:h-screen ${fontClass}`;
+  const root = `cc-root flex min-h-screen flex-col min-[900px]:h-dvh min-[900px]:overflow-hidden ${fontClass}`;
 
   if (!bundle || !radar) {
     return (
@@ -436,6 +437,8 @@ export function CommandCenterView({
             on: state.basemap === "satellite",
             toggle: () => dispatch({ type: "setBasemap", basemap: state.basemap === "satellite" ? "dark" : "satellite" }),
           }}
+          opacity={state.overlayOpacity}
+          onOpacity={(value) => dispatch({ type: "setOpacity", value })}
           className={`${drawer ? "max-[899px]:flex" : "max-[899px]:hidden"} ${state.layersOpen ? "min-[900px]:flex" : "min-[900px]:hidden"}`}
         />
 
@@ -473,10 +476,13 @@ export function CommandCenterView({
                   <h3 className="m-0 mb-1 text-[13px] font-semibold text-cc-muted">Who is affected</h3>
                   <Tiles area={areaTile} people={peopleT} />
                   {classesKm2.length > 0 && (
-                    <dl className="mt-1.5 grid grid-cols-2 gap-x-4 text-xs text-cc-muted" aria-label="Area by class">
+                    <dl className="mt-2 grid grid-cols-2 gap-x-4 text-[13px]" aria-label="Area by class">
                       {classesKm2.map(([cls, km2]) => (
-                        <div key={cls} className="flex justify-between border-t border-cc-rule py-0.5">
-                          <dt>class {classLabel(cls)}</dt><dd>{fmtKm2(km2)}</dd>
+                        <div key={cls} className="flex items-center gap-2 border-t border-cc-rule py-1">
+                          <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-[3px] border border-black/15"
+                            style={{ background: CLASS_COLOR[classLabel(cls)] ?? "var(--cc-line-strong)" }} />
+                          <dt className="grow text-cc-muted">class {classLabel(cls)}</dt>
+                          <dd className="font-semibold tabular-nums">{fmtKm2(km2)}</dd>
                         </div>
                       ))}
                     </dl>

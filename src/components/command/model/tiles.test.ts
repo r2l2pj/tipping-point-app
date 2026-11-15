@@ -10,7 +10,19 @@ describe("priority areas", () => {
     { type: "Feature", properties: { name: "no rank" }, geometry: { type: "Point", coordinates: [0, 0] } },
   ]) });
 
-  test("sorted by rank; the class comes from the data", () => {
+  test("most severe first: observed flood, then class, then TPI; numbered in that order", () => {
+    const mixed = priorityAreas(bundle({ zones: zones([
+      zone(1, { name: "A", class: "High", tpi: 0.5 }),
+      zone(2, { name: "B", class: "Critical", tpi: 0.7 }),
+      zone(3, { name: "C", class: "Critical", tpi: 0.9 }),
+      zone(4, { name: "D", class: "High", tpi: 0.5 }),
+    ]) }));
+    expect(mixed.map((a) => a.name)).toEqual(["C", "B", "A", "D"]);
+    expect(mixed.map((a) => a.rank)).toEqual([1, 2, 3, 4]);
+    expect(mixed.map((a) => a.dataRank)).toEqual([3, 2, 1, 4]);
+  });
+
+  test("equal severity keeps the rank of the data; the class comes from the data", () => {
     const areas = priorityAreas(b);
     expect(areas.map((a) => a.rank)).toEqual([1, 2, 3]);
     expect(areas[0].cls).toBe("Critical");

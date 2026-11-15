@@ -17,6 +17,7 @@ import { classRows, HATCH_SWATCH, layerLegendRows } from "./model/legend";
 import { fmtDataDate } from "./model/format";
 import { caseHasHazard } from "./model/steps";
 import { HAZARD_LABEL, type CcBundle, type Hazard } from "./model/types";
+import { OPACITY_DEFAULT, OPACITY_MIN } from "./state";
 import { Icon, ICON } from "./ui";
 import { activeView, viewLayers, VIEWS, type ViewId } from "./model/views";
 
@@ -42,6 +43,8 @@ export default function LayersColumn({
   onClose,
   onView,
   satellite,
+  opacity = OPACITY_DEFAULT,
+  onOpacity,
   className = "",
 }: {
   bundle: CcBundle;
@@ -58,6 +61,10 @@ export default function LayersColumn({
   onView?: (v: ViewId) => void;
   // U3 basemap: the 'Satellite' view (absent until the basemap switcher exists).
   satellite?: { on: boolean; toggle: () => void };
+  // Opacity of the data rasters (0 to 1) and its control; without the
+  // handler the control is not drawn.
+  opacity?: number;
+  onOpacity?: (value: number) => void;
   className?: string;
 }) {
   // Collapsing hides the rows only; the legend stays visible (rule 3).
@@ -87,7 +94,7 @@ export default function LayersColumn({
       </div>
 
       {open && (
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pr-1">
           {/* L52 U1: big views first, one tap each. */}
           {onView && views.length > 0 && (
             <div role="radiogroup" aria-label="Map view" className="mt-1 flex flex-col gap-1.5 border-t border-cc-rule pt-2.5" data-views>
@@ -128,6 +135,26 @@ export default function LayersColumn({
           </div>
 
           <Legend bundle={bundle} layers={layers} hazard={hazard} stepDate={stepDate} probHorizon={probHorizon} className="mt-2.5 shrink-0" />
+
+          {onOpacity && (
+            <label className="mt-1 block border-t border-cc-rule pb-1 pt-3 text-[13px]" data-opacity>
+              <span className="flex items-baseline justify-between">
+                <span className="text-sm font-semibold">Layer opacity</span>
+                <span className="tabular-nums text-cc-muted">{Math.round(opacity * 100)}%</span>
+              </span>
+              <input
+                type="range"
+                min={OPACITY_MIN * 100}
+                max={100}
+                step={5}
+                value={Math.round(opacity * 100)}
+                onChange={(e) => onOpacity(Number(e.target.value) / 100)}
+                aria-valuetext={`${Math.round(opacity * 100)} percent`}
+                className="mt-1 block w-full accent-cc-accent"
+              />
+              <span className="block text-xs text-cc-faint">Lower it to see the map under the data.</span>
+            </label>
+          )}
 
           <details className="mt-2 border-t border-cc-rule pt-1.5" data-more-layers>
             <summary className="cursor-pointer py-1 text-sm font-semibold">More layers (advanced)</summary>
@@ -241,7 +268,7 @@ export function Legend({
     <div className={className} data-legend={compact ? "compact" : "full"}>
       {/* The TPI classes only when the TPI is on (Now's ML view has its own
           legend row; two scales on screen contradict each other). */}
-      {tpiOn && <div className={`mb-1.5 font-semibold ${compact ? "text-xs" : "text-sm"}`}>TPI - {HAZARD_LABEL[hazard]} risk class</div>}
+      {tpiOn && <div className={`mb-1.5 font-semibold ${compact ? "text-xs" : "text-sm"}`}>{legendTitle(hazard, compact)}</div>}
       <div className={`flex flex-col gap-1 ${compact ? "text-xs" : "text-[13px]"}`}>
         {tpiOn && classRows(bundle).map((c) => (
           <span key={c.key} className="inline-flex items-center gap-2.5">
@@ -273,6 +300,13 @@ export function Legend({
     </div>
   );
 }
+
+// "TPI" is the Tipping Point Index: the full legend spells it out once, and
+// never says "TPI index". The compact legend on the map keeps the short form.
+export const legendTitle = (hazard: Hazard, compact = false) =>
+  compact
+    ? `TPI · ${HAZARD_LABEL[hazard]} risk class`
+    : `Tipping Point Index (TPI) · ${HAZARD_LABEL[hazard]} risk class`;
 
 export const legendSource = (stepDate?: string) =>
   `TPI 0–1 from NASA GPM IMERG rain, SMAP soil moisture and NASADEM terrain${stepDate ? ` · ${fmtDataDate(stepDate)}` : ""}`;

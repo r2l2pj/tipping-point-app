@@ -109,10 +109,13 @@ export default function StartHere({ cases, dispatch }: { cases: readonly CcBundl
       <ol className="m-0 mt-1 flex list-none flex-col gap-1 p-0">
         {stops.map((s) => (
           <li key={s.key}>
-            <button type="button" onClick={() => dispatch(s.action)} data-tour={s.key}
+            <button type="button" onClick={() => dispatch(s.action)} data-tour={s.key} title={s.what}
               className={`w-full rounded-md border bg-cc-surface text-left hover:border-cc-accent ${s.primary ? "border-2 border-cc-accent px-2.5 py-2" : "border-cc-line px-2 py-1"}`}>
               <span className={`block font-semibold ${s.primary ? "text-[15px]" : "text-[13px]"}`}>{s.title}</span>
-              <span className="block text-cc-muted">{s.what}</span>
+              {/* Only the main stop spells out its line; the others keep it as a tooltip. */}
+              {s.primary
+                ? <span className="block text-cc-muted">{s.what}</span>
+                : <span className="sr-only">{s.what}</span>}
             </button>
           </li>
         ))}

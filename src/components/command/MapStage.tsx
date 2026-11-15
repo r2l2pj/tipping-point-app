@@ -111,8 +111,9 @@ export default function MapStage({
         bundle.mode === "live"
           ? undefined
           : (bundle.series?.reference_date ?? bundle.reference_date)?.slice(0, 10),
+      opacity: state.overlayOpacity,
     }),
-    [step?.date, state.layers, state.probHorizon, issued, state.basemap, bundle]
+    [step?.date, state.layers, state.probHorizon, issued, state.basemap, state.overlayOpacity, bundle]
   );
   useMapLayers(map, bundle, state.dayIndex, layerState, false, undefined, options);
 

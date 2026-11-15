@@ -1,7 +1,7 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
 import { bundle, frame, liveBundle, manifest, point, series, zones } from "./model/fixtures";
-import { caseHazard, initialState, linkParams, reduce, type Action, type ScreenState, FEATURED_BASEMAP } from "./state";
+import { caseHazard, initialState, linkParams, OPACITY_DEFAULT, OPACITY_MIN, reduce, type Action, type ScreenState, FEATURED_BASEMAP } from "./state";
 import { zone } from "./model/fixtures";
 import { layerRows } from "./model/layerRegistry";
 import { statusChip } from "./model/status";
@@ -345,7 +345,7 @@ describe("layers", () => {
   test("a third layer turns off the oldest and names it", () => {
     const s = run(start, { type: "toggleLayer", id: "imerg" }, { type: "toggleLayer", id: "flood" });
     expect(s.layers).toEqual(["imerg", "flood"]);
-    expect(s.layerNotice).toBe("TPI index turned off to show Flood");
+    expect(s.layerNotice).toBe("TPI turned off to show Flood");
   });
 
   test("a row without data cannot be turned on", () => {
@@ -477,5 +477,18 @@ describe("basemap (L52)", () => {
     const c = [uy, wa];
     const s = reduce(initialState(c, "wa_2025"), { type: "goTo", id: "rs_uruguai_2026" }, c);
     expect(s.basemap).toBe(FEATURED_BASEMAP);
+  });
+});
+
+describe("layer opacity", () => {
+  test("opens see-through and stays inside its range", () => {
+    const cases = [bundle()];
+    const s = initialState(cases);
+    expect(s.overlayOpacity).toBe(OPACITY_DEFAULT);
+    expect(OPACITY_DEFAULT).toBeLessThan(0.9);
+    expect(reduce(s, { type: "setOpacity", value: 0.4 }, cases).overlayOpacity).toBe(0.4);
+    expect(reduce(s, { type: "setOpacity", value: 0 }, cases).overlayOpacity).toBe(OPACITY_MIN);
+    expect(reduce(s, { type: "setOpacity", value: 7 }, cases).overlayOpacity).toBe(1);
+    expect(reduce(s, { type: "setOpacity", value: NaN }, cases)).toBe(s);
   });
 });

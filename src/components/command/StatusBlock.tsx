@@ -25,15 +25,14 @@ export default function StatusBlock({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <h1 className="m-0 font-cc-display text-[21px] font-semibold leading-tight">Situation overview</h1>
-        <span data-chip={chip.kind} className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-[3px] text-xs font-bold tracking-[0.02em] ${TONE[chip.kind]}`}>
+        <span data-chip={chip.kind} className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-[3px] text-[13px] font-bold tracking-[0.02em] ${TONE[chip.kind]}`}>
           {chip.kind !== "below" && chip.kind !== "no-data" && <Icon d={ICON.warn} size={14} strokeWidth={2.2} />}
           {chip.label}
           {chip.source && <span className="font-semibold">· {chip.source}</span>}
         </span>
+        {stepLabel && <span className="text-xs text-cc-faint">Step: {stepLabel}</span>}
       </div>
-      {stepLabel && <p className="mt-0.5 text-xs text-cc-faint">Step: {stepLabel}</p>}
-      <p className="mt-1 text-[13px] text-cc-muted">{chip.sentence}</p>
+      <p className="mt-1.5 text-[13px] text-cc-ink">{chip.sentence}</p>
       {(status.kind === "last-saved" || status.kind === "stale") && (
         <p data-notice={status.kind} className="mt-1.5 flex items-center gap-1.5 rounded-md bg-cc-warn-soft px-2 py-1 text-xs font-semibold text-cc-warn">
           <Icon d={ICON.warn} size={14} /> {freshnessText(status)}
