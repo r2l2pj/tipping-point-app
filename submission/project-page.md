@@ -83,9 +83,9 @@ Other limits:
 - The live view covers Southern Brazil only.
 
 ### Try it (no login)
-- Live view: https://tipping-point-app.vercel.app · public alerts: https://tipping-point-app.vercel.app/alerts
-- Rio Grande do Sul replay: https://tipping-point-app.vercel.app/?case=rs_2024 (press Play)
-- Washington forecast as issued: https://tipping-point-app.vercel.app/?case=wa_2025&day=-7, then **Forecast issued this day: +3 d**
+- Live view: [APP URL] · public alerts: [APP URL]/alerts
+- Rio Grande do Sul replay: [APP URL]/?case=rs_2024 (press Play)
+- Washington forecast as issued: [APP URL]/?case=wa_2025&day=-7, then **Forecast issued this day: +3 d**
 - NISAR before/after: in the Washington replay, open the **NISAR radar** card and click **Before / after**
 - Code (open source): https://github.com/r2l2pj/tipping-point-app · https://github.com/r2l2pj/tipping-point-data
 
@@ -93,7 +93,7 @@ Other limits:
 We used AI coding assistants (Anthropic Claude via Claude Code, Cognition Devin, OpenAI Codex/GPT) under human direction. They helped write and review code and drafted documentation. The idea, method and data choices come from the team's own project document. Every source, threshold and number was reviewed by the team. The repository READMEs and the commit metadata acknowledge this. The project contains no AI-generated images, video or audio. `[if the VO is TTS, say so here]`
 
 ### Tools
-- **App:** TypeScript, Next.js 16, React 19, MapLibre GL, Recharts, Tailwind (Vercel).
+- **App:** TypeScript, Next.js 16, React 19, MapLibre GL, Recharts, Tailwind (self-hosted on a VPS).
 - **Pipeline:** Python with uv, earthaccess, asf_search, xarray/rioxarray, rasterio, h5py, geopandas, scikit-image, XGBoost/scikit-learn/SHAP, cfgrib/ecCodes.
 - **Platforms:** Google Earth Engine (one-off compute), GitHub Actions (3-hourly live job), Neon Postgres (alert subscribers).
 - **Team:** `[TEAM NAME]` — `[member names]` — Local Event `[EVENT]`.

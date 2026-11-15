@@ -18,7 +18,7 @@ Paste every field from `submission/FORM.md`, tick "Terms and Conditions" and "Co
    - Tagline: keep "Radar confirms", or "Radar sees through."
    - Calling public alerts "experimental, not official".
    - Rule-by-rule status: `COMPLIANCE.md`.
-7. Backup demo: `.crew/deck/slides.pdf` (7 slides), used only if the video slips. Optional: FortiGuard classification for the vercel.app URL.
+7. Backup demo: `.crew/deck/slides.pdf` (7 slides), used only if the video slips. Optional: check the [APP URL] host is not blocked by school or office filters.
 
 ## Only you can do (2)
 
@@ -27,7 +27,7 @@ Paste every field from `submission/FORM.md`, tick "Terms and Conditions" and "Co
 
 ## Check on your phone
 
-Open https://tipping-point-app.vercel.app on a real phone: the headless capture rendered the mobile Now map mostly black (likely a headless GPU artefact). Prod tour with screenshots: `.crew/review/morning/index.md`.
+Open [APP URL] on a real phone: the headless capture rendered the mobile Now map mostly black (likely a headless GPU artefact). Prod tour with screenshots: `.crew/review/morning/index.md`.
 
 ## Awaiting you (20) — reply "approve all", or edit by number
 
