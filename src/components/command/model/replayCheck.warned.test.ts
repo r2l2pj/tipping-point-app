@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { anchorShort, catalogHitsDetail, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
+import { anchorShort, catalogHitsDetail, handCheck, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
 
 // lead-analysis fallback bb125cf values (authored 0-100).
 describe("warned before the damage (lead-analysis)", () => {
@@ -122,5 +122,19 @@ describe("QA fresh eyes: catalog hits say 'observed, after the fact'", () => {
       .toBe("Share of the 16,027 mapped landslides where the index was Critical (0.60 or more) with observed rain at the event peak — measured after the fact, not a forecast.");
     expect(catalogHitsDetail({ landslide_hit: { n_points: 15 } })).toContain("Only 15 points: a fragile share.");
     expect(catalogHitsDetail({})).toContain("Share of the mapped landslides");
+  });
+});
+
+describe("HAND check + WA denominator (lead-analysis fallback 80505ff)", () => {
+  test("IoU 0-1 with r and radius; out of range or absent -> no card", () => {
+    expect(handCheck({ hand_validation: 0.26, hand_validation_iou: 0.2613, hand_validation_r: 0.8719, hand_validation_radius_m: 1000, hand_validation_definition: "IoU of HAND<5 m zones" }))
+      .toEqual({ line: "IoU 0.26 · r 0.87 · radius 1000 m", definition: "IoU of HAND<5 m zones" });
+    expect(handCheck({ hand_validation_iou: 26 })).toBeUndefined();
+    expect(handCheck({ hand_validation: 0.98 })).toBeUndefined();
+  });
+  test("WA warned row carries the denominator label", () => {
+    const r = warnedRow({ flood_warned_pct: 0, flood_warned_denominator_label: "27.9 km² of NISAR flood pixels on the ~12 m flood raster (the denominator); the canonical flooded_km2 27.99 km² is the polygon set within the swath",
+      flood_warned: { anchor_basis: "onset", confirmed_flood_km2: 27.921 } })!;
+    expect(r.detail).toContain("27.9 km² of NISAR flood pixels on the ~12 m flood raster (the denominator); the canonical flooded_km2 27.99 km² is the polygon set within the swath.");
   });
 });

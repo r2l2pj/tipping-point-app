@@ -279,6 +279,8 @@ export function warnedRow(m: M): CheckRow | undefined {
         ? `NOAA GFS forecast issued ${runText.join("; ")}${runText.length > 1 ? " — single runs vary" : ""}`
         : `TPI High or above in the NOAA GFS forecast issued 24 h before ${anchor}`) +
         (finite(obs) ? `; with observed rain instead: ${pct100(obs)}` : "") + ".",
+      // WA: why 27.9 km² here vs 27.99 km² flooded (lead-analysis).
+      typeof m[`${hz}_warned_denominator_label`] === "string" ? `${m[`${hz}_warned_denominator_label`]}.` : undefined,
       typeof obj.explanation === "string" ? obj.explanation : undefined,
     ].filter(Boolean).join(" ");
     return {
@@ -313,8 +315,24 @@ export interface LeadTimeBlock {
   note: string;
 }
 
+// Terrain check (lead-analysis fallback 80505ff): the NASADEM HAND proxy vs
+// MERIT Hydro (reference only), IoU 0-1 of the HAND < 5 m zones + Pearson r.
+// Reads hand_validation_iou (hand_validation sits in PCT_KEYS).
+export interface HandCheck { line: string; definition?: string }
+export function handCheck(m: M): HandCheck | undefined {
+  const iou = m.hand_validation_iou;
+  if (!finite(iou) || iou < 0 || iou > 1) return undefined;
+  const r = m.hand_validation_r;
+  const radius = m.hand_validation_radius_m;
+  return {
+    line: `IoU ${fmtScore(iou)}${finite(r) ? ` · r ${fmtScore(r)}` : ""}${finite(radius) ? ` · radius ${Math.round(radius)} m` : ""}`,
+    definition: typeof m.hand_validation_definition === "string" ? m.hand_validation_definition : undefined,
+  };
+}
+
 export interface Evidence {
   hasMetrics: boolean;
+  hand?: HandCheck;
   floodStats: Stat[];
   floodNote: string;
   // Secondary check: every OPERA water pixel incl. permanent water
@@ -490,10 +508,9 @@ export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
       stat(bundle, "Precision", "precision", fmtScore),
       stat(bundle, "Recall", "recall", fmtScore),
       stat(bundle, "Landslide catalog hits", "landslide_hit_pct", fmtPct),
-      // hand_validation is hidden (conductor, 2026-11-15): the published value
-      // is already a percent (0.98 %) and lead-analysis is re-checking what it
-      // measures (G2). Brought back once G2 settles the unit and meaning.
+      // HAND has its own card (handCheck): IoU 0-1, not a flood score.
     ],
+    hand: handCheck(m),
     floodNote:
       typeof m.validation_method === "string" && m.validation_method
         ? m.validation_method

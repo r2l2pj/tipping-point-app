@@ -118,6 +118,14 @@ describe("status chip and contract values (S1, L9)", () => {
 });
 
 describe("replay check and evidence details (S17, S18, S19)", () => {
+  test("HAND check card renders IoU, r, radius and the definition (0-1 IoU only)", () => {
+    const html = details(bundle({ metricsView: mv({ hand_validation_iou: 0.2613, hand_validation_r: 0.8719, hand_validation_radius_m: 1000, hand_validation_definition: "IoU of HAND<5 m zones" }) }));
+    expect(html).toContain("Terrain check: HAND proxy vs MERIT Hydro (reference only)");
+    expect(html).toContain("IoU 0.26 · r 0.87 · radius 1000 m");
+    expect(html).toContain("IoU of HAND&lt;5 m zones");
+    expect(details(bundle({ metricsView: mv({}) }))).not.toContain("Terrain check");
+  });
+
   test("cloud_pct 0.95 renders 'clouds hid 95%'", () => {
     expect(details(bundle({ metricsView: mv({ cloud_pct: 0.95 }) }))).toContain("clouds hid 95% of the area");
   });
