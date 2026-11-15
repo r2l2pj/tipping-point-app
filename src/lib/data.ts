@@ -237,6 +237,7 @@ async function readData<T>(
   // budget is spent no new remote request starts — straight to disk.
   const urls = ctx.bases.map((b) => resolveAsset(b, dir, p));
   if (urls[0] === undefined) return undefined;
+  let missed = false;
   for (const url of new Set(urls as string[])) {
     if (ctx.remoteTries >= maxRemoteTries()) {
       ctx.fellBack = true;
@@ -244,13 +245,24 @@ async function readData<T>(
     }
     ctx.remoteTries++;
     const remote = await fetchJson<T>(url).catch(() => undefined);
-    if (remote !== undefined) return remote;
-    ctx.fellBack = true;
+    if (remote !== undefined) {
+      // Served by a later base after the first one missed: a substitute.
+      if (missed) ctx.fellBack = true;
+      return remote;
+    }
+    missed = true;
   }
   const key = resolveAsset("", dir, p);
-  return key === undefined || /^https?:\/\//i.test(key)
-    ? undefined
-    : readFs<T>(key);
+  const stored =
+    key === undefined || /^https?:\/\//i.test(key)
+      ? undefined
+      : await readFs<T>(key);
+  // "Fell back" means a substitute copy served a file the first remote did
+  // not. A file that is in no place at all (an optional file the case never
+  // publishes, such as series/swot.json) is absent or pending, not a
+  // fallback: it must not label the whole bundle "last saved data".
+  if (stored !== undefined) ctx.fellBack = true;
+  return stored;
 }
 
 // products map first (null -> absent), fixed filename fallback.
