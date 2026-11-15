@@ -428,6 +428,8 @@ export function CommandCenterView({
         <span className="min-w-0 grow">
           Data: NASA GPM · SMAP · NASADEM · NISAR · OPERA · Forecast rain: NOAA GFS (the only non-NASA input) · Basemap © CARTO © OpenStreetMap · Boundaries ©{" "}
           {caseDirOf(bundle) === "wa_2025" ? "US Census · Landslide points: Washington Geological Survey" : "IBGE"} · Population: GPW (NASA SEDAC) / US Census
+          {typeof (bundle.metricsView as Record<string, unknown> | undefined)?.flood_ems_iou === "number" &&
+            " · Flood reference: © European Union, Copernicus Emergency Management Service"}
         </span>
         {/* Judges (conductor): methods links, closed by default. */}
         <MethodsDrawer />

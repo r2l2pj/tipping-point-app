@@ -84,6 +84,7 @@ const SRC = {
   prob: "tp-prob-img",
   muni: "tp-muni",
   catalog: "tp-catalog",
+  ems: "tp-ems",
   places: "tp-places",
   zones: "tp-zones",
   zonePins: "tp-zone-pins",
@@ -116,6 +117,7 @@ const LYR = {
   zonesLine: "tp-zones-line",
   muni: "tp-muni-line",
   catalog: "tp-catalog-circle",
+  ems: "tp-ems-line",
   zoneDot: "tp-zone-dot",
   zoneNum: "tp-zone-num",
   cityLabel: "tp-city-label",
@@ -225,6 +227,7 @@ export function useMapLayers(
     map.addSource(SRC.zones, { type: "geojson", data: EMPTY });
     map.addSource(SRC.muni, { type: "geojson", data: EMPTY });
     map.addSource(SRC.catalog, { type: "geojson", data: EMPTY });
+    map.addSource(SRC.ems, { type: "geojson", data: EMPTY, attribution: "© European Union, Copernicus Emergency Management Service" });
     map.addSource(SRC.places, { type: "geojson", data: bundle?.places ?? EMPTY });
     map.addSource(SRC.zonePins, { type: "geojson", data: EMPTY });
 
@@ -294,6 +297,9 @@ export function useMapLayers(
       { id: LYR.muni, type: "line", source: SRC.muni,
         paint: { "line-color": "#FFFFFF", "line-width": 0.5, "line-opacity": 0.4 },
         layout: {} },
+      // Copernicus EMS EMSR720 flood polygons (RS, Taquari valley): outline.
+      { id: LYR.ems, type: "line", source: SRC.ems,
+        paint: { "line-color": "#00e5ff", "line-width": 1.6 }, layout: {} },
       // Landslide catalog: 6 px white dots with a black edge (validation tab).
       { id: LYR.catalog, type: "circle", source: SRC.catalog,
         paint: {
@@ -653,6 +659,7 @@ export function useMapLayers(
     const wantFlood = overlay.flood;
     const wantScars = overlay.scars;
     const wantCatalog = overlay.catalog;
+    const wantEms = overlay.ems;
     if (wantFlood) {
       // Now: the OPERA DSWx-S1 candidates (products.flood_dswx) join the
       // NISAR ones in the same layer; "lower" confidence polygons (cropland,
@@ -665,6 +672,7 @@ export function useMapLayers(
     }
     if (wantScars) loadGeo(SRC.scars, "landslide candidates", url("landslide_candidates", "geojson/landslide_candidates.geojson"));
     if (wantCatalog) loadGeo(SRC.catalog, "landslide catalog", url("landslide_catalog", "geojson/landslide_catalog.geojson"));
+    if (wantEms) loadGeo(SRC.ems, "Copernicus EMS flood map", url("flood_ems", "geojson/flood_ems.geojson"));
     set(SRC.places, bundle.places ?? EMPTY);
 
     vis(LYR.tpiRaster, usePng && frameOk);
@@ -677,6 +685,7 @@ export function useMapLayers(
     vis(LYR.scarsFill, wantScars);
     vis(LYR.scarsLine, wantScars);
     vis(LYR.catalog, wantCatalog);
+    vis(LYR.ems, wantEms);
 
     // Forecast label — pinned to the top edge of the frame on any forecast
     // day (v4: previsão sempre rotulada). The text names the

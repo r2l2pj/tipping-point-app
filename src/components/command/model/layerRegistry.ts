@@ -22,7 +22,7 @@ import { HAZARD_LABEL, RISK_PAUSED_SHORT, type CcBundle, type Hazard } from "./t
 export type LayerId =
   | "tpi" | "imerg" | "smap" | "tml" | "ptrigger"
   | "flood" | "candidates"
-  | "catalog" | "opera";
+  | "catalog" | "opera" | "ems";
 
 export type LayerGroup = "Analysis" | "Observations" | "Replay evidence";
 
@@ -52,6 +52,7 @@ const DEFS: Def[] = [
   { id: "candidates", group: "Observations", short: "Scar candidates" },
   { id: "catalog", group: "Replay evidence", short: "Landslide catalog" },
   { id: "opera", group: "Replay evidence", short: "NISAR vs OPERA flood check" },
+  { id: "ems", group: "Replay evidence", short: "Copernicus EMS flood map" },
 ];
 
 export const LAYER_SHORT = Object.fromEntries(
@@ -105,6 +106,11 @@ export function layerAvailable(bundle: CcBundle, id: LayerId, hazard: Hazard): b
       return hasProduct(bundle, bundle.scars, "landslide_candidates");
     case "catalog":
       return hasProduct(bundle, bundle.catalog, "landslide_catalog");
+    case "ems":
+      // Declared product, or the RS EMS scores published (file at the
+      // agreed geojson/flood_ems.geojson).
+      return declared(bundle, "flood_ems") ||
+        typeof (bundle.metricsView as Record<string, unknown> | undefined)?.flood_ems_iou === "number";
   }
 }
 
@@ -141,6 +147,7 @@ export function layerRows(
     candidates: CANDIDATES_LABEL,
     catalog: "Landslide catalog",
     opera: "NISAR vs OPERA flood check",
+    ems: "Copernicus EMS flood map (Taquari valley only)",
   };
   const okSub: Partial<Record<LayerId, string | undefined>> = {
     tpi: partlyForecastText(bundle, stepDate) ? `${partlyForecastText(bundle, stepDate)} (partly forecast)`
@@ -160,6 +167,7 @@ export function layerRows(
     tml: NO_MAP_LAYER_TEXT,
     ptrigger: bundle.riskPaused ? RISK_PAUSED_SHORT : NO_MAP_LAYER_TEXT,
     opera: NO_MAP_LAYER_TEXT,
+    ems: NO_MAP_LAYER_TEXT,
     flood: radar.state === "not-applicable" ? NO_RADAR_TEXT : missingText(availability(bundle, "flood_confirmed")),
     candidates: missingText(availability(bundle, "landslide_candidates")),
     catalog: missingText(availability(bundle, "landslide_catalog")),
@@ -244,6 +252,7 @@ export const overlaysFor = (on: readonly LayerId[]): MapOverlays => ({
   catalogPoints: on.includes("catalog"),
   operaValidation: on.includes("opera"),
   mlHazard: on.includes("tml"),
+  emsFlood: on.includes("ems"),
 });
 
 export const layerStateFor = (on: readonly LayerId[], hazard: Hazard) => ({

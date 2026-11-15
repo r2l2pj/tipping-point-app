@@ -47,6 +47,7 @@ export function layerLegendRows(bundle: CcBundle, on: readonly LayerId[]): Layer
   if (on.includes("flood")) rows.push({ id: "flood", label: floodLabels(bundle).layer, swatch: "#2166ac" });
   if (on.includes("candidates")) rows.push({ id: "candidates", label: CANDIDATES_LABEL, swatch: "#7b3294" });
   if (on.includes("catalog")) rows.push({ id: "catalog", label: "Landslide catalog point", swatch: "#ffffff", round: true });
+  if (on.includes("ems")) rows.push({ id: "ems", label: "Copernicus EMS flood map (© European Union, Copernicus EMS)", swatch: "#00e5ff" });
   if (on.includes("opera")) {
     rows.push(
       { id: "opera-both", label: "New flood in both NISAR and OPERA", swatch: OPERA.both },
