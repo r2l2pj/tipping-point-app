@@ -29,7 +29,7 @@
 - **TIPPING POINT REACHED** banner + ranked priority zones (TPI ≥ 0.60)
 - Side tabs ALERT / RADAR / Did we get it right? / IMPACT; "Confirm with NISAR radar →"
 - Public feed `/alerts`: Civil-Defense-style alert cards
-- Replay D+1..D+3 uses the real **NOAA GFS** forecast issued on each day, labelled "forecast: NOAA GFS (issued <date>)"; live mode uses NASA GEOS-FP
+- Replay D+1..D+3 uses the real **NOAA GFS** forecast issued on each day, labelled "forecast · NOAA GFS (issued <date>)"; live mode uses NASA GEOS-FP
 - *Visual:* 2–3 real screenshots — banner over the heated Taquari valley map, RADAR NISAR before/after swipe, /alerts card
 
 ## Slide 5 — Did it work?

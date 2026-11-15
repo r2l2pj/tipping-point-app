@@ -68,7 +68,7 @@ Full env list (`GCP_SA_KEY` canonical; `GEE_SERVICE_ACCOUNT_KEY` fallback;
 ## Forecast & model
 
 Replay D+1..D+3 forecast frames are real issued forecasts: NOAA GFS 0.25
-historical forecasts issued on each day, labelled `forecast: NOAA GFS
+historical forecasts issued on each day, labelled `forecast · NOAA GFS
 (issued <date>)`. GFS is the only non-NASA model input, used only for the
 replay forecast — live mode (`now/`) uses NASA GEOS-FP. Perfect-forecast
 frames (observed IMERG shown as D+1..D+3) are kept only as a labelled upper
