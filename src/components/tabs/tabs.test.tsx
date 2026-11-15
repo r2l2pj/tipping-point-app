@@ -9,7 +9,11 @@ import { normalizeLeadTimeHist } from "../charts/LeadTimeHistogram";
 import Timeline from "../Timeline";
 import { fmtBrt } from "./format";
 import { cutsFor, tpiClass } from "../../lib/tpi";
-import { fmtDate } from "../../lib/layers";
+import { fmtDate, forecastChip, pickTpiFrame } from "../../lib/layers";
+import { toMetricsView } from "../../lib/contract";
+import { opticalSeenPct } from "./ValidationTab";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const noop = () => {};
 
@@ -108,6 +112,36 @@ describe("alert playback and contract values", () => {
 });
 
 describe("validation tab on metricsView", () => {
+  test("opticalSeenPct accepts 0-1 and 0-100 cloud_pct, never negative", () => {
+    expect(opticalSeenPct(0.95)).toBe(5);
+    expect(opticalSeenPct(92.89292282546754)).toBe(7);
+    expect(opticalSeenPct(100)).toBe(0);
+    expect(opticalSeenPct(1)).toBe(0); // normalized 1.0 = 100% cloud
+    expect(opticalSeenPct(0)).toBe(100);
+    expect(opticalSeenPct(null)).toBeNull();
+    expect(opticalSeenPct(-3)).toBeNull();
+    expect(opticalSeenPct(250)).toBeNull();
+  });
+
+  test("real public/data/metrics.json renders a sane optical % for every case", () => {
+    const real = JSON.parse(
+      readFileSync(join(import.meta.dir, "../../../public/data/metrics.json"), "utf8")
+    ) as { cases: Record<string, Record<string, unknown>> };
+    for (const [id, raw] of Object.entries(real.cases)) {
+      if (raw.cloud_pct == null) continue;
+      const cloud = Number(raw.cloud_pct);
+      // metrics.json authors *_pct 0-100 (SCHEMA)
+      const expected = Math.round(100 - cloud);
+      // normalized path (what getCaseBundle builds)
+      const viaView = render("validation", bundle({ id, metricsView: toMetricsView(raw) }));
+      expect(viaView).toContain(`the optical saw only ${expected}%`);
+      // raw path (un-normalized value must not leak a negative percent)
+      const viaRaw = render("validation", bundle({ id, metricsView: { cloud_pct: cloud } }));
+      expect(viaRaw).toContain(`the optical saw only ${expected}%`);
+      expect(viaRaw).not.toMatch(/saw only -/);
+    }
+  });
+
   test("cloud_pct 0.95 renders 'the optical saw only 5%'", () => {
     const html = render("validation", bundle({ metricsView: { cloud_pct: 0.95 } }));
     expect(html).toContain("the optical saw only 5%");
@@ -420,6 +454,57 @@ describe("alert tab 'Data pending' marker", () => {
       1
     );
     expect(live).toContain("forecast · GEOS-FP");
+  });
+
+  // L22: a real issued GFS frame on the forecast day names its issue date;
+  // perfect-forecast frames on the same date never win the headline.
+  test("GFS frame on a forecast day: chip reads 'forecast · GFS (issued <date>)'", () => {
+    const gfsLayer = (k: number, date: string, issued: string) => ({
+      id: `tpi_flood_gfs_d${k}`, date, png: `rs_2024/png/tpi_flood_gfs_d${k}_${date.replaceAll("-", "")}.png`,
+      forecast: true, issued, forecast_source: "noaa-gfs", kind: "forecast",
+    });
+    const b = bundle({
+      metricsView: FULL_METRICS,
+      reference_date: "2024-05-02",
+      manifest: {
+        event: "rs_2024",
+        forecast_source: "perfect-forecast",
+        layers: [
+          { id: "tpi_flood", date: "2024-05-03", png: "rs_2024/png/tpi_flood_20240503.png", forecast: false },
+          { id: "tpi_flood_d1", date: "2024-05-03", png: "rs_2024/png/tpi_flood_d1_20240503.png", forecast: true, forecast_source: "perfect-forecast", upper_bound: true },
+          gfsLayer(1, "2024-05-03", "2024-05-02"),
+          gfsLayer(2, "2024-05-03", "2024-05-01"),
+          // issued after the anchor day: must not be picked
+          gfsLayer(1, "2024-05-04", "2024-05-03"),
+        ],
+      },
+      series: {
+        event: "rs_2024",
+        reference_date: "2024-05-02",
+        days: [
+          { date: "2024-05-02", offset: 0, kind: "observed", tpi: 0.5, imerg_mm: 1, smap: 0.5 },
+          { date: "2024-05-03", offset: 1, kind: "forecast", tpi: 0.5, imerg_mm: 1, smap: 0.5 },
+          { date: "2024-05-04", offset: 2, kind: "forecast", tpi: 0.5, imerg_mm: 1, smap: 0.5 },
+        ],
+      },
+    });
+    expect(render("alert", b, 1)).toContain("forecast · GFS (issued May 2, 2024)");
+    expect(render("alert", b, 1)).not.toContain("forecast · perfect");
+    // 05-04 only has a GFS frame issued after the anchor -> never shown;
+    // the chip falls back to the case source.
+    expect(render("alert", b, 2)).toContain("forecast · perfect");
+    expect(pickTpiFrame(b.manifest!.layers, b.series!.days[2], "flood", "2024-05-02")).toBeUndefined();
+    expect(render("alert", b, 0)).not.toContain("forecast ·");
+
+    const day1 = b.series!.days[1];
+    const f = pickTpiFrame(b.manifest!.layers, day1, "flood", "2024-05-02");
+    expect(f?.id).toBe("tpi_flood_gfs_d1");
+    expect(f?.issued).toBe("2024-05-02");
+    // observed day: the observed frame wins even when a GFS frame shares the date
+    const obs = pickTpiFrame(b.manifest!.layers, { date: "2024-05-03", kind: "observed" }, "flood", "2024-05-02");
+    expect(obs?.id).toBe("tpi_flood");
+    expect(forecastChip(f, "perfect forecast")).toBe("forecast · GFS (issued May 2, 2024)");
+    expect(forecastChip(undefined, "GEOS-FP")).toBe("forecast · GEOS-FP");
   });
 });
 

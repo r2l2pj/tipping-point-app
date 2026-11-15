@@ -347,6 +347,7 @@ export function resolveAsset(
 export const FORECAST_SOURCE_LABELS: Record<string, string> = {
   "perfect-forecast": "perfect forecast", // replay cases
   "geos-fp": "GEOS-FP", // live now/ runs
+  "noaa-gfs": "NOAA GFS", // L22 issued-forecast replay frames
 };
 
 // UI label for a forecast_source value; unknown sources pass through

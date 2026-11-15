@@ -22,8 +22,11 @@ import {
   fmtDataDate,
   fmtDate,
   geoUrl,
+  forecastChip,
   isForecastLayer,
+  isGfsFrame,
   manifestRaster,
+  pickTpiFrame,
   overlayPlan,
   pointInPolygons,
   rankedZonePoints,
@@ -168,11 +171,15 @@ export function useMapLayers(
   // v4 image-source contract: when the manifest carries a pre-rendered
   // EPSG:3857 PNG for this day, show it as a raster layer — no raster in
   // the manifest means no pixels, never a synthetic grid.
-  const pngLayers = (bundle?.manifest?.layers ?? []).filter((l) => l.png);
   const wanted = layers.tpiSlide ? "slide" : layers.tpiFlood ? "flood" : null;
-  const candidates = day ? pngLayers.filter((l) => l.date === day.date) : [];
-  const activePng =
-    candidates.find((l) => wanted && l.id.includes(wanted)) ?? candidates[0];
+  // L22: on forecast days the real issued GFS frame wins over the
+  // perfect-forecast upper bound (see pickTpiFrame).
+  const activePng = pickTpiFrame(
+    bundle?.manifest?.layers,
+    day,
+    wanted,
+    bundle?.series?.reference_date ?? bundle?.reference_date
+  );
   // Forecast frames never look observed: the manifest flag or a *_d[1-3] id
   // marks a forecast PNG, or the timeline day itself is a forecast day.
   const isForecast =
@@ -573,7 +580,9 @@ export function useMapLayers(
       fcastMarker.current = new Marker({ element: el, anchor: "top" });
     }
     fcastMarker.current.getElement().textContent =
-      forecastSourceLabel(bundle.manifest?.forecast_source) ?? "forecast";
+      activePng && isGfsFrame(activePng)
+        ? forecastChip(activePng, undefined)
+        : (forecastSourceLabel(bundle.manifest?.forecast_source) ?? "forecast");
     if (tpiOn && isForecast) {
       const b = activePng?.bounds ?? bundle.bbox;
       fcastMarker.current

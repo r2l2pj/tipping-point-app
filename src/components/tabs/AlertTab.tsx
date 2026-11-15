@@ -1,6 +1,7 @@
 "use client";
 
 import { count, forecastSourceLabel } from "@/lib/contract";
+import { forecastChip, pickTpiFrame } from "@/lib/layers";
 import { cutsFor, fmtKm2, fmtPeople } from "@/lib/tpi";
 import type { CaseBundle, PriorityZone } from "@/lib/types";
 import TpiChart from "../TpiChart";
@@ -57,9 +58,18 @@ export default function AlertTab({
   );
   // Rule 2: the forecast chip only appears on forecast days — observed
   // days (incl. EVENT) are labeled observed, never "perfect forecast".
+  // L22: a GFS frame on that day names its issue date.
   const dayChip =
     day?.kind === "forecast"
-      ? `forecast · ${source === "perfect forecast" ? "perfect" : (source ?? "day")}`
+      ? forecastChip(
+          pickTpiFrame(
+            bundle.manifest?.layers,
+            day,
+            null,
+            bundle.series?.reference_date ?? bundle.reference_date
+          ),
+          source
+        )
       : day?.kind === "observed" || day?.kind === "hindcast"
         ? day.kind
         : undefined;

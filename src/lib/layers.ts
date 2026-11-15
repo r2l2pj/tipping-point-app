@@ -26,6 +26,69 @@ export function isForecastLayer(l: {
   );
 }
 
+// --- L22 issued-forecast (GFS) frames ----------------------------------------
+
+// A real issued forecast frame (L22): NOAA GFS source, or the `_gfs_d<k>` id
+// family when the source field is absent.
+export function isGfsFrame(l: {
+  id?: string;
+  forecast_source?: string;
+}): boolean {
+  return /gfs/i.test(l.forecast_source ?? "") || /_gfs_d[1-3]$/.test(l.id ?? "");
+}
+
+// The TPI PNG frame painted for a timeline day. `wanted` picks the family
+// ("slide" | "flood"; null = any). On a forecast day the real issued GFS
+// frame wins (L22: perfect-forecast frames are only a labelled upper bound,
+// never the headline) — the latest issue on or before the reference date,
+// so the replay never peeks at a forecast issued after the anchor day. On
+// observed days GFS frames never displace the observed frame; they are only
+// a last resort when nothing else depicts the date.
+export function pickTpiFrame(
+  layers: ManifestLayer[] | undefined,
+  day: { date: string; kind?: string } | undefined,
+  wanted: "slide" | "flood" | null,
+  referenceDate?: string
+): ManifestLayer | undefined {
+  if (!day) return undefined;
+  // A GFS run issued after the anchor day is never shown (no peeking).
+  const candidates = (layers ?? []).filter(
+    (l) =>
+      l.png &&
+      l.date === day.date &&
+      !(isGfsFrame(l) && referenceDate && l.issued && l.issued > referenceDate)
+  );
+  const fam = (l: ManifestLayer) => !wanted || l.id.includes(wanted);
+  if (day.kind === "forecast") {
+    const gfs = candidates
+      .filter((l) => isGfsFrame(l) && fam(l))
+      .sort((a, b) => (b.issued ?? "").localeCompare(a.issued ?? ""));
+    if (gfs[0]) return gfs[0];
+  }
+  const rest = candidates.filter((l) => !isGfsFrame(l));
+  return (
+    rest.find((l) => wanted && l.id.includes(wanted)) ??
+    rest[0] ??
+    candidates.find((l) => wanted && l.id.includes(wanted)) ??
+    candidates[0]
+  );
+}
+
+// Forecast chip text. A GFS frame names its issue day —
+// "forecast · GFS (issued Apr 22, 2024)"; otherwise the case/run source:
+// "forecast · perfect" (replay upper bound), "forecast · GEOS-FP" (live).
+export function forecastChip(
+  frame: ManifestLayer | undefined,
+  sourceLabel: string | undefined
+): string {
+  if (frame && isGfsFrame(frame)) {
+    return frame.issued
+      ? `forecast · GFS (issued ${fmtDate(frame.issued)})`
+      : "forecast · GFS";
+  }
+  return `forecast · ${sourceLabel === "perfect forecast" ? "perfect" : (sourceLabel ?? "day")}`;
+}
+
 // --- per-tab dynamic overlays ------------------------------------------------
 //
 // Which data overlays each side-panel tab turns on (project doc "Abas e
@@ -222,7 +285,7 @@ export function pointInPolygons(
 // --- asset URLs --------------------------------------------------------------
 
 // Manifest png/cog paths are bucket-relative; the bucket is served at /data
-// locally and at bundle.assetBase (Neon) when published. resolveAsset passes
+// locally and at bundle.assetBase (GitHub data branch, or Neon) when published. resolveAsset passes
 // through absolute http(s) URLs and does not double paths that already carry
 // the case dir.
 export const assetUrl = (
@@ -479,7 +542,7 @@ type ProductsLike = Record<string, string | null | undefined> | undefined;
 
 // URL for a geojson product: products map wins (explicit null = declared
 // absent -> undefined, never fetched), fixed filename as fallback. The base
-// is the bundle's remote assetBase when published (Neon), else the bundled
+// is the bundle's remote assetBase when published (GitHub or Neon), else the bundled
 // /data copy.
 export function geoUrl(
   bundle:

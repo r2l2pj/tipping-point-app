@@ -36,6 +36,12 @@ export interface ManifestLayer {
   // ("NOAA GFS") the probability was computed against.
   issued_at?: string;
   forecast_source?: string;
+  // L22 issued-forecast frames (SCHEMA "Layer fields"): `issued` is the
+  // YYYY-MM-DD issue day (depicted date = issued + k); `upper_bound` marks
+  // perfect-forecast frames (labelled upper bound, never the headline).
+  issued?: string;
+  kind?: string;
+  upper_bound?: boolean;
 }
 
 export interface NisarPass {

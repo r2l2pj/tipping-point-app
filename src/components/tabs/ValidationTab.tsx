@@ -8,6 +8,18 @@ import { isMockDerived, pendingIncludes } from "./format";
 import LeadTimeCard from "./LeadTimeCard";
 import { StatCard } from "./Stat";
 
+// Share of the scene the optical sensor saw (100 - cloud %), as an integer
+// percent. metricsView already normalizes cloud_pct to 0-1, so 1 means 100%
+// cloud here; only a value > 1 can be a raw 0-100 metrics.json number (e.g.
+// 92.9) that skipped normalization — rescale it so it can never render as
+// -9189%. Out-of-range -> null.
+export function opticalSeenPct(cloudPct: number | null | undefined): number | null {
+  if (cloudPct == null || !Number.isFinite(cloudPct)) return null;
+  const frac = cloudPct > 1 ? cloudPct / 100 : cloudPct;
+  if (frac < 0 || frac > 1) return null;
+  return Math.round((1 - frac) * 100);
+}
+
 // "Acertamos?" — did the pipeline get it right: flood scores vs reference,
 // landslide model vs the manual slope rule, early-warning lead times, and why
 // radar was needed at all. All metric reads go through bundle.metricsView.
@@ -27,8 +39,7 @@ export default function ValidationTab({ bundle }: { bundle: CaseBundle }) {
     );
   }
 
-  const opticalPct =
-    m.cloud_pct == null ? null : Math.round((1 - m.cloud_pct) * 100);
+  const opticalPct = opticalSeenPct(m.cloud_pct);
 
   return (
     <div className="space-y-3">

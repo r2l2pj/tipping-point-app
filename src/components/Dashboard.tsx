@@ -7,6 +7,7 @@ import {
   fmtDataDate,
   fmtDate,
   layerAvailable,
+  pickTpiFrame,
   toggleBudget,
   type TabKey,
   type ToggleLayerKey,
@@ -198,12 +199,12 @@ export default function Dashboard({ cases, initialCase, initialDay }: { cases: C
             frameBasis={(() => {
               // Frame provenance for the selected day: the active TPI
               // layer's own data_basis wins over the case-level field.
-              const want = layers.tpiSlide ? "tpi_slide" : "tpi_flood";
-              const date = days[dayIndex]?.date;
-              const frame = bundle.manifest?.layers?.find(
-                (l) =>
-                  l.date === date &&
-                  (l.id === want || l.id.startsWith(`${want}_d`))
+              // Same pick as the map (L22: GFS frame on forecast days).
+              const frame = pickTpiFrame(
+                bundle.manifest?.layers,
+                days[dayIndex],
+                layers.tpiSlide ? "slide" : "flood",
+                bundle.series?.reference_date ?? bundle.reference_date
               );
               return frame?.data_basis ?? bundle.manifest?.data_basis;
             })()}
