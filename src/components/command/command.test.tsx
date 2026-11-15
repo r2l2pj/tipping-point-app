@@ -558,7 +558,7 @@ describe("public view (P1 to P5) and routes", () => {
   });
 
   test("in Replay the panel lists what the live rule would have sent, up to the step, and offers Now", () => {
-    const WA_SERIES = JSON.parse(readFileSync(join(process.cwd(), "public/data/wa_2025/series/imerg_smap_daily.json"), "utf8"));
+    const WA_SERIES = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/lead/wa_2025_series.json"), "utf8"));
     const b = bundle({ forecastLeadTime: WA_LEAD, series: WA_SERIES, zones: zones([zone(1), zone(2, { name: "Sultan" })]) });
     const dec5 = WA_SERIES.days.findIndex((d: { date: string }) => d.date === "2025-12-05");
     const html = render(b, { dayIndex: dec5 }, "public", alerts);
@@ -570,6 +570,8 @@ describe("public view (P1 to P5) and routes", () => {
     expect(html).toContain("Built from the replay TPI frames with the live alert rule. Not sent to anyone.");
     expect(html).toContain("Go to Now");
     expect(html).not.toContain("There is no public alert feed in replay.");
+    expect(html).toContain("certainty: replay");
+    expect(html).not.toContain("SMS 40199"); // Brazilian contact line: not on replay cards
     expect(html).not.toContain("Tipping Point: CRITICAL");
     expect(html).not.toContain("Replay: CRITICAL landslide risk");
     const later = render(b, { dayIndex: WA_SERIES.days.length - 1 }, "public", alerts);

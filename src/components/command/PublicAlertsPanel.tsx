@@ -129,7 +129,8 @@ export default function PublicAlertsPanel({
         </section>
       )}
 
-      <p className="text-[13px] font-semibold text-cc-muted">{ALERT_FOOTER}</p>
+      {/* Brazilian Civil Defense contact line: the live (Southern Brazil) view only. */}
+      {live && <p className="text-[13px] font-semibold text-cc-muted">{ALERT_FOOTER}</p>}
       {children}
     </>
   );
@@ -155,7 +156,7 @@ function ReplayAlerts({
       {shown.length > 0 ? (
         <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
           {shown.map((a) => (
-            <AlertCard key={a.id} alert={a} onViewOnMap={onViewOnMap} />
+            <AlertCard key={a.id} alert={a} onViewOnMap={onViewOnMap} noFooter />
           ))}
         </ul>
       ) : (

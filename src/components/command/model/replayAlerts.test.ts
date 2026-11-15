@@ -9,7 +9,7 @@ import { replayAlerts, replayAlertsAt, replayLaterText, replayPlaces } from "./r
 const json = (p: string) => JSON.parse(readFileSync(join(process.cwd(), p), "utf8"));
 const WA_LEAD = json("test/fixtures/lead/forecast_lead_time_wa_2025.json");
 const RS_LEAD = json("test/fixtures/lead/forecast_lead_time_rs_2024.json");
-const WA_SERIES = json("public/data/wa_2025/series/imerg_smap_daily.json");
+const WA_SERIES = json("test/fixtures/lead/wa_2025_series.json");
 const RS_SERIES = json("public/data/rs_2024/series/imerg_smap_daily.json");
 
 const wa = bundle({ forecastLeadTime: WA_LEAD, series: WA_SERIES });

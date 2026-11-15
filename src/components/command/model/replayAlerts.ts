@@ -126,7 +126,8 @@ export function replayAlerts(bundle: CcBundle | undefined): ReplayAlert[] {
       region,
       hazard: h.hazard,
       level: h.level,
-      certainty: "medium",
+      // Replay alerts were never rated; the card says so instead of a level.
+      certainty: "replay",
       when: h.source === "forecast" ? "d1" : "today",
       ...(h.km2 !== undefined ? { area_km2: h.km2 } : {}),
       ...(detail ? { rain: detail } : {}),
