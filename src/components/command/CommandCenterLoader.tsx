@@ -85,7 +85,7 @@ const METRICS_DROP = ["landslide_ml", "lead_time_asavail", "scar_sensitivity", "
 // lead-analysis "Did the alert come before?" objects carry per-issue and
 // per-date curves; the browser needs only the denominators and the text.
 const WARNED_OBJECTS = ["flood_warned", "slide_warned"];
-const WARNED_KEEP = ["n_points", "confirmed_flood_km2", "explanation", "anchor_utc", "unit"];
+const WARNED_KEEP = ["n_points", "confirmed_flood_km2", "explanation", "anchor_utc", "anchor_basis", "unit"];
 function slimWarned(v: unknown): unknown {
   if (!isRecord(v)) return v;
   const out: Record<string, unknown> = Object.fromEntries(Object.entries(v).filter(([k]) => WARNED_KEEP.includes(k)));
