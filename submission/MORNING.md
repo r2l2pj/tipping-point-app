@@ -2,6 +2,17 @@
 
 One page. Full detail, sources and history: `submission/REVIEW.md`. Every number in the pack comes from published `metrics.json` (tipping-point-data); no placeholders are left. DRAFT banners stay on until you approve.
 
+## Submit today — deadline Sun Nov 15, 23:59, Local Event time (official 2026 guide)
+
+Paste every field from `submission/FORM.md`, tick "Terms and Conditions" and "Confirm All Work is Original", then click **Submit for Judging**. You can resubmit until the deadline, and only the last save counts. The video must be **≤30 s**; anything longer is not eligible for Global Judging.
+
+1. **Identity:** team name, member names, Local Event. All members must be confirmed at the same event. No one under 18 appears on camera.
+2. **Voiceover:** read `submission/captions.srt` (64 words, about 29 s) over the rough cut. Rough cut: `.crew/video/rough-cut-v1.mp4`; the final is re-shot from the 13:00 `freeze-1300` build. If you use TTS instead of your voice, it must be declared (see `ai-declaration.md`).
+3. **Host the video:** YouTube Unlisted, or Drive "anyone with the link". Test it in a private window and paste it into FORM §3.
+4. **Confirm the AI declaration** (`ai-declaration.md`): the tool list, that the idea doc was written by the team, and human voice vs TTS.
+5. **RS event facts need a source** (446 of 497 municipalities, 185 dead, 581,000+ displaced, R$88.9 bn). Public totals differ (e.g. 183 deaths, 478 municipalities). Either cite one official source or cut the figures.
+6. Backup demo: `.crew/deck/slides.pdf` (7 slides), used only if the video slips. Optional: FortiGuard classification for the vercel.app URL.
+
 ## Only you can do (2)
 
 1. **ASF OPERA RTC-S1 EULA.** Accept the Alaska Satellite Facility EULA that covers OPERA RTC-S1 for the Earthdata account the pipeline uses (Earthdata Login profile → EULAs, or the prompt ASF shows when you sign in at search.asf.alaska.edu). Today ASF answers "EULA Acceptance Failure", so Rio Grande do Sul 2024 has **no radar flood map** (`flooded_km2` / `people_flooded` null). Then tell the conductor; lead-analysis runs the RS Sentinel-1 flood unit (post May 8/11, 2024).
