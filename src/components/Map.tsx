@@ -76,6 +76,12 @@ export default function Map({
       mapRef.current = map;
       // Debug/introspection handle — lets headless QA inspect layer state.
       (window as unknown as { __map?: MapInstance }).__map = map;
+      // The compact attribution opens expanded and then covers the locator
+      // inset and the legend: start it folded (the "i" button opens it, and
+      // the page footer names the same sources).
+      const attrib = map.getContainer().querySelector(".maplibregl-ctrl-attrib");
+      attrib?.classList.remove("maplibregl-compact-show");
+      attrib?.removeAttribute("open");
       if (bounds) fit(map, bounds);
       ready.current?.(map);
     });
