@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { anchorShort, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
+import { anchorShort, catalogHitsDetail, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
 
 // lead-analysis fallback bb125cf values (authored 0-100).
 describe("warned before the damage (lead-analysis)", () => {
@@ -113,5 +113,14 @@ describe("L37 onset lead time (forecast_lead_time_onset)", () => {
     expect(onsetLead({})).toBeUndefined();
     expect(onsetLead({ forecast_lead_time_onset: { ...o, n_warned: 0, issue_days: [] } })!.text)
       .toBe("none of 8 forecast runs reached Critical before the event start");
+  });
+});
+
+describe("QA fresh eyes: catalog hits say 'observed, after the fact'", () => {
+  test("RS 16,027 points; WA 15 points flagged fragile", () => {
+    expect(catalogHitsDetail({ landslide_hit: { n_points: 16027 } }))
+      .toBe("Share of the 16,027 mapped landslides where the index was Critical (0.60 or more) with observed rain at the event peak — measured after the fact, not a forecast.");
+    expect(catalogHitsDetail({ landslide_hit: { n_points: 15 } })).toContain("Only 15 points: a fragile share.");
+    expect(catalogHitsDetail({})).toContain("Share of the mapped landslides");
   });
 });

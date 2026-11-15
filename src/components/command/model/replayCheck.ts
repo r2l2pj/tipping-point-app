@@ -198,7 +198,7 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
   });
   optional("catalog-hits", "Landslide catalog hits", "landslide_hit_pct", () =>
     finite(m.landslide_hit_pct)
-      ? { id: "catalog-hits", name: "Landslide catalog hits", value: fmtPct(m.landslide_hit_pct), missing: false }
+      ? { id: "catalog-hits", name: "Landslide catalog hits", value: fmtPct(m.landslide_hit_pct), detail: catalogHitsDetail(m), missing: false }
       : undefined);
   const warned = warnedRow(m);
   if (warned) rows.push(warned);
@@ -333,11 +333,28 @@ export interface Evidence {
   exposureBasis: string;
 }
 
+// QA (fresh eyes): next to the forecast row, the catalog-hit share must say
+// it is the observed-rain index after the fact, not a forecast.
+export function catalogHitsDetail(m: M): string {
+  const h = isRecord(m.landslide_hit) ? m.landslide_hit : {};
+  const n = finite(h.n_points) ? h.n_points : undefined;
+  return `Share of the ${n !== undefined ? `${n.toLocaleString("en-US")} ` : ""}mapped landslides where the index was Critical (0.60 or more) ` +
+    "with observed rain at the event peak — measured after the fact, not a forecast." +
+    (n !== undefined && n < 30 ? ` Only ${n} points: a fragile share.` : "");
+}
+
+// Flood scores: one reason for the whole block when the case has none (RS:
+// before NISAR) — precision/recall carry no own null reason.
+const FLOOD_SCORE_KEYS = ["iou", "f1", "precision", "recall"];
 const stat = (bundle: CcBundle, label: string, key: string, format: (v: unknown) => string): Stat => {
   const v = (bundle.metricsView as M | undefined)?.[key];
-  return finite(v)
-    ? { label, value: format(v), missing: false }
-    : { label, value: missingText(availability(bundle, key)), missing: true };
+  if (finite(v)) return { label, value: format(v), missing: false };
+  let reason = missingText(availability(bundle, key));
+  if (FLOOD_SCORE_KEYS.includes(key) && reason === NOT_PUBLISHED) {
+    const shared = FLOOD_SCORE_KEYS.map((k) => missingText(availability(bundle, k))).find((t) => t !== NOT_PUBLISHED);
+    if (shared) reason = shared;
+  }
+  return { label, value: reason, missing: true };
 };
 
 function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
