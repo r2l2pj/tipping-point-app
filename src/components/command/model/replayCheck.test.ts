@@ -7,7 +7,7 @@ import { bundle, liveBundle, manifest, point } from "./fixtures";
 import { toNowDist } from "../../../lib/response";
 import { nightLightsCompare, radarCard, radarCompare } from "./radar";
 import { sourceRows } from "./sources";
-import { evidence, LEAD_TIME_HELD, LEAD_TIME_REEVALUATED, opticalSeenPct, replayCheckRows } from "./replayCheck";
+import { evidence, LEAD_TIME_HELD, LEAD_TIME_REEVALUATED, opticalSeenPct, replayCheckRows, sceneDates, whyRadarText } from "./replayCheck";
 import type { CcBundle } from "./types";
 
 const mv = (m: Record<string, unknown>) => m as CcBundle["metricsView"];
@@ -110,13 +110,27 @@ describe("replay check rows", () => {
   });
 });
 
+describe("whyRadarText (scene dates from cloud_pct_source)", () => {
+  const RS = "HLS v2.0 Fmask (HLSL30 Landsat + HLSS30 Sentinel-2), cloud/adjacent/shadow/snow bits 1-4; 20 scenes on 2024-05-01, 2024-05-02, 2024-05-03 (2024-05-01..2024-05-03) over the AOI";
+  test("RS May 1–3 scenes are not 'after the storm' (event date May 2)", () => {
+    expect(sceneDates(RS)).toEqual(["2024-05-01", "2024-05-02", "2024-05-03"]);
+    expect(whyRadarText(100, RS, "2024-05-02"))
+      .toBe("In the optical (HLS) scenes of May 1–3, 2024, clouds hid 100% of the area. Radar sees through cloud.");
+  });
+  test("WA Dec 15/17 after Dec 10; no dates -> no date clause", () => {
+    expect(sceneDates("OPERA DSWx-HLS cloud class (WTR 253) 2025-12-15/17 over the AOI")).toEqual(["2025-12-15", "2025-12-17"]);
+    expect(whyRadarText(93, "", undefined)).toBe("In the optical scenes, clouds hid 93% of the area. Radar sees through cloud.");
+  });
+});
+
 describe("evidence", () => {
   test("cloud_pct 0.95 gives 'clouds hid 95%'; an HLS source says 'after the storm', never 'during the event'", () => {
     expect(evidence(bundle({ metricsView: mv({ cloud_pct: 0.95 }) })).whyRadar)
       .toBe("In the optical scenes, clouds hid 95% of the area. Radar sees through cloud.");
     const wa = evidence(bundle({ metricsView: mv({ cloud_pct: 92.89292282546754,
       cloud_pct_source: "OPERA DSWx-HLS cloud class (WTR 253) 2025-12-15/17 over the AOI" }) })).whyRadar;
-    expect(wa).toBe("In the optical (HLS) scenes after the storm, clouds hid 93% of the area. Radar sees through cloud.");
+    // fixtures: reference_date 2025-12-10 -> Dec 15/17 are after the storm
+    expect(wa).toBe("In the optical (HLS) scenes of Dec 15 and 17, 2025, after the storm, clouds hid 93% of the area. Radar sees through cloud.");
     expect(wa).not.toContain("during the event");
   });
 

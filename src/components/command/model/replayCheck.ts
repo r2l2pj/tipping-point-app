@@ -417,6 +417,46 @@ export function rainCheckLine(m: M): string | undefined {
   );
 }
 
+// The optical scenes the cloud share was measured on, from cloud_pct_source
+// ("… 2025-12-15/17 …", "… 20 scenes on 2024-05-01, 2024-05-02, 2024-05-03").
+export function sceneDates(source: string): string[] {
+  const out = new Set<string>();
+  for (const x of source.matchAll(/(\d{4}-\d{2})-(\d{2})((?:\/\d{2})*)/g)) {
+    out.add(`${x[1]}-${x[2]}`);
+    for (const d of x[3].split("/").filter(Boolean)) out.add(`${x[1]}-${d}`);
+  }
+  return [...out].sort();
+}
+
+const dayMs = 86_400_000;
+function fmtScenes(dates: string[]): string {
+  if (dates.length === 1) return fmtDate(dates[0]);
+  const [a, z] = [dates[0], dates[dates.length - 1]];
+  const sameMonth = a.slice(0, 7) === z.slice(0, 7);
+  const consecutive = (Date.parse(z) - Date.parse(a)) / dayMs === dates.length - 1;
+  if (sameMonth) {
+    const mon = fmtDate(a).replace(/\s*\d+,.*$/, ""); // "May"
+    const year = a.slice(0, 4);
+    const days = dates.map((d) => String(Number(d.slice(8, 10))));
+    return consecutive
+      ? `${mon} ${days[0]}–${days[days.length - 1]}, ${year}`
+      : `${mon} ${days.slice(0, -1).join(", ")} and ${days[days.length - 1]}, ${year}`;
+  }
+  return `${fmtDate(a)} to ${fmtDate(z)}`;
+}
+
+// Conductor: the cloud share is measured on the optical scenes named in
+// cloud_pct_source, never "during the event" by default. The dates are
+// named; "after the storm" only when every scene is after the case's
+// reference (event) date — WA's Dec 15/17 HLS, not RS's May 1–3.
+export function whyRadarText(cloudPct: number, source: string, referenceDate?: string): string {
+  const dates = sceneDates(source);
+  const hls = /HLS/.test(source);
+  const after = !!referenceDate && dates.length > 0 && dates.every((d) => d > referenceDate.slice(0, 10));
+  const scenes = `In the optical${hls ? " (HLS)" : ""} scenes${dates.length ? ` of ${fmtScenes(dates)}` : ""}${after ? ", after the storm" : ""}`;
+  return `${scenes}, clouds hid ${cloudPct}% of the area. Radar sees through cloud.`;
+}
+
 // `day`: the selected timeline day. People in critical areas follow it when
 // the series carries a per-day count (same rule as the tile).
 export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
@@ -457,12 +497,7 @@ export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
     leadTime: leadTimeBlock(bundle, m),
     rainCheck: rainCheckLine(m),
     whyRadar: optical != null
-      // Conductor: the cloud share is measured on the optical scenes named
-      // in cloud_pct_source (WA: OPERA DSWx-HLS, Dec 15/17, after the storm),
-      // never "during the event".
-      ? (/HLS/.test(String(m.cloud_pct_source ?? ""))
-          ? `In the optical (HLS) scenes after the storm, clouds hid ${100 - optical}% of the area. Radar sees through cloud.`
-          : `In the optical scenes, clouds hid ${100 - optical}% of the area. Radar sees through cloud.`)
+      ? whyRadarText(100 - optical, String(m.cloud_pct_source ?? ""), bundle.reference_date)
       : "Cloud cover during the event is not reported for this case — SAR sees through either way.",
     featureImportance:
       m.feature_importance && typeof m.feature_importance === "object"
