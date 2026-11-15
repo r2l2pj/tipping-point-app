@@ -107,6 +107,19 @@ function slimWarned(v: unknown): unknown {
   return out;
 }
 
+// flood_ems (~40 KB): the row reads the headline, the before-onset shares
+// and the scope/licence strings only.
+function slimEms(v: unknown): unknown {
+  if (!isRecord(v)) return v;
+  const b = isRecord(v.flagged_before_onset) ? v.flagged_before_onset : undefined;
+  return {
+    activation: v.activation, licence: v.licence, coverage_limit: v.coverage_limit,
+    headline: isRecord(v.headline) ? { image_date_utc: v.headline.image_date_utc } : undefined,
+    flagged_before_onset: b ? Object.fromEntries(Object.entries(b).filter(([k]) =>
+      k === "anchor_local" || k.startsWith("observed_band_") || k === "gfs_issued")) : undefined,
+  };
+}
+
 // imerg_vs_gauge ships a per-station table (stations[]) the screen never
 // reads — the rain-check line cites only the medians, the counts and the
 // caveat.
@@ -154,7 +167,8 @@ function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
   const metricsView = bundle.metricsView
     ? (Object.fromEntries(Object.entries(bundle.metricsView)
         .filter(([k]) => !METRICS_DROP.includes(k))
-        .map(([k, v]) => [k, k === "imerg_vs_gauge" ? slimGauge(v) : WARNED_OBJECTS.includes(k) ? slimWarned(v) : v])) as CcBundle["metricsView"])
+        .map(([k, v]) => [k, k === "imerg_vs_gauge" ? slimGauge(v) : WARNED_OBJECTS.includes(k) ? slimWarned(v)
+          : k === "flood_ems" ? slimEms(v) : v])) as CcBundle["metricsView"])
     : bundle.metricsView;
   // The raw metrics blob duplicates metricsView; the screen reads only its
   // `_null_reasons` (availability.nullReason).

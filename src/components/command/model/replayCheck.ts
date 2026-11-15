@@ -200,6 +200,8 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
     finite(m.landslide_hit_pct)
       ? { id: "catalog-hits", name: "Landslide catalog hits", value: fmtPct(m.landslide_hit_pct), detail: catalogHitsDetail(m), missing: false }
       : undefined);
+  const ems = emsRow(m);
+  if (ems) rows.push(ems);
   const warned = warnedRow(m);
   if (warned) rows.push(warned);
   // Model scores are shown only with their n, in the 'Did we get it right?'
@@ -226,6 +228,46 @@ export const WARNED_NAME = {
   slide: "Mapped landslides in High or Critical areas (forecast as issued)",
   flood: "Flooded area in High or Critical areas (forecast as issued)",
 };
+// Conductor (lead-analysis a363629): RS flood index vs Copernicus EMS
+// EMSR720 flood map — Taquari valley only (EMS did not map Porto Alegre /
+// Guaíba). Headline = observed rain, High or above; before-onset shares;
+// attribution required by the EMS licence.
+export const EMS_ROW_NAME = "Flood map vs Copernicus EMS (Taquari valley only)";
+export const EMS_ATTRIBUTION = "© European Union, Copernicus Emergency Management Service";
+export function emsRow(m: M): CheckRow | undefined {
+  if (![m.flood_ems_iou, m.flood_ems_f1].some(finite)) return undefined;
+  const e = isRecord(m.flood_ems) ? m.flood_ems : {};
+  const h = isRecord(e.headline) ? e.headline : {};
+  const b = isRecord(e.flagged_before_onset) ? e.flagged_before_onset : {};
+  const pr = [finite(m.flood_ems_precision) ? `P ${fmtScore(m.flood_ems_precision)}` : undefined,
+    finite(m.flood_ems_recall) ? `R ${fmtScore(m.flood_ems_recall)}` : undefined].filter(Boolean).join(" · ");
+  const img = typeof h.image_date_utc === "string" ? fmtDate(h.image_date_utc) : undefined;
+  const onset = typeof b.anchor_local === "string" ? fmtDate(b.anchor_local.slice(0, 10)) : undefined;
+  const obsKey = Object.keys(b).find((k) => k.startsWith("observed_band_"));
+  const obs = obsKey && isRecord(b[obsKey]) ? (b[obsKey] as M).alto_or_critico_pct : undefined;
+  const gfs = isRecord(b.gfs_issued) ? b.gfs_issued : {};
+  const lastIssue = Object.keys(gfs).sort().pop();
+  const g = lastIssue && isRecord(gfs[lastIssue]) ? gfs[lastIssue] as M : undefined;
+  const before = onset && (finite(obs) || (g && finite(g.alto_or_critico_pct)))
+    ? ` Before the onset (${onset}): ${[
+        finite(obs) ? `${pct100(obs)} of the EMS flood area was High or above with observed rain` : undefined,
+        g && finite(g.alto_or_critico_pct)
+          ? `${pct100(g.alto_or_critico_pct as number)} in the NOAA GFS forecast issued ${fmtDate(lastIssue!)}${finite(g.critico_pct) ? ` (Critical ${pct100(g.critico_pct as number)})` : ""}`
+          : undefined,
+      ].filter(Boolean).join(", ")}.`
+    : "";
+  const scope = typeof e.coverage_limit === "string"
+    ? " EMS mapped only five Taquari-valley areas; the Porto Alegre / Guaíba flood is not in it."
+    : "";
+  return {
+    id: "ems",
+    name: EMS_ROW_NAME,
+    value: `IoU ${fmtScore(m.flood_ems_iou)} · F1 ${fmtScore(m.flood_ems_f1)}${pr ? ` · ${pr}` : ""}`,
+    detail: `Flood index High or above (observed rain)${img ? ` vs the EMS ${typeof e.activation === "string" ? `${e.activation} ` : ""}flood map of ${img}` : " vs the EMS flood map"}.${scope}${before} ${EMS_ATTRIBUTION}.`,
+    missing: false,
+  };
+}
+
 // L37 (conductor): the RS landslide anchor (May 1) is under review — the
 // event likely started Apr 29-30. A warned row (landslide or flood) shows its
 // numbers only when lead-analysis marks the anchor as the event onset.

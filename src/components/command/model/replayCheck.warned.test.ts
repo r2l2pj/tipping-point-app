@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { anchorShort, catalogHitsDetail, handCheck, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
+import { anchorShort, catalogHitsDetail, emsRow, handCheck, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
 
 // lead-analysis fallback bb125cf values (authored 0-100).
 describe("warned before the damage (lead-analysis)", () => {
@@ -162,5 +162,16 @@ describe("HAND card on the served radius (conductor)", () => {
     expect(h.line).toBe("IoU 0.34 · r 0.86 · radius 1500 m (the radius the index uses)");
     expect(h.note).toBe("Best radius 1000 m (IoU 0.42, r 0.90).");
     expect(handCheck({ hand_validation_iou: 0.26, hand_validation_r: 0.87, hand_validation_radius_m: 1000 })!.line).toBe("IoU 0.26 · r 0.87 · radius 1000 m");
+  });
+});
+
+describe("RS flood vs Copernicus EMS (lead-analysis a363629)", () => {
+  test("row from the real keys: scores, Taquari scope, before-onset shares, attribution", () => {
+    const m = JSON.parse(readFileSync(join(import.meta.dir, "../../../../test/fixtures/rs-ems.json"), "utf8"));
+    const r = emsRow(m)!;
+    expect(r.name).toBe("Flood map vs Copernicus EMS (Taquari valley only)");
+    expect(r.value).toBe("IoU 0.18 · F1 0.31 · P 0.46 · R 0.24");
+    expect(r.detail).toBe("Flood index High or above (observed rain) vs the EMS EMSR720 flood map of May 6, 2024. EMS mapped only five Taquari-valley areas; the Porto Alegre / Guaíba flood is not in it. Before the onset (Apr 29, 2024): 0.21% of the EMS flood area was High or above with observed rain, 6.6% in the NOAA GFS forecast issued Apr 28, 2024 (Critical 0.10%). © European Union, Copernicus Emergency Management Service.");
+    expect(emsRow({})).toBeUndefined();
   });
 });
