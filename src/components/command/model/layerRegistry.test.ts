@@ -38,7 +38,7 @@ describe("layer rows", () => {
 
   test("a row without data is greyed with its reason", () => {
     expect(row("imerg")).toMatchObject({ available: false, sub: "no map layer for this case" });
-    expect(row("candidates").sub).toBe("not published yet (no landslide candidate product yet)");
+    expect(row("candidates").sub).toBe("pending");
   });
 
   test("the flood row carries the real pass dates and a label that follows the source", () => {

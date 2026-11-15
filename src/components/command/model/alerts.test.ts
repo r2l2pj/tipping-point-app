@@ -4,6 +4,7 @@ import { alertsByRegion, buildAlertList } from "./alerts";
 import { bundle, liveBundle } from "./fixtures";
 import { ageText, classLabel, fmtBrt, fmtDate, fmtHours, sourceTime } from "./format";
 import { sourceRows } from "./sources";
+import { chartForecastLabel, issuedForecastLabel } from "./steps";
 
 describe("alert list", () => {
   const now = (candidates?: unknown[]) => liveBundle({
@@ -117,8 +118,27 @@ describe("source rows", () => {
       manifest: { event: "wa_2025", layers: [], forecast_source: "perfect-forecast" } });
     const rows = sourceRows(wa, Date.now());
     expect(rows.find((r) => r.id === "nisar")!.date).toBe("Dec 4, 2025 and Dec 16, 2025");
-    expect(rows.find((r) => r.id === "forecast")!.date).toBe("perfect forecast");
+    // Perfect forecast is only ever named as the upper bound.
+    expect(rows.find((r) => r.id === "forecast")!.date).toBe("perfect forecast · upper bound");
     expect(rows[0].age).toBeUndefined();
     expect(sourceRows(bundle()).find((r) => r.id === "nisar")!.date).toBe("No radar for this event (before NISAR launch)");
+  });
+
+  test("replay with an issued GFS run: the source names it; perfect forecast is the labelled chart upper bound", () => {
+    const rs = bundle({
+      id: "rs_2024", reference_date: "2024-05-02",
+      manifest: { event: "rs_2024", forecast_source: "perfect-forecast", layers: [
+        { id: "tpi_flood_d1", date: "2024-05-03", png: "a.png", forecast: true, forecast_source: "perfect-forecast", upper_bound: true },
+        { id: "tpi_flood_gfs_d1", date: "2024-05-03", png: "b.png", forecast: true, issued: "2024-05-02", forecast_source: "noaa-gfs" },
+      ] },
+      series: { event: "rs-2024-05", reference_date: "2024-05-02", days: [
+        { date: "2024-05-02", offset: 0, kind: "observed", tpi: 1, imerg_mm: 290, smap: 0.88 },
+        { date: "2024-05-03", offset: 1, kind: "forecast", tpi: 1, imerg_mm: 342, smap: 0.93 },
+      ] },
+    });
+    expect(sourceRows(rs).find((r) => r.id === "forecast")!.date)
+      .toBe("NOAA GFS (issued May 2, 2024) · chart: perfect forecast · upper bound");
+    expect(issuedForecastLabel(rs)).toBe("NOAA GFS (issued May 2, 2024)");
+    expect(chartForecastLabel(rs)).toBe("perfect forecast · upper bound");
   });
 });

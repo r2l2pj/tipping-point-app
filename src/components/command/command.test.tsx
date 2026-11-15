@@ -44,7 +44,7 @@ const mv = (m: Record<string, unknown>) => m as CcBundle["metricsView"];
 const FULL_METRICS = mv({
   iou: 0.71, f1: 0.83, cloud_pct: 0.95, landslide_hit_pct: 0.62, hand_validation: 0.78,
   people_critical: 8400, people_flooded: 2100, flooded_km2: 41.6, night_light_drop_pct: 0.18,
-  lead_time_mean_h: 47.5, lead_time_median_h: 52, warned_before_pct: 0.87,
+  lead_time_mean_h: 47.5, lead_time_median_h: 52, lead_time_iqr_h: [30, 70], lead_time_n: 9, warned_before_pct: 0.87,
   rf_auc: 0.91, rule_auc: 0.74,
   feature_importance: { imerg_p95_mm: 0.41, smap_l4: 0.33, nasadem_slope: 0.26 },
   forecast_source: "perfect-forecast",
@@ -134,14 +134,17 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
       anchor_precision: "mixed", lead_time_assumptions: { quality: "placeholder" },
     }) }));
     for (const text of ["How early? (in replay)", "Tipping Point would have warned 30 hours earlier",
-      "IQR 18–42 h · n = 12", "mixed-precision anchors", "Flagged before damage",
-      "Warned &gt;= 24 h early", "Never crossed Critical", "80%", "60%", "20%",
+      "IQR 18–42 h · n = 12", "mixed-precision anchors", "Never crossed Critical", "20%",
       "vs first official warning: +6 h", "Event-level anchor lead: 24 h",
       "Critical area that had damage: 25%", "40 km²", "Illustrative numbers",
       "Median 30 h · IQR 18–42 h · n = 12"]) {
       expect(html).toContain(text);
     }
     expect(html).not.toMatch(/Mediana|antecedência|deslizamentos|Avisados|Crítico/);
+    // "% warned first" was dropped (Lucas, 2026-11-15): never shown.
+    expect(html).not.toContain("Flagged before damage");
+    expect(html).not.toContain("Warned &gt;= 24 h early");
+    expect(html).not.toContain("Zones warned before the event");
     expect(html).not.toContain(">30<");
   });
 
@@ -152,21 +155,22 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
     expect(html).not.toContain("47.5");
   });
 
-  test("absent median: the row and the card read 'not published yet'; no metrics hides the card", () => {
-    for (const m of [{}, { lead_time_median_h: null }]) {
+  test("no median or no n: the row and the card read 'pending: forecast rebuild'; no metrics hides the card", () => {
+    // Never a stat without n: a median with n missing (the real RS metrics:
+    // median -57 h, IQR -57–-57, n null) is pending too.
+    for (const m of [{}, { lead_time_median_h: null },
+      { lead_time_median_h: -57, lead_time_iqr_h: [-57, -57], lead_time_n: null },
+      { lead_time_median_h: 0 }]) {
       const html = details(bundle({ metricsView: mv(m as never) }));
       expect(html).toContain("How early? (in replay)");
-      expect(html).toContain("Lead-time hindcast: not published yet");
-      expect(html).toMatch(/data-check="lead-time".*?not published yet/);
+      expect(html).toContain("Lead time: pending: forecast rebuild.");
+      expect(html).toMatch(/data-check="lead-time".*?pending: forecast rebuild/);
+      expect(html).not.toContain("-57");
+      expect(html).not.toContain("n = not reported");
     }
     const none = details(bundle({ metricsView: undefined }));
     expect(none).not.toContain("How early?");
-    expect(none).toMatch(/data-check="lead-time".*?not published yet/);
-    const html = details(bundle({ metricsView: mv({ lead_time_median_h: 0 }) }));
-    expect(html).toContain("IQR not reported–not reported h · n = not reported");
-    expect(html).toContain("IMERG Early ~4 h");
-    expect(html).not.toContain("vs first official warning");
-    expect(html).not.toContain("Lead time histogram");
+    expect(none).toMatch(/data-check="lead-time".*?pending: forecast rebuild/);
   });
 
   test("both histogram shapes render", () => {
