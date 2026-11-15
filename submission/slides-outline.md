@@ -16,12 +16,11 @@
 - *Visual:* the Uruguaiana NISAR map from the app ([TBD] screenshot once the series is published)
 
 ## Slide 3 — Prevent the disaster, not the flood: when · where · who (Uruguaiana, Oct 2026)
-- **When:** our index, fed by NASA satellite rain (GPM IMERG), turned the Uruguaiana region Critical on Sep 30, five days before Uruguaiana reached flood stage (Oct 5); NOAA's forecast the day before already showed High. Near-real-time rain; holds when scaled to the final product (still Critical on Sep 30 and Oct 1). NISAR then saw the water through cloud
-- **Where:** right days, not yet the right streets — timing yes (no Critical in the dry weeks before), location weak (lift 1.16 for the low-lying corridor); NISAR shows where: the corridor which holds 54% of the about 1.8 km² a teammate's NISAR change map (Sep 30 → Oct 12; 7 polygons, small sample) shows newly flooded, in 36% of the land (1.5× chance); our stricter automatic check did not reproduce that map
-- **Who:** about 20,900 people live in that corridor (about 29 inside the teammate's flood polygons)
-- **Also tested (post-event):** upstream-basin rain was above its 99th percentile on Sep 30; the upstream term is not yet live (on Washington it added 32% more false Critical area); an experimental upstream-aware model adds lead time, not location (it flags 82–88% of the area). No claim of being earlier than official warnings
-- **Then radar:** NISAR sees the river through cloud; our automatic check (HH drop > 3 dB below a per-scene threshold, low ground near rivers, ≥ 3 ha) found darkening along the corridor (1.76 km²) but rejected every Uruguaiana pair at its threshold clamp, so no automatic flood map yet
-- How: Tipping Point Index of NASA rain (IMERG), soil (SMAP) and terrain (NASADEM); builds on NASA's LHASA (doi:10.3389/feart.2021.640043; LHASA-F doi:10.3389/feart.2022.878996); an experimental XGBoost trigger model sits beside it
+- **When:** our index, fed by NASA satellite rain (GPM IMERG), turned the Uruguaiana region Critical on Sep 30, five days before flood stage (Oct 5; 13,129 km², 6,121 on the low floodplain); NOAA's forecast from Sep 27 already pointed there, 8 days ahead. Near-real-time rain; holds when scaled to the final product (3,541 km² on the floodplain)
+- **Honest:** 15 Critical days Sep 15 → Oct 31; 3 small ones (Sep 20–22) had no flood stage within 10 days. The Critical area was only 1.34× concentrated on the floodplain: right days, not yet the right streets
+- **Where (radar):** NISAR then saw the water through cloud; 54% of the NISAR flood candidates (a teammate's polygons, 1.85 km²) lie on the floodplain, which is 28% of the land in this case area (1.92×); our stricter automatic check has not reproduced them yet
+- **Who:** about 98,000 people live on the low floodplain (GPW v4.11)
+- How: Tipping Point Index of NASA rain, soil (SMAP) and terrain (NASADEM), with NOAA GFS for the next days; builds on NASA's LHASA (doi:10.3389/feart.2021.640043; LHASA-F doi:10.3389/feart.2022.878996); an experimental XGBoost model sits beside it
 
 ## Slide 4 — The demo
 - **Uruguaiana, Oct–Nov 2026:** NISAR pass pair Oct 24 → Nov 5, 2026 (HH + HV) over the Uruguay River — flood candidates [TBD] km², about [TBD] people inside; Itaqui is outside the swath
