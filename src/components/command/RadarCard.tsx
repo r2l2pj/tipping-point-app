@@ -49,11 +49,18 @@ export default function RadarCard({
             {radar.flooded.swath && <dd className="text-xs text-cc-faint">{radar.flooded.swath}</dd>}
           </div>
         )}
+        {radar.people && (
+          <div>
+            <dt className="text-xs text-cc-muted">{radar.people.label}</dt>
+            <dd className="font-semibold">{radar.people.value}</dd>
+          </div>
+        )}
         <div>
           <dt className="text-xs text-cc-muted">{radar.candidates.label}</dt>
           <dd className="font-semibold">{radar.candidates.value}</dd>
         </div>
       </dl>
+      {radar.note && <p className="mt-1 text-xs text-cc-muted">{radar.note}</p>}
       <p className="mt-1 text-xs text-cc-faint">{radar.candidates.note}</p>
       {radar.limitation && <p className="mt-1 text-xs text-cc-muted">{radar.limitation}</p>}
 

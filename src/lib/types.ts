@@ -52,6 +52,23 @@ export interface NisarPass {
 
 export type DataDates = Record<string, string | null | NisarPass[]>;
 
+// Live radar response of the Now case (now/response/nisar_meta.json,
+// normalized by src/lib/response.ts). Flood polygons are candidates.
+export interface NowResponse {
+  source: string;
+  flooded_km2?: number;
+  new_km2?: number;
+  receded_km2?: number;
+  people_flooded?: number;
+  pre_acquired?: string; // newest pair, earlier pass
+  post_acquired?: string; // newest pair, later pass
+  latest_acquired?: string;
+  latency_h?: number; // hours from the pass to the published product
+  polygons?: number;
+  geojson?: string; // polygon file name next to the meta file
+  null_reasons?: Record<string, string>;
+}
+
 // v4 root manifest.json — the single contract between data and front. Case
 // keys are the canonical underscore ids (rs_2024, wa_2025, now); each node
 // carries its hyphen event id and explicit asset paths — the app never
@@ -202,6 +219,8 @@ export interface CaseBundle {
   metrics?: EventMetrics;
   metricsView?: MetricsView;
   summary?: NowSummary;
+  // Live case only: the radar flood response (lead-live R2).
+  response?: NowResponse;
   swot?: unknown;
   catalog?: GeoJSON.FeatureCollection;
   municipalities?: GeoJSON.FeatureCollection;

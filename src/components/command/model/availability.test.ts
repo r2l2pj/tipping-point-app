@@ -23,12 +23,21 @@ describe("availability", () => {
     });
     const a = availability(b, "landslide_candidates");
     expect(a).toEqual({ state: "absent", reason: "no landslide candidate product yet" });
-    expect(missingText(a)).toBe("not published yet (no landslide candidate product yet)");
+    // The raw pipeline reason never reaches the screen.
+    expect(missingText(a)).toBe("pending");
+  });
+
+  test("_null_reasons map to short user text", () => {
+    const reason = (r: string) => missingText({ state: "absent", reason: r });
+    expect(reason("No NISAR coverage — event predates launch (Jul 2025)")).toBe("before NISAR launch");
+    expect(reason("No local labeled feature CSV/parquet table found")).toBe("pending");
+    expect(reason("not yet produced")).toBe("pending");
   });
 
   test("a reason in the raw metrics blob is read too", () => {
     const b = bundle({ metricsView: {}, metrics: { event: "x", _null_reasons: { iou: "no reference" } } as never });
-    expect(missingText(availability(b, "iou"))).toBe("not published yet (no reference)");
+    expect(availability(b, "iou")).toEqual({ state: "absent", reason: "no reference" });
+    expect(missingText(availability(b, "iou"))).toBe("pending");
   });
 
   test("radar is not applicable for a replay without a pair", () => {

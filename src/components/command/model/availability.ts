@@ -79,10 +79,20 @@ export function availability(bundle: CcBundle, key: string): Availability {
   return { state: "pending" };
 }
 
+// Pipeline `_null_reasons` are internal notes ("No local labeled feature
+// CSV/parquet ...", "No NISAR coverage — event predates launch (Jul 2025)").
+// The screen shows a short user phrase instead; the raw text never leaks.
+export const BEFORE_NISAR_TEXT = "before NISAR launch";
+export const PENDING_TEXT = "pending";
+export function shortReason(reason: string | undefined): string {
+  if (reason && /nisar/i.test(reason) && /(launch|predat)/i.test(reason)) return BEFORE_NISAR_TEXT;
+  return PENDING_TEXT;
+}
+
 // Text for a value that is not `ok`.
 export function missingText(a: Availability): string {
   if (a.state === "loading") return LOADING_TEXT;
   if (a.state === "not-applicable") return a.text;
-  if (a.state === "absent" && a.reason) return `${NOT_PUBLISHED} (${a.reason})`;
+  if (a.state === "absent" && a.reason) return shortReason(a.reason);
   return NOT_PUBLISHED;
 }

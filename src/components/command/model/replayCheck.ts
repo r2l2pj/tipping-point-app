@@ -33,9 +33,24 @@ export function opticalSeenPct(cloudPct: unknown): number | null {
 }
 
 // Lead time is never shown alone: median with IQR and n in one value.
+// Number of damage points behind the lead-time stat: metrics `lead_time_n`
+// only. The legacy `n_points` belongs to the old event-anchor run (RS:
+// median -57 h, IQR -57–-57, n_points 5678) and does not qualify a stat —
+// until the forecast rebuild publishes lead_time_n the stat is pending.
+export const leadTimeN = (m: M): number | undefined =>
+  finite(m.lead_time_n) && m.lead_time_n > 0 ? m.lead_time_n : undefined;
+
+// A lead-time stat is shown only with its n (conductor ruling): a median
+// without the number of points behind it is not a result.
+export const hasLeadTime = (m: M): boolean =>
+  finite(m.lead_time_median_h) && leadTimeN(m) !== undefined;
+
+export const LEAD_TIME_PENDING = "pending: forecast rebuild";
+
 export function leadTimeText(m: M): string {
   const iqr = Array.isArray(m.lead_time_iqr_h) ? m.lead_time_iqr_h : [];
-  return `Median ${round(m.lead_time_median_h)} h · IQR ${round(iqr[0])}–${round(iqr[1])} h · n = ${round(m.n_points)}`;
+  const range = finite(iqr[0]) && finite(iqr[1]) ? ` · IQR ${round(iqr[0])}–${round(iqr[1])} h` : "";
+  return `Median ${round(m.lead_time_median_h)} h${range} · n = ${round(leadTimeN(m))}`;
 }
 
 const isPlaceholder = (m: M): boolean => {
@@ -59,7 +74,7 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
     else if (m[key] === null || nullReason(bundle, key)) rows.push(missingRow(id, name, key));
   };
 
-  if (finite(m.lead_time_median_h)) {
+  if (hasLeadTime(m)) {
     const never = finite(m.never_critical_pct)
       ? `${fmtPct(m.never_critical_pct)} never crossed Critical` : undefined;
     rows.push({
@@ -70,13 +85,9 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
       missing: false,
     });
   } else {
-    rows.push(missingRow("lead-time", "Lead time before mapped landslides", "lead_time_median_h"));
+    rows.push({ id: "lead-time", name: "Lead time before mapped landslides", value: LEAD_TIME_PENDING, missing: true });
   }
-
-  optional("warned", "Zones warned before the event", "warned_before_pct", () =>
-    finite(m.warned_before_pct)
-      ? { id: "warned", name: "Zones warned before the event", value: fmtPct(m.warned_before_pct), missing: false }
-      : undefined);
+  // "% of zones warned first" was dropped (Lucas, 2026-11-15): no row.
   optional("flood-agreement", "Flood agreement with the reference", "iou", () => {
     if (![m.iou, m.f1, m.precision, m.recall].some(finite)) return undefined;
     const pr = [
@@ -158,9 +169,9 @@ const stat = (bundle: CcBundle, label: string, key: string, format: (v: unknown)
 
 function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
   if (!bundle.metricsView) return undefined;
-  if (!finite(m.lead_time_median_h)) {
+  if (!hasLeadTime(m)) {
     return {
-      missing: `Lead-time hindcast: ${missingText(availability(bundle, "lead_time_median_h"))} — IMERG latency-aware rerun not published for this case.`,
+      missing: `Lead time: ${LEAD_TIME_PENDING}.`,
       placeholder: false, median: "", iqr: "", shares: [], lines: [], histogram: undefined, note: "",
     };
   }
@@ -172,9 +183,8 @@ function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
   const precision = m.anchor_precision === "hour" ? "hour-precision anchors"
     : m.anchor_precision === "date" ? "date-precision anchors"
     : m.anchor_precision === "mixed" ? "mixed-precision anchors" : null;
+  // The "% warned first" shares were dropped (Lucas, 2026-11-15).
   const shares = ([
-    ["warned_before_pct", "Flagged before damage"],
-    ["warned_24h_pct", "Warned >= 24 h early"],
     ["never_critical_pct", "Never crossed Critical"],
   ] as const).flatMap(([key, label]) =>
     finite(m[key]) ? [{ label, value: fmtPct(m[key]), missing: false }] : []);
@@ -189,8 +199,12 @@ function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
   }
   return {
     placeholder: isPlaceholder(m),
-    median: `Tipping Point would have warned ${round(m.lead_time_median_h)} hours earlier`,
-    iqr: `IQR ${round(iqr[0])}–${round(iqr[1])} h · n = ${round(m.n_points)}${precision ? ` · ${precision}` : ""}`,
+    // A negative median means the index flagged AFTER the mapped damage —
+    // never phrase it as "warned earlier".
+    median: (m.lead_time_median_h as number) >= 0
+      ? `Tipping Point would have warned ${round(m.lead_time_median_h)} hours earlier`
+      : `Tipping Point flagged ${round(-(m.lead_time_median_h as number))} hours after the mapped damage`,
+    iqr: `${finite(iqr[0]) && finite(iqr[1]) ? `IQR ${round(iqr[0])}–${round(iqr[1])} h · ` : ""}n = ${round(leadTimeN(m))}${precision ? ` · ${precision}` : ""}`,
     shares,
     lines,
     histogram: m.lead_time_hist,

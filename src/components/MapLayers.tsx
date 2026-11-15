@@ -575,10 +575,18 @@ export function useMapLayers(
     };
     const url = (key: string, fixed: string) =>
       geoUrl(bundle, caseDir, key, fixed);
+    // Map chrome is optional: when the case publishes a products map, a file
+    // it does not declare is not requested (the live case declares none of
+    // these yet — no 404s). Cases without a products map keep the fixed name.
+    const products = (bundle.products ?? bundle.manifest?.products) as
+      | Record<string, unknown>
+      | undefined;
+    const chrome = (key: string, fixed: string) =>
+      products && !(key in products) ? undefined : url(key, fixed);
     // Map chrome loads eagerly; overlays only when their tab/toggle asks.
-    loadGeo(SRC.water, "permanent water", url("permanent_water", "geojson/permanent_water.geojson"));
-    loadGeo(SRC.zones, "priority zones", url("priority_zones", "geojson/priority_zones.geojson"));
-    loadGeo(SRC.muni, "boundaries", url("municipal_boundaries", "geojson/municipal_boundaries.geojson"));
+    loadGeo(SRC.water, "permanent water", chrome("permanent_water", "geojson/permanent_water.geojson"));
+    loadGeo(SRC.zones, "priority zones", chrome("priority_zones", "geojson/priority_zones.geojson"));
+    loadGeo(SRC.muni, "boundaries", chrome("municipal_boundaries", "geojson/municipal_boundaries.geojson"));
     // With no tab context the caller drives flood/scars via showFlood (and
     // the nisar toggle); with a tab the overlayPlan decides; explicit
     // options.overlays replace both (see resolveOverlays).

@@ -19,7 +19,7 @@ import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
 import { sourceRows } from "./model/sources";
 import { statusChip } from "./model/status";
-import { forecastSource, forecastTag, stepLabel, stepMarks, stepsFor } from "./model/steps";
+import { chartForecastLabel, forecastTag, stepLabel, stepMarks, stepsFor } from "./model/steps";
 import { criticalAreaTile, peopleTile, zoneSnapshot } from "./model/tiles";
 import type { CcBundle } from "./model/types";
 import PriorityAreas from "./PriorityAreas";
@@ -334,7 +334,7 @@ export function CommandCenterView({
                   steps={steps}
                   dayIndex={state.dayIndex}
                   asTable={state.chartAsTable}
-                  forecastLabel={forecastSource(bundle) ?? "source not published"}
+                  forecastLabel={chartForecastLabel(bundle) ?? "source not published"}
                   onSeek={seek}
                   onToggleTable={toggleTable}
                 />

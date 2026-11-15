@@ -14,7 +14,7 @@ const row = (b: CcBundle, id: string) => replayCheckRows(b).find((r) => r.id ===
 
 describe("replay check rows", () => {
   test("lead time shows median with IQR and n together, never alone", () => {
-    const b = bundle({ metricsView: mv({ lead_time_median_h: 30, lead_time_iqr_h: [18, 42], n_points: 12, never_critical_pct: 0.2 }) });
+    const b = bundle({ metricsView: mv({ lead_time_median_h: 30, lead_time_iqr_h: [18, 42], lead_time_n: 12, never_critical_pct: 0.2 }) });
     expect(row(b, "lead-time")).toMatchObject({
       value: "Median 30 h · IQR 18–42 h · n = 12",
       detail: "20% never crossed Critical",
@@ -23,16 +23,30 @@ describe("replay check rows", () => {
   });
 
   test("hours render whole: 47.5 shows as 48 h", () => {
-    const value = row(bundle({ metricsView: mv({ lead_time_median_h: 47.5 }) }), "lead-time")!.value;
+    const value = row(bundle({ metricsView: mv({ lead_time_median_h: 47.5, lead_time_n: 5 }) }), "lead-time")!.value;
     expect(value).toContain("Median 48 h");
     expect(value).not.toContain("47.5");
   });
 
-  test("an absent lead time reads 'not published yet', never an empty or zero row", () => {
-    for (const m of [undefined, {}, { lead_time_median_h: null }]) {
+  test("an absent lead time, or one without n, reads 'pending: forecast rebuild'", () => {
+    for (const m of [undefined, {}, { lead_time_median_h: null },
+      { lead_time_median_h: -57, lead_time_iqr_h: [-57, -57], lead_time_n: null }]) {
       const r = row(bundle({ metricsView: mv(m as never) }), "lead-time")!;
-      expect(r).toMatchObject({ value: "not published yet", missing: true });
+      expect(r).toMatchObject({ value: "pending: forecast rebuild", missing: true });
     }
+  });
+
+  test("n comes from lead_time_n only; IQR is dropped when absent", () => {
+    expect(row(bundle({ metricsView: mv({ lead_time_median_h: 12, lead_time_n: 7 }) }), "lead-time")!.value)
+      .toBe("Median 12 h · n = 7");
+    // the legacy n_points of the old run does not qualify a stat (real RS metrics)
+    expect(row(bundle({ metricsView: mv({ lead_time_median_h: -57, lead_time_iqr_h: [-57, -57], lead_time_n: null, n_points: 5678 }) }), "lead-time")!.value)
+      .toBe("pending: forecast rebuild");
+  });
+
+  test("'% warned first' is dropped: no row even when the metric is present", () => {
+    expect(row(bundle({ metricsView: mv({ warned_before_pct: 0.0 }) }), "warned")).toBeUndefined();
+    expect(row(bundle({ metricsView: mv({ warned_before_pct: 0.87 }) }), "warned")).toBeUndefined();
   });
 
   test("rows follow the metrics each case has", () => {
@@ -55,7 +69,8 @@ describe("replay check rows", () => {
 
   test("a null metric shows its reason", () => {
     const b = bundle({ metricsView: mv({}), nullReasons: { iou: "no reference mask" } });
-    expect(row(b, "flood-agreement")!.value).toBe("not published yet (no reference mask)");
+    // Internal pipeline reasons never reach the screen: a short phrase only.
+    expect(row(b, "flood-agreement")!.value).toBe("pending");
   });
 
   test("flood agreement reads the like-for-like headline scores incl. P/R", () => {
@@ -159,11 +174,15 @@ describe("evidence", () => {
   test("the lead-time block: hidden without metrics, 'not published yet' without a median", () => {
     expect(evidence(bundle()).leadTime).toBeUndefined();
     const missing = evidence(bundle({ metricsView: mv({ lead_time_median_h: null }) })).leadTime!;
-    expect(missing.missing).toBe("Lead-time hindcast: not published yet — IMERG latency-aware rerun not published for this case.");
-    expect(evidence(bundle({ metricsView: mv({ lead_time_median_h: 52 }) })).leadTime!.median)
-      .toBe("Tipping Point would have warned 52 hours earlier");
-    const lt = evidence(bundle({ metricsView: mv({ lead_time_median_h: 0 }) })).leadTime!;
-    expect(lt.iqr).toBe("IQR not reported–not reported h · n = not reported");
+    expect(missing.missing).toBe("Lead time: pending: forecast rebuild.");
+    expect(evidence(bundle({ metricsView: mv({ lead_time_median_h: 52 }) })).leadTime!.missing)
+      .toBe("Lead time: pending: forecast rebuild."); // no n -> pending
+    const lt = evidence(bundle({ metricsView: mv({ lead_time_median_h: 52, lead_time_n: 4 }) })).leadTime!;
+    expect(lt.median).toBe("Tipping Point would have warned 52 hours earlier");
+    expect(lt.iqr).toBe("n = 4");
+    // Real RS metrics: median -57 h, n 5678 -> no "warned -57 hours earlier".
+    const late = evidence(bundle({ metricsView: mv({ lead_time_median_h: -57, lead_time_iqr_h: [-57, -57], lead_time_n: 5678 }) })).leadTime!;
+    expect(late.median).toBe("Tipping Point flagged 57 hours after the mapped damage");
     expect(lt.note).toContain("IMERG Early ~4 h");
   });
 
@@ -231,6 +250,33 @@ describe("radar card", () => {
 
   test("live case without a pair keeps the awaiting copy", () => {
     expect(radarCard(liveBundle()).headline).toBe("Awaiting a NISAR pair over the AOI.");
+  });
+
+  test("live radar response: candidates wording, area, people, pass age, no replay limitation", () => {
+    const live = liveBundle({
+      response: { source: "nisar-gcov", flooded_km2: 12.06, people_flooded: 384, latency_h: 99.7,
+        pre_acquired: "2026-10-25T21:16:03Z", post_acquired: "2026-11-06T21:16:03Z" },
+      data_dates: { nisar_pre: "2026-10-25T21:16:03Z", nisar_post: "2026-11-06T21:16:03Z" },
+      products: { flood_confirmed: "response/flood_nisar.geojson" },
+    });
+    const card = radarCard(live);
+    expect(card.pair).toBe(true);
+    expect(card.headline).toBe("NISAR pair available");
+    expect(card.dates).toBe("Oct 25, 2026 → Nov 6, 2026");
+    expect(card.flooded).toEqual({ label: "Flooded area (NISAR radar, candidates)", value: "12.1 km²" });
+    expect(card.people).toEqual({ label: "People in the flooded area", value: "400" });
+    expect(card.note).toContain("not yet checked on the ground");
+    expect(card.note).toContain("100 h after the radar pass");
+    expect(card.limitation).toBeUndefined();
+    expect(card.canShowOnMap).toBe(true);
+    expect(JSON.stringify([card.flooded, card.note, card.headline])).not.toMatch(/confirmed/i);
+  });
+
+  test("live response with a null area shows the short reason, never the raw note", () => {
+    const card = radarCard(liveBundle({
+      response: { source: "nisar-gcov", null_reasons: { flooded_km2: "No local labeled feature for x" } },
+    }));
+    expect(card.flooded!.value).not.toContain("labeled feature");
   });
 
   test("the pass list comes from data_dates", () => {

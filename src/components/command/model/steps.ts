@@ -100,6 +100,27 @@ export const forecastSource = (bundle: CcBundle): string | undefined =>
       bundle.metricsView?.forecast_source
   );
 
+// The case's real issued forecast (L22): the GFS frame the map paints on the
+// first forecast day, when there is one — "NOAA GFS (issued May 2, 2024)".
+export function issuedForecastLabel(bundle: CcBundle): string | undefined {
+  const first = bundle.series?.days.find((d) => d.kind === "forecast");
+  if (!first) return undefined;
+  const frame = pickTpiFrame(
+    bundle.manifest?.layers, first, null,
+    bundle.series?.reference_date ?? bundle.reference_date
+  );
+  return frame && isGfsFrame(frame) ? gfsChipSource(frame) : undefined;
+}
+
+export const UPPER_BOUND_TEXT = "perfect forecast · upper bound";
+
+// Source of the forecast-day values in the chart (series). Perfect forecast
+// is copied observation: it is only ever labelled as the upper bound.
+export function chartForecastLabel(bundle: CcBundle): string | undefined {
+  const src = forecastSource(bundle);
+  return src === "perfect forecast" ? UPPER_BOUND_TEXT : src;
+}
+
 // Forecast tag of the timeline.
 export function forecastTag(bundle: CcBundle): string {
   const label = forecastSource(bundle);

@@ -22,6 +22,7 @@ import {
   type NowSummary,
 } from "./contract";
 import type { LayerMeta } from "./ee-layers";
+import { NISAR_META, responseGeojsonPath, toNowResponse } from "./response";
 import type {
   AlertsFile,
   CaseBundle,
@@ -506,6 +507,7 @@ export async function getCaseBundle(
     places,
     summary,
     nowAlerts,
+    responseRaw,
   ] = await Promise.all([
     loadMetrics(ctx, entry?.metrics ?? `metrics.json#${canonical}`, dirs),
     loadProduct<SeriesDaily>(
@@ -524,7 +526,29 @@ export async function getCaseBundle(
     now
       ? loadProduct<NowAlertsFile>(ctx, canonical, rawProducts, "alerts", "alerts.json")
       : undefined,
+    // Radar flood response (lead-live R2). Read server-side by its fixed
+    // name until the products map declares it; absent -> no radar numbers.
+    now
+      ? loadProduct<unknown>(ctx, canonical, rawProducts, "nisar_meta", NISAR_META)
+      : undefined,
   ]);
+
+  // The response polygons ride the flood_confirmed slot the map and the
+  // radar card already read, at the declared path (no request when absent).
+  // Its pass pair fills nisar_pre/nisar_post unless the manifest has them.
+  const response = now ? toNowResponse(responseRaw) : undefined;
+  let bundleProducts = manifest?.products;
+  let bundleDates = manifest?.data_dates;
+  if (response) {
+    const floodPath = responseGeojsonPath(rawProducts, response);
+    if (floodPath && typeof bundleProducts?.flood_confirmed !== "string") {
+      bundleProducts = { ...bundleProducts, flood_confirmed: floodPath };
+    }
+    if (response.pre_acquired && response.post_acquired &&
+        typeof bundleDates?.nisar_pre !== "string" && typeof bundleDates?.nisar_post !== "string") {
+      bundleDates = { ...bundleDates, nisar_pre: response.pre_acquired, nisar_post: response.post_acquired };
+    }
+  }
 
   // A10: bbox and reference_date come from the contract, not caller literals.
   // bbox = manifest `bounds` ?? caller arg ?? events.json entry `bbox`;
@@ -631,7 +655,7 @@ export async function getCaseBundle(
     bbox: resolvedBbox,
     reference_date: referenceDate,
     updated_at: manifest?.updated_at,
-    data_dates: manifest?.data_dates,
+    data_dates: bundleDates,
     manifest,
     metrics,
     // Nested landslide_hit -> flat event-day landslide_hit_pct (the day
@@ -639,9 +663,10 @@ export async function getCaseBundle(
     metricsView: flattenLandslideHit(toMetricsView(metrics), referenceDate),
     summary,
     nowAlerts,
+    response,
     nisarPasses: now?.nisar_passes,
     swot,
-    products: manifest?.products,
+    products: bundleProducts,
     series: effectiveSeries,
     pending: [...pending].sort(),
     tpiCuts: manifest?.tpi_cuts ?? TPI_CUTS,

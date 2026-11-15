@@ -5,7 +5,7 @@ import { assetUrl } from "@/lib/layers";
 import type { NisarPass } from "@/lib/types";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
 import { declared } from "./lazy";
-import { finite, fmtDate, fmtKm2 } from "./format";
+import { finite, fmtDate, fmtKm2, fmtPeople } from "./format";
 import type { CcBundle } from "./types";
 
 type BBox = [number, number, number, number];
@@ -73,7 +73,16 @@ export const nightLightsCompare = (bundle: CcBundle): CompareOption =>
 
 // Label of the flood polygons and of the flooded area: follows the pair and
 // `flood_source`, never a fixed "NISAR".
+export const RESPONSE_AREA_LABEL = "Flooded area (NISAR radar, candidates)";
+export const RESPONSE_LAYER_LABEL = "Flood candidates from radar (NISAR)";
+export const RESPONSE_NOTE =
+  "Radar flood candidates from two NISAR passes — not yet checked on the ground.";
+
 export function floodLabels(bundle: CcBundle): { area: string; layer: string } {
+  // Live case: the response polygons are radar candidates, never "confirmed".
+  if (bundle.mode === "live" && bundle.response) {
+    return { area: RESPONSE_AREA_LABEL, layer: RESPONSE_LAYER_LABEL };
+  }
   const source = bundle.metricsView?.flood_source;
   if (hasNisarPair(bundle) || source === "nisar") {
     return { area: "Flooded area (NISAR)", layer: "Flood confirmed by radar (NISAR)" };
@@ -130,6 +139,8 @@ export interface RadarCard {
   headline: string; // status line of the card
   dates?: string; // "Dec 4, 2025 → Dec 16, 2025"
   flooded?: { label: string; value: string; swath?: string };
+  people?: { label: string; value: string };
+  note?: string; // live response: candidates + how old the radar pass is
   candidates: { label: string; value: string; note: string };
   limitation?: string;
   passes: NisarPass[];
@@ -137,7 +148,34 @@ export interface RadarCard {
   compare: CompareOption;
 }
 
+// Live case with a published radar response (lead-live R2).
+function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
+  const r = bundle.response!;
+  const reasonOf = (key: string) => r.null_reasons?.[key];
+  const value = (key: "flooded_km2" | "people_flooded", fmt: (n: number) => string) => {
+    const v = r[key];
+    return finite(v)
+      ? fmt(v)
+      : missingText(reasonOf(key) ? { state: "absent", reason: reasonOf(key) } : { state: "pending" });
+  };
+  const age = finite(r.latency_h)
+    ? ` Newest pair published ${Math.round(r.latency_h)} h after the radar pass.`
+    : "";
+  return {
+    ...base,
+    flooded: { label: RESPONSE_AREA_LABEL, value: value("flooded_km2", fmtKm2) },
+    people: { label: "People in the flooded area", value: value("people_flooded", fmtPeople) },
+    note: `${RESPONSE_NOTE}${age}`,
+    limitation: undefined,
+  };
+}
+
 export function radarCard(bundle: CcBundle): RadarCard {
+  const card = baseRadarCard(bundle);
+  return bundle.mode === "live" && bundle.response ? responseCard(bundle, card) : card;
+}
+
+function baseRadarCard(bundle: CcBundle): RadarCard {
   const dd = bundle.data_dates ?? {};
   const pre = typeof dd.nisar_pre === "string" ? dd.nisar_pre : null;
   const post = typeof dd.nisar_post === "string" ? dd.nisar_post : null;

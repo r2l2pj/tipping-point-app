@@ -3,6 +3,7 @@ import { forecastSourceLabel } from "@/lib/contract";
 import { NO_RADAR_TEXT } from "./availability";
 import { ageText, fmtBrt, fmtDate, sourceTime } from "./format";
 import { nisarPasses } from "./radar";
+import { issuedForecastLabel, UPPER_BOUND_TEXT } from "./steps";
 import { NOT_PUBLISHED, type CcBundle } from "./types";
 
 export interface SourceRow {
@@ -38,10 +39,17 @@ export function sourceRows(bundle: CcBundle, nowMs?: number): SourceRow[] {
   if (live) {
     rows.push(row("geos", "GEOS-FP forecast", "geos_fp_issued"));
   } else {
+    // L22: the map's forecast frames are an issued NOAA GFS run; perfect
+    // forecast (copied observation) appears only as a labelled upper bound.
+    const issued = issuedForecastLabel(bundle);
     const label = forecastSourceLabel(bundle.manifest?.forecast_source);
+    const upper = label === "perfect forecast";
+    const date = issued
+      ? `${issued}${upper ? ` · chart: ${UPPER_BOUND_TEXT}` : ""}`
+      : upper ? UPPER_BOUND_TEXT : label;
     rows.push({
       id: "forecast", name: "Forecast source",
-      date: label ?? NOT_PUBLISHED, missing: !label,
+      date: date ?? NOT_PUBLISHED, missing: !date,
     });
   }
   const pre = typeof dd.nisar_pre === "string" ? dd.nisar_pre : undefined;
