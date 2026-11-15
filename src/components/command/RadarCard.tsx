@@ -25,12 +25,12 @@ export default function RadarCard({
   const primary = "inline-flex items-center gap-1.5 rounded-lg bg-cc-accent px-2.5 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50";
   const secondary = "inline-flex items-center rounded-lg border border-cc-line-strong bg-cc-surface px-2.5 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60";
   return (
-    <section aria-label="Radar confirmation" className="rounded-[10px] border border-cc-line px-3 py-2">
+    <section aria-label="Radar check" className="rounded-[10px] border border-cc-line px-3 py-2">
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
         <Icon d={ICON.radar} size={30} strokeWidth={1.8} className="shrink-0" />
         <div className="shrink-0">
           <div className="text-[15px] font-semibold leading-tight">{radar.pair ? "NISAR radar" : "Radar"}</div>
-          <div className="text-xs text-cc-muted">Post-event confirmation</div>
+          <div className="text-xs text-cc-muted">Post-event radar check</div>
         </div>
         <div className="min-w-0 flex-[1_1_150px] border-l border-cc-line pl-2.5">
           <div className="flex items-center gap-2 text-[13px] font-semibold">
@@ -91,7 +91,7 @@ export default function RadarCard({
       <div className="mt-2 flex flex-wrap items-center gap-2">
         {radar.pair && (
           <button type="button" onClick={onConfirm} disabled={!radar.canShowOnMap} className={primary}>
-            Confirm with NISAR radar <Icon d={ICON.arrowRight} size={14} strokeWidth={2.2} />
+            Check with NISAR radar <Icon d={ICON.arrowRight} size={14} strokeWidth={2.2} />
           </button>
         )}
         <button type="button" onClick={onShowFlood} aria-pressed={floodOn} disabled={!radar.canShowOnMap} className={secondary}>

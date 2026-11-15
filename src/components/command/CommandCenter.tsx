@@ -21,7 +21,7 @@ import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
 import { sourceRows } from "./model/sources";
 import { statusChip } from "./model/status";
-import { chartForecastLabel, forecastTag, stepLabel, stepMarks, stepsFor } from "./model/steps";
+import { chartForecastLabel, forecastTag, frameFor, issuedFrame, stepLabel, stepMarks, stepsFor } from "./model/steps";
 import { criticalAreaTile, peopleTile, zoneSnapshot } from "./model/tiles";
 import type { CcBundle } from "./model/types";
 import PriorityAreas from "./PriorityAreas";
@@ -198,6 +198,12 @@ export function CommandCenterView({
     : undefined;
   const snap = zoneSnapshot(bundle, step?.date);
   const tag = forecastTag(bundle);
+  // The TPI frame on the map, one source of truth for the tiles and the
+  // timeline chip: the "forecast issued this day" overlay when on, else the
+  // step's own frame (TPI index on).
+  const tpiOn = state.layers.includes("tpi");
+  const overlayFrame = tpiOn ? issuedFrame(bundle, step?.date, state.hazard, state.issueLead)?.layer : undefined;
+  const mapFrame = overlayFrame ?? (tpiOn ? frameFor(bundle, step?.date, state.hazard)?.layer : undefined);
   // Area by class of the selected hazard (summary v2), or the v1 union.
   const classesKm2 = bundle.riskPaused ? [] : Object.entries(liveClasses(bundle.summary, state.hazard) ?? {});
 
@@ -295,8 +301,8 @@ export function CommandCenterView({
                 <div>
                   <h3 className="m-0 mb-1 text-[13px] font-semibold text-cc-muted">Who is affected</h3>
                   <Tiles
-                    area={criticalAreaTile(bundle, state.hazard, step?.date, step?.day)}
-                    people={peopleTile(bundle, step?.date, step?.day)}
+                    area={criticalAreaTile(bundle, state.hazard, step?.date, step?.day, overlayFrame)}
+                    people={peopleTile(bundle, step?.date, step?.day, overlayFrame)}
                   />
                   {classesKm2.length > 0 && (
                     <dl className="mt-1.5 grid grid-cols-2 gap-x-4 text-xs text-cc-muted" aria-label="Area by class">
@@ -386,6 +392,7 @@ export function CommandCenterView({
         dayIndex={state.dayIndex}
         playing={state.playing}
         forecastTag={tag}
+        mapFrame={mapFrame}
         onSeek={(index) => dispatch({ type: "seek", index })}
         onPrev={() => dispatch({ type: "prev" })}
         onNext={() => dispatch({ type: "next" })}

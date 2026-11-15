@@ -1,7 +1,7 @@
 // The two tiles of the Situation panel. Values come from the metrics, the
 // summary or the zone snapshot; a missing value is never shown as 0.
 import { count, liveCriticalKm2, liveSummaryV2 } from "@/lib/contract";
-import type { DayPoint } from "@/lib/types";
+import type { DayPoint, ManifestLayer } from "@/lib/types";
 import { availability, missingText } from "./availability";
 import { priorityAreas } from "./areas";
 import { finite, fmtBrt, fmtDate, fmtKm2, fmtPeople } from "./format";
@@ -76,8 +76,28 @@ const splitNote = (day: DayPoint, hazard: Hazard): string | undefined => {
 // Order of sources (same as the old ALERT card on main): the value of the
 // selected day, else the metrics scalar with its date, else the labelled sum
 // over the priority zones.
-export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: string, day?: DayPoint): Tile {
+// Replay "forecast issued this day": the tiles follow the GFS frame on the
+// map (lead-analysis adds critical_km2 / people_critical per GFS layer);
+// until a frame carries them the tile says so, never the observed day's 0.
+export const FRAME_FIGURES_PENDING = "pending for this forecast frame";
+
+const frameNote = (frame: ManifestLayer): string =>
+  `forecast for ${fmtDate(frame.date ?? "")}${frame.issued ? ` (issued ${fmtDate(frame.issued)})` : ""}`;
+
+function frameTile(label: string, frame: ManifestLayer, value: number | undefined, fmt: (v: number) => string): Tile {
+  return finite(value)
+    ? { label, value: fmt(value), missing: false, note: frameNote(frame), dimmed: false }
+    : { label, value: FRAME_FIGURES_PENDING, missing: true, note: frameNote(frame), dimmed: false };
+}
+
+const frameField = (frame: ManifestLayer, key: string): unknown => (frame as unknown as Record<string, unknown>)[key];
+
+export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: string, day?: DayPoint, frame?: ManifestLayer): Tile {
   const label = "Critical area";
+  if (frame && bundle.mode === "replay") {
+    const v = frameField(frame, "critical_km2");
+    return frameTile(label, frame, finite(v) ? v : undefined, fmtKm2);
+  }
   if (bundle.mode === "live" && bundle.riskPaused) return pausedTile(label);
   if (bundle.mode !== "live" && day && finite(day.critical_km2)) {
     return dayTile(label, fmtKm2(day.critical_km2), day.date,
@@ -111,8 +131,11 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
     bundle.zones ? "critical_area_km2" : "priority_zones", zoneNote(bundle, critical.length));
 }
 
-export function peopleTile(bundle: CcBundle, stepDate?: string, day?: DayPoint): Tile {
+export function peopleTile(bundle: CcBundle, stepDate?: string, day?: DayPoint, frame?: ManifestLayer): Tile {
   const label = "People potentially exposed";
+  if (frame && bundle.mode === "replay") {
+    return frameTile(label, frame, count(frameField(frame, "people_critical")), fmtPeople);
+  }
   if (bundle.mode === "live" && bundle.riskPaused) return pausedTile(label);
   // count() drops raster fill values and negatives: not data.
   const ofDay = bundle.mode !== "live" ? count(day?.people_critical) : undefined;

@@ -43,7 +43,7 @@ describe("layer rows", () => {
 
   test("the flood row carries the real pass dates and a label that follows the source", () => {
     expect(row("flood")).toMatchObject({
-      label: "Flood confirmed by radar (NISAR)",
+      label: "Flood candidates from radar (NISAR)",
       sub: "NISAR passes: Dec 4, 2025, Dec 16, 2025",
     });
     const rs = layerRows(bundle({ metricsView: { flood_source: "opera" } }), [], "slide");

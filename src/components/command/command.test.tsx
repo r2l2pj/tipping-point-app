@@ -250,7 +250,7 @@ describe("radar card (S13, L6, L7, L11)", () => {
     }));
     expect(html).not.toContain("Flooded area (NISAR)");
     expect(html).not.toContain("Flood confirmed by radar (NISAR)");
-    expect(html).not.toContain("Confirm with NISAR radar");
+    expect(html).not.toContain("Check with NISAR radar");
     expect(html).toContain("No radar for this event (before NISAR launch).");
     expect(html).toContain("Flooded area (observed reference)");
     expect(html).toContain("118.3 km");
@@ -345,7 +345,7 @@ describe("response-first section order (L27)", () => {
     expect(at("Now on the ground")).toBeGreaterThanOrEqual(0);
     expect(at("Prediction")).toBeGreaterThan(at("Now on the ground"));
     // What is flooded/sliding and who is exposed come before the TPI chip.
-    for (const s of ["Radar confirmation", "Flooded area (NISAR)", "Who is affected", "People potentially exposed", "Priority areas"]) {
+    for (const s of ["Radar check", "Flooded area (NISAR)", "Who is affected", "People potentially exposed", "Priority areas"]) {
       expect(at(s)).toBeGreaterThanOrEqual(0);
       expect(at(s)).toBeLessThan(at("Tipping point reached"));
     }
@@ -591,5 +591,53 @@ describe("public view (P1 to P5) and routes", () => {
     const html = render([]);
     expect(html).toContain("Data unavailable");
     expect(html).not.toContain("Below the tipping point");
+  });
+});
+
+describe("forecast issued this day: one source of truth (recording fixes)", () => {
+  const gfs = (k: number, issued: string, date: string, extra: Record<string, unknown> = {}) => ({
+    id: `tpi_slide_gfs_d${k}`, date, issued, png: `wa_2025/png/tpi_slide_gfs_d${k}_${date.replace(/-/g, "")}.png`,
+    forecast: true, forecast_source: "noaa-gfs", kind: "forecast", ...extra });
+  const wa = (extra: Record<string, unknown> = {}) => bundle({
+    series: series([0, 0, 0, 1], ["observed", "observed", "observed", "forecast"], 0.6, 2),
+    manifest: { ...manifest([]), layers: [
+      { id: "tpi_slide", date: "2025-12-10", png: "wa_2025/png/tpi_slide_20251210.png" },
+      gfs(3, "2025-12-10", "2025-12-13"), // post-event forecast-day frame (run issued on the event day)
+      gfs(3, "2025-12-03", "2025-12-06", extra), // the overlay: run issued Dec 3, depicting Dec 6
+    ] } as never,
+  });
+  test("tiles follow the overlay frame: figures when published, 'pending' otherwise — never the observed 0", () => {
+    const b = wa();
+    const steps = (b.series!.days as { date: string }[]);
+    steps[0].date = "2025-12-03"; // the issue day as a timeline step
+    const html = render(b, { dayIndex: 0, issueLead: 3, layers: ["tpi"], hazard: "slide" });
+    expect(html).toContain("pending for this forecast frame");
+    expect(html).toContain("forecast for Dec 6, 2025 (issued Dec 3, 2025)");
+    const withFigures = wa({ critical_km2: 812.4, people_critical: 4321 });
+    (withFigures.series!.days as { date: string }[])[0].date = "2025-12-03";
+    const html2 = render(withFigures, { dayIndex: 0, issueLead: 3, layers: ["tpi"], hazard: "slide" });
+    expect(html2).toContain("812.4 km²");
+    expect(html2).toContain("forecast for Dec 6, 2025 (issued Dec 3, 2025)");
+  });
+
+  test("the timeline chip names the run of the frame on the map, never another run", () => {
+    const b = wa();
+    (b.series!.days as { date: string }[])[0].date = "2025-12-03";
+    const html = render(b, { dayIndex: 0, issueLead: 3, layers: ["tpi"], hazard: "slide" });
+    expect(html).toContain("forecast · NOAA GFS (issued Dec 3, 2025)");
+    expect(html).not.toMatch(/>forecast · NOAA GFS \(issued Dec 10, 2025\)</);
+  });
+});
+
+describe("no 'confirm' on screen except the tagline (candidates rule)", () => {
+  test("the radar card and the layer rows never say a flood is confirmed", () => {
+    const wa = bundle({ metricsView: { flooded_km2: 28 } as never,
+      data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" },
+      products: { flood_confirmed: "wa_2025/geojson/flood_confirmed.geojson" } });
+    // Allowed: the tagline (Lucas) and the rule itself ("never confirmed").
+    const html = render(wa).replace("Rain warns. Radar confirms.", "").replaceAll("never confirmed", "");
+    expect(html.match(/.{60}confirm.{40}/gi) ?? []).toEqual([]);
+    expect(html).toContain("Check with NISAR radar");
+    expect(html).toContain("NISAR radar maps flood candidates only in this case");
   });
 });
