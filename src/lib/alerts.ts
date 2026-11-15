@@ -178,7 +178,9 @@ export function candidatesToAlerts(
       region,
       hazard,
       level,
-      certainty: certaintyFor(c.pixels),
+      // lead-live's own certainty wins when published.
+      certainty: typeof (c as { certainty?: unknown }).certainty === "string" && (c as { certainty: string }).certainty
+        ? (c as { certainty: string }).certainty : certaintyFor(c.pixels),
       held,
       quiet: quietFlag,
       valid_from: (active && c.first_issued_at && !Number.isNaN(Date.parse(c.first_issued_at))

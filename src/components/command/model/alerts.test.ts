@@ -366,3 +366,12 @@ describe("alerts.json 'active': the public page shows every current High/Critica
     expect(list.state).toBe("none");
   });
 });
+
+describe("published certainty", () => {
+  test("lead-live's certainty wins over the pixel rule", () => {
+    const list = buildAlertList({ now: liveBundle({ updated_at: "2026-11-15T06:33:00Z", nowAlerts: { active: [
+      { kind: "tpi", hazard: "flood", class: 3, municipality: "X", pixels: 1, certainty: "high" },
+    ] } as never }) });
+    expect(list.alerts[0].certainty).toBe("high");
+  });
+});
