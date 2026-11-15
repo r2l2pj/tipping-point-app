@@ -34,16 +34,16 @@
 
 ## Slide 5 — Did it work?
 - WA Dec 2025: "Optical satellites were 92.9% blind under the clouds. On the 7% they could see, our radar flood map overlaps at F1 0.15 (precision 0.19, recall 0.13, new flood only). Radar maps the rest." — 27.99 km² flooded within the NISAR swath; landslides remain candidates only
-- Early warning headline: **"Using the forecast available at the time, Tipping Point flagged the area X hours before the damage."** (X from the rebuilt forecast lead time, with n in the footnote; decided by Lucas 2026-11-15)
+- Early warning headline: **"Using the forecast available at the time, Tipping Point flagged the area 85 hours before the damage."** (wording decided by Lucas 2026-11-15; 85 h = WA median, n = 6 of 8 forecast days — case choice awaiting Lucas)
 - "With the forecast available at the time, the index marked the area as critical before the damage, adding a map of where and who to the official warnings."
-  - supporting line (footnote): "In replay, using only data available at the time, the index crossed Critical a median of X h (IQR A-B h) before mapped landslides (n = N)" (in replay; median, IQR A-B h, n = N)
-- RS replay (no radar — event predates NISAR, so no flood-overlap score): median X h (IQR A-B h, n = N)
+  - supporting line (footnote): "In replay with the NOAA GFS forecast issued each day (no look-ahead), Washington (Dec 2025) reached Critical a median of 85 h before the damage (IQR 55–115 h; 6 of 8 forecast days flagged it); in Rio Grande do Sul (May 2024), 1 of 4 forecast days flagged it, 111 h ahead."
+- RS replay (no radar — event predates NISAR, so no flood-overlap score): 111 h ahead on the one forecast day (of 4) that flagged it — too few to call a median
 - **Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar**
 - *Visual:* Did we get it right? tab screenshot next to a small metrics table for both cases
 
 ## Slide 6 — Impact + honest limitations
 - Impact numbers the demo reports: 229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, May 2, 2024)
-- Limitations: thresholds calibrated on a single event; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days
+- Limitations: thresholds calibrated on a single event; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days; lead time counts the area as flagged when any pixel crosses Critical on a D+1..D+3 forecast frame (lenient); GFS under-forecast the RS peak by about half; official warnings still came before the index
 - Demo is a replay, not live ops; the replay forecast is NOAA GFS as issued at the time (our only non-NASA input) — perfect-forecast frames appear only as a labelled upper bound
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event
 - *Visual:* IMPACT tab cards + a short "What we don't claim" callout box
@@ -57,4 +57,4 @@
 - Repo + live app links; built with AI assistants under human review
 - *Visual:* mission-logo strip / data-source grid + QR code to the repo
 
-*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Slide 5 flood score is from the published `metrics.json` (tipping-point-data 864cf95, GitHub `fallback` branch) (Lucas's wording, 2026-11-15); "% warned" is dropped. Remaining X/A/B/N placeholders are the lead time only — quoted after the rebuilt forecast numbers, with n.*
+*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Slide 5 flood score is from the published `metrics.json` (tipping-point-data 864cf95, GitHub `fallback` branch) (Lucas's wording, 2026-11-15); "% warned" is dropped. Lead time from tipping-point-data 0dc5b58 (`forecast_lead_time`, rebuilt L28/L28b): WA median 85 h, IQR 55–115 h, 6 of 8 forecast days; RS 111 h on 1 of 4 forecast days (never a median).*
