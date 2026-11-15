@@ -193,7 +193,7 @@ export function warnedRow(m: M): CheckRow | undefined {
     const obs = m[`${hz}_warned_observed_pct`];
     const of = hz === "slide"
       ? (finite(obj.n_points) ? ` of ${obj.n_points.toLocaleString("en-US")} inventoried landslides` : " of inventoried landslides")
-      : (finite(obj.confirmed_flood_km2) ? ` of ${fmtKm2(obj.confirmed_flood_km2)} radar-confirmed flood` : " of the radar-confirmed flood");
+      : (finite(obj.confirmed_flood_km2) ? ` of ${fmtKm2(obj.confirmed_flood_km2)} radar-mapped flood` : " of the radar-mapped flood");
     const anchor = typeof obj.anchor_utc === "string" ? fmtDate(obj.anchor_utc.slice(0, 10)) : undefined;
     // Per forecast run inside the window, nearest first: "24 h before
     // 88.1% · 48 h before 0.3%" (data-driven — the L35 re-score may move it).

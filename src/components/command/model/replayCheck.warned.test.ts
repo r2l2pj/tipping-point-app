@@ -26,7 +26,7 @@ describe("warned before the damage (lead-analysis)", () => {
       flood_warned_pct: 0.14, flood_warned_critical_pct: 0, flood_warned_observed_pct: 0,
       flood_warned: { confirmed_flood_km2: 27.921, explanation: "TPI_flood is pixel-local." },
     })!;
-    expect(r.value).toMatch(/^0\.14% of 27\.9 km² radar-confirmed flood \(Critical 0\.0%\)$/);
+    expect(r.value).toMatch(/^0\.14% of 27\.9 km² radar-mapped flood \(Critical 0\.0%\)$/);
     expect(r.detail).toContain("TPI_flood is pixel-local.");
   });
   test("no published value: no row", () => {
