@@ -4,6 +4,7 @@ import { PASSES_SHOWN, type RadarCard as RadarModel } from "./model/radar";
 import { fmtBrt } from "./model/format";
 import NisarSeriesChart from "./NisarSeriesChart";
 import { Icon, ICON } from "./ui";
+import { isMissingText } from "./model/sparse";
 
 // Radar confirmation. "NISAR" is only said for a real pair; scars are always
 // "candidates". "Confirm with NISAR radar" opens the confirmation on the map
@@ -28,14 +29,17 @@ export default function RadarCard({
   onConfirm,
   onShowFlood,
   onCompare,
+  hideMissing = false,
 }: {
   radar: RadarModel;
+  hideMissing?: boolean; // featured replay: no "pending" scar block (conductor, v6)
   floodOn: boolean;
   compareOpen: boolean;
   onConfirm: () => void;
   onShowFlood: () => void;
   onCompare: () => void;
 }) {
+  const noCandidates = hideMissing && isMissingText(radar.candidates.value) && !radar.candidates.lines?.length;
   const primary = "inline-flex items-center gap-1.5 rounded-lg bg-cc-accent px-2.5 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50";
   const secondary = "inline-flex items-center rounded-lg border border-cc-line-strong bg-cc-surface px-2.5 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60";
   return (
@@ -69,10 +73,12 @@ export default function RadarCard({
             <dd className="font-semibold">{radar.people.value}</dd>
           </div>
         )}
-        <div>
-          <dt className="text-xs text-cc-muted">{radar.candidates.label}</dt>
-          <dd className="font-semibold">{radar.candidates.value}</dd>
-        </div>
+        {!noCandidates && (
+          <div>
+            <dt className="text-xs text-cc-muted">{radar.candidates.label}</dt>
+            <dd className="font-semibold">{radar.candidates.value}</dd>
+          </div>
+        )}
       </dl>
       {/* Scar candidates: figures, lag and caveat right under the count. */}
       {radar.candidates.lines?.map((l) => (
@@ -84,7 +90,7 @@ export default function RadarCard({
         </p>
       ))}
       {radar.note && <p className="mt-1 text-xs text-cc-muted">{radar.note}</p>}
-      <p className="mt-1 text-xs text-cc-faint">{radar.candidates.note}</p>
+      {!noCandidates && <p className="mt-1 text-xs text-cc-faint">{radar.candidates.note}</p>}
       {radar.limitation && <p className="mt-1 text-xs text-cc-muted">{radar.limitation}</p>}
 
       {radar.pair && (

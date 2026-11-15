@@ -40,6 +40,7 @@ import SituationPanel from "./SituationPanel";
 import SourceAges from "./SourceAges";
 import { initialState, linkParams, PLAYBACK_MS, reduce, type Action, type ScreenState, type DeepLink, isFeatured } from "./state";
 import StatusBlock from "./StatusBlock";
+import { hideMissingFor } from "./model/sparse";
 import Tiles from "./Tiles";
 import TimelineBar from "./TimelineBar";
 import TopBar, { type View } from "./TopBar";
@@ -234,7 +235,10 @@ export function CommandCenterView({
   const step = steps[state.dayIndex];
   const status = dataStatus(bundle, nowMs);
   const chip = statusChip(bundle, steps, state.dayIndex, state.hazard);
-  const rows = visibleLayerRows(layerRows(bundle, state.layers, state.hazard, step?.date, state.probHorizon));
+  // Featured replay (v6): blocks with no data for this case are not shown.
+  const sparse = hideMissingFor(bundle);
+  const rows = visibleLayerRows(layerRows(bundle, state.layers, state.hazard, step?.date, state.probHorizon))
+    .filter((r) => !sparse || r.available || r.on);
   const nightLights = nightLightsCompare(bundle);
   const comparePair =
     state.compareOpen === "radar" ? radar.compare.pair
@@ -253,6 +257,9 @@ export function CommandCenterView({
   const mapFrame = overlayFrame ?? (tpiOn ? frameFor(bundle, step?.date, state.hazard)?.layer : undefined);
   // Area by class of the selected hazard (summary v2), or the v1 union.
   const classesKm2 = bundle.riskPaused ? [] : Object.entries(liveClasses(bundle.summary, state.hazard) ?? {});
+  const areaTile = criticalAreaTile(bundle, state.hazard, step?.date, step?.day, overlayFrame);
+  const peopleT = peopleTile(bundle, step?.date, step?.day, overlayFrame);
+  const showAffected = !sparse || !areaTile.missing || !peopleT.missing || classesKm2.length > 0;
 
   // Gap 2: the card's own geometry frames the map; a card without one falls
   // back to the priority area of the same name.
@@ -357,6 +364,7 @@ export function CommandCenterView({
               {/* Response first, prediction second (ruling L27). */}
               <PanelSection label="Now on the ground">
                 <RadarCard
+                  hideMissing={sparse}
                   radar={radar}
                   floodOn={state.layers.includes("flood")}
                   compareOpen={state.compareOpen === "radar"}
@@ -366,12 +374,9 @@ export function CommandCenterView({
                     dispatch(state.compareOpen === "radar" ? { type: "closeCompare" } : { type: "openCompare", kind: "radar" })}
                 />
 
-                <div>
+                {showAffected && <div>
                   <h3 className="m-0 mb-1 text-[13px] font-semibold text-cc-muted">Who is affected</h3>
-                  <Tiles
-                    area={criticalAreaTile(bundle, state.hazard, step?.date, step?.day, overlayFrame)}
-                    people={peopleTile(bundle, step?.date, step?.day, overlayFrame)}
-                  />
+                  <Tiles area={areaTile} people={peopleT} />
                   {classesKm2.length > 0 && (
                     <dl className="mt-1.5 grid grid-cols-2 gap-x-4 text-xs text-cc-muted" aria-label="Area by class">
                       {classesKm2.map(([cls, km2]) => (
@@ -381,9 +386,9 @@ export function CommandCenterView({
                       ))}
                     </dl>
                   )}
-                </div>
+                </div>}
 
-                <PriorityAreas
+                {(!sparse || areas.length > 0) && <PriorityAreas
                   areas={areas}
                   missingText={missingText(availability(bundle, "priority_zones"))}
                   expanded={state.listExpanded}
@@ -400,7 +405,7 @@ export function CommandCenterView({
                         return i >= 0 ? () => seek(i) : undefined;
                       })()
                     : undefined}
-                />
+                />}
               </PanelSection>
 
               <PanelSection label="Prediction">
@@ -420,7 +425,7 @@ export function CommandCenterView({
                   )}
                 </StatusBlock>
 
-                <RainSoilChart
+                {(!sparse || (!!bundle.series && steps.some((s) => s.day))) && <RainSoilChart
                   bundle={bundle}
                   steps={steps}
                   dayIndex={state.dayIndex}
@@ -428,7 +433,7 @@ export function CommandCenterView({
                   forecastLabel={chartForecastLabel(bundle) ?? "source not published"}
                   onSeek={seek}
                   onToggleTable={toggleTable}
-                />
+                />}
                 {rows.some((r) => r.id === "ptrigger" && r.available) && (
                   <p className="m-0 text-xs text-cc-faint">
                     Relative likelihood of a rain-triggered landslide (24 h–14 d) is in the Layers column.
@@ -443,6 +448,7 @@ export function CommandCenterView({
                   onToggleDetails={() => dispatch({ type: "toggleDetails" })}
                 >
                   <EvidenceDetails
+                    hideMissing={sparse}
                     evidence={evidence(bundle, step?.day)}
                     swot={bundle.swot}
                     ml={mergedMl}
@@ -459,7 +465,7 @@ export function CommandCenterView({
             </>
           )}
           {/* Source dates sit in the panel, so the floating timeline stays low. */}
-          <SourceAges rows={sourceRows(bundle, nowMs)} />
+          <SourceAges rows={sourceRows(bundle, nowMs).filter((r) => !sparse || !r.missing)} />
         </SituationPanel>
         </div>
 

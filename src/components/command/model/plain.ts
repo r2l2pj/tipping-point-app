@@ -7,6 +7,8 @@ const RULES: [RegExp, string][] = [
   [/teammate zip change polygons\s*\(cross-check only\)/gi, "teammate change map (cross-check)"],
   [/teammate zip change polygons/gi, "teammate change map"],
   [/teammate zip\b/gi, "teammate pair"],
+  [/permanent water \(JRC GSW occurrence\s*>=?\s*50\s*%\)/gi, "permanent water (reference mask)"],
+  [/\(JRC GSW[^)]*\)/g, "(reference mask)"],
   [/\bits own P99\b/g, "its extreme level"],
   [/\(see forecast_proof\)/g, "(see the upstream-rain test)"],
   [/\s*\(see [a-z0-9]+(?:_[a-z0-9]+)+\)/g, ""],

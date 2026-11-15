@@ -24,6 +24,7 @@ export default function EvidenceDetails({
   nightLights,
   onToggleLayer,
   onCompareNightLights,
+  hideMissing = false,
 }: {
   evidence: Evidence;
   swot: unknown;
@@ -33,13 +34,19 @@ export default function EvidenceDetails({
   nightLights: CompareOption;
   onToggleLayer: (id: LayerId) => void;
   onCompareNightLights: () => void;
+  hideMissing?: boolean; // featured replay: drop blocks with no data (model/sparse)
 }) {
+  const allMissing = (stats: { missing: boolean }[]) => stats.length === 0 || stats.every((s) => s.missing);
+  const showFlood = !hideMissing || !allMissing(e.floodStats) || !!e.scarHit || !!e.floodSecondary;
+  const showImpact = !hideMissing || !allMissing(e.impactStats);
+  const rowsShown = hideMissing ? evidenceRows.filter((r) => r.available) : evidenceRows;
+  const showNight = !hideMissing || !!nightLights.pair;
   const btn = "rounded-lg border border-cc-line-strong bg-cc-surface px-2.5 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60";
   return (
     <div className="mt-2 flex flex-col gap-3 border-t border-cc-line pt-2">
-      <div>
+      {showFlood && <div>
         <h3 className={h3}>Flood detection vs reference (NISAR vs OPERA, new flood)</h3>
-        <div className="mt-1"><StatGrid stats={e.floodStats} /></div>
+        <div className="mt-1"><StatGrid stats={hideMissing ? e.floodStats.filter((s) => !s.missing) : e.floodStats} /></div>
         <p className="mt-1 text-xs text-cc-faint">{e.floodNote}</p>
         {e.scarHit && <p className="mt-1 text-xs text-cc-muted" data-scar-hit>{e.scarHit}</p>}
         {e.floodSecondary && (
@@ -51,7 +58,7 @@ export default function EvidenceDetails({
             )}
           </div>
         )}
-      </div>
+      </div>}
 
       {e.hand && (
         <div data-hand-check>
@@ -65,7 +72,7 @@ export default function EvidenceDetails({
       {/* Model scores only with their n (TEST split, lead-ml ml_card.json). */}
       {ml ? (
         <MlCard ml={ml} />
-      ) : (
+      ) : !hideMissing && (
         <div>
           <h3 className={h3}>Did we get it right? (TEST data)</h3>
           <p className="mt-0.5 text-xs italic text-cc-faint">Model scores pending: the TEST evaluation with its sample sizes is not published yet.</p>
@@ -111,19 +118,19 @@ export default function EvidenceDetails({
           <p className="mt-0.5 text-xs text-cc-muted">{e.rainCheck}</p>
         </div>
       )}
-      <SwotChart swot={swot} />
+      {(!hideMissing || swot != null) && <SwotChart swot={swot} />}
 
-      <div>
+      {showImpact && <div>
         <h3 className={h3}>Impact</h3>
-        <div className="mt-1"><StatGrid stats={e.impactStats} /></div>
+        <div className="mt-1"><StatGrid stats={hideMissing ? e.impactStats.filter((s) => !s.missing) : e.impactStats} /></div>
         <p className="mt-1 text-xs font-semibold">Exposure basis</p>
         <p className="text-xs text-cc-muted">{e.exposureBasis}</p>
-      </div>
+      </div>}
 
-      <div>
+      {(rowsShown.length > 0 || showNight) && <div>
         <h3 className={h3}>Evidence on the map</h3>
         <div className="mt-1 flex flex-col gap-1.5">
-          {evidenceRows.map((r) => (
+          {rowsShown.map((r) => (
             <div key={r.id} className="flex flex-wrap items-center gap-2 text-xs">
               <button type="button" className={btn} aria-pressed={r.on} disabled={!r.available} onClick={() => onToggleLayer(r.id)}>
                 {r.on ? `Hide ${r.label}` : `Show ${r.label}`}
@@ -131,14 +138,14 @@ export default function EvidenceDetails({
               {!r.available && <span className="italic text-cc-faint">{r.sub}</span>}
             </div>
           ))}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
+          {showNight && <div className="flex flex-wrap items-center gap-2 text-xs">
             <button type="button" className={btn} disabled={!nightLights.pair} onClick={onCompareNightLights}>
               Night lights before / after
             </button>
             {!nightLights.pair && <span className="italic text-cc-faint">{nightLights.reason}</span>}
-          </div>
+          </div>}
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
