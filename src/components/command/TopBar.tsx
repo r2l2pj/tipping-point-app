@@ -1,6 +1,5 @@
 "use client";
 
-import MethodsDrawer from "./MethodsDrawer";
 import type { CcBundle } from "./model/types";
 import { Icon, ICON } from "./ui";
 
@@ -88,7 +87,6 @@ export default function TopBar({
       <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${tone}`} role="status">
         <Icon d={ICON.clock} size={14} /> {freshness}
       </span>
-      <MethodsDrawer />
     </header>
   );
 }

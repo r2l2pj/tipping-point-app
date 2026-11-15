@@ -1,4 +1,5 @@
-// "Methods" for judges (conductor): closed by default, links to the public
+// "Methods" for judges (conductor): closed by default, in the footer (opens
+// upward), links to the public
 // READMEs. Section anchors are GitHub heading slugs on main.
 const DATA = "https://github.com/r2l2pj/tipping-point-data/blob/main/README.md";
 const APP = "https://github.com/r2l2pj/tipping-point-app/blob/main/README.md";
@@ -19,7 +20,7 @@ export default function MethodsDrawer() {
       </summary>
       <nav
         aria-label="Methods"
-        className="absolute right-0 top-full z-30 mt-1 w-[300px] rounded-lg border border-cc-line bg-cc-surface p-2.5 shadow-lg"
+        className="absolute bottom-full right-0 z-30 mb-1 w-[300px] rounded-lg border border-cc-line bg-cc-surface p-2.5 shadow-lg"
       >
         <ul className="m-0 list-none space-y-1.5 p-0">
           {METHODS_LINKS.map((l) => (
