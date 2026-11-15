@@ -95,7 +95,8 @@ function withMl(bundle: CcBundle, ml: Awaited<ReturnType<typeof getMlArtifacts>>
     out = { ...out, manifest: { ...bundle.manifest, layers: [...bundle.manifest.layers, tml] } };
   }
   if (bundle.mode === "replay") {
-    const view = buildMlView(ml.card, canonicalCaseId(bundle.id));
+    const served = isRecord(ml.tml) && typeof ml.tml.model === "string" ? ml.tml.model : undefined;
+    const view = buildMlView(ml.card, canonicalCaseId(bundle.id), served);
     const imp = groupImportance(ml.importance);
     out = { ...out, ...(view ? { ml: view } : {}), ...(imp ? { mlImportance: imp } : {}) };
   }

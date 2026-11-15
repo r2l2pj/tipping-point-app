@@ -122,11 +122,21 @@ function table(models: string[], labels: Record<string, string>, pick: (m: strin
   };
 }
 
-export function buildMlView(card: unknown, caseId?: string): MlView | undefined {
+// `servedModel`: the T_ML model the map layer paints (ml/t_ml.json `model`,
+// e.g. xgb_terrain_landcover) — first row of the 'where' table, labelled so.
+export function buildMlView(card: unknown, caseId?: string, servedModel?: string): MlView | undefined {
   if (!isRecord(card)) return undefined;
   const labels: Record<string, string> = { ...FALLBACK_LABEL, ...(isRecord(card.models) ? card.models as Record<string, string> : {}) };
+  const tml = isRecord(card.t_ml) ? card.t_ml : undefined;
+  const served = servedModel && tml && isRecord(tml[servedModel]) ? servedModel : undefined;
+  if (served) {
+    labels[served] = `${labels[served] ?? served.replace(/_/g, " ")} — the model on the map`;
+  }
+  // The served model replaces xgb_all (not served); random forest and the
+  // slope rule stay as comparisons on the same TEST blocks (conductor).
+  const whereModels = served ? [served, "rf_all", "rule_slope"] : T_ML_MODELS;
   const split = isRecord(card.split) ? card.split : {};
-  const where = isRecord(card.t_ml) ? table(T_ML_MODELS, labels, (m) => (card.t_ml as M)[m]) : undefined;
+  const where = tml ? table(whereModels, labels, (m) => tml[m]) : undefined;
   const trig = isRecord(card.trigger) ? card.trigger : {};
   const horizons = HORIZON_ORDER.filter((h) => isRecord(trig[h]));
   const sources = ["gfs", "perfect"].filter((s) => horizons.some((h) => isRecord((trig[h] as M)[s])));

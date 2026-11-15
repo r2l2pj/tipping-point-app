@@ -75,3 +75,19 @@ describe("real export (lead-ml, data main 1b943b6)", () => {
     expect(Math.round(g.groups.reduce((a, x) => a + x.gain, 0) * 100)).toBe(100);
   });
 });
+
+describe("served T_ML model first (lead-analysis review)", () => {
+  test("the map's model (t_ml.json model) leads the 'where' table, labelled", () => {
+    const tml = read("t_ml.json");
+    const v = buildMlView(read("ml_card.json"), "rs_2024", tml.model)!;
+    const first = v.where!.rows[0];
+    expect(first.model).toBe("xgb_terrain_landcover");
+    expect(first.label).toMatch(/— the model on the map$/);
+    expect(first.cells.rocAuc).toBe("0.97");
+    expect(first.cells.prAuc).toBe("0.49");
+    expect(v.where!.rows.map((r) => [r.model, r.n, r.nPos, r.cells.rocAuc])).toEqual([
+      ["xgb_terrain_landcover", 2039, 45, "0.97"], ["rf_all", 2039, 45, "0.92"], ["rule_slope", 2039, 45, "0.86"],
+    ]);
+    expect(v.where!.baseLine).toBe("Base rate 2.2% (45 of 2,039 test samples)");
+  });
+});
