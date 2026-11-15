@@ -18,8 +18,15 @@ import { fmtDataDate } from "./model/format";
 import { caseHasHazard } from "./model/steps";
 import { HAZARD_LABEL, type CcBundle, type Hazard } from "./model/types";
 import { Icon, ICON } from "./ui";
+import { activeView, viewLayers, VIEWS, type ViewId } from "./model/views";
 
 const GROUPS: LayerGroup[] = ["Analysis", "Observations", "Replay evidence"];
+const VIEW_ICON: Record<ViewId, string> = {
+  risk: ICON.warn,
+  rain: "M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z",
+  radar: ICON.radar,
+  satellite: "M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18",
+};
 
 export default function LayersColumn({
   bundle,
@@ -33,6 +40,8 @@ export default function LayersColumn({
   onToggle,
   onProbHorizon,
   onClose,
+  onView,
+  satellite,
   className = "",
 }: {
   bundle: CcBundle;
@@ -46,10 +55,15 @@ export default function LayersColumn({
   onToggle: (id: LayerId) => void;
   onProbHorizon: (h: ProbHorizon) => void;
   onClose: () => void;
+  onView?: (v: ViewId) => void;
+  // U3 basemap: the 'Satellite' view (absent until the basemap switcher exists).
+  satellite?: { on: boolean; toggle: () => void };
   className?: string;
 }) {
   // Collapsing hides the rows only; the legend stays visible (rule 3).
   const [open, setOpen] = useState(true);
+  const current = activeView(layers);
+  const views = VIEWS.filter((v) => v.id === "satellite" ? !!satellite : viewLayers(bundle, hazard, v.id).length > 0);
   const probHorizons = probHorizonsAvailable(bundle.manifest?.layers);
   return (
     <aside
@@ -74,9 +88,27 @@ export default function LayersColumn({
 
       {open && (
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pr-1">
-          <div className="mt-1 border-t border-cc-rule pb-1.5 pt-3 text-sm font-semibold">Hazards</div>
-          <div role="radiogroup" aria-label="Hazard" className="flex flex-col gap-1">
-            {(["slide", "flood"] as Hazard[]).map((h) => {
+          {/* L52 U1: big views first, one tap each. */}
+          {onView && views.length > 0 && (
+            <div role="radiogroup" aria-label="Map view" className="mt-1 flex flex-col gap-1.5 border-t border-cc-rule pt-2.5" data-views>
+              {views.map((v) => {
+                const on = v.id === "satellite" ? !!satellite?.on : current === v.id;
+                return (
+                  <button key={v.id} type="button" role="radio" aria-checked={on} data-view-id={v.id}
+                    onClick={() => (v.id === "satellite" ? satellite?.toggle() : onView(v.id))}
+                    className={`flex min-h-12 items-center gap-2.5 rounded-xl border-2 px-2.5 py-1.5 text-left ${on ? "border-cc-accent bg-cc-accent-soft" : "border-cc-line hover:border-cc-line-strong"}`}>
+                    <Icon d={VIEW_ICON[v.id]} size={22} className={on ? "text-cc-accent" : "text-cc-muted"} />
+                    <span className="leading-tight">
+                      <span className="block text-[15px] font-semibold">{v.label}</span>
+                      <span className="block text-xs text-cc-muted">{v.line}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div role="radiogroup" aria-label="Hazard" className="mt-2 grid grid-cols-2 gap-1.5">
+            {(["flood", "slide"] as Hazard[]).map((h) => {
               const has = caseHasHazard(bundle, h);
               return (
                 <button
@@ -85,21 +117,20 @@ export default function LayersColumn({
                   role="radio"
                   aria-checked={hazard === h}
                   disabled={!has}
+                  title={has ? undefined : "no map layer for this case"}
                   onClick={() => onHazard(h)}
-                  className="flex min-h-9 items-center gap-2.5 rounded-lg px-1 text-left text-[13px] disabled:cursor-not-allowed disabled:opacity-55"
+                  className={`min-h-10 rounded-xl border-2 px-2 text-[15px] font-semibold disabled:cursor-not-allowed disabled:opacity-45 ${hazard === h ? "border-cc-accent bg-cc-accent text-white" : "border-cc-line"}`}
                 >
-                  <span aria-hidden="true" className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 ${hazard === h ? "border-cc-accent" : "border-cc-line-strong"}`}>
-                    {hazard === h && <span className="h-2.5 w-2.5 rounded-full bg-cc-accent" />}
-                  </span>
-                  <span className="leading-tight">
-                    {HAZARD_LABEL[h]} risk
-                    {!has && <span className="block text-xs text-cc-faint">no map layer for this case</span>}
-                  </span>
+                  {h === "flood" ? "Flood" : "Landslide"}
                 </button>
               );
             })}
           </div>
 
+          <Legend bundle={bundle} layers={layers} hazard={hazard} stepDate={stepDate} probHorizon={probHorizon} className="mt-2.5 shrink-0" />
+
+          <details className="mt-2 border-t border-cc-rule pt-1.5" data-more-layers>
+            <summary className="cursor-pointer py-1 text-sm font-semibold">More layers (advanced)</summary>
           {GROUPS.map((group) => {
             const groupRows = rows.filter((r) => r.group === group);
             if (!groupRows.length) return null;
@@ -177,10 +208,11 @@ export default function LayersColumn({
           </p>
           <p className="pt-1 text-xs text-cc-faint">{BUDGET_RULE_TEXT}</p>
           <p className="pt-1 text-xs text-cc-faint">{REFERENCE_TEXT}</p>
+          </details>
         </div>
       )}
 
-      <Legend bundle={bundle} layers={layers} hazard={hazard} stepDate={stepDate} probHorizon={probHorizon} className="mt-2 shrink-0 border-t border-cc-rule pt-2.5" />
+      {!open && <Legend bundle={bundle} layers={layers} hazard={hazard} stepDate={stepDate} probHorizon={probHorizon} className="mt-2 shrink-0 border-t border-cc-rule pt-2.5" />}
     </aside>
   );
 }

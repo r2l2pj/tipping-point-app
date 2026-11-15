@@ -38,6 +38,7 @@ const render = (
       view={view}
       onView={noop}
       initial={initial}
+      panelTab="all"
     />
   );
 

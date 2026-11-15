@@ -12,7 +12,9 @@ import LayersColumn from "./LayersColumn";
 import MapStage, { type CityPin, type MapFocus } from "./MapStage";
 import CityCard from "./CityCard";
 import CitySearch from "./CitySearch";
-import type { Place, Places } from "./model/places";
+import { parsePlaces, type Place, type Places } from "./model/places";
+import PanelTabs, { type PanelTab } from "./PanelTabs";
+import { headlineFor } from "./model/headline";
 import { geoUrl } from "@/lib/layers";
 import StartHere from "./StartHere";
 import PanelSection from "./PanelSection";
@@ -100,11 +102,13 @@ export function CommandCenterView({
   onView,
   nowMs,
   initial,
+  panelTab,
 }: CommandCenterProps & {
   view: View;
   onView: (v: View) => void;
   nowMs?: number;
   initial?: Partial<ScreenState>; // tests
+  panelTab?: PanelTab | "all"; // tests: "all" renders every tab's content in order
 }) {
   // Layer URLs travel compacted (page budget): restore them once, here.
   const cases = useMemo(() => rawCases.map(expandLayerUrls), [rawCases]);
@@ -126,6 +130,20 @@ export function CommandCenterView({
     ? geoUrl(liveCase, caseDirOf(liveCase), "places", "places.json")
     : undefined;
   const [city, setCity] = useState<{ place: Place; dates: string[] }>();
+  // L52 U1: right-panel tabs (content moved, nothing deleted).
+  const [tab, setTab] = useState<PanelTab | "all">(panelTab ?? (deepLink?.compare === "radar" ? "radar" : "overview"));
+  const show = (t: PanelTab) => tab === t || tab === "all";
+  // Headline card (Lucas, "simple and WOW"): the live places file, once.
+  const [places, setPlaces] = useState<Places>();
+  useEffect(() => {
+    if (!placesUrl) return;
+    let alive = true;
+    fetch(placesUrl).then((r) => (r.ok ? r.json() : null)).then((raw) => {
+      const p = raw ? parsePlaces(raw) : undefined;
+      if (alive && p) setPlaces(p);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [placesUrl]);
   const activeRef = useRef(state.activeId);
   useEffect(() => { activeRef.current = state.activeId; }, [state.activeId]);
   const setCityParam = (id: string | undefined) => {
@@ -257,6 +275,8 @@ export function CommandCenterView({
   const mapFrame = overlayFrame ?? (tpiOn ? frameFor(bundle, step?.date, state.hazard)?.layer : undefined);
   // Area by class of the selected hazard (summary v2), or the v1 union.
   const classesKm2 = bundle.riskPaused ? [] : Object.entries(liveClasses(bundle.summary, state.hazard) ?? {});
+  const headlineData = live && places ? headlineFor(places) : undefined;
+  const tabsShown: PanelTab[] = ["overview", "forecast", "radar", ...(!sparse || areas.length > 0 ? ["places" as const] : []), "sources"];
   const areaTile = criticalAreaTile(bundle, state.hazard, step?.date, step?.day, overlayFrame);
   const peopleT = peopleTile(bundle, step?.date, step?.day, overlayFrame);
   const showAffected = !sparse || !areaTile.missing || !peopleT.missing || classesKm2.length > 0;
@@ -337,6 +357,7 @@ export function CommandCenterView({
           onToggle={(id) => dispatch({ type: "toggleLayer", id })}
           onProbHorizon={(horizon) => dispatch({ type: "setProbHorizon", horizon })}
           onClose={() => setDrawer(false)}
+          onView={(v) => dispatch({ type: "setView", view: v })}
           className={`${drawer ? "max-[899px]:flex" : "max-[899px]:hidden"} ${state.layersOpen ? "min-[900px]:flex" : "min-[900px]:hidden"}`}
         />
 
@@ -360,20 +381,16 @@ export function CommandCenterView({
             </PublicAlertsPanel>
           ) : (
             <>
+              {tab !== "all" && <PanelTabs tabs={tabsShown} tab={tab} onTab={setTab} />}
+              {show("overview") && (
+                <>
+                  {headlineData && places && (
+                    <section aria-label="Headline" data-headline className="rounded-xl border-2 border-cc-accent-line bg-cc-accent-soft px-3 py-2.5">
+                      <p className="m-0 text-[17px] font-semibold leading-snug">{headlineData.text}</p>
+                      <button type="button" onClick={() => onCity(headlineData.top, places)} className="mt-1.5 rounded-lg bg-cc-accent px-3 py-1.5 text-sm font-semibold text-white">Show me</button>
+                    </section>
+                  )}
               <StartHere cases={cases} dispatch={dispatch} />
-              {/* Response first, prediction second (ruling L27). */}
-              <PanelSection label="Now on the ground">
-                <RadarCard
-                  hideMissing={sparse}
-                  radar={radar}
-                  floodOn={state.layers.includes("flood")}
-                  compareOpen={state.compareOpen === "radar"}
-                  onConfirm={() => dispatch({ type: "confirmRadar" })}
-                  onShowFlood={() => dispatch({ type: "toggleLayer", id: "flood" })}
-                  onCompare={() =>
-                    dispatch(state.compareOpen === "radar" ? { type: "closeCompare" } : { type: "openCompare", kind: "radar" })}
-                />
-
                 {showAffected && <div>
                   <h3 className="m-0 mb-1 text-[13px] font-semibold text-cc-muted">Who is affected</h3>
                   <Tiles area={areaTile} people={peopleT} />
@@ -387,8 +404,25 @@ export function CommandCenterView({
                     </dl>
                   )}
                 </div>}
-
-                {(!sparse || areas.length > 0) && <PriorityAreas
+                  <GetAlertsCard botUrl={botUrl} />
+                </>
+              )}
+              {show("radar") && (
+                <PanelSection label="Now on the ground">
+                <RadarCard
+                  hideMissing={sparse}
+                  radar={radar}
+                  floodOn={state.layers.includes("flood")}
+                  compareOpen={state.compareOpen === "radar"}
+                  onConfirm={() => dispatch({ type: "confirmRadar" })}
+                  onShowFlood={() => dispatch({ type: "toggleLayer", id: "flood" })}
+                  onCompare={() =>
+                    dispatch(state.compareOpen === "radar" ? { type: "closeCompare" } : { type: "openCompare", kind: "radar" })}
+                />
+                </PanelSection>
+              )}
+              {show("places") && (
+                <PriorityAreas
                   areas={areas}
                   missingText={missingText(availability(bundle, "priority_zones"))}
                   expanded={state.listExpanded}
@@ -405,10 +439,11 @@ export function CommandCenterView({
                         return i >= 0 ? () => seek(i) : undefined;
                       })()
                     : undefined}
-                />}
-              </PanelSection>
-
-              <PanelSection label="Prediction">
+                />
+              )}
+              {show("forecast") && (
+                <>
+                  <PanelSection label="Prediction">
                 <StatusBlock
                   chip={chip}
                   status={status}
@@ -439,8 +474,7 @@ export function CommandCenterView({
                     Relative likelihood of a rain-triggered landslide (24 h–14 d) is in the Layers column.
                   </p>
                 )}
-              </PanelSection>
-
+                  </PanelSection>
               {!live && (
                 <ReplayCheck
                   rows={replayCheckRows(bundle)}
@@ -461,11 +495,12 @@ export function CommandCenterView({
                 </ReplayCheck>
               )}
 
-              <GetAlertsCard botUrl={botUrl} />
+                </>
+              )}
+              {show("sources") && <SourceAges rows={sourceRows(bundle, nowMs).filter((r) => !sparse || !r.missing)} />}
             </>
           )}
-          {/* Source dates sit in the panel, so the floating timeline stays low. */}
-          <SourceAges rows={sourceRows(bundle, nowMs).filter((r) => !sparse || !r.missing)} />
+          {view === "public" && <SourceAges rows={sourceRows(bundle, nowMs)} />}
         </SituationPanel>
         </div>
 

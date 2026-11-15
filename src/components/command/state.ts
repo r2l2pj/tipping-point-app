@@ -16,6 +16,7 @@ import {
   type LayerId,
 } from "./model/layerRegistry";
 import type { ComparePair } from "./model/radar";
+import { viewLayers, type ViewId } from "./model/views";
 import { caseHasHazard, defaultStepIndex, stepsFor, type IssueLead } from "./model/steps";
 import type { CcBundle, Hazard } from "./model/types";
 
@@ -58,6 +59,8 @@ export type Action =
   | { type: "setProbHorizon"; horizon: ProbHorizon }
   | { type: "setIssueLead"; lead: IssueLead }
   | { type: "toggleLayer"; id: LayerId }
+  // L52 U1: one big map view = a layer set (model/views).
+  | { type: "setView"; view: ViewId }
   | { type: "confirmRadar" }
   | { type: "selectArea"; rank: number }
   | { type: "clearArea" }
@@ -329,6 +332,12 @@ export function reduce(
       const layers = action.lead > 0 && !tpiOn && canTpi ? toggleLayer(state.layers, "tpi").layers : state.layers;
       return { ...state, issueLead: action.lead, layers };
     }
+    case "setView": {
+      if (!bundle) return state;
+      const layers = viewLayers(bundle, state.hazard, action.view);
+      if (!layers.length) return state;
+      return { ...state, layers, layerNotice: null, issueLead: 0 };
+    }
     case "toggleLayer": {
       if (!bundle) return state;
       if (!state.layers.includes(action.id) && !layerAvailable(bundle, action.id, state.hazard)) {
@@ -376,4 +385,4 @@ export function reduce(
   }
 }
 
-export const PLAYBACK_MS = 1200;
+export const PLAYBACK_MS = 1000; // L52: 1 s per step (today → +3 d)

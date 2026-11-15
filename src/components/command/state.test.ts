@@ -433,3 +433,14 @@ describe("area selection and comparison", () => {
     expect(run(s, { type: "selectArea", rank: 1 }, { type: "escape" })).toMatchObject({ compareOpen: null, selectedArea: 1 });
   });
 });
+
+test("L52 setView: one tap sets the view's layer set; a view without data changes nothing", async () => {
+  const { reduce, initialState } = await import("./state");
+  const { bundle: mk, frame } = await import("./model/fixtures");
+  void frame;
+  const b = mk({ id: "rs_2024", mode: "replay" });
+  const s0 = initialState([b]);
+  const s1 = reduce(s0, { type: "setView", view: "radar" }, [b]);
+  // no flood layer in this fixture: unchanged
+  expect(s1.layers).toEqual(s0.layers);
+});
