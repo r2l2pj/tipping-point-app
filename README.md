@@ -154,6 +154,18 @@ land-cover-aware detection. Data: `data/wa_2025/nisar_hypothesis.json`
   fall in Critical cells on the peak day (Dec 12, 2025). The points are
   undated, so this is agreement after the damage, not a forecast.
 
+**Forecast alarms by municipality.** Unit = municipality × NOAA GFS issue
+day; an alarm = any cell in the municipality at Critical. Rio Grande do Sul:
+33.7% of alarms (327 of 971) fell in municipalities with mapped landslides vs
+24.9% for a random alarm (1.35×). Washington: 19.7% (13 of 66) vs 10.0%
+(1.97×). The landslide maps are undated, so every slide is assumed inside the
+trigger window.
+
+**People.** GPW v4.11 population count (2020) on its native ~1 km grid, exact
+cell fractions: 1,681,783 people in Rio Grande do Sul's Critical areas (May 3,
+2024) and 254,263 in Washington's (Dec 12, 2025); about 950 people inside the
+27.99 km² of NISAR flood candidates.
+
 **Flood forecast (Washington).** None of the NISAR-mapped flood area was
 High in the GFS forecasts issued 24 h or 48 h before the onset (Dec 8, 2025
 00:00 PST, WA EMD situation report), and 0.14% (none Critical) in the run
