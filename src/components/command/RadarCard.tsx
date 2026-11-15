@@ -101,6 +101,27 @@ export default function RadarCard({
         </div>
       )}
       {radar.series && <NisarSeriesChart s={radar.series} />}
+      {radar.extras.length > 0 && (
+        <div className="mt-2 border-t border-cc-rule pt-1.5 text-xs" data-nisar-extras>
+          <p className="m-0 font-semibold">More NISAR products</p>
+          {radar.extras.map((x) => (
+            <figure key={x.id} className="m-0 mt-1.5">
+              <figcaption className="font-medium">{x.label}{x.date ? ` · ${x.date}` : ""}</figcaption>
+              {/* eslint-disable-next-line @next/next/no-img-element -- data PNG from the manifest */}
+              <img src={x.url} alt={x.label} loading="lazy" className="mt-0.5 h-auto w-full rounded border border-cc-line bg-black" />
+              {x.legend.length > 0 && (
+                <ul className="m-0 mt-0.5 flex list-none flex-wrap gap-x-3 p-0 text-cc-muted">
+                  {x.legend.map((g) => (
+                    <li key={g.label}><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm align-middle" style={{ background: g.color }} />{g.label}</li>
+                  ))}
+                </ul>
+              )}
+              {x.note && <p className="m-0 mt-0.5 text-cc-muted">{x.note}</p>}
+              {x.attribution && <p className="m-0 mt-0.5 text-cc-faint">{x.attribution}</p>}
+            </figure>
+          ))}
+        </div>
+      )}
       {radar.pair && (
         <details className="mt-1.5 text-xs" data-nisar-why>
           <summary className="cursor-pointer font-semibold">What NISAR sees and why</summary>

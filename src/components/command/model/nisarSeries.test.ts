@@ -155,3 +155,25 @@ describe("lead-analysis R2 status (nisar_meta.json)", () => {
     expect(c.note).toBe("every paired granule failed to read (see pair reasons).");
   });
 });
+
+describe("More NISAR products (kind 'nisar_extra')", () => {
+  test("manifest-declared PNG with label, legend, attribution; hidden if none", async () => {
+    const RadarCardC = (await import("../RadarCard")).default;
+    const b = bundle({ manifest: manifest([
+      { id: "nisar_pre", date: "2025-12-04", png: "wa_2025/png/nisar_pre.png", bounds: [-122, 47, -121, 48] },
+      { id: "nisar_post", date: "2025-12-16", png: "wa_2025/png/nisar_post.png", bounds: [-122, 47, -121, 48] },
+      { id: "nisar_coh_loss", kind: "nisar_extra", label: "NISAR coherence loss (Dec 4 → Dec 16)", png: "wa_2025/png/nisar_coh_loss.png",
+        bounds: [-122, 47, -121, 48], date: "2025-12-16", legend: [{ label: "coherence loss", color: "#ff00ff" }],
+        attribution: "NASA/JPL-Caltech NISAR", note: "candidates, never confirmed" },
+    ]) } as never);
+    const card = radarCard(b);
+    expect(card.extras).toHaveLength(1);
+    expect(card.extras[0].url).toBe("/data/wa_2025/png/nisar_coh_loss.png");
+    const html = renderToStaticMarkup(createElement(RadarCardC, { radar: card, floodOn: false, compareOpen: false,
+      onConfirm: () => {}, onShowFlood: () => {}, onCompare: () => {} } as never));
+    expect(html).toContain("More NISAR products");
+    expect(html).toContain("NISAR coherence loss (Dec 4 → Dec 16)");
+    expect(html).toContain("NASA/JPL-Caltech NISAR");
+    expect(radarCard(bundle()).extras).toEqual([]);
+  });
+});

@@ -4,6 +4,7 @@ import { canonicalCaseId } from "@/lib/contract";
 import { assetUrl } from "@/lib/layers";
 import { hypothesisLine, nisarSeriesView, type NisarSeriesView } from "./nisarSeries";
 import { NISAR_FRAMING, nextLookText } from "./nextPass";
+import { nisarExtras, type NisarExtra } from "./nisarExtras";
 import type { NisarPass } from "@/lib/types";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
 import { declared, productUrl } from "./lazy";
@@ -238,6 +239,7 @@ export interface RadarCard {
   hypothesisLine?: string; // L42: lead-analysis double-bounce test, when supported
   nextLook?: string; // L43 live: "Next NISAR look: …"
   framing?: string; // L43 live framing line (with nextLook)
+  extras: NisarExtra[]; // manifest layers kind 'nisar_extra'
 }
 
 // Conductor: the live NISAR pass may find nothing (lead-analysis R2 fix can
@@ -376,5 +378,6 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
     hypothesisLine: hypothesisLine(bundle),
     nextLook: nextLookText(bundle.nisarNext),
     framing: bundle.nisarNext ? NISAR_FRAMING : undefined,
+    extras: nisarExtras(bundle),
   };
 }
