@@ -352,7 +352,12 @@ export function layerAvailable(
 // · forecast: NOAA GFS". The issued timestamp prefers the layer's issued_at;
 // the source falls back to the contract default until lead-live publishes a
 // forecast_source on the frame.
-export const PROB_LAYER_TITLE = "Model probability (XGBoost)";
+// P(trigger) is a relative likelihood (conductor): never called a
+// probability on screen, and its legend has no percentages.
+export const PROB_LAYER_TITLE = "Relative likelihood of a rain-triggered landslide (when × where)";
+const HORIZON_WORDS: Record<string, string> = { "24h": "24 h", "48h": "48 h", "72h": "72 h", "7d": "7 days", "14d": "14 days" };
+export const probLayerTitle = (h: string): string =>
+  `Relative likelihood of a rain-triggered landslide within ${HORIZON_WORDS[h] ?? h} (when × where)`;
 export const PROB_FORECAST_DEFAULT = "NOAA GFS";
 
 // P(trigger) horizons (L27): one manifest layer family per horizon, ids

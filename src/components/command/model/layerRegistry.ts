@@ -8,7 +8,7 @@ import {
   probFrame,
   probHorizonsAvailable,
   probLayerNote,
-  PROB_LAYER_TITLE,
+  probLayerTitle,
   type ProbHorizon,
 } from "@/lib/layers";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
@@ -47,7 +47,7 @@ const DEFS: Def[] = [
   { id: "imerg", group: "Analysis", short: "Rain" },
   { id: "smap", group: "Analysis", short: "Soil moisture" },
   { id: "tml", group: "Analysis", short: "Modeled landslide hazard" },
-  { id: "ptrigger", group: "Analysis", short: "Trigger probability" },
+  { id: "ptrigger", group: "Analysis", short: "Rain-triggered landslide likelihood" },
   { id: "flood", group: "Observations", short: "Flood" },
   { id: "candidates", group: "Observations", short: "Scar candidates" },
   { id: "catalog", group: "Replay evidence", short: "Landslide catalog" },
@@ -136,7 +136,7 @@ export function layerRows(
     imerg: "Rain (GPM IMERG)",
     smap: "Soil moisture (SMAP)",
     tml: "Modeled landslide hazard (XGBoost)",
-    ptrigger: PROB_LAYER_TITLE,
+    ptrigger: probLayerTitle(probHorizon),
     flood: floodLabels(bundle).layer,
     candidates: CANDIDATES_LABEL,
     catalog: "Landslide catalog",

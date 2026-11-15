@@ -42,6 +42,7 @@ export function layerLegendRows(bundle: CcBundle, on: readonly LayerId[]): Layer
   const rows: LayerLegendRow[] = [];
   if (on.includes("imerg")) rows.push({ id: "imerg", label: "Rain (GPM IMERG)", swatch: "linear-gradient(90deg, #e6f1fb, #2166ac)" });
   if (on.includes("smap")) rows.push({ id: "smap", label: "Soil moisture (SMAP), 0 to 1", swatch: "linear-gradient(90deg, #f6e8c3, #8c510a)" });
+  if (on.includes("ptrigger")) rows.push({ id: "ptrigger", label: "Relative likelihood, low → high (not a percentage)", swatch: "linear-gradient(90deg, #f2f0f7, #54278f)" });
   if (on.includes("tml")) rows.push({ id: "tml", label: "Modeled landslide hazard, 0 to 1", swatch: "linear-gradient(90deg, #ffffb2, #bd0026)" });
   if (on.includes("flood")) rows.push({ id: "flood", label: floodLabels(bundle).layer, swatch: "#2166ac" });
   if (on.includes("candidates")) rows.push({ id: "candidates", label: CANDIDATES_LABEL, swatch: "#7b3294" });

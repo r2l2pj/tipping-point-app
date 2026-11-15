@@ -355,7 +355,7 @@ export function CommandCenterView({
                 />
                 {rows.some((r) => r.id === "ptrigger" && r.available) && (
                   <p className="m-0 text-xs text-cc-faint">
-                    Model probabilities (24 h–14 d) are in the Layers column.
+                    Relative likelihood of a rain-triggered landslide (24 h–14 d) is in the Layers column.
                   </p>
                 )}
               </PanelSection>

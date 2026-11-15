@@ -8,6 +8,8 @@ import {
 } from "./layerRegistry";
 import { resolveFrameDate, resolveOverlays, zoneMarkersOn } from "./overlays";
 import type { CcBundle } from "./types";
+import { probLayerTitle } from "@/lib/layers";
+import { layerLegendRows } from "./legend";
 
 const fc = (n: number): GeoJSON.FeatureCollection => zones(Array.from({ length: n }, () => point()));
 
@@ -74,7 +76,7 @@ describe("P(trigger) probability row", () => {
 
   test("available when the case ships p_trigger horizon frames; the issued/forecast note is the sub", () => {
     expect(probRow(prob)).toMatchObject({
-      available: true, on: true, label: "Model probability (XGBoost)",
+      available: true, on: true, label: "Relative likelihood of a rain-triggered landslide within 24 h (when × where)",
     });
     expect(probRow(prob).sub).toBe("issued Dec 10, 2025 · forecast: NOAA GFS");
   });
@@ -157,14 +159,14 @@ describe("layer budget", () => {
     });
   });
 
-  test("the probability row counts toward the budget; eviction names 'Trigger probability'", () => {
+  test("the probability row counts toward the budget; eviction names the rain-triggered likelihood", () => {
     expect(toggleLayer(["tpi", "flood"], "ptrigger")).toEqual({
       layers: ["flood", "ptrigger"], evicted: "tpi",
-      notice: "TPI index turned off to show Trigger probability",
+      notice: "TPI index turned off to show Rain-triggered landslide likelihood",
     });
     expect(toggleLayer(["ptrigger", "tpi"], "flood")).toEqual({
       layers: ["tpi", "flood"], evicted: "ptrigger",
-      notice: "Trigger probability turned off to show Flood",
+      notice: "Rain-triggered landslide likelihood turned off to show Flood",
     });
   });
 
@@ -229,5 +231,15 @@ describe("useMapLayers options (pure part)", () => {
     expect(zoneMarkersOn()).toBe(true);
     expect(zoneMarkersOn({})).toBe(true);
     expect(zoneMarkersOn({ zoneMarkers: false })).toBe(false);
+  });
+});
+
+describe("P(trigger) wording: relative likelihood, never a probability", () => {
+  test("title follows the horizon; the legend has no percentage", () => {
+    expect(probLayerTitle("72h")).toBe("Relative likelihood of a rain-triggered landslide within 72 h (when × where)");
+    expect(probLayerTitle("7d")).toBe("Relative likelihood of a rain-triggered landslide within 7 days (when × where)");
+    const legend = layerLegendRows(liveBundle(), ["ptrigger"]);
+    expect(legend[0].label).toBe("Relative likelihood, low → high (not a percentage)");
+    expect(JSON.stringify(legend)).not.toMatch(/probability|%/i);
   });
 });
