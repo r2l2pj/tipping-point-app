@@ -226,6 +226,24 @@ describe("remote-first reads (DATA_BASE_URL)", () => {
     expect(hits).not.toContain("rs_2024/geojson/flood_confirmed.geojson");
   });
 
+  test("a file that is in no place is not a fallback", async () => {
+    // The products map leaves `swot` out, so the loader tries the fixed file
+    // name. The remote does not have it and neither does the bundled copy:
+    // nothing substitute is shown, so the bundle is not "last saved data".
+    stageReplay();
+    const root = remoteRoot();
+    delete (root.cases.rs_2024.products as Record<string, unknown>).swot;
+    files.set("manifest.json", root);
+    process.env.DATA_BASE_URL = base;
+    process.env.DATA_FS_DIR = EMPTY_DATA;
+
+    const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02");
+
+    expect(hits).toContain("rs_2024/series/swot.json");
+    expect(b.swot).toBeUndefined();
+    expect(b.fallback).toBe(false);
+  });
+
   test("remote 404 falls back to public/data and flags the bundle", async () => {
     process.env.DATA_BASE_URL = base; // server 404s everything — files empty
 

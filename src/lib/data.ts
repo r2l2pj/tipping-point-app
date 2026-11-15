@@ -261,13 +261,19 @@ async function readData<T>(
       ctx.lastBase = base;
       return remote;
     }
-    ctx.fellBack = true;
   }
   ctx.lastBase = undefined;
   const key = resolveAsset("", dir, p);
-  return key === undefined || /^https?:\/\//i.test(key)
-    ? undefined
-    : readFs<T>(key);
+  const stored =
+    key === undefined || /^https?:\/\//i.test(key)
+      ? undefined
+      : await readFs<T>(key);
+  // "Fell back" means a substitute copy served a file the first remote did
+  // not. A file that is in no place at all (an optional file the case never
+  // publishes, such as series/swot.json) is absent or pending, not a
+  // fallback: it must not label the whole bundle "last saved data".
+  if (stored !== undefined) ctx.fellBack = true;
+  return stored;
 }
 
 // products map first (null -> absent), fixed filename fallback.

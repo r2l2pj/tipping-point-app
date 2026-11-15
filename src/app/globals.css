@@ -131,3 +131,132 @@ body {
   color: #a1a1aa;
   pointer-events: none;
 }
+
+/* --- Command Center (light chrome, dark map) -------------------------------
+   Semantic tokens scoped to the new screen root, so the old screen keeps its
+   look until the switch. Utilities: bg-cc-surface, text-cc-muted, ... */
+.cc-root {
+  --cc-bg: #f4f5f1;
+  --cc-surface: #ffffff;
+  --cc-header: #fbfbf9;
+  --cc-well: #f6f8f4;
+  --cc-ink: #16242b;
+  --cc-muted: #44535a;
+  --cc-faint: #5f6d73;
+  --cc-line: #dfe3dc;
+  --cc-line-strong: #cfd6cf;
+  --cc-rule: #e9ece6;
+  --cc-accent: #17473f;
+  --cc-accent-soft: #e8f1ee;
+  --cc-accent-line: #b9d2ca;
+  --cc-map: #0d1f26;
+  --cc-focus: #2f8fdd;
+  --cc-forecast: #e6e6f5;
+  --cc-forecast-ink: #2c2a66;
+  --cc-warn: #8a4b00;
+  --cc-warn-soft: #fff4e0;
+  --cc-danger: #9b0020;
+  --cc-danger-soft: #fdecee;
+  background: var(--cc-bg);
+  color: var(--cc-ink);
+  font-family: var(--cc-font-body), Inter, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+@theme inline {
+  --color-cc-bg: var(--cc-bg);
+  --color-cc-surface: var(--cc-surface);
+  --color-cc-header: var(--cc-header);
+  --color-cc-well: var(--cc-well);
+  --color-cc-ink: var(--cc-ink);
+  --color-cc-muted: var(--cc-muted);
+  --color-cc-faint: var(--cc-faint);
+  --color-cc-line: var(--cc-line);
+  --color-cc-line-strong: var(--cc-line-strong);
+  --color-cc-rule: var(--cc-rule);
+  --color-cc-accent: var(--cc-accent);
+  --color-cc-accent-soft: var(--cc-accent-soft);
+  --color-cc-accent-line: var(--cc-accent-line);
+  --color-cc-map: var(--cc-map);
+  --color-cc-focus: var(--cc-focus);
+  --color-cc-forecast: var(--cc-forecast);
+  --color-cc-forecast-ink: var(--cc-forecast-ink);
+  --color-cc-warn: var(--cc-warn);
+  --color-cc-warn-soft: var(--cc-warn-soft);
+  --color-cc-danger: var(--cc-danger);
+  --color-cc-danger-soft: var(--cc-danger-soft);
+  --font-cc-display: var(--cc-font-display), var(--cc-font-body), Inter, system-ui, sans-serif;
+}
+.cc-root button:focus-visible,
+.cc-root select:focus-visible,
+.cc-root a:focus-visible,
+.cc-root [role="slider"]:focus-visible {
+  outline: 3px solid var(--cc-focus);
+  outline-offset: 2px;
+}
+.cc-root ::-webkit-scrollbar-thumb {
+  background: #c3cbc4;
+}
+/* The screen has its own zoom and recenter buttons: hide the MapLibre
+   navigation control so the controls are not doubled. The scale stays. */
+.cc-root .maplibregl-ctrl-top-right .maplibregl-ctrl-group {
+  display: none;
+}
+.cc-root .tp-loading-chip {
+  left: calc(var(--cc-il, 0px) + 14px);
+  bottom: calc(var(--cc-ib, 0px) + 74px);
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.95);
+  color: #16242b;
+  font-weight: 600;
+}
+/* MapLibre controls stay inside the part of the map that no card covers. */
+.cc-root .maplibregl-ctrl-bottom-left {
+  left: calc(var(--cc-il, 0px) + 6px);
+  bottom: calc(var(--cc-ib, 0px) + 4px);
+}
+.cc-root .maplibregl-ctrl-bottom-right {
+  right: var(--cc-ir, 0px);
+  bottom: var(--cc-ib, 0px);
+}
+/* Numbered pins of the priority areas. Built from text nodes. */
+.cc-pin {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 2.5px solid #ffffff;
+  border-radius: 50%;
+  background: #bd0026;
+  color: #ffffff;
+  font: 700 13px/1 var(--cc-font-body), Inter, system-ui, sans-serif;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+}
+.cc-pin[data-class="High"] {
+  background: #fd8d3c;
+  color: #16242b;
+}
+.cc-pin[data-class="Moderate"] {
+  background: #fecc5c;
+  color: #16242b;
+}
+.cc-pin[data-class="Low"] {
+  background: #ffffb2;
+  color: #16242b;
+}
+.cc-pin[aria-pressed="true"] {
+  width: 34px;
+  height: 34px;
+  box-shadow: 0 0 0 3px #16242b, 0 0 0 6px #ffffff;
+  z-index: 3;
+}
+.cc-pin:focus-visible {
+  outline: 3px solid #2f8fdd;
+  outline-offset: 2px;
+}
+.cc-callout-marker {
+  z-index: 4;
+}

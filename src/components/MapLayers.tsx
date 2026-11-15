@@ -15,6 +15,7 @@ import type {
 } from "@/lib/types";
 import type { CogRSTUrls } from "@/lib/cog";
 import { canonicalCaseId, forecastSourceLabel } from "@/lib/contract";
+import { isPermanentFrameFailure } from "./mapFrameErrors";
 import {
   assetUrl,
   dropSource,
@@ -39,6 +40,12 @@ import {
   type TabKey,
   type ToggleLayerKey,
 } from "@/lib/layers";
+import {
+  resolveFrameDate,
+  resolveOverlays,
+  zoneMarkersOn,
+  type MapLayerOptions,
+} from "./command/model/overlays";
 import {
   bboxPolygon,
   boundsToImageCoordinates,
@@ -137,7 +144,8 @@ export function useMapLayers(
   layers: LayerState,
   showFlood: boolean,
   tab?: TabKey,
-  probHorizon: ProbHorizon = "24h"
+  // Additive (Command Center): without it the hook behaves as before.
+  options?: MapLayerOptions
 ) {
   const fcastMarker = useRef<Marker | null>(null);
   const clickSeq = useRef(0);
@@ -159,7 +167,8 @@ export function useMapLayers(
   const loading = useRef<Map<string, string>>(new Map());
   const chip = useRef<HTMLDivElement | null>(null);
   // PNG frames that 404'd — skipped on later days and noted via the chip
-  // ("frame unavailable") instead of crashing the map.
+  // ("frame unavailable") instead of crashing the map. A network or CORS
+  // failure is not kept here (see isPermanentFrameFailure).
   const frameFailed = useRef<Set<string>>(new Set());
   const frameNote = useRef<string | null>(null);
   const imgUrls = useRef<Record<string, string>>({});
@@ -175,11 +184,14 @@ export function useMapLayers(
   // EPSG:3857 PNG for this day, show it as a raster layer — no raster in
   // the manifest means no pixels, never a synthetic grid.
   const wanted = layers.tpiSlide ? "slide" : layers.tpiFlood ? "flood" : null;
+  const frameDate = resolveFrameDate(day?.date, options);
   // L22: on forecast days the real issued GFS frame wins over the
   // perfect-forecast upper bound (see pickTpiFrame).
   const activePng = pickTpiFrame(
     bundle?.manifest?.layers,
-    day,
+    frameDate
+      ? { date: frameDate, kind: day?.date === frameDate ? day?.kind : undefined }
+      : undefined,
     wanted,
     bundle?.series?.reference_date ?? bundle?.reference_date
   );
@@ -187,8 +199,13 @@ export function useMapLayers(
   // marks a forecast PNG, or the timeline day itself is a forecast day.
   const isForecast =
     (activePng ? isForecastLayer(activePng) : false) ||
-    day?.kind === "forecast";
+    day?.kind === "forecast" ||
+    // With options a hindcast day is drawn as forecast: not an observation.
+    (options !== undefined && day?.kind === "hindcast");
   const plan = overlayPlan(tab);
+  const overlay = resolveOverlays(tab, showFlood, layers.nisar, options?.overlays);
+  const overlayKey = Object.values(overlay).join();
+  const zoneMarkers = zoneMarkersOn(options);
   const zones = bundle ? zoneProps(bundle) : [];
 
   // Create sources/layers once per map instance.
@@ -304,14 +321,16 @@ export function useMapLayers(
 
     // A dynamic image source whose PNG 404s fires 'error' asynchronously —
     // drop it so it never paints a broken frame or crashes a later update.
-    const onMapError = (e: { sourceId?: string }) => {
+    const onMapError = (e: { sourceId?: string; error?: unknown }) => {
       const sid = e?.sourceId;
       if (!sid) return;
       const pair = DYNAMIC_IMG.find(([, s]) => s === sid);
       if (!pair) return;
       const [lyr] = pair;
       const u = imgUrls.current[sid];
-      if (u) frameFailed.current.add(u);
+      // Only a missing file is remembered. A network or CORS failure is
+      // tried again the next time the frame is wanted.
+      if (u && isPermanentFrameFailure(e.error)) frameFailed.current.add(u);
       dropSource(map, sid, lyr);
       if (sid === SRC.tpiImg) {
         const d = state.current.day;
@@ -385,8 +404,8 @@ export function useMapLayers(
     const rasterToggle = (key: ToggleLayerKey, src: string, lyr: string) => {
       const l =
         key === "pTrigger"
-          ? probFrame(bundle.manifest?.layers, probHorizon, day?.date)
-          : manifestRaster(bundle.manifest?.layers, key, day?.date);
+          ? probFrame(bundle.manifest?.layers, options?.probHorizon ?? "24h", frameDate)
+          : manifestRaster(bundle.manifest?.layers, key, frameDate);
       const url = assetUrl(caseDir, l?.png);
       if (l && url) {
         ensureImageLayer(
@@ -450,10 +469,10 @@ export function useMapLayers(
 
     // Tab overlays (doc order): pre-painted rasters below the muni lines.
     imgOverlay("opera_validation", SRC.opera, LYR.opera, 0.85, LYR.muni,
-      tab === undefined ? false : plan.operaValidation);
+      overlay.opera);
     imgOverlay("night_lights", SRC.nl, LYR.nl, 0.85, LYR.muni,
-      tab === undefined ? false : plan.nightLights);
-    imgOverlay("t_ml", SRC.tml, LYR.tml, 0.7, LYR.muni, true);
+      overlay.nightLights);
+    imgOverlay("t_ml", SRC.tml, LYR.tml, 0.7, LYR.muni, overlay.tml);
 
     // Image source for the day's PNG frame (created lazily — MapLibre image
     // sources need url+coordinates up front; the raster layer sits below
@@ -496,17 +515,18 @@ export function useMapLayers(
           isForecast ? 0.5 : 0.9
         );
       } catch {
-        frameFailed.current.add(tpiUrl);
+        // A throw here says nothing about the file: drop the source and try
+        // again the next time the frame is wanted.
         dropSource(map, SRC.tpiImg, LYR.tpiRaster);
       }
     }
     if (activePng && tpiUrl && !frameOk) {
-      frameNote.current = `TPI frame unavailable — ${day ? fmtDate(day.date) : "this day"}`;
+      frameNote.current = `TPI frame unavailable — ${frameDate ? fmtDate(frameDate) : "this day"}`;
     } else if (tpiOn && !activePng) {
       // The manifest published no PNG for this day — say so instead of
       // leaving a bare basemap that reads as broken.
-      frameNote.current = day
-        ? `No TPI frame published for ${fmtDate(day.date)}`
+      frameNote.current = frameDate
+        ? `No TPI frame published for ${fmtDate(frameDate)}`
         : "No TPI frames published for this case";
     }
     refreshChip(map, loading.current, chip, frameNote.current);
@@ -559,9 +579,12 @@ export function useMapLayers(
     loadGeo(SRC.water, "permanent water", url("permanent_water", "geojson/permanent_water.geojson"));
     loadGeo(SRC.zones, "priority zones", url("priority_zones", "geojson/priority_zones.geojson"));
     loadGeo(SRC.muni, "boundaries", url("municipal_boundaries", "geojson/municipal_boundaries.geojson"));
-    const wantFlood = tab === undefined ? showFlood : plan.floodPolygons;
-    const wantScars = tab === undefined ? showFlood || layers.nisar : plan.landslideCandidates;
-    const wantCatalog = tab !== undefined && plan.catalogPoints;
+    // With no tab context the caller drives flood/scars via showFlood (and
+    // the nisar toggle); with a tab the overlayPlan decides; explicit
+    // options.overlays replace both (see resolveOverlays).
+    const wantFlood = overlay.flood;
+    const wantScars = overlay.scars;
+    const wantCatalog = overlay.catalog;
     if (wantFlood) loadGeo(SRC.flood, "flood extent", url("flood_confirmed", "geojson/flood_confirmed.geojson"));
     if (wantScars) loadGeo(SRC.scars, "landslide candidates", url("landslide_candidates", "geojson/landslide_candidates.geojson"));
     if (wantCatalog) loadGeo(SRC.catalog, "landslide catalog", url("landslide_catalog", "geojson/landslide_catalog.geojson"));
@@ -601,7 +624,7 @@ export function useMapLayers(
       console.warn("MapLayers update failed (map kept alive)", err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, probHorizon]);
+  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey, options?.probHorizon]);
 
   // Priority-zone pins — top 20 by rank (matches the side list), anchored
   // at the polygon label point (real files are Polygons, not Points).
@@ -614,7 +637,8 @@ export function useMapLayers(
       | undefined;
     src?.setData?.({
       type: "FeatureCollection",
-      features: rankedZonePoints(bundle?.zones?.features, 20).map(
+      // options.zoneMarkers === false: the caller draws its own pins.
+      features: (zoneMarkers ? rankedZonePoints(bundle?.zones?.features, 20) : []).map(
         ({ zone: p, at }) => ({
           type: "Feature" as const,
           geometry: { type: "Point" as const, coordinates: at },
@@ -629,7 +653,7 @@ export function useMapLayers(
         })
       ),
     });
-  }, [map, bundle]);
+  }, [map, bundle, zoneMarkers]);
 
   // Click on a TPI frame -> popup with place name, TPI class, R/S/T values
   // and the data date (v4 spec). Reads day-level values off the PNG raster

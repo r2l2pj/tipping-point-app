@@ -1,0 +1,135 @@
+// The two tiles of the Situation panel. Values come from the metrics, the
+// summary or the zone snapshot; a missing value is never shown as 0.
+import { count } from "@/lib/contract";
+import type { DayPoint } from "@/lib/types";
+import { availability, missingText } from "./availability";
+import { priorityAreas } from "./areas";
+import { finite, fmtBrt, fmtDate, fmtKm2, fmtPeople } from "./format";
+import type { CcBundle, Hazard } from "./types";
+
+export interface Tile {
+  label: string;
+  value: string; // formatted value, or the missing-data text
+  missing: boolean;
+  note?: string; // for example "in priority zones"
+  asOf?: string; // "as of <date>"
+  dimmed: boolean; // the selected step is not the day of the snapshot
+}
+
+const snapshot = (bundle: CcBundle): { iso?: string; text?: string } => {
+  if (bundle.mode === "live") {
+    const iso = bundle.summary?.generated_at ?? bundle.updated_at;
+    return { iso, text: iso ? fmtBrt(iso) : undefined };
+  }
+  const iso = bundle.reference_date;
+  return { iso, text: iso ? fmtDate(iso) : undefined };
+};
+
+const finish = (
+  bundle: CcBundle,
+  stepDate: string | undefined,
+  label: string,
+  value: number | undefined,
+  format: (v: unknown) => string,
+  missingKey: string,
+  note?: string
+): Tile => {
+  const snap = snapshot(bundle);
+  const missing = !finite(value);
+  return {
+    label,
+    value: missing ? missingText(availability(bundle, missingKey)) : format(value),
+    missing,
+    note: missing ? undefined : note,
+    asOf: missing ? undefined : snap.text,
+    dimmed: !missing && !!stepDate && !!snap.iso && stepDate.slice(0, 10) !== snap.iso.slice(0, 10),
+  };
+};
+
+// Critical zones by the class of the data, in any letter case.
+const isCritical = (a: { cls: string }): boolean => /^critical$/i.test(a.cls);
+
+// While only the trimmed inline zones are loaded the sum covers those zones
+// only, and the note says so.
+const zoneNote = (bundle: CcBundle, count: number): string =>
+  bundle.zonesTrimmed ? `in the ${count} top-ranked priority zones` : "in priority zones";
+
+// A value of the selected day: its date is the step, so it is never dimmed.
+const dayTile = (label: string, value: string, date: string, note?: string): Tile => ({
+  label, value, missing: false, note, asOf: fmtDate(date), dimmed: false,
+});
+
+// Per-hazard split of the day, with the chosen hazard first.
+const splitNote = (day: DayPoint, hazard: Hazard): string | undefined => {
+  const parts: Record<Hazard, string | undefined> = {
+    slide: finite(day.critical_slide_km2) ? `landslide ${fmtKm2(day.critical_slide_km2)}` : undefined,
+    flood: finite(day.critical_flood_km2) ? `flood ${fmtKm2(day.critical_flood_km2)}` : undefined,
+  };
+  const order: Hazard[] = hazard === "flood" ? ["flood", "slide"] : ["slide", "flood"];
+  const text = order.map((h) => parts[h]).filter(Boolean).join(" · ");
+  return text || undefined;
+};
+
+// Order of sources (same as the old ALERT card on main): the value of the
+// selected day, else the metrics scalar with its date, else the labelled sum
+// over the priority zones.
+export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: string, day?: DayPoint): Tile {
+  const label = "Critical area";
+  if (bundle.mode !== "live" && day && finite(day.critical_km2)) {
+    return dayTile(label, fmtKm2(day.critical_km2), day.date,
+      splitNote(day, hazard) ?? "landslide or flood");
+  }
+  const scalar = bundle.metricsView?.critical_km2;
+  if (bundle.mode !== "live" && finite(scalar)) {
+    const iso = bundle.metricsView?.critical_km2_date;
+    return {
+      label, value: fmtKm2(scalar), missing: false, note: "landslide or flood",
+      asOf: iso ? fmtDate(iso) : undefined,
+      dimmed: !!iso && !!stepDate && stepDate.slice(0, 10) !== iso.slice(0, 10),
+    };
+  }
+  if (bundle.mode === "live") {
+    const km2 = bundle.summary?.critical_km2;
+    const byHazard = km2?.[hazard];
+    return finite(byHazard)
+      ? finish(bundle, stepDate, label, byHazard, fmtKm2, "summary", `${hazard === "flood" ? "flood" : "landslide"} hazard`)
+      : finish(bundle, stepDate, label, km2?.any, fmtKm2, "summary", "any hazard");
+  }
+  const fromMetrics = bundle.metricsView?.critical_area_km2;
+  if (finite(fromMetrics)) return finish(bundle, stepDate, label, fromMetrics, fmtKm2, "critical_area_km2");
+  const critical = priorityAreas(bundle).filter(isCritical);
+  const known = critical.filter((a) => a.areaKm2 !== null);
+  const sum = bundle.zones && known.length === critical.length && critical.length > 0
+    ? known.reduce((acc, a) => acc + (a.areaKm2 as number), 0)
+    : undefined;
+  return finish(bundle, stepDate, label, sum, fmtKm2,
+    bundle.zones ? "critical_area_km2" : "priority_zones", zoneNote(bundle, critical.length));
+}
+
+export function peopleTile(bundle: CcBundle, stepDate?: string, day?: DayPoint): Tile {
+  const label = "People potentially exposed";
+  // count() drops raster fill values and negatives: not data.
+  const ofDay = bundle.mode !== "live" ? count(day?.people_critical) : undefined;
+  if (day && ofDay !== undefined) return dayTile(label, fmtPeople(ofDay), day.date);
+  if (bundle.mode === "live") {
+    const s = bundle.summary;
+    return finish(bundle, stepDate, label, s?.people_critical ?? s?.people_exposed, fmtPeople, "summary");
+  }
+  const fromMetrics = bundle.metricsView?.people_critical;
+  if (finite(fromMetrics)) return finish(bundle, stepDate, label, fromMetrics, fmtPeople, "people_critical");
+  // Zone sum only when every Critical zone reports people.
+  const critical = priorityAreas(bundle).filter(isCritical);
+  const sum = critical.length > 0 && critical.every((a) => a.people !== null)
+    ? critical.reduce((acc, a) => acc + (a.people as number), 0)
+    : undefined;
+  return finish(bundle, stepDate, label, sum, fmtPeople, "people_critical", zoneNote(bundle, critical.length));
+}
+
+// The zone snapshot has one date. Off that day the list is dimmed.
+export function zoneSnapshot(bundle: CcBundle, stepDate?: string): { asOf?: string; dimmed: boolean } {
+  const snap = snapshot(bundle);
+  return {
+    asOf: snap.text,
+    dimmed: !!stepDate && !!snap.iso && stepDate.slice(0, 10) !== snap.iso.slice(0, 10),
+  };
+}
