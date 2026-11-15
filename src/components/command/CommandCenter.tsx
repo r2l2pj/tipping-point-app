@@ -9,7 +9,11 @@ import type { AlertCardData } from "@/lib/alerts";
 import EvidenceDetails from "./EvidenceDetails";
 import GetAlertsCard from "./GetAlertsCard";
 import LayersColumn from "./LayersColumn";
-import MapStage, { type MapFocus } from "./MapStage";
+import MapStage, { type CityPin, type MapFocus } from "./MapStage";
+import CityCard from "./CityCard";
+import CitySearch from "./CitySearch";
+import type { Place, Places } from "./model/places";
+import { geoUrl } from "@/lib/layers";
 import StartHere from "./StartHere";
 import PanelSection from "./PanelSection";
 import { observedRows, type AlertList } from "./model/alerts";
@@ -19,7 +23,7 @@ import { availability, missingText } from "./model/availability";
 import { dataStatus, freshnessText } from "./model/dataStatus";
 import { classLabel, fmtKm2 } from "./model/format";
 import { layerRows, visibleLayerRows } from "./model/layerRegistry";
-import { caseDirOf, effectiveBundle, productUrl, withLazy, zonesAreTrimmed } from "./model/lazy";
+import { caseDirOf, declared, effectiveBundle, productUrl, withLazy, zonesAreTrimmed } from "./model/lazy";
 import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
 import { sourceRows } from "./model/sources";
@@ -52,6 +56,8 @@ export interface CommandCenterProps {
   // `?day=<offset>` deep link: day offset from the event day.
   initialDay?: number | string;
   deepLink?: DeepLink;
+  // `?city=<IBGE id>` deep link: open the City card of that municipality.
+  initialCity?: string;
 }
 
 // Browser clock, minute steps. Undefined on the server and during hydration,
@@ -88,6 +94,7 @@ export function CommandCenterView({
   initialCase,
   initialDay,
   deepLink,
+  initialCity,
   view,
   onView,
   nowMs,
@@ -110,6 +117,33 @@ export function CommandCenterView({
   }));
   const [drawer, setDrawer] = useState(false); // Layers drawer, narrow screens
   const [focus, setFocus] = useState<MapFocus>(); // "View on the map" target
+
+  // City search (Lucas): places.json of the live run (lead-analysis). A
+  // pick opens Now (the card is about today), frames the city and pins it.
+  const liveCase = cases.find((c) => c.mode === "live");
+  const placesUrl = liveCase && declared(liveCase, "places")
+    ? geoUrl(liveCase, caseDirOf(liveCase), "places", "places.json")
+    : undefined;
+  const [city, setCity] = useState<{ place: Place; dates: string[] }>();
+  const activeRef = useRef(state.activeId);
+  useEffect(() => { activeRef.current = state.activeId; }, [state.activeId]);
+  const setCityParam = (id: string | undefined) => {
+    const params = new URLSearchParams(window.location.search);
+    if (id) params.set("city", id); else params.delete("city");
+    const q = params.toString();
+    window.history.replaceState(null, "", window.location.pathname + (q ? `?${q}` : ""));
+  };
+  const onCity = useCallback((place: Place, all: Places) => {
+    onView("command");
+    if (liveCase && activeRef.current !== liveCase.id) dispatch({ type: "setMode", mode: "now" });
+    setCity({ place, dates: all.dates });
+    setFocus({ bbox: place.bbox, center: place.centroid, key: Date.now() });
+    setCityParam(place.id);
+  }, [liveCase, onView]);
+  const cityPin = useMemo<CityPin | undefined>(
+    () => (city ? { center: city.place.centroid, name: city.place.name } : undefined),
+    [city]
+  );
 
   useEffect(() => {
     if (!state.playing) return;
@@ -244,6 +278,7 @@ export function CommandCenterView({
         onSelectCase={(id) => dispatch({ type: "selectCase", id })}
         freshness={freshnessText(status, nowMs)}
         freshnessKind={status.kind}
+        search={placesUrl && <CitySearch url={placesUrl} initialCityId={initialCity} onSelect={onCity} />}
       />
 
       {/* Wide: the map fills the whole area and the cards float over it.
@@ -260,6 +295,7 @@ export function CommandCenterView({
           insets={insets}
           stageRef={stageRef}
           focus={focus}
+          cityPin={live ? cityPin : undefined}
           featuredCase={(() => {
             const f = cases.find((c) => c.mode === "replay" && isFeatured(c));
             return f ? { id: f.id, short: "Uruguaiana Oct 2026" } : undefined;
@@ -269,6 +305,13 @@ export function CommandCenterView({
             setDrawer((d) => !d);
           }}
         />
+        {city && live && view === "command" && (
+          <div className="pointer-events-auto absolute left-1/2 top-14 z-30 w-[min(360px,calc(100%-24px))] -translate-x-1/2">
+            <CityCard place={city.place} dates={city.dates}
+              onShow={() => setFocus({ bbox: city.place.bbox, center: city.place.centroid, key: Date.now() })}
+              onClose={() => { setCity(undefined); setCityParam(undefined); }} />
+          </div>
+        )}
         {drawer && (
           <button type="button" aria-label="Close the Layers column" onClick={() => setDrawer(false)}
             className="fixed inset-0 z-30 bg-black/40 min-[900px]:hidden" />

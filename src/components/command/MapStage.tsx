@@ -3,7 +3,7 @@
 import { horizonLabel, probHorizonsAvailable } from "@/lib/layers";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Map as MapInstance } from "maplibre-gl";
+import { Marker, type Map as MapInstance } from "maplibre-gl";
 import Map from "../Map";
 import { useMapLayers } from "../MapLayers";
 import AreaCallout from "./AreaCallout";
@@ -37,6 +37,9 @@ export interface MapFocus {
   key: number;
 }
 
+// The searched city (City search): a pin with its name.
+export interface CityPin { center: [number, number]; name: string }
+
 export default function MapStage({
   bundle,
   steps,
@@ -50,6 +53,7 @@ export default function MapStage({
   stageRef,
   focus,
   featuredCase,
+  cityPin,
 }: {
   bundle: CcBundle;
   steps: Step[];
@@ -63,6 +67,7 @@ export default function MapStage({
   stageRef: React.RefObject<HTMLDivElement | null>;
   featuredCase?: { id: string; short: string };
   focus?: MapFocus;
+  cityPin?: CityPin;
 }) {
   const [map, setMap] = useState<MapInstance | null>(null);
   const [bearing, setBearing] = useState(0);
@@ -119,8 +124,15 @@ export default function MapStage({
   // Frame a requested place. Opening the map view changes the card insets,
   // and the padding ease that follows would cancel a camera move started now:
   // wait for it (300 ms) first.
+  // When the case was last fitted (see the padding effect below).
+  const fitted = useRef<{ key: string; at: number }>({ key: "", at: 0 });
+  // A case switch (city search from Replay) refits the case bounds for
+  // 1.5 s: start after that.
   useEffect(() => {
     if (!map || !focus) return;
+    // This effect runs before the padding effect: a case not fitted yet is
+    // about to be.
+    const sinceFit = fitted.current.key !== bundle.id ? 0 : performance.now() - fitted.current.at;
     const t = setTimeout(() => {
       const b = focus.bbox;
       if (b) {
@@ -128,9 +140,31 @@ export default function MapStage({
       } else if (focus.center) {
         map.flyTo({ center: focus.center, zoom: Math.max(map.getZoom(), 11), duration: 1000 });
       }
-    }, 350);
+    }, Math.max(350, 1600 - sinceFit));
     return () => clearTimeout(t);
+    // Only a new focus moves the map; the case id is read for timing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, focus]);
+
+  useEffect(() => {
+    if (!map || !cityPin) return;
+    const el = document.createElement("div");
+    el.className = "cc-city-pin";
+    el.dataset.cityPin = cityPin.name;
+    el.setAttribute("role", "img");
+    el.setAttribute("aria-label", `Searched city: ${cityPin.name}`);
+    const dot = document.createElement("span");
+    dot.className = "block h-4 w-4 rounded-full border-[3px] border-white bg-cc-accent shadow-[0_1px_4px_rgba(0,0,0,0.5)]";
+    const name = document.createElement("span");
+    name.className = "mt-0.5 block whitespace-nowrap rounded bg-white/95 px-1.5 text-xs font-semibold text-cc-ink shadow";
+    name.textContent = cityPin.name;
+    el.append(dot, name);
+    el.style.display = "flex";
+    el.style.flexDirection = "column";
+    el.style.alignItems = "center";
+    const m = new Marker({ element: el, anchor: "top", offset: [0, -8] }).setLngLat(cityPin.center).addTo(map);
+    return () => { m.remove(); };
+  }, [map, cityPin]);
 
   useEffect(() => {
     if (!map) return;
@@ -156,7 +190,6 @@ export default function MapStage({
   // on its start position. So: on a new map or a new case, and while that
   // fit may still run, the padding is set first and the fit is done again
   // here. Later padding changes only ease the padding.
-  const fitted = useRef<{ key: string; at: number }>({ key: "", at: 0 });
   useEffect(() => {
     if (!map) return;
     const padding = { left: insets.left, right: insets.right, bottom: insets.bottom, top: 0 };
@@ -225,6 +258,14 @@ export default function MapStage({
         <button type="button" data-featured-case onClick={() => dispatch({ type: "goTo", id: featuredCase.id, hazard: "flood" })}
           className={`absolute top-3 z-10 ${chip} !text-xs font-semibold text-cc-accent`} style={{ left: L(140) }}>
           <span className="max-[639px]:hidden">Open the </span>{featuredCase.short}<span className="max-[639px]:hidden"> case</span> →
+        </button>
+      )}
+
+      {/* Nav (Lucas): one click from any past event back to the live map. */}
+      {!comparing && bundle.mode === "replay" && (
+        <button type="button" data-back-to-live onClick={() => dispatch({ type: "setMode", mode: "now" })}
+          className={`absolute top-3 z-10 ${chip} !text-xs font-semibold text-cc-accent`} style={{ left: L(140) }}>
+          ← Back to live<span className="max-[639px]:hidden"> (Now)</span>
         </button>
       )}
 

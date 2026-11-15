@@ -295,6 +295,7 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
       fontClass={fontClass}
       initialCase={initialCase}
       initialDay={initialDay}
+      initialCity={search?.city || undefined}
       deepLink={{ lead: search?.lead, compare: search?.compare, before: search?.before, after: search?.after, pol: search?.pol, layers: search?.layers, fit: search?.fit }}
     />
   );

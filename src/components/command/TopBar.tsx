@@ -19,6 +19,7 @@ export default function TopBar({
   onSelectCase,
   freshness,
   freshnessKind,
+  search,
 }: {
   cases: readonly CcBundle[];
   bundle: CcBundle | undefined;
@@ -28,6 +29,7 @@ export default function TopBar({
   onSelectCase: (id: string) => void;
   freshness: string;
   freshnessKind: string;
+  search?: React.ReactNode; // City search: in the header (wide), a full row above the map (phones)
 }) {
   const live = bundle?.mode === "live";
   const replays = cases.filter((c) => c.mode === "replay");
@@ -47,6 +49,9 @@ export default function TopBar({
         Rain warns. Radar sees through.
       </span>
       <div className="grow" />
+      {search && (
+        <div className="max-[899px]:order-last max-[899px]:basis-full min-[900px]:w-[min(260px,22vw)]">{search}</div>
+      )}
 
       <div role="group" aria-label="View" className="inline-flex rounded-full border border-cc-line-strong bg-cc-surface p-[3px]">
         <button type="button" aria-pressed={view === "command"} onClick={() => onView("command")} className={seg(view === "command")}>
