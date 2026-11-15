@@ -259,3 +259,14 @@ describe("P(trigger) wording: relative likelihood, never a probability", () => {
     expect(JSON.stringify(legend)).not.toMatch(/probability|%/i);
   });
 });
+
+describe("OPERA validation legend (lead-analysis wa_2025/opera_validation.json)", () => {
+  test("three classes in the PNG's colors, no cloud class", () => {
+    const rows = layerLegendRows({} as never, ["opera"]);
+    expect(rows.map((r) => [r.label, r.swatch])).toEqual([
+      ["New flood in both NISAR and OPERA", "#1a9850"],
+      ["NISAR only", "#f46d43"],
+      ["OPERA DSWx-S1 only", "#4575b4"],
+    ]);
+  });
+});

@@ -51,7 +51,7 @@ const DEFS: Def[] = [
   { id: "flood", group: "Observations", short: "Flood" },
   { id: "candidates", group: "Observations", short: "Scar candidates" },
   { id: "catalog", group: "Replay evidence", short: "Landslide catalog" },
-  { id: "opera", group: "Replay evidence", short: "OPERA water map" },
+  { id: "opera", group: "Replay evidence", short: "NISAR vs OPERA flood check" },
 ];
 
 export const LAYER_SHORT = Object.fromEntries(
@@ -140,7 +140,7 @@ export function layerRows(
     flood: floodLabels(bundle).layer,
     candidates: CANDIDATES_LABEL,
     catalog: "Landslide catalog",
-    opera: "OPERA water map",
+    opera: "NISAR vs OPERA flood check",
   };
   const okSub: Partial<Record<LayerId, string | undefined>> = {
     tpi: partlyForecastText(bundle, stepDate) ? `${partlyForecastText(bundle, stepDate)} (partly forecast)`

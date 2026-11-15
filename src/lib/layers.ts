@@ -518,11 +518,14 @@ export const TPI_STOPS: [number, string][] = [
 // T_ML Random-Forest probability: continuous YlOrRd 0 -> 1.
 export const TML_STOPS = TPI_STOPS;
 
-// OPERA validation raster: both / NISAR-only / OPERA-only / cloud (hatched).
+// OPERA validation raster (lead-analysis wa_2025/opera_validation.json, the
+// colors baked into the PNG): new flood in both / NISAR only / OPERA only.
+// Like-for-like: observed cloud-free on both dates, so no cloud class. `cloud`
+// stays for the optional GEE tile path.
 export const OPERA = {
-  both: "#2166AC",
-  nisarOnly: "#92C5DE",
-  operaOnly: "#F4A582",
+  both: "#1a9850",
+  nisarOnly: "#f46d43",
+  operaOnly: "#4575b4",
   cloud: "#BDBDBD",
 } as const;
 

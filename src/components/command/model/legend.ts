@@ -49,10 +49,9 @@ export function layerLegendRows(bundle: CcBundle, on: readonly LayerId[]): Layer
   if (on.includes("catalog")) rows.push({ id: "catalog", label: "Landslide catalog point", swatch: "#ffffff", round: true });
   if (on.includes("opera")) {
     rows.push(
-      { id: "opera-both", label: "OPERA map: both", swatch: OPERA.both },
-      { id: "opera-nisar", label: "OPERA map: NISAR only", swatch: OPERA.nisarOnly },
-      { id: "opera-opera", label: "OPERA map: OPERA only", swatch: OPERA.operaOnly },
-      { id: "opera-cloud", label: "OPERA map: cloud", swatch: OPERA.cloud },
+      { id: "opera-both", label: "New flood in both NISAR and OPERA", swatch: OPERA.both },
+      { id: "opera-nisar", label: "NISAR only", swatch: OPERA.nisarOnly },
+      { id: "opera-opera", label: "OPERA DSWx-S1 only", swatch: OPERA.operaOnly },
     );
   }
   return rows;
