@@ -85,6 +85,7 @@ Sentinel-1 (C-band, 5.6 cm) also sees open floodwater through cloud; we use its 
 | Washington: NISAR 3-pass time series (HH) | flood candidates −9.7 dB (Nov 10) → −9.7 dB (Dec 4) → −16.2 dB (Dec 16): stable for a month, then dropped ~6.5 dB when the river flooded; control areas stayed within 2.9 dB | the candidates were picked by the Dec 4 → Dec 16 drop, so Nov 10 = Dec 4 is the independent check |
 | Washington: NISAR vs optical HLS water | not meaningful | optical saw only 7% of the area |
 | Rio Grande do Sul: flood index vs Copernicus EMS flood maps (EMSR720) | IoU 0.18 · F1 0.31 · precision 0.46 · recall 0.24 (High or above, observed rain, May 6, 2024). Before the onset, only 0.21% (observed rain) / 6.6% (NOAA GFS forecast) of that flooded area was flagged | Taquari valley only (5 EMS map areas, 32 km² of mapped flood); Porto Alegre was not mapped by EMS. This is agreement during the flood, not a warning |
+| Southern Brazil live NISAR, first pair (Oct 25 → Nov 6, 2026) | rejected — no flood candidates published | the first candidate strip (2.35 km²) was in São Miguel Arcanjo, São Paulo (outside our RS/SC/PR scope), on the swath edge, from a pair with different acquisition modes. Two passes in between (Oct 29, Nov 1) saw it mid-swath as ordinary land (HH −5.6 / −5.1 dB). The live check now rejects mixed-mode pairs, threshold fallbacks and swath-edge patches |
 | Optical cloud cover | Washington 92.9% (OPERA DSWx-HLS, Dec 15/17, after the storm) · Rio Grande do Sul 100% (20 HLS scenes during the event) | why radar |
 | Rio Grande do Sul: Copernicus EMS landslide polygons (EMSR720), forecast as issued | 81% of 497 mapped slides touched a High-or-above cell in the NOAA GFS run issued 27 h before the first deaths (Critical 20.7%); runs issued 51 and 75 h before: 0% | Taquari valley only (5 EMS areas); slides undated (post-event imagery); counted when any ~90 m cell the polygon touches is High+ — only the centroid cell: 56.9% |
 | Rio Grande do Sul: landslide scar candidates | 2,849 candidates, 20.0 km² | 46% of the 16,027 inventoried landslides lie within 500 m of a candidate; 55% of candidates lie within 500 m of one. Against Copernicus EMS slides (Taquari valley), candidates are 3.3× a random steep-terrain baseline at 100 m, but only 1.1× at 500 m |
@@ -107,6 +108,7 @@ Other limits:
 - IMERG and SMAP are about 10 km; the detail comes from terrain.
 - People counts in the replays are lower bounds: they use a ~1 km resample of the GPW population grid that reads about 12% low (Rio Grande do Sul peak 1.49 million vs about 1.68 million on the native grid).
 - NISAR revisits every 12 days, so the radar check can arrive a week after the damage.
+- NISAR's regular coverage of Southern Brazil began in late October 2026; no comparable pass pair over our area has passed the live checks yet, so the NISAR flood evidence here is the Washington replay.
 - Landslides are always candidates, never confirmed.
 - The live view covers Southern Brazil only.
 
