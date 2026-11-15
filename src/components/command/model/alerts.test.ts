@@ -1,6 +1,6 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
-import { alertsByRegion, buildAlertList } from "./alerts";
+import { alertsByRegion, buildAlertList, capAlertList, moreAlertsText } from "./alerts";
 import { bundle, liveBundle } from "./fixtures";
 import { ageText, classLabel, fmtBrt, fmtDate, fmtHours, sourceTime } from "./format";
 import { sourceRows } from "./sources";
@@ -140,5 +140,31 @@ describe("source rows", () => {
       .toBe("NOAA GFS (issued May 2, 2024) · chart: perfect forecast · upper bound");
     expect(issuedForecastLabel(rs)).toBe("NOAA GFS (issued May 2, 2024)");
     expect(chartForecastLabel(rs)).toBe("perfect forecast · upper bound");
+  });
+});
+
+describe("capAlertList (A10 page budget)", () => {
+  const card = (i: number, level: string, region: string) =>
+    ({ id: `a${i}`, title: "t", area: region, region, hazard: "landslide", level, guidance: "g" }) as never;
+  const many = { state: "alerts" as const, alerts: [
+    ...Array.from({ length: 30 }, (_, i) => card(i, "emergency", "Porto Alegre")),
+    ...Array.from({ length: 5 }, (_, i) => card(100 + i, "warning", "Canoas")),
+  ], dataTime: "2026-11-15T04:15:23Z" };
+
+  test("sends the first cards, keeps the exact total and per-region counts", () => {
+    const capped = capAlertList(many, 20);
+    expect(capped.alerts).toHaveLength(20);
+    expect(capped.total).toBe(35);
+    expect(capped.regions).toEqual([
+      { region: "Porto Alegre", level: "emergency", count: 30 },
+      { region: "Canoas", level: "warning", count: 5 },
+    ]);
+    expect(moreAlertsText(capped)).toBe("and 15 more alerts of the same run");
+  });
+
+  test("a short list is unchanged", () => {
+    const few = { ...many, alerts: many.alerts.slice(0, 3) };
+    expect(capAlertList(few, 20)).toBe(few);
+    expect(moreAlertsText(few)).toBeUndefined();
   });
 });

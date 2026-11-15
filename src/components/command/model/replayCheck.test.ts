@@ -299,6 +299,13 @@ describe("radar card", () => {
     expect(sourceRows(b).find((r) => r.id === "nisar")?.date).toBe("Nov 14, 06:37 AM BRT");
   });
 
+  test("the pass count survives the list cut to the cards shown", () => {
+    const passes = [{ date: "2026-11-14T09:37:37Z", track: "132" }];
+    const card = radarCard(bundle({ mode: "live", nisarPasses: passes, nisarPassCount: 118 }));
+    expect(card.passes).toHaveLength(1);
+    expect(card.passCount).toBe(118);
+  });
+
   test("a published image pair enables the comparison", () => {
     const b = bundle({ manifest: manifest([
       { id: "nisar_pre", date: "2025-12-04", png: "wa_2025/png/nisar_pre.png", bounds: [-122, 47, -121, 48] },

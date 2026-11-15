@@ -144,6 +144,7 @@ export interface RadarCard {
   candidates: { label: string; value: string; note: string };
   limitation?: string;
   passes: NisarPass[];
+  passCount: number; // all passes, also those not sent to the browser
   canShowOnMap: boolean;
   compare: CompareOption;
 }
@@ -208,6 +209,7 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
     },
     limitation: pair ? GUNW_LIMIT_TEXT : undefined,
     passes: nisarPasses(bundle),
+    passCount: Math.max(bundle.nisarPassCount ?? 0, nisarPasses(bundle).length),
     canShowOnMap: bundle.flood
       ? bundle.flood.features.length > 0
       : declared(bundle, "flood_confirmed"),

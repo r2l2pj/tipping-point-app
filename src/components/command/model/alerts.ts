@@ -12,7 +12,31 @@ export interface AlertList {
   alerts: AlertCardData[];
   // Time of the data, or the last known run time when unavailable.
   dataTime?: string;
+  // Set by capAlertList: the full count and the region rows of ALL alerts,
+  // when only the first cards are sent to the browser.
+  total?: number;
+  regions?: RegionRow[];
 }
+
+// Cards sent to the browser. The live run can raise hundreds of candidates
+// (541 on 2026-11-15 = 303 KB of page); the panel shows the most severe
+// cards, says how many more there are, and keeps exact counts per region.
+export const ALERTS_SHOWN = 20;
+
+export function capAlertList(list: AlertList, n = ALERTS_SHOWN): AlertList {
+  if (list.alerts.length <= n) return list;
+  return {
+    ...list,
+    alerts: list.alerts.slice(0, n),
+    total: list.alerts.length,
+    regions: alertsByRegion(list.alerts),
+  };
+}
+
+export const moreAlertsText = (list: AlertList): string | undefined => {
+  const more = (list.total ?? list.alerts.length) - list.alerts.length;
+  return more > 0 ? `and ${more} more ${more === 1 ? "alert" : "alerts"} of the same run` : undefined;
+};
 
 const LEVEL_ORDER: Record<string, number> = { emergency: 0, warning: 1, watch: 2 };
 

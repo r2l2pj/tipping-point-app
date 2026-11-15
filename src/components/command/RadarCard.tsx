@@ -74,9 +74,9 @@ export default function RadarCard({
                 {p.note && <span className="text-cc-faint">{p.note}</span>}
               </li>
             ))}
-            {radar.passes.length > PASSES_SHOWN && (
+            {radar.passCount > PASSES_SHOWN && (
               <li className="text-xs text-cc-faint">
-                and {radar.passes.length - PASSES_SHOWN} older passes
+                and {radar.passCount - PASSES_SHOWN} older passes
               </li>
             )}
           </ul>
