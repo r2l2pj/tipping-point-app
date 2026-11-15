@@ -19,6 +19,10 @@ export type CcBundle = CaseBundle & {
   // Live: the observed cards, computed on the server from alerts.json
   // observed[] (see observedRows); the raw list is not sent to the browser.
   observedSummary?: import("./alerts").ObservedRow[];
+  // Replay: the TEST card and importance groups built on the server from
+  // lead-ml's global exports (model/ml.ts).
+  ml?: import("./ml").MlView;
+  mlImportance?: import("./ml").ImportanceView;
   // Replay: data/<case>/forecast_lead_time.json (NOAA GFS forecast replay).
   forecastLeadTime?: unknown;
   // `_null_reasons` of the case node in the root manifest. The loader in

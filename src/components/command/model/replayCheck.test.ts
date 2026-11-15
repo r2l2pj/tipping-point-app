@@ -73,9 +73,9 @@ describe("replay check rows", () => {
     expect(row(rs, "catalog-hits")!.value).toBe("86%");
   });
 
-  test("the two AUC values are labelled", () => {
+  test("no bare AUC row: model scores only appear with their n (ML card)", () => {
     const b = bundle({ metricsView: mv({ rf_auc: 0.91, rule_auc: 0.74 }) });
-    expect(row(b, "model")!.value).toBe("ML model AUC (XGBoost) 0.91 · Manual slope-rule AUC 0.74");
+    expect(row(b, "model")).toBeUndefined();
   });
 
   test("a null metric shows its reason", () => {

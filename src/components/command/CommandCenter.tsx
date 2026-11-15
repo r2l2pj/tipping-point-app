@@ -369,6 +369,8 @@ export function CommandCenterView({
                   <EvidenceDetails
                     evidence={evidence(bundle, step?.day)}
                     swot={bundle.swot}
+                    ml={bundle.ml}
+                    mlImportance={bundle.mlImportance}
                     evidenceRows={rows.filter((r) => r.group === "Replay evidence")}
                     nightLights={nightLights}
                     onToggleLayer={(id) => dispatch({ type: "toggleLayer", id })}

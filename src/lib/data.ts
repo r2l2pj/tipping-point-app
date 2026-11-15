@@ -393,6 +393,26 @@ export const getAlerts = async () => {
   return readData<AlertsFile>(newCtx(), "", "alerts.json");
 };
 
+// lead-ml exports (global, not per case; main 1fe4aba): the TEST card, the
+// trigger-model feature importance and the T_ML layer descriptor. Read on
+// the server; the Command Center builds a small per-case view from them.
+// `base` is the remote that answered, for absolute asset URLs.
+export const getMlArtifacts = async (): Promise<{
+  card?: unknown;
+  importance?: unknown;
+  tml?: unknown;
+  base?: string;
+}> => {
+  await requestTime();
+  const ctx = newCtx();
+  const [card, importance, tml] = await Promise.all([
+    readData<unknown>(ctx, "", "ml/ml_card.json"),
+    readData<unknown>(ctx, "", "ml/feature_importance_3b.json"),
+    readData<unknown>(ctx, "", "ml/t_ml.json"),
+  ]);
+  return { card, importance, tml, base: ctx.lastBase ?? ctx.bases[0] };
+};
+
 // One case = one entry in the root manifest's `cases` map (canonical
 // underscore keys; caseAlias maps the hyphen event ids used by events.json),
 // backed by a directory under public/data/<case-key>. Legacy per-case

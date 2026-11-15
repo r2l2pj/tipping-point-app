@@ -155,14 +155,8 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
     finite(m.landslide_hit_pct)
       ? { id: "catalog-hits", name: "Landslide catalog hits", value: fmtPct(m.landslide_hit_pct), missing: false }
       : undefined);
-  optional("model", "Model against the slope rule", "rf_auc", () =>
-    finite(m.rf_auc) || finite(m.rule_auc)
-      ? {
-          id: "model", name: "Model against the slope rule",
-          value: `ML model AUC (XGBoost) ${fmtScore(m.rf_auc)} · Manual slope-rule AUC ${fmtScore(m.rule_auc)}`,
-          missing: false,
-        }
-      : undefined);
+  // Model scores are shown only with their n, in the 'Did we get it right?'
+  // card (lead-ml ml_card.json); the bare rf_auc / rule_auc row is gone.
   optional("flooded", floodLabels(bundle).area, "flooded_km2", () =>
     finite(m.flooded_km2)
       ? {

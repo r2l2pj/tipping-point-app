@@ -13,6 +13,7 @@ import { normalizeLeadTimeHist } from "./charts/LeadTimeHistogram";
 import { CommandCenterView } from "./CommandCenter";
 import type { AlertList } from "./model/alerts";
 import { buildAlertList } from "./model/alerts";
+import { buildMlView } from "./model/ml";
 import { priorityAreas } from "./model/areas";
 import { bundle, liveBundle, manifest, point, series, zone, zones } from "./model/fixtures";
 import type { CcBundle } from "./model/types";
@@ -120,10 +121,20 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
     expect(details(bundle({ metricsView: mv({ cloud_pct: 0.95 }) }))).toContain("the optical saw only 5%");
   });
 
-  test("learned vs manual slope rule and integer lead hours", () => {
+  test("without the ML card no model score is shown (never a metric without n); lead hours integer", () => {
     const html = details(bundle({ metricsView: FULL_METRICS, forecastLeadTime: WA_LEAD }));
-    for (const text of ["learned vs manual slope rule", "ML model AUC (XGBoost)", "Manual slope-rule AUC",
-      "0.91", "0.74", "IQR 55–115 h", "85 h", "no cloud pixels"]) {
+    for (const text of ["Model scores pending", "IQR 55–115 h", "85 h", "no cloud pixels"]) {
+      expect(html).toContain(text);
+    }
+    expect(html).not.toContain("ML model AUC (XGBoost)");
+    expect(html).not.toContain("0.91");
+  });
+
+  test("the ML card renders TEST rows with n, base rate and the GFS headline (lead-ml sample shape)", () => {
+    const card = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/ml/ml_card.json"), "utf8"));
+    const html = details(bundle({ id: "wa_2025", metricsView: mv({}), ml: buildMlView(card, "wa_2025") }));
+    for (const text of ["Did we get it right?", "All TEST events · 72h · NOAA GFS forecast rain", "XGBoost (all features)",
+      "TPI &gt; 0.6 rule", "positive", "Base rate", "This event only (WA 2025)", "these scores are fragile"]) {
       expect(html).toContain(text);
     }
   });
