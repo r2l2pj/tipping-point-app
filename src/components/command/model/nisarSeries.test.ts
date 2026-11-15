@@ -258,3 +258,9 @@ test("radar-only replay (Uruguay v0) opens with the flooded-area layer on", asyn
     manifest: { event: "rs_uruguai_2026", layers: [L("radar_post", "2026-10-12"), L("radar_pre", "2026-09-30")] } } as never);
   expect(initialState([uy]).layers).toEqual(["flood"]);
 });
+
+test("replay radar card shows people in the flooded area when published (Uruguay v0: 28)", () => {
+  const uy = bundle({ id: "rs_uruguai_2026", metricsView: { flooded_km2: 1.817, people_flooded: 28, flood_source: "radar" } as never } as never);
+  expect(radarCard(uy).people).toEqual({ label: "People in the flooded area (estimate)", value: "28" });
+  expect(radarCard(bundle({ metricsView: { flooded_km2: 28 } as never } as never)).people).toBeUndefined();
+});

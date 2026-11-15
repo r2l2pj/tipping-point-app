@@ -425,6 +425,11 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
           swath: swathLine(bundle),
         }
       : undefined,
+    // Replay: people inside the radar flood candidates when published
+    // (Uruguay v0: people_flooded, GPW native grid, exact cell fractions).
+    people: bundle.mode !== "live" && finite(bundle.metricsView?.people_flooded)
+      ? { label: "People in the flooded area (estimate)", value: Math.round(bundle.metricsView!.people_flooded as number).toLocaleString("en-US") }
+      : undefined,
     candidates: {
       label: CANDIDATES_LABEL,
       value: cand.value,
