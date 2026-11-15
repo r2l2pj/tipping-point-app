@@ -69,7 +69,7 @@ export default function CompareOverlay({
     <>
       <CompareMaps key={`${pol}-${bi}-${ai}`} pair={shown} onClose={onClose} controlsRef={controlsRef} />
       {(hasHv || forecastCtl) && (
-        <div className={`absolute z-30 flex -translate-x-1/2 flex-col items-center gap-1 ${forecastCtl || stack ? "top-12" : "top-3"}`}
+        <div className={`absolute z-30 flex -translate-x-1/2 flex-col items-center gap-1 ${forecastCtl ? "top-20" : stack ? "top-12" : "top-3"}`}
           // Centred on the visible map, never under the floating cards.
           style={{ left: "calc(var(--cc-il, 0px) + (100% - var(--cc-il, 0px) - var(--cc-ir, 0px)) / 2)",
             maxWidth: "calc(100% - var(--cc-il, 0px) - var(--cc-ir, 0px) - 24px)" }}>
@@ -81,7 +81,7 @@ export default function CompareOverlay({
                 <button key={k} type="button" aria-pressed={forecastCtl.lead === k}
                   disabled={!forecastCtl.leads.includes(k)}
                   onClick={() => forecastCtl.onLead(k)}
-                  className={`${seg(forecastCtl.lead === k)} disabled:opacity-40`}>{k} d</button>
+                  className={`${seg(forecastCtl.lead === k)} disabled:opacity-40`}>{k} {k === 1 ? "day" : "days"} before</button>
               ))}
             </div>
           )}

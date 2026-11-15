@@ -209,12 +209,12 @@ function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
 // Loads the case bundles and builds the alert list once, on the server, for
 // both routes (/ and /alerts). The alert list is built here because
 // candidatesToAlerts reads the clock when no issue time is given.
-type Search = Promise<{ case?: string; day?: string; lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string; city?: string; basemap?: string }> | undefined;
+type Search = Promise<{ view?: string; date?: string; case?: string; day?: string; lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string; city?: string; basemap?: string }> | undefined;
 
 async function Loaded({ searchParams }: { searchParams?: Search }) {
   const search = await searchParams;
   const initialCase = search?.case;
-  const initialDay = search?.day || undefined;
+  const initialDay = search?.day || search?.date || undefined;
   const [index, root, mlArtifacts] = await Promise.all([
     getEventsIndex().catch(() => null),
     getRootManifest().catch(() => undefined),
@@ -305,7 +305,7 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
       initialCase={initialCase}
       initialDay={initialDay}
       initialCity={search?.city || undefined}
-      deepLink={{ lead: search?.lead, compare: search?.compare, before: search?.before, after: search?.after, pol: search?.pol, layers: search?.layers, fit: search?.fit, basemap: search?.basemap }}
+      deepLink={{ view: search?.view, lead: search?.lead, compare: search?.compare, before: search?.before, after: search?.after, pol: search?.pol, layers: search?.layers, fit: search?.fit, basemap: search?.basemap }}
     />
   );
 }

@@ -151,7 +151,7 @@ export function featuredFirst<T extends CcBundle>(cases: readonly T[]): T[] {
 // The screen opens on Now when a live case is loaded, else on the first case.
 // `initialCase` (the `?case=<id|alias>` deep link of the old screen) opens
 // that case when it is loaded.
-export interface DeepLink { lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string; basemap?: string }
+export interface DeepLink { view?: string; lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string; basemap?: string }
 
 // ?layers=imerg,hand5 → layer ids ("hand5"/"hand" = low ground); ?fit=<key>
 // → the map opens on that layer's bounds (the upstream basin for imerg).
@@ -201,10 +201,13 @@ export function initialState(
     basemap: parseBasemap(link.basemap) ?? (first && isFeatured(first) ? FEATURED_BASEMAP : "dark"),
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
-    issueLead: [1, 2, 3].includes(Number(link.lead)) && first && layerAvailable(first, "tpi", hazard) ? Number(link.lead) as 1 | 2 | 3 : 0,
+    // Lucas: ?view=observed|forecast|compare (&lead=1..3, default 3).
+    issueLead: !first || !layerAvailable(first, "tpi", hazard) || link.view === "observed" ? 0
+      : [1, 2, 3].includes(Number(link.lead)) ? Number(link.lead) as 1 | 2 | 3
+      : link.view === "forecast" || link.view === "compare" ? 3 : 0,
     selectedArea: null,
     calloutExpanded: false,
-    compareOpen: link.compare === "radar" ? "radar" : link.compare === "forecast" ? "forecast" : null,
+    compareOpen: link.compare === "radar" ? "radar" : link.compare === "forecast" || link.view === "compare" ? "forecast" : null,
     compareInit: { before: link.before, after: link.after, pol: link.pol === "HV" ? "HV" : link.pol === "HH" ? "HH" : undefined },
     detailsOpen: false,
     layersOpen: true,

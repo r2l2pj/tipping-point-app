@@ -663,12 +663,12 @@ describe("forecast issued this day: one source of truth (recording fixes)", () =
   test("tiles follow the overlay frame: figures when published, 'pending' otherwise — never the observed 0", () => {
     const b = wa();
     const steps = (b.series!.days as { date: string }[]);
-    steps[0].date = "2025-12-03"; // the issue day as a timeline step
+    steps[0].date = "2025-12-06"; // L-forecast view: the TARGET day on the timeline (issued D−3 = Dec 3)
     const html = render(b, { dayIndex: 0, issueLead: 3, layers: ["tpi"], hazard: "slide" });
     expect(html).toContain("pending for this forecast frame");
     expect(html).toContain("forecast for Dec 6, 2025 (issued Dec 3, 2025)");
     const withFigures = wa({ critical_km2: 812.4, people_critical: 4321 });
-    (withFigures.series!.days as { date: string }[])[0].date = "2025-12-03";
+    (withFigures.series!.days as { date: string }[])[0].date = "2025-12-06";
     const html2 = render(withFigures, { dayIndex: 0, issueLead: 3, layers: ["tpi"], hazard: "slide" });
     expect(html2).toContain("812.4 km²");
     expect(html2).toContain("4,321 (estimate)");
@@ -677,7 +677,7 @@ describe("forecast issued this day: one source of truth (recording fixes)", () =
 
   test("the timeline chip names the run of the frame on the map, never another run", () => {
     const b = wa();
-    (b.series!.days as { date: string }[])[0].date = "2025-12-03";
+    (b.series!.days as { date: string }[])[0].date = "2025-12-06";
     const html = render(b, { dayIndex: 0, issueLead: 3, layers: ["tpi"], hazard: "slide" });
     expect(html).toContain("forecast · NOAA GFS (issued Dec 3, 2025)");
     expect(html).not.toMatch(/>forecast · NOAA GFS \(issued Dec 10, 2025\)</);

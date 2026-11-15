@@ -29,7 +29,10 @@ export default function TimelineBar({
   children,
   emptyText = NO_STEPS_TEXT,
   hours,
+  forecastDates,
 }: {
+  // Replay: days that have an archived NOAA forecast (marked in the picker).
+  forecastDates?: Set<string>;
   // Lucas: HOUR selector (6-hourly frames); only for cases that publish them.
   hours?: { available: string[]; hour: string | null; onHour: (h: string | null) => void };
   emptyText?: string;
@@ -102,7 +105,7 @@ export default function TimelineBar({
           <select aria-label="Pick a day" value={dayIndex} onChange={(e) => onSeek(Number(e.target.value))} data-day-picker
             className="h-[38px] rounded-lg border border-cc-line-strong bg-cc-surface px-2 text-sm font-semibold text-cc-ink">
             {steps.map((s) => (
-              <option key={s.date} value={s.index}>{fmtDate(s.date)}{s.forecast ? " (forecast)" : ""}</option>
+              <option key={s.date} value={s.index}>{fmtDate(s.date)}{s.forecast ? " (forecast)" : ""}{forecastDates?.has(s.date) ? " · ● NOAA forecast" : ""}</option>
             ))}
           </select>
         )}

@@ -111,11 +111,14 @@ describe("replay: forecast issued this day (beat 2)", () => {
   });
 
   test("caption names the depicted day, the issue day and the lead", () => {
-    const steps = [{ index: 0, date: "2025-12-03", offset: -7, kind: "observed", top: "Dec 3", sub: "D-7", forecast: false }] as never;
+    // Lucas: the step is the TARGET day; lead k = the run issued k days before.
+    const steps = [{ index: 0, date: "2025-12-06", offset: -4, kind: "observed", top: "Dec 6", sub: "D-4", forecast: false }] as never;
     expect(mapCaption(waG, steps, 0, "slide", ["tpi"], 3).text)
-      .toBe("Landslide TPI · Dec 6, 2025 · forecast · NOAA GFS (issued Dec 3, 2025), 3 days ahead");
+      .toBe("Forecast for Dec 6, 2025, issued Dec 3, 2025 (NOAA GFS) · Landslide TPI");
     expect(mapCaption(waG, steps, 0, "slide", ["tpi"], 1).text)
-      .toBe("No NOAA GFS forecast issued Dec 3, 2025 for 1 day ahead");
+      .toBe("Forecast for Dec 6, 2025, issued Dec 5, 2025 (NOAA GFS) · Landslide TPI");
+    expect(mapCaption(waG, steps, 0, "slide", ["tpi"], 2).text)
+      .toBe("No NOAA run archived for Dec 4, 2025");
   });
 
   test("Start here: one goTo sets case, day, hazard and the forecast lead (beat 2)", () => {

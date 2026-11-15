@@ -33,7 +33,7 @@ import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
 import { sourceRows } from "./model/sources";
 import { statusChip } from "./model/status";
-import { chartForecastLabel, forecastTag, frameFor, issuedFrame, stepLabel, stepMarks, stepsFor, timelineForecastTag, noStepsText } from "./model/steps";
+import { chartForecastLabel, effectiveLead, forecastForDay, forecastLeadsForDay, forecastTag, frameFor, stepLabel, stepMarks, stepsFor, timelineForecastTag, noStepsText } from "./model/steps";
 import { criticalAreaTile, peopleTile, zoneSnapshot } from "./model/tiles";
 import type { CcBundle } from "./model/types";
 import PriorityAreas from "./PriorityAreas";
@@ -318,7 +318,7 @@ export function CommandCenterView({
     // L52: forecast vs observed — the pair follows the timeline day and
     // the lead chips (state.issueLead); both sides change together.
     : state.compareOpen === "forecast"
-      ? forecastCompare(bundle, step?.date, state.hazard, state.issueLead).pair
+      ? forecastCompare(bundle, step?.date, state.hazard, effectiveLead(bundle, step?.date, state.hazard, state.issueLead || 3)).pair
       : undefined;
   const snap = zoneSnapshot(bundle, step?.date);
   // The ML card's global tables travel on one case only (page budget).
@@ -329,7 +329,7 @@ export function CommandCenterView({
   // timeline chip: the "forecast issued this day" overlay when on, else the
   // step's own frame (TPI index on).
   const tpiOn = state.layers.includes("tpi");
-  const overlayFrame = tpiOn ? issuedFrame(bundle, step?.date, state.hazard, state.issueLead)?.layer : undefined;
+  const overlayFrame = tpiOn ? forecastForDay(bundle, step?.date, state.hazard, effectiveLead(bundle, step?.date, state.hazard, state.issueLead))?.layer : undefined;
   const mapFrame = overlayFrame ?? (tpiOn ? frameFor(bundle, step?.date, state.hazard)?.layer : undefined);
   // Area by class of the selected hazard (summary v2), or the v1 union.
   const classesKm2 = bundle.riskPaused ? [] : Object.entries(liveClasses(bundle.summary, state.hazard) ?? {});
@@ -612,6 +612,7 @@ export function CommandCenterView({
         onPrev={() => dispatch({ type: "prev" })}
         onNext={() => dispatch({ type: "next" })}
         onPlayToggle={() => dispatch({ type: "togglePlay" })}
+        forecastDates={live ? undefined : new Set(steps.filter((s) => forecastLeadsForDay(bundle, s.date, state.hazard).length > 0).map((s) => s.date))}
         hours={hasHourFrames(bundle, state.hazard) ? { available: hoursOn(bundle, state.hazard, step?.date), hour, onHour: (h) => setHourPick({ caseId: bundle.id, hour: h }) } : undefined}
       />
         </div>
