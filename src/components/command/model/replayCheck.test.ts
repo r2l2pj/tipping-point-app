@@ -308,7 +308,7 @@ describe("radar card", () => {
     expect(card.candidates.value).toBe("2,849");
     expect(card.candidates.lines).toEqual([
       "20.0 km² · 522 people (estimate)",
-      "46% of the 16,027 inventoried landslides lie within 500 m of a candidate; 55% of candidates within 500 m of one.",
+      "46% of the 16,027 mapped landslides lie within 500 m of a candidate; 55% of candidates within 500 m of one.",
     ]);
     expect(JSON.stringify(card.candidates)).not.toMatch(/(?<!never )confirmed/);
   });

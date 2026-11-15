@@ -41,7 +41,7 @@ function candidatesBlock(bundle: CcBundle): { value: string; lines: string[] } {
       value: m.scar_candidates_n.toLocaleString("en-US"),
       lines: [
         [finite(m.scar_candidates_km2) ? fmtKm2(m.scar_candidates_km2) : undefined, people(m.scar_people)].filter(Boolean).join(" · "),
-        hit && inv ? `${hit} of the ${inv} inventoried landslides lie within 500 m of a candidate${prec ? `; ${prec} of candidates within 500 m of one` : ""}.` : "",
+        hit && inv ? `${hit} of the ${inv} mapped landslides lie within 500 m of a candidate${prec ? `; ${prec} of candidates within 500 m of one` : ""}.` : "",
       ].filter(Boolean),
     };
   }
