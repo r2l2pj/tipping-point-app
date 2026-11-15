@@ -144,6 +144,166 @@ const trimZones = (
   };
 };
 
+// --- live Now city labels ------------------------------------------------------
+// `now` publishes no `places` product, so the live map showed no city labels
+// while replays render theirs (MapLayers cityLabel reads bundle.places ->
+// source tp-places). The anchor cities of RS/SC/PR are matched by name
+// (accent/case-insensitive) against the municipal_boundaries polygons and
+// reduced to one representative Point each server-side, so the ~840KB
+// municipality file never reaches the browser. Features carry the same
+// {name, kind:"city"} shape replay places.geojson uses.
+const NOW_CITY_NAMES = [
+  "Porto Alegre", "Caxias do Sul", "Pelotas", "Santa Maria",
+  "Passo Fundo", "Rio Grande", "Uruguaiana", "Novo Hamburgo", // RS
+  "Florianópolis", "Joinville", "Blumenau", "Chapecó", "Criciúma",
+  "Lages", "Itajaí", // SC
+  "Curitiba", "Londrina", "Maringá", "Ponta Grossa", "Cascavel",
+  "Foz do Iguaçu", // PR
+] as const;
+
+// Accent/case-insensitive match key ("Foz do Iguacu" == "Foz do Iguaçu").
+const placeKey = (s: string): string =>
+  s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+
+type Ring = GeoJSON.Position[];
+
+// Signed shoelace area of a ring.
+const ringArea = (ring: Ring): number => {
+  let a = 0;
+  for (let i = 0, n = ring.length; i < n; i++) {
+    const [x1, y1] = ring[i];
+    const [x2, y2] = ring[(i + 1) % n];
+    a += x1 * y2 - x2 * y1;
+  }
+  return a / 2;
+};
+
+// Area centroid of a ring; a degenerate zero-area ring falls back to its
+// vertex mean. Non-finite vertices -> undefined (caller skips the feature).
+const ringCentroid = (ring: Ring): [number, number] | undefined => {
+  const pts = ring.length > 1 ? ring.slice(0, -1) : ring;
+  if (!pts.length) return undefined;
+  let a = 0, cx = 0, cy = 0, mx = 0, my = 0;
+  for (let i = 0, n = pts.length; i < n; i++) {
+    const [x1, y1] = pts[i];
+    const [x2, y2] = pts[(i + 1) % n];
+    if (!Number.isFinite(x1) || !Number.isFinite(y1)) return undefined;
+    const w = x1 * y2 - x2 * y1;
+    a += w;
+    cx += (x1 + x2) * w;
+    cy += (y1 + y2) * w;
+    mx += x1;
+    my += y1;
+  }
+  return a === 0 ? [mx / pts.length, my / pts.length] : [cx / (3 * a), cy / (3 * a)];
+};
+
+const ringContains = (ring: Ring, lon: number, lat: number): boolean => {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi)
+      inside = !inside;
+  }
+  return inside;
+};
+
+const geomContains = (g: GeoJSON.Geometry, lon: number, lat: number): boolean => {
+  const polys =
+    g.type === "Polygon"
+      ? [g.coordinates]
+      : g.type === "MultiPolygon"
+        ? g.coordinates
+        : [];
+  return polys.some(
+    (rings) =>
+      rings.length > 0 &&
+      ringContains(rings[0], lon, lat) &&
+      !rings.slice(1).some((hole) => ringContains(hole, lon, lat))
+  );
+};
+
+// One anchor point inside a municipality polygon: the area centroid of the
+// largest exterior ring when it lands inside; concave municipalities (e.g.
+// Foz do Iguaçu) can hold their centroid outside, so the ring bbox is
+// scanned on a grid for the inside point nearest the centroid; the first
+// vertex (on the boundary) is the last resort so a name never emits a null
+// coordinate.
+export function representativePoint(
+  g: GeoJSON.Geometry | null | undefined
+): [number, number] | undefined {
+  if (!g) return undefined;
+  const exteriors = (
+    g?.type === "Polygon"
+      ? [g.coordinates[0]]
+      : g?.type === "MultiPolygon"
+        ? g.coordinates.map((p) => p[0])
+        : []
+  ).filter((r): r is Ring => Array.isArray(r) && r.length > 0);
+  if (!exteriors.length) return undefined;
+  const ring = exteriors.sort(
+    (a, b) => Math.abs(ringArea(b)) - Math.abs(ringArea(a))
+  )[0];
+  const c = ringCentroid(ring);
+  if (!c) return undefined;
+  if (geomContains(g, c[0], c[1])) return c;
+  let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+  for (const [x, y] of ring) {
+    if (x < minx) minx = x;
+    if (x > maxx) maxx = x;
+    if (y < miny) miny = y;
+    if (y > maxy) maxy = y;
+  }
+  const N = 64;
+  let best: [number, number] | undefined;
+  let bestD = Infinity;
+  for (let i = 0; i <= N; i++) {
+    for (let j = 0; j <= N; j++) {
+      const x = minx + ((maxx - minx) * i) / N;
+      const y = miny + ((maxy - miny) * j) / N;
+      const d = (x - c[0]) ** 2 + (y - c[1]) ** 2;
+      if (d < bestD && geomContains(g, x, y)) {
+        bestD = d;
+        best = [x, y];
+      }
+    }
+  }
+  return best ?? (ring[0] as [number, number]);
+}
+
+// City-label Points for the live Now map, cut from municipal_boundaries.
+// Display `name` is the data's own spelling (proper accents); kind:"city"
+// matches the replay places features so MapLayers renders them unchanged.
+// Names with no matching municipality are skipped; absent boundaries ->
+// undefined (no fabricated labels).
+export function nowCityPlaces(
+  boundaries: GeoJSON.FeatureCollection | undefined
+): GeoJSON.FeatureCollection | undefined {
+  const byName = new Map<string, { name: string; f: GeoJSON.Feature }>();
+  for (const f of boundaries?.features ?? []) {
+    const p = f.properties as Record<string, unknown> | null;
+    const name = p?.name ?? p?.nome ?? p?.NM_MUN;
+    if (typeof name !== "string" || !name) continue;
+    const k = placeKey(name);
+    if (!byName.has(k)) byName.set(k, { name, f });
+  }
+  const features: GeoJSON.Feature[] = [];
+  for (const wanted of NOW_CITY_NAMES) {
+    const hit = byName.get(placeKey(wanted));
+    const at = hit ? representativePoint(hit.f.geometry) : undefined;
+    if (!hit || !at) continue;
+    features.push({
+      type: "Feature",
+      properties: { name: hit.name, kind: "city" },
+      geometry: { type: "Point", coordinates: at },
+    });
+  }
+  return features.length
+    ? { type: "FeatureCollection", features }
+    : undefined;
+}
+
 interface ReadCtx {
   bases: string[];
   fellBack: boolean;
@@ -667,9 +827,25 @@ export async function getCaseBundle(
   // lazy-loads the full polygons via products[] + assetBase). Every other
   // heavy geojson (permanent_water, flood_confirmed, landslide_candidates,
   // landslide_catalog, municipal_boundaries, critical_areas) is NOT loaded
-  // server-side — the client fetches its URL lazily, and it is not pending:
+  // server-side — the client fetches its URL lazily, and it is not pending.
+  // Sole exception: for `now`, municipal_boundaries is read once to cut the
+  // ~20 city-label Points below (the polygons themselves stay out of the
+  // bundle), and it is still not pending when absent:
   // pending stays for products-map null / a file that is truly missing.
   const zones = trimZones(zonesRaw);
+  // The live Now case publishes no `places` product: the ~20 anchor city
+  // labels are cut from municipal_boundaries server-side so only small
+  // Points ride the bundle. A real places.geojson wins when published.
+  const effectivePlaces =
+    places ??
+    (now
+      ? nowCityPlaces(
+          await geo(
+            "municipal_boundaries",
+            "geojson/municipal_boundaries.geojson"
+          )
+        )
+      : undefined);
   const pending = new Set<string>();
   if (metrics === undefined) pending.add("metrics");
   if (effectiveSeries === undefined) pending.add("series");
@@ -677,7 +853,7 @@ export async function getCaseBundle(
     imerg_smap_daily: series,
     swot,
     priority_zones: zones,
-    places,
+    places: effectivePlaces,
     ...(now ? { summary, alerts: nowAlerts } : {}),
   };
   for (const [key, value] of Object.entries(declaredMissing)) {
@@ -741,7 +917,7 @@ export async function getCaseBundle(
     pending: [...pending].sort(),
     tpiCuts: manifest?.tpi_cuts ?? TPI_CUTS,
     zones,
-    places,
+    places: effectivePlaces,
     assetBase,
     fallback: ctx.fellBack,
   };

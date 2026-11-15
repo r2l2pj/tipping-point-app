@@ -7,7 +7,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import realMetrics from "../../test/fixtures/metrics-19c56df.json";
-import { getAlerts, getCaseBundle, getEventsIndex, getMetrics, getRootManifest, isEmptySeedManifest } from "./data";
+import { getAlerts, getCaseBundle, getEventsIndex, getMetrics, getRootManifest, isEmptySeedManifest, nowCityPlaces, representativePoint } from "./data";
 import type { MetricsV4 } from "./contract";
 
 // bun-types isn't installed — declare the Bun.serve surface the tests use.
@@ -466,6 +466,131 @@ describe("now@2 bundle", () => {
     expect(b.response).toBeUndefined();
     expect(b.products?.flood_confirmed).toBeUndefined();
     expect(b.data_dates?.nisar_pre).toBeUndefined();
+  });
+
+  // The live case publishes no places product: city labels are cut
+  // server-side from municipal_boundaries (nowCityPlaces/representativePoint).
+  const MUNI = (
+    name: string,
+    x: number,
+    y: number,
+    r = 0.3
+  ): GeoJSON.Feature => ({
+    type: "Feature",
+    properties: { name },
+    geometry: {
+      type: "Polygon",
+      coordinates: [
+        [[x - r, y - r], [x + r, y - r], [x + r, y + r], [x - r, y + r], [x - r, y - r]],
+      ],
+    },
+  });
+  const mbFc = (features: GeoJSON.Feature[]): GeoJSON.FeatureCollection => ({
+    type: "FeatureCollection",
+    features,
+  });
+  // Independent ray-cast for asserting a point is inside a polygon.
+  const insidePoly = (rings: number[][][], x: number, y: number): boolean => {
+    const ringHas = (ring: number[][]): boolean => {
+      let inside = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, yi] = ring[i];
+        const [xj, yj] = ring[j];
+        if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi)
+          inside = !inside;
+      }
+      return inside;
+    };
+    return ringHas(rings[0]) && !rings.slice(1).some(ringHas);
+  };
+
+  test("no places product -> city labels cut from municipal_boundaries", async () => {
+    stageNow();
+    files.set("now/geojson/municipal_boundaries.geojson", {
+      type: "FeatureCollection",
+      features: [
+        MUNI("Porto Alegre", -51.2, -30.0),
+        MUNI("Chapecó", -52.65, -27.1),
+        MUNI("Não Listada", -50.0, -28.0),
+      ],
+    });
+    process.env.DATA_BASE_URL = base;
+    // bundled fixture places.geojson must not answer — the build path is
+    // only taken when no places file exists anywhere.
+    process.env.DATA_FS_DIR = EMPTY_DATA;
+
+    const b = await getCaseBundle("now", "Now", [-58, -34, -48, -22.5], "2026-11-14");
+
+    expect(hits).toContain("now/geojson/municipal_boundaries.geojson");
+    expect(
+      b.places?.features.map((f) => f.properties?.name).sort()
+    ).toEqual(["Chapecó", "Porto Alegre"]);
+    for (const f of b.places?.features ?? []) {
+      expect(f.geometry.type).toBe("Point");
+      expect(f.properties?.kind).toBe("city");
+      const [x, y] = (f.geometry as GeoJSON.Point).coordinates;
+      expect(Number.isFinite(x) && Number.isFinite(y)).toBe(true);
+    }
+  });
+
+  test("a published places.geojson wins; municipal_boundaries is never fetched", async () => {
+    stageNow();
+    files.set("now/geojson/places.geojson", {
+      type: "FeatureCollection",
+      features: [
+        { type: "Feature", properties: { name: "Publicado", kind: "town" },
+          geometry: { type: "Point", coordinates: [-51.0, -30.0] } },
+      ],
+    });
+    process.env.DATA_BASE_URL = base;
+
+    const b = await getCaseBundle("now", "Now", [-58, -34, -48, -22.5], "2026-11-14");
+
+    expect(b.places?.features[0].properties?.name).toBe("Publicado");
+    expect(hits).not.toContain("now/geojson/municipal_boundaries.geojson");
+  });
+
+  test("nowCityPlaces: accent/case-insensitive match, file spelling, unlisted names skipped", () => {
+    const out = nowCityPlaces(
+      mbFc([
+        MUNI("PORTO ALEGRE", -51.2, -30.0),     // case-insensitive
+        MUNI("florianopolis", -48.5, -27.6),    // unaccented file name
+        MUNI("São Paulo", -46.6, -23.5),        // real city, not on the list
+      ])
+    );
+    expect(
+      out?.features.map((f) => f.properties?.name).sort()
+    ).toEqual(["PORTO ALEGRE", "florianopolis"]);
+    expect(
+      out?.features.every(
+        (f) => f.geometry.type === "Point" && f.properties?.kind === "city"
+      )
+    ).toBe(true);
+    // absent boundaries / zero matches -> undefined (no fabricated labels)
+    expect(nowCityPlaces(undefined)).toBeUndefined();
+    expect(nowCityPlaces(mbFc([]))).toBeUndefined();
+    expect(nowCityPlaces(mbFc([MUNI("X", 0, 0)]))).toBeUndefined();
+  });
+
+  test("representativePoint: convex -> centroid; concave -> still inside; non-polygon -> undefined", () => {
+    const c = representativePoint(MUNI("x", -51.0, -30.0).geometry);
+    expect(c?.[0]).toBeCloseTo(-51.0, 9);
+    expect(c?.[1]).toBeCloseTo(-30.0, 9);
+    // C-shape: filled bottom/top bars + thin left wall, notch open to the
+    // east — the area centroid sits in the notch (outside the polygon).
+    const concave: GeoJSON.Polygon = {
+      type: "Polygon",
+      coordinates: [
+        [[0, 0], [4, 0], [4, 1.4], [0.5, 1.4], [0.5, 2.6], [4, 2.6], [4, 4], [0, 4], [0, 0]],
+      ],
+    };
+    const p = representativePoint(concave);
+    expect(p).toBeDefined();
+    expect(insidePoly(concave.coordinates, p![0], p![1])).toBe(true);
+    expect(
+      representativePoint({ type: "Point", coordinates: [0, 0] })
+    ).toBeUndefined();
+    expect(representativePoint(null)).toBeUndefined();
   });
 });
 
