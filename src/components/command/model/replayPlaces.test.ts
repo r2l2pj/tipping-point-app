@@ -146,3 +146,12 @@ describe("places_daily", () => {
     expect(placesDailyUrl(withProducts({}))).toBeUndefined();
   });
 });
+
+test("a town point fills the polygon's missing pop / code (WA places + county-less polygons)", async () => {
+  const { replayPlacesFrom } = await import("./replayPlaces");
+  const poly = { type: "Feature", properties: { name: "Mount Vernon" }, geometry: { type: "Polygon", coordinates: [[[-122.4, 48.4], [-122.3, 48.4], [-122.3, 48.45], [-122.4, 48.45], [-122.4, 48.4]]] } };
+  const pt = { type: "Feature", properties: { name: "Mount Vernon", code: "5347560", pop: 35000, state: "WA" }, geometry: { type: "Point", coordinates: [-122.33, 48.42] } };
+  const r = replayPlacesFrom({ type: "FeatureCollection", features: [poly] } as never, { type: "FeatureCollection", features: [pt] } as never);
+  expect(r.places).toHaveLength(1);
+  expect(r.places[0]).toMatchObject({ name: "Mount Vernon", pop: 35000, code: "5347560" });
+});

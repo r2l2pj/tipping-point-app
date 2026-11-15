@@ -129,14 +129,23 @@ export function replayPlacesFrom(
   towns: GeoJSON.FeatureCollection | null | undefined
 ): Places {
   const places: ReplayPlace[] = [];
-  const seen = new Set<string>(); // name alone: town points carry no uf
+  const seen = new Map<string, ReplayPlace>(); // name alone: town points carry no uf
   for (const f of muni?.features ?? []) {
     const p = featureToReplayPlace(f);
-    if (p && !seen.has(fold(p.name))) { places.push(p); seen.add(fold(p.name)); }
+    if (p && !seen.has(fold(p.name))) { places.push(p); seen.set(fold(p.name), p); }
   }
   for (const f of towns?.features ?? []) {
     const p = pointToReplayPlace(f);
-    if (p && !seen.has(fold(p.name))) { places.push(p); seen.add(fold(p.name)); }
+    if (!p) continue;
+    const same = seen.get(fold(p.name));
+    if (same) {
+      // WA: the polygon lacks pop / Census code; the town point has them.
+      if (same.pop == null) same.pop = p.pop;
+      if (same.code == null) same.code = p.code;
+      if (!same.uf) same.uf = p.uf;
+      continue;
+    }
+    places.push(p); seen.set(fold(p.name), p);
   }
   return { dates: [], places };
 }
