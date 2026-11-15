@@ -162,6 +162,8 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
     finite(m.landslide_hit_pct)
       ? { id: "catalog-hits", name: "Landslide catalog hits", value: fmtPct(m.landslide_hit_pct), missing: false }
       : undefined);
+  const warned = warnedRow(m);
+  if (warned) rows.push(warned);
   // Model scores are shown only with their n, in the 'Did we get it right?'
   // card (lead-ml ml_card.json); the bare rf_auc / rule_auc row is gone.
   optional("flooded", floodLabels(bundle).area, "flooded_km2", () =>
@@ -172,6 +174,41 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
         }
       : undefined);
   return rows;
+}
+
+// "Did the alert come before?" (lead-analysis tools/warned_before.py, SCHEMA
+// 'Did the alert come before?'): share of the damage the TPI already flagged
+// High or above in the NOAA GFS frames issued 24-48 h before the damage
+// anchor. The *_warned*_pct values are authored 0-100 and are NOT in the
+// contract's PCT_KEYS (whose >= 1 heuristic turned 0.98 into 98%): they are
+// printed as published.
+const pct100 = (v: number) => `${v < 1 && v > 0 ? v.toFixed(2) : v.toFixed(1)}%`;
+export const WARNED_NAME = { slide: "Landslides flagged before the damage", flood: "Flood area flagged before the damage" };
+export function warnedRow(m: M): CheckRow | undefined {
+  for (const hz of ["slide", "flood"] as const) {
+    const v = m[`${hz}_warned_pct`];
+    if (!finite(v)) continue;
+    const obj = (m[`${hz}_warned`] ?? {}) as M;
+    const crit = m[`${hz}_warned_critical_pct`];
+    const obs = m[`${hz}_warned_observed_pct`];
+    const of = hz === "slide"
+      ? (finite(obj.n_points) ? ` of ${obj.n_points.toLocaleString("en-US")} inventoried landslides` : " of inventoried landslides")
+      : (finite(obj.confirmed_flood_km2) ? ` of ${fmtKm2(obj.confirmed_flood_km2)} radar-confirmed flood` : " of the radar-confirmed flood");
+    const anchor = typeof obj.anchor_utc === "string" ? fmtDate(obj.anchor_utc.slice(0, 10)) : undefined;
+    const detail = [
+      `TPI High or above in the NOAA GFS forecasts issued 24–48 h before the damage${anchor ? ` (${anchor})` : ""}` +
+        (finite(obs) ? `; with observed rain instead: ${pct100(obs)}` : "") + ".",
+      typeof obj.explanation === "string" ? obj.explanation : undefined,
+    ].filter(Boolean).join(" ");
+    return {
+      id: "warned-before",
+      name: WARNED_NAME[hz],
+      value: `${pct100(v)}${of}${finite(crit) ? ` (Critical ${pct100(crit)})` : ""}`,
+      detail,
+      missing: false,
+    };
+  }
+  return undefined;
 }
 
 // --- evidence details (G4) ----------------------------------------------------

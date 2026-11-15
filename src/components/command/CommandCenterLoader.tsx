@@ -82,6 +82,15 @@ function slimLayer(layer: NonNullable<CcBundle["manifest"]>["layers"][number]) {
 const METRICS_DROP = ["landslide_ml", "lead_time_asavail", "scar_sensitivity", "scar_sensitivity_note",
   "scar_method", "collections", "t_ml_note"];
 
+// lead-analysis "Did the alert come before?" objects carry per-issue and
+// per-date curves; the browser needs only the denominators and the text.
+const WARNED_OBJECTS = ["flood_warned", "slide_warned"];
+const WARNED_KEEP = ["n_points", "confirmed_flood_km2", "explanation", "anchor_utc", "unit"];
+function slimWarned(v: unknown): unknown {
+  if (!isRecord(v)) return v;
+  return Object.fromEntries(Object.entries(v).filter(([k]) => WARNED_KEEP.includes(k)));
+}
+
 // T_ML (lead-ml ml/t_ml.json): one static layer, added as manifest layer
 // `t_ml` to every case its bounds overlap (RS Serra region). The PNG path is
 // relative to the data root, so it is resolved here to an absolute URL.
@@ -119,7 +128,9 @@ function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
     : undefined;
   const zones = slimZones(bundle.zones);
   const metricsView = bundle.metricsView
-    ? (Object.fromEntries(Object.entries(bundle.metricsView).filter(([k]) => !METRICS_DROP.includes(k))) as CcBundle["metricsView"])
+    ? (Object.fromEntries(Object.entries(bundle.metricsView)
+        .filter(([k]) => !METRICS_DROP.includes(k))
+        .map(([k, v]) => [k, WARNED_OBJECTS.includes(k) ? slimWarned(v) : v])) as CcBundle["metricsView"])
     : bundle.metricsView;
   // The raw metrics blob duplicates metricsView; the screen reads only its
   // `_null_reasons` (availability.nullReason).
