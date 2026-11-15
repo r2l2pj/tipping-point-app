@@ -84,6 +84,28 @@ export interface ComparePair {
   hv?: { before: CompareSide; after: CompareSide };
   // Jhonatan: the radar flood polygons over the swipe, in their own colour.
   flood?: { url: string; label: string };
+  // Uruguay (L-freeze-1500): NISAR frames on several dates (manifest layers
+  // kind 'nisar_frame' {id, date, polarization, png, bounds}) — the swipe
+  // picks any two dates, HH or HV.
+  stack?: NisarStack;
+}
+export interface NisarStack { dates: string[]; frames: Record<string, { HH?: CompareSide; HV?: CompareSide }> }
+
+export function nisarStack(bundle: CcBundle): NisarStack | undefined {
+  const caseDir = canonicalCaseId(bundle.manifest?.event ?? bundle.id);
+  const frames: NisarStack["frames"] = {};
+  for (const raw of bundle.manifest?.layers ?? []) {
+    const l = raw as unknown as Record<string, unknown>;
+    if (l.kind !== "nisar_frame" || typeof l.date !== "string" || typeof l.png !== "string") continue;
+    const url = assetUrl(caseDir, l.png);
+    if (!url) continue;
+    const pol = String(l.polarization ?? "HH").toUpperCase() === "HV" ? "HV" : "HH";
+    const day = l.date.slice(0, 10);
+    const b = Array.isArray(l.bounds) && l.bounds.length === 4 ? (l.bounds as BBox) : undefined;
+    (frames[day] ??= {})[pol] = { url, label: `NISAR radar ${pol} — ${fmtDate(day)}`, bounds: b };
+  }
+  const dates = Object.keys(frames).filter((d) => frames[d].HH || frames[d].HV).sort();
+  return dates.length >= 2 ? { dates, frames } : undefined;
 }
 
 export interface CompareOption {
@@ -129,13 +151,22 @@ function pairFor(
 }
 
 export function radarCompare(bundle: CcBundle): CompareOption {
-  if (availability(bundle, "radar").state === "not-applicable") return { kind: "radar", reason: NO_RADAR_TEXT };
+  const stack = nisarStack(bundle);
+  if (availability(bundle, "radar").state === "not-applicable" && !stack) return { kind: "radar", reason: NO_RADAR_TEXT };
   const hv = pairFor(bundle, "radar", "nisar_hv_pre", "nisar_hv_post", "NISAR radar",
     { before: "NISAR radar before (HV)", after: "NISAR radar after (HV)" }).pair;
   const hh = pairFor(bundle, "radar", "nisar_pre", "nisar_post", "NISAR radar",
     hv ? { before: "NISAR radar before (HH)", after: "NISAR radar after (HH)" }
       : { before: "NISAR radar before", after: "NISAR radar after" });
-  const withHv = hh.pair && hv ? { ...hh, pair: { ...hh.pair, hv: { before: hv.before, after: hv.after } } } : hh;
+  let withHv: CompareOption = hh.pair && hv ? { ...hh, pair: { ...hh.pair, hv: { before: hv.before, after: hv.after } } } : hh;
+  if (stack) {
+    // Frames only (no fixed pair): the swipe starts on the first and last date.
+    const side = (d: string) => (stack.frames[d].HH ?? stack.frames[d].HV)!;
+    const first = side(stack.dates[0]);
+    const last = side(stack.dates[stack.dates.length - 1]);
+    const base = withHv.pair ?? { kind: "radar" as const, bounds: unionBounds(first.bounds, last.bounds) ?? bundle.bbox, before: first, after: last };
+    withHv = { kind: "radar", pair: { ...base, stack } };
+  }
   const floodUrl = productUrl(bundle, "flood_confirmed");
   return withHv.pair && floodUrl
     ? { ...withHv, pair: { ...withHv.pair, flood: { url: floodUrl, label: floodLabels(bundle).layer } } }
@@ -342,8 +373,11 @@ export function radarCard(bundle: CcBundle): RadarCard {
 
 function baseRadarCard(bundle: CcBundle): RadarCard {
   const dd = bundle.data_dates ?? {};
-  const pre = typeof dd.nisar_pre === "string" ? dd.nisar_pre : null;
-  const post = typeof dd.nisar_post === "string" ? dd.nisar_post : null;
+  // data_dates first; else the NISAR layers' own dates (Uruguay v0 has none).
+  const layerDate = (id: string) => bundle.manifest?.layers?.find((l) => l.id === id)?.date ?? null;
+  const stack = nisarStack(bundle);
+  const pre = typeof dd.nisar_pre === "string" ? dd.nisar_pre : layerDate("nisar_pre") ?? stack?.dates[0] ?? null;
+  const post = typeof dd.nisar_post === "string" ? dd.nisar_post : layerDate("nisar_post") ?? stack?.dates[stack.dates.length - 1] ?? null;
   const pair = hasNisarPair(bundle);
   const flooded = bundle.metricsView?.flooded_km2;
   const labels = floodLabels(bundle);

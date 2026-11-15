@@ -177,3 +177,31 @@ describe("More NISAR products (kind 'nisar_extra')", () => {
     expect(radarCard(bundle()).extras).toEqual([]);
   });
 });
+
+describe("Uruguay: NISAR multi-date stack (kind 'nisar_frame')", () => {
+  const frame = (date: string, pol: string) => ({ id: `nisar_${pol.toLowerCase()}_${date.replace(/-/g, "")}`, kind: "nisar_frame", date, polarization: pol,
+    png: `rs_uruguai_2026/png/nisar_${pol.toLowerCase()}_${date.replace(/-/g, "")}.png`, bounds: [-57.25, -29.85, -56.45, -29.05] });
+  test("stub stack (WA pair as 2 frames) + HV; frames-only case still gets a swipe; Passes from layer dates", () => {
+    const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, manifest: { event: "rs_uruguai_2026", layers: [
+      frame("2026-10-24", "HH"), frame("2026-10-24", "HV"), frame("2026-11-05", "HH"), frame("2026-11-05", "HV"), frame("2026-10-12", "HH"),
+    ] } } as never);
+    const p = radarCompare(uy).pair!;
+    expect(p.stack!.dates).toEqual(["2026-10-12", "2026-10-24", "2026-11-05"]);
+    expect(p.stack!.frames["2026-11-05"].HV!.label).toBe("NISAR radar HV — Nov 5, 2026");
+    expect(p.before.url).toBe("/data/rs_uruguai_2026/png/nisar_hh_20261012.png");
+    expect(p.after.url).toBe("/data/rs_uruguai_2026/png/nisar_hh_20261105.png");
+    expect(radarCard(uy).dates).toBe("Oct 12, 2026 → Nov 5, 2026");
+  });
+  test("real v0 node: teammate pair layers (no data_dates) -> pair + Passes; no stack; no 'before NISAR launch'", () => {
+    const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, products: { flood_confirmed: "rs_uruguai_2026/geojson/flood_confirmed.geojson" },
+      manifest: { event: "rs_uruguai_2026", layers: [
+        { id: "nisar_post", date: "2026-10-12", png: "rs_uruguai_2026/png/nisar_post_20261012.png", bounds: [-57.079983, -29.757373, -57.008572, -29.700131], kind: "observed" },
+        { id: "nisar_pre", date: "2026-09-30", png: "rs_uruguai_2026/png/nisar_pre_20260930.png", bounds: [-57.079983, -29.757373, -57.008572, -29.700131], kind: "observed" },
+      ] } } as never);
+    const card = radarCard(uy);
+    expect(card.headline).toBe("NISAR pair available");
+    expect(card.dates).toBe("Sep 30, 2026 → Oct 12, 2026");
+    expect(card.compare.pair!.stack).toBeUndefined();
+    expect(card.compare.pair!.before.label).toBe("NISAR radar before — Sep 30, 2026");
+  });
+});
