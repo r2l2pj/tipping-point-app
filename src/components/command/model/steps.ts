@@ -200,6 +200,34 @@ export function frameFor(
   };
 }
 
+// "Forecast issued this day" (replay): the NOAA GFS frame of the run issued
+// on day D (00Z) that depicts D+k, k = 1..3 (lead-analysis L28b layers
+// tpi_<hazard>_gfs_d<k>, grouped by `issued`). Runs issued after the case's
+// reference day are never shown (no peeking).
+export type IssueLead = 0 | 1 | 2 | 3;
+export const ISSUE_LEADS: readonly IssueLead[] = [1, 2, 3];
+
+export function issuedFrame(
+  bundle: CcBundle,
+  issueDate: string | undefined,
+  hazard: Hazard,
+  k: IssueLead
+): Frame | undefined {
+  if (!issueDate || k === 0 || bundle.mode !== "replay") return undefined;
+  const day = issueDate.slice(0, 10);
+  const ref = (bundle.series?.reference_date ?? bundle.reference_date)?.slice(0, 10);
+  if (ref && day > ref) return undefined;
+  const layer = (bundle.manifest?.layers ?? []).find(
+    (l) => l.id === `tpi_${hazard}_gfs_d${k}` && l.issued === day && !!l.png
+  );
+  return layer ? { layer, hazard, forecast: true } : undefined;
+}
+
+// Leads with a frame for the day (either hazard): the control shows only
+// when there is at least one.
+export const issueLeadsFor = (bundle: CcBundle, issueDate: string | undefined, hazard: Hazard): IssueLead[] =>
+  ISSUE_LEADS.filter((k) => issuedFrame(bundle, issueDate, hazard, k));
+
 export const caseHasHazard = (bundle: CcBundle, hazard: Hazard): boolean =>
   (bundle.manifest?.layers ?? []).some(
     (l) => l.id.startsWith(`tpi_${hazard}`) && (l.png || l.cog)
@@ -212,11 +240,19 @@ export function mapCaption(
   steps: Step[],
   dayIndex: number,
   hazard: Hazard,
-  on: readonly LayerId[]
+  on: readonly LayerId[],
+  issueLead: IssueLead = 0
 ): { text: string; forecast: boolean } {
   const step = steps[dayIndex];
   if (!step) return { text: NO_STEPS_TEXT, forecast: false };
   const when = `${fmtDate(step.date)}${step.sub ? ` (${step.sub})` : ""}`;
+  if (issueLead > 0 && on.includes("tpi")) {
+    const f = issuedFrame(bundle, step.date, hazard, issueLead);
+    const ahead = `${issueLead} ${issueLead === 1 ? "day" : "days"} ahead`;
+    return f
+      ? { text: `${HAZARD_LABEL[f.hazard]} TPI · ${fmtDate(f.layer.date ?? "")} · ${forecastChip(f.layer, undefined)}, ${ahead}`, forecast: true }
+      : { text: `No NOAA GFS forecast issued ${fmtDate(step.date)} for ${ahead}`, forecast: false };
+  }
   if (bundle.riskPaused) return { text: `${RISK_PAUSED_TEXT} · ${when}`, forecast: false };
   if (!on.includes("tpi")) return { text: `TPI index off · ${when}`, forecast: false };
   const frame = frameFor(bundle, step.date, hazard);

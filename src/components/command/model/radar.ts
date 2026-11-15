@@ -15,7 +15,7 @@ export const CANDIDATES_NOTE =
   "Landslide scar candidates (HLS optical) — candidates, never confirmed.";
 export const AWAITING_PAIR_TEXT = "Awaiting a NISAR pair over the AOI.";
 export const GUNW_LIMIT_TEXT =
-  "NISAR radar confirms floods only in this case; scar candidates come from post-event HLS optical — the GUNW pair spanning the event is a declared limitation.";
+  "NISAR radar maps flood candidates only in this case; scar candidates come from post-event HLS optical — the GUNW pair spanning the event is a declared limitation.";
 
 export interface ComparePair {
   kind: "radar" | "night-lights";
@@ -91,7 +91,8 @@ export function floodLabels(bundle: CcBundle): { area: string; layer: string } {
   }
   const source = bundle.metricsView?.flood_source;
   if (hasNisarPair(bundle) || source === "nisar") {
-    return { area: "Flooded area (NISAR)", layer: "Flood confirmed by radar (NISAR)" };
+    // Radar flood polygons are candidates (never "confirmed"), replay too.
+    return { area: "Flooded area (NISAR)", layer: "Flood candidates from radar (NISAR)" };
   }
   if (source === "opera") {
     return { area: "Flooded area (optical/OPERA reference)", layer: "Flood reference (optical/OPERA)" };

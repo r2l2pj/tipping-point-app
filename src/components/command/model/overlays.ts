@@ -1,3 +1,4 @@
+import type { ManifestLayer } from "@/lib/types";
 import type { ProbHorizon } from "@/lib/layers";
 // Pure part of the additive `options` argument of useMapLayers. Without
 // options the result equals what the hook computed before (tab plan, or
@@ -22,6 +23,9 @@ export interface MapLayerOptions {
   overlays?: MapOverlays;
   // P(trigger) horizon painted by the pTrigger toggle (default 24h).
   probHorizon?: ProbHorizon;
+  // When given, this TPI frame is painted instead of the one picked for the
+  // date (replay "forecast issued this day": the GFS frame for D+k).
+  frameLayer?: ManifestLayer;
 }
 
 export interface OverlayVisibility {

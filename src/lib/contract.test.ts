@@ -16,6 +16,9 @@ import {
   resolveAsset,
   toMetricsView,
   toNowView,
+  liveClasses,
+  liveCriticalKm2,
+  liveSummaryV2,
 } from "./contract";
 
 describe("toMetricsView", () => {
@@ -367,5 +370,32 @@ describe("forecast_source labels", () => {
     expect(forecastSourceLabel("other")).toBe("other");
     expect(forecastSourceLabel(undefined)).toBeUndefined();
     expect(forecastSourceLabel(null)).toBeUndefined();
+  });
+});
+
+describe("live summary v1 / v2 (per-hazard classes)", () => {
+  const v1 = { critical_km2: { slide: 0, flood: 98.6, any: 98.6 }, classes_km2: { Baixo: 9, Moderado: 1, Alto: 2, Crítico: 98.6 } };
+  const v2 = {
+    critical_km2: { slide: 12, flood: 130, any: 140 }, // High + Critical in v2
+    classes_km2: {
+      landslide: { Baixo: 100, Moderado: 5, Alto: 10, Crítico: 2 },
+      flood: { Baixo: 90, Moderado: 7, Alto: 100, Crítico: 30 },
+    },
+  };
+  test("v1: critical_km2 per hazard, flat classes", () => {
+    expect(liveSummaryV2(v1 as never)).toBe(false);
+    expect(liveCriticalKm2(v1 as never, "flood")).toBe(98.6);
+    expect(liveClasses(v1 as never, "slide")).toEqual(v1.classes_km2);
+  });
+  test("v2: Critical is the per-hazard Crítico class, never High + Critical", () => {
+    expect(liveSummaryV2(v2 as never)).toBe(true);
+    expect(liveCriticalKm2(v2 as never, "slide")).toBe(2);
+    expect(liveCriticalKm2(v2 as never, "flood")).toBe(30);
+    expect(liveClasses(v2 as never, "flood")).toEqual(v2.classes_km2.flood);
+    expect(liveClasses(v2 as never, "slide")).toEqual(v2.classes_km2.landslide);
+  });
+  test("nothing published reads undefined", () => {
+    expect(liveCriticalKm2(undefined, "flood")).toBeUndefined();
+    expect(liveClasses({} as never, "flood")).toBeUndefined();
   });
 });

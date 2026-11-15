@@ -15,9 +15,13 @@ export const LEVEL_STYLE: Record<AlertLevel, { chip: string; border: string }> =
 export default function AlertCard({
   alert: a,
   onViewOnMap,
+  noFooter = false,
 }: {
   alert: AlertCardData;
   onViewOnMap: (alert: AlertCardData) => void;
+  // Replay cards: the Civil Defense contact line (a Brazilian number) is
+  // not shown — the replay may be another country and nothing was sent.
+  noFooter?: boolean;
 }) {
   const style = LEVEL_STYLE[a.level] ?? LEVEL_STYLE.watch;
   const word = ALERT_LEVEL_WORDS[a.level] ?? ALERT_LEVEL_WORDS.watch;
@@ -56,7 +60,7 @@ export default function AlertCard({
         <span className={tag}>hazard: {a.hazard}</span>
       </div>
       <p className="mt-2 text-[13px]">{a.guidance}</p>
-      {!a.guidance.endsWith(ALERT_FOOTER) && <p className="mt-1.5 text-xs font-semibold text-cc-muted">{ALERT_FOOTER}</p>}
+      {!noFooter && !a.guidance.endsWith(ALERT_FOOTER) && <p className="mt-1.5 text-xs font-semibold text-cc-muted">{ALERT_FOOTER}</p>}
       <button type="button" onClick={() => onViewOnMap(a)}
         className="mt-2 text-[13px] font-semibold text-cc-accent underline decoration-dotted underline-offset-2">
         View on the map

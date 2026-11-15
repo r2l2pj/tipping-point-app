@@ -17,7 +17,7 @@ import type { ComparePair } from "./model/radar";
 import { assetUrl } from "@/lib/layers";
 import { caseDirOf } from "./model/lazy";
 import { preloadFrames } from "./model/preload";
-import { frameFor, mapCaption, type Step } from "./model/steps";
+import { frameFor, issuedFrame, issueLeadsFor, mapCaption, type IssueLead, type Step } from "./model/steps";
 import type { CcBundle } from "./model/types";
 import type { Action, ScreenState } from "./state";
 import type { Insets } from "./useInsets";
@@ -59,14 +59,22 @@ export default function MapStage({
     () => layerStateFor(state.layers, state.hazard),
     [state.layers, state.hazard]
   );
+  // Replay "forecast issued this day": the GFS frame issued on the step
+  // day for D+k replaces the day's own frame.
+  const issued = useMemo(
+    () => issuedFrame(bundle, step?.date, state.hazard, state.issueLead)?.layer,
+    [bundle, step?.date, state.hazard, state.issueLead]
+  );
+  const leads = useMemo(() => issueLeadsFor(bundle, step?.date, state.hazard), [bundle, step?.date, state.hazard]);
   const options = useMemo(
     () => ({
       zoneMarkers: false,
       frameDate: step?.date,
       overlays: overlaysFor(state.layers),
       probHorizon: state.probHorizon,
+      frameLayer: issued,
     }),
-    [step?.date, state.layers, state.probHorizon]
+    [step?.date, state.layers, state.probHorizon, issued]
   );
   useMapLayers(map, bundle, state.dayIndex, layerState, false, undefined, options);
 
@@ -135,7 +143,8 @@ export default function MapStage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, bundle.id, insets.left, insets.right, insets.bottom]);
   const comparing = !!comparePair;
-  const caption = mapCaption(bundle, steps, state.dayIndex, state.hazard, state.layers);
+  const caption = mapCaption(bundle, steps, state.dayIndex, state.hazard, state.layers, state.issueLead);
+  const showLeads = bundle.mode === "replay" && (leads.length > 0 || state.issueLead > 0);
   const chip =
     "rounded-lg bg-white/95 px-2.5 py-1 text-[13px] font-semibold text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]";
 
@@ -174,6 +183,21 @@ export default function MapStage({
       <span data-status={status.kind} className={`absolute top-3 z-10 ${chip} !text-xs tracking-[0.02em]`} style={{ left: L(56) }}>
         {STATUS_WORD[status.kind]}
       </span>
+
+      {!comparing && showLeads && (
+        <div role="group" aria-label="Forecast issued this day" data-issue-leads
+          className={`absolute z-10 flex items-center gap-1 ${chip} !py-0.5`} style={{ left: L(14), bottom: B(70) }}>
+          <span className="pr-1 text-xs font-semibold">Forecast issued this day:</span>
+          {([0, 1, 2, 3] as IssueLead[]).map((k) => (
+            <button key={k} type="button" aria-pressed={state.issueLead === k}
+              disabled={k > 0 && !leads.includes(k)}
+              onClick={() => dispatch({ type: "setIssueLead", lead: k })}
+              className={`rounded-md px-1.5 py-0.5 text-xs font-semibold disabled:opacity-40 ${state.issueLead === k ? "bg-cc-accent text-white" : "border border-cc-line-strong"}`}>
+              {k === 0 ? "Off" : `+${k} d`}
+            </button>
+          ))}
+        </div>
+      )}
 
       {!comparing && (
         <span data-caption className={`absolute z-10 max-w-[46%] ${chip} ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`} style={{ left: L(14), bottom: B(36) }}>

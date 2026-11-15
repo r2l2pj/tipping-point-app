@@ -5,7 +5,7 @@ import { caseHazard, initialState, linkParams, reduce, type Action, type ScreenS
 import { zone } from "./model/fixtures";
 import { layerRows } from "./model/layerRegistry";
 import { statusChip } from "./model/status";
-import { mapCaption, stepsFor } from "./model/steps";
+import { issuedFrame, issueLeadsFor, mapCaption, stepsFor } from "./model/steps";
 import { criticalAreaTile, peopleTile } from "./model/tiles";
 import { priorityAreas } from "./model/areas";
 import { radarCard } from "./model/radar";
@@ -50,6 +50,65 @@ describe("Now radar default (L27)", () => {
     const c = [nowPair];
     const s = reduce(initialState(c), { type: "toggleLayer", id: "flood" }, c);
     expect(s.layers).toEqual(["tpi"]);
+  });
+});
+
+describe("live summary v2 in the tile and status", () => {
+  test("Critical area and 'reached' read the Crítico class of the hazard", () => {
+    const v2 = liveBundle({ manifest: manifest([frame("tpi_flood", "2026-11-15")]),
+      summary: { critical_km2: { slide: 12, flood: 130, any: 140 },
+        classes_km2: { landslide: { Baixo: 1, Alto: 12, Crítico: 0 }, flood: { Baixo: 1, Alto: 100, Crítico: 30 } } } as never });
+    expect(criticalAreaTile(v2, "flood").value).toBe("30.0 km²");
+    expect(criticalAreaTile(v2, "slide").value).toBe("0.0 km²");
+    expect(statusChip(v2, stepsFor(v2), 0, "slide").kind).toBe("below");
+    expect(statusChip(v2, stepsFor(v2), 0, "flood").kind).toBe("reached");
+  });
+});
+
+describe("replay: forecast issued this day (beat 2)", () => {
+  const gfs = (hz: string, k: number, issued: string, date: string) => ({
+    id: `tpi_${hz}_gfs_d${k}`, date, issued, png: `wa_2025/png/tpi_${hz}_gfs_d${k}_${date.replace(/-/g, "")}.png`,
+    forecast: true, forecast_source: "noaa-gfs", kind: "forecast" });
+  const waG = bundle({
+    series: series([0, 0, 0, 0.97, 1], ["observed", "observed", "observed", "observed", "observed"], 0.6, 4),
+    manifest: { ...manifest([frame("tpi_flood", "2025-12-10"), frame("tpi_slide", "2025-12-10")]),
+      layers: [frame("tpi_flood", "2025-12-10"), frame("tpi_slide", "2025-12-10"),
+        gfs("slide", 3, "2025-12-03", "2025-12-06"), gfs("slide", 1, "2025-12-05", "2025-12-06"),
+        gfs("slide", 1, "2025-12-11", "2025-12-12")] } as never,
+  });
+
+  test("the frame of the run issued that day for D+k; never a run issued after the event day", () => {
+    expect(issuedFrame(waG, "2025-12-03", "slide", 3)?.layer.date).toBe("2025-12-06");
+    expect(issuedFrame(waG, "2025-12-03", "slide", 1)).toBeUndefined();
+    expect(issuedFrame(waG, "2025-12-11", "slide", 1)).toBeUndefined(); // after reference day
+    expect(issueLeadsFor(waG, "2025-12-05", "slide")).toEqual([1]);
+    expect(issuedFrame(liveBundle(), "2025-12-05", "slide", 1)).toBeUndefined();
+  });
+
+  test("caption names the depicted day, the issue day and the lead", () => {
+    const steps = [{ index: 0, date: "2025-12-03", offset: -7, kind: "observed", top: "Dec 3", sub: "D-7", forecast: false }] as never;
+    expect(mapCaption(waG, steps, 0, "slide", ["tpi"], 3).text)
+      .toBe("Landslide TPI · Dec 6, 2025 · forecast · NOAA GFS (issued Dec 3, 2025), 3 days ahead");
+    expect(mapCaption(waG, steps, 0, "slide", ["tpi"], 1).text)
+      .toBe("No NOAA GFS forecast issued Dec 3, 2025 for 1 day ahead");
+  });
+
+  test("choosing a lead turns the TPI index on; a case change resets it", () => {
+    const c = [waG, nowPair];
+    let s = reduce(initialState(c, "wa_2025"), { type: "toggleLayer", id: "tpi" }, c);
+    expect(s.layers).not.toContain("tpi");
+    s = reduce(s, { type: "setIssueLead", lead: 3 }, c);
+    expect(s).toMatchObject({ issueLead: 3 });
+    expect(s.layers).toContain("tpi");
+    expect(reduce(s, { type: "selectCase", id: "now" }, c).issueLead).toBe(0);
+  });
+
+  test("arriving from a paused Now (flood only) opens the replay with the TPI index on", () => {
+    const paused = { ...nowPair, riskPaused: true };
+    const c = [waG, paused];
+    const s = initialState(c);
+    expect(s.layers).toEqual(["flood"]);
+    expect(reduce(s, { type: "selectCase", id: "wa_2025" }, c).layers).toContain("tpi");
   });
 });
 

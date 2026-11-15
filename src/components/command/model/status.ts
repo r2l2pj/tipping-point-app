@@ -1,6 +1,6 @@
 // Status chip of the Situation panel. Reads the series (replay) or the
 // summary (live). The browser computes no TPI and no class.
-import { forecastSourceLabel } from "@/lib/contract";
+import { forecastSourceLabel, liveCriticalKm2 } from "@/lib/contract";
 import { forecastChip, isGfsFrame, pickTpiFrame } from "@/lib/layers";
 import { cutsFor } from "@/lib/tpi";
 import { finite, fmtDate } from "./format";
@@ -74,8 +74,7 @@ export function statusChip(
     };
   }
   if (bundle.mode === "live") {
-    const km2 = bundle.summary?.critical_km2;
-    const value = finite(km2?.[hazard]) ? km2?.[hazard] : km2?.any;
+    const value = liveCriticalKm2(bundle.summary, hazard);
     if (!bundle.summary || pending("summary") || !finite(value)) {
       return {
         kind: "no-data",

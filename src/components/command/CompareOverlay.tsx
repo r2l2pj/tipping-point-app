@@ -121,8 +121,16 @@ export default function CompareOverlay({
 
   return (
     <div ref={containerRef} data-compare={pair.kind} className="absolute inset-0 z-20 overflow-hidden bg-cc-map">
-      <div ref={beforeEl} className="absolute inset-0" />
-      <div ref={afterEl} className="absolute inset-0" style={{ clipPath: clipPathFor(pct) }} />
+      {/* MapLibre styles its container `.maplibregl-map { position: relative }`,
+          which overrides `absolute inset-0` on the container itself: the
+          div collapsed to 0 px (canvas 300 px, clipped) and the comparison
+          rendered blank. Each map fills its own positioned box instead. */}
+      <div className="absolute inset-0">
+        <div ref={beforeEl} className="h-full w-full" />
+      </div>
+      <div className="absolute inset-0" style={{ clipPath: clipPathFor(pct) }}>
+        <div ref={afterEl} className="h-full w-full" />
+      </div>
       <div className={tag} style={{ left: "calc(var(--cc-il, 0px) + 56px)", top: 44 }}>{pair.before.label}</div>
       <div className={tag} style={{ right: "calc(var(--cc-ir, 0px) + 68px)" }}>{pair.after.label}</div>
       <div

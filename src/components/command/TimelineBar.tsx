@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { forecastChip, isGfsFrame } from "@/lib/layers";
+import type { ManifestLayer } from "@/lib/types";
 import { NO_STEPS_TEXT, type Step, type StepMark } from "./model/steps";
 import { Icon, ICON } from "./ui";
 
@@ -18,6 +19,7 @@ export default function TimelineBar({
   dayIndex,
   playing,
   forecastTag,
+  mapFrame,
   onSeek,
   onPrev,
   onNext,
@@ -29,6 +31,10 @@ export default function TimelineBar({
   dayIndex: number;
   playing: boolean;
   forecastTag: string;
+  // The TPI frame on the map. The forecast chip names its issued run when it
+  // is a GFS frame, so the chip and the map caption never disagree; with an
+  // observed frame on the map the chip names the source only.
+  mapFrame?: ManifestLayer;
   onSeek: (i: number) => void;
   onPrev: () => void;
   onNext: () => void;
@@ -50,12 +56,10 @@ export default function TimelineBar({
     }
   }, [dayIndex, n]);
   const firstFc = steps.findIndex((s) => s.forecast);
-  // The source named for a forecast step: an issued NOAA GFS frame names
-  // its issue day (L22); anything else keeps the case-level tag.
+  const chipText = mapFrame && isGfsFrame(mapFrame) ? forecastChip(mapFrame, undefined) : forecastTag;
+  // Accessible name of a forecast step: that step's own frame source.
   const stepTag = (s: Step) =>
-    s.forecast && s.layer && isGfsFrame(s.layer)
-      ? forecastChip(s.layer, undefined)
-      : forecastTag;
+    s.forecast && s.layer && isGfsFrame(s.layer) ? forecastChip(s.layer, undefined) : forecastTag;
   // A long case (Washington has 21 steps) keeps every step and its offset in
   // view, and prints the date of every second step. The selected step and
   // the event day always show their date; the full date is in the title and
@@ -96,7 +100,7 @@ export default function TimelineBar({
             {firstFc >= 0 && (
               <span className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-md bg-cc-forecast px-3 py-px text-xs font-semibold text-cc-forecast-ink"
                 style={{ left: `${((firstFc + (n - firstFc) / 2) / n) * 100}%` }}>
-                {stepTag(steps[firstFc])}
+                {chipText}
               </span>
             )}
             {steps.map((s) => {

@@ -191,7 +191,7 @@ export function useMapLayers(
   const frameDate = resolveFrameDate(day?.date, options);
   // L22: on forecast days the real issued GFS frame wins over the
   // perfect-forecast upper bound (see pickTpiFrame).
-  const activePng = pickTpiFrame(
+  const activePng = options?.frameLayer ?? pickTpiFrame(
     bundle?.manifest?.layers,
     frameDate
       ? { date: frameDate, kind: day?.date === frameDate ? day?.kind : undefined }
@@ -238,7 +238,12 @@ export function useMapLayers(
       { id: LYR.waterFill, type: "fill", source: SRC.water,
         paint: { "fill-color": "#9ECAE1", "fill-opacity": 0.6 },
         layout: {},
-        filter: ["==", ["geometry-type"], "Polygon"] },
+        // The live permanent_water layer (MCD12Q1 water class) carries the
+        // open Atlantic as one ~212,000 km2 polygon; a reference layer
+        // should not paint the ocean. Inland water (Lagoa dos Patos
+        // ~10,000 km2) stays.
+        filter: ["all", ["==", ["geometry-type"], "Polygon"],
+          ["<", ["to-number", ["coalesce", ["get", "area_km2"], 0]], 50000]] },
       { id: LYR.river, type: "line", source: SRC.water,
         paint: { "line-color": "#4B93C5", "line-width": 1.6 },
         layout: {},

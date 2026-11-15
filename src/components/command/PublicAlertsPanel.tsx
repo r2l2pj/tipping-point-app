@@ -4,9 +4,13 @@ import { ALERT_FOOTER, ALERT_LEVEL_WORDS, type AlertCardData } from "@/lib/alert
 import AlertCard, { LEVEL_STYLE } from "./AlertCard";
 import {
   ALERTS_PAUSED_TEXT, ALERTS_UNAVAILABLE_TEXT, alertsByRegion, moreAlertsText, NO_ALERTS_TEXT, NO_RUN_TEXT,
-  OBSERVED_NOTE, OBSERVED_TITLE, REPLAY_NO_FEED_TEXT,
+  OBSERVED_NOTE, OBSERVED_TITLE,
   type AlertList, type ObservedRow,
 } from "./model/alerts";
+import {
+  REPLAY_ALERTS_NOTE, REPLAY_ALERTS_TITLE, REPLAY_NO_ALERTS_TEXT, replayAlertsAt, replayLaterText,
+} from "./model/replayAlerts";
+import type { CcBundle } from "./model/types";
 import { fmtBrt } from "./model/format";
 
 // Right panel of the Public Alerts view. Three states of the alert data:
@@ -20,7 +24,12 @@ export default function PublicAlertsPanel({
   observedOn = false,
   onShowObserved,
   children,
+  bundle,
+  stepDate,
 }: {
+  // Replay: the case in view and the selected timeline step date.
+  bundle?: CcBundle;
+  stepDate?: string;
   observed?: ObservedRow[];
   observedOn?: boolean;
   onShowObserved?: () => void;
@@ -43,13 +52,7 @@ export default function PublicAlertsPanel({
       </div>
 
       {!live ? (
-        <div data-alerts="replay" className="rounded-[10px] border border-cc-line bg-cc-well px-3.5 py-3">
-          <p className="text-sm font-semibold">{REPLAY_NO_FEED_TEXT}</p>
-          <p className="mt-0.5 text-[13px] text-cc-muted">Public alerts come from the live run only.</p>
-          <button type="button" onClick={onGoToNow} className="mt-2 rounded-lg bg-cc-accent px-3 py-1.5 text-[13px] font-semibold text-white">
-            Go to Now
-          </button>
-        </div>
+        <ReplayAlerts bundle={bundle} stepDate={stepDate} onGoToNow={onGoToNow} onViewOnMap={onViewOnMap} />
       ) : alertList.state === "paused" ? (
         <div data-alerts="paused" role="status" className="rounded-[10px] border border-cc-line bg-cc-well px-3.5 py-3">
           <p className="text-[15px] font-semibold">{ALERTS_PAUSED_TEXT}</p>
@@ -126,8 +129,49 @@ export default function PublicAlertsPanel({
         </section>
       )}
 
-      <p className="text-[13px] font-semibold text-cc-muted">{ALERT_FOOTER}</p>
+      {/* Brazilian Civil Defense contact line: the live (Southern Brazil) view only. */}
+      {live && <p className="text-[13px] font-semibold text-cc-muted">{ALERT_FOOTER}</p>}
       {children}
     </>
+  );
+}
+
+// Replay: what the live alert rule would have issued, up to the selected step.
+function ReplayAlerts({
+  bundle,
+  stepDate,
+  onGoToNow,
+  onViewOnMap,
+}: {
+  bundle?: CcBundle;
+  stepDate?: string;
+  onGoToNow: () => void;
+  onViewOnMap: (alert: AlertCardData) => void;
+}) {
+  const { shown, later } = replayAlertsAt(bundle, stepDate);
+  const laterText = replayLaterText(later);
+  return (
+    <section data-alerts="replay" aria-label={REPLAY_ALERTS_TITLE} className="flex flex-col gap-2.5">
+      <h2 className="m-0 text-base font-semibold">{REPLAY_ALERTS_TITLE}</h2>
+      {shown.length > 0 ? (
+        <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+          {shown.map((a) => (
+            <AlertCard key={a.id} alert={a} onViewOnMap={onViewOnMap} noFooter />
+          ))}
+        </ul>
+      ) : (
+        <p className="text-[13px] text-cc-muted">
+          {later > 0 ? "No alert yet at this step." : REPLAY_NO_ALERTS_TEXT}
+        </p>
+      )}
+      {laterText && <p data-replay-later className="text-[13px] text-cc-muted">{laterText}</p>}
+      <p className="text-xs italic text-cc-muted">{REPLAY_ALERTS_NOTE}</p>
+      <div>
+        <button type="button" onClick={onGoToNow}
+          className="rounded-lg border border-cc-line-strong bg-cc-surface px-2.5 py-1 text-xs font-semibold">
+          Go to Now
+        </button>
+      </div>
+    </section>
   );
 }
