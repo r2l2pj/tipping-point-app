@@ -103,6 +103,11 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
   }
   if (bundle.mode === "live" && bundle.riskPaused) return pausedTile(label);
   if (bundle.mode !== "live" && day && finite(day.critical_km2)) {
+    // External review: the tile follows the hazard on the map (WA flood:
+    // 199 km², not the 2,276 km² both-hazard total); the other hazard is one
+    // click away on the hazard selector.
+    const own = hazard === "flood" ? day.critical_flood_km2 : day.critical_slide_km2;
+    if (finite(own)) return dayTile(label, fmtKm2(own), day.date, `${hazard === "flood" ? "flood" : "landslide"} hazard`);
     return dayTile(label, fmtKm2(day.critical_km2), day.date,
       splitNote(day, hazard) ?? "landslide or flood");
   }

@@ -321,10 +321,17 @@ describe("radar card", () => {
       scar_people: 522.3, scar_hit_500m_pct: 46.13, scar_precision_500m_pct: 55.07, scar_inventory_n: 16027 }) }));
     expect(card.candidates.value).toBe("2,849");
     expect(card.candidates.lines).toEqual([
-      "20.0 km² · 522 people (estimate)",
+      "Scar candidates: 20.0 km², 522 people (estimate)",
       "46% of the 16,027 mapped landslides lie within 500 m of a candidate; 55% of candidates within 500 m of one.",
     ]);
     expect(JSON.stringify(card.candidates)).not.toMatch(/(?<!never )confirmed/);
+  });
+
+  test("WA (15 mapped landslides): the 500 m share leaves the card for Details", () => {
+    const m = { scar_candidates_n: 176, scar_candidates_km2: 1.2, scar_people: 14, scar_hit_500m_pct: 0, scar_precision_500m_pct: 0, scar_inventory_n: 15 };
+    const card = radarCard(bundle({ metricsView: mv(m) }));
+    expect(card.candidates.lines).toEqual(["Scar candidates: 1.2 km², 14 people (estimate)"]);
+    expect(evidence(bundle({ metricsView: mv(m) })).scarHit).toBe("Scar candidates vs the 15 mapped landslides: 0% within 500 m — too few points to judge.");
   });
 
   test("Now scar candidates: meta figures, publication lag and the harvest/fire caveat", () => {
@@ -333,7 +340,7 @@ describe("radar card", () => {
     const card = radarCard(liveBundle({ dist }));
     expect(card.candidates.value).toBe("685");
     expect(card.candidates.lines).toEqual([
-      "3.3 km² · 89 people (estimate)",
+      "Scar candidates: 3.3 km², 89 people (estimate)",
       "Newest image Nov 5, 2026 — the product is published 1–2 weeks after the pass.",
       "Caveat: Vegetation loss on steep slopes outside a rain event is mostly forestry harvest / fire.",
     ]);

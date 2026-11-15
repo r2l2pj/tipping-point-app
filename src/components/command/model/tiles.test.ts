@@ -77,7 +77,8 @@ describe("tiles", () => {
     const day = { date: "2025-12-12", offset: 2, kind: "observed" as const, imerg_mm: 1, smap: 0.5, tpi: 0.9,
       critical_km2: 120.04, critical_slide_km2: 100, critical_flood_km2: 0.02, people_critical: 5300 };
     expect(criticalAreaTile(b, "flood", "2025-12-12", day)).toMatchObject({
-      value: "120.0 km²", note: "flood <0.1 km² · landslide 100.0 km²", asOf: "Dec 12, 2025", dimmed: false,
+      // the tile follows the map hazard (external review)
+      value: "<0.1 km²", note: "flood hazard", asOf: "Dec 12, 2025", dimmed: false,
     });
     expect(peopleTile(b, "2025-12-12", day)).toMatchObject({ value: "at least 5,300", asOf: "Dec 12, 2025" });
     const bare = { ...day, critical_km2: undefined, people_critical: -2.3e38 };

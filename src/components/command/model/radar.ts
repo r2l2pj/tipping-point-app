@@ -18,6 +18,17 @@ export const CANDIDATES_LABEL = "Landslide scar candidates (OPERA DIST-ALERT-HLS
 export const CANDIDATES_NOTE =
   "Vegetation loss on steep slopes seen by HLS optical — candidates, never confirmed.";
 
+const scarFigures = (km2: (v: unknown) => string, area: unknown, ppl: string | undefined): string => {
+  const parts = [finite(area) ? km2(area) : undefined, ppl].filter(Boolean);
+  return parts.length ? `Scar candidates: ${parts.join(", ")}` : "";
+};
+
+// WA-size inventories (< 30 points): the 500 m share, for Details only.
+export function scarHitDetail(m: Record<string, unknown>): string | undefined {
+  if (!finite(m.scar_inventory_n) || m.scar_inventory_n >= 30 || !finite(m.scar_hit_500m_pct)) return undefined;
+  return `Scar candidates vs the ${m.scar_inventory_n} mapped landslides: ${Math.round(m.scar_hit_500m_pct)}% within 500 m — too few points to judge.`;
+}
+
 // Figures and context lines of the candidates block: the Now meta
 // (dist_meta.json), else the replay metrics scar_*, else the fetched count.
 function candidatesBlock(bundle: CcBundle): { value: string; lines: string[] } {
@@ -27,7 +38,7 @@ function candidatesBlock(bundle: CcBundle): { value: string; lines: string[] } {
     return {
       value: d.features.toLocaleString("en-US"),
       lines: [
-        [finite(d.km2) ? fmtKm2(d.km2) : undefined, people(d.people)].filter(Boolean).join(" · "),
+        scarFigures(fmtKm2, d.km2, people(d.people)),
         d.latest_acquired ? `Newest image ${fmtDate(d.latest_acquired)} — the product is published 1–2 weeks after the pass.` : "",
         d.caveat ? `Caveat: ${d.caveat.charAt(0).toUpperCase()}${d.caveat.slice(1)}.` : "",
       ].filter(Boolean),
@@ -42,8 +53,12 @@ function candidatesBlock(bundle: CcBundle): { value: string; lines: string[] } {
     return {
       value: m.scar_candidates_n.toLocaleString("en-US"),
       lines: [
-        [finite(m.scar_candidates_km2) ? fmtKm2(m.scar_candidates_km2) : undefined, people(m.scar_people)].filter(Boolean).join(" · "),
-        hit && inv ? `${hit} of the ${inv} mapped landslides lie within 500 m of a candidate${prec ? `; ${prec} of candidates within 500 m of one` : ""}.` : "",
+        // External review: the figures say what they are.
+        scarFigures(fmtKm2, m.scar_candidates_km2, people(m.scar_people)),
+        // Under 30 mapped landslides (WA: 15) the share is too thin for the
+        // main card: it moves to Details (scarHitDetail).
+        hit && inv && finite(m.scar_inventory_n) && m.scar_inventory_n >= 30
+          ? `${hit} of the ${inv} mapped landslides lie within 500 m of a candidate${prec ? `; ${prec} of candidates within 500 m of one` : ""}.` : "",
       ].filter(Boolean),
     };
   }

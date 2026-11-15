@@ -41,6 +41,7 @@ export default function EvidenceDetails({
         <h3 className={h3}>Flood detection vs reference (NISAR vs OPERA, new flood)</h3>
         <div className="mt-1"><StatGrid stats={e.floodStats} /></div>
         <p className="mt-1 text-xs text-cc-faint">{e.floodNote}</p>
+        {e.scarHit && <p className="mt-1 text-xs text-cc-muted" data-scar-hit>{e.scarHit}</p>}
         {e.floodSecondary && (
           <div className="mt-1 rounded-lg border border-cc-line p-2.5">
             <p className="text-xs text-cc-muted">All water incl. permanent (secondary)</p>

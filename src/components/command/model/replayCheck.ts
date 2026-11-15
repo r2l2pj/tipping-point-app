@@ -4,7 +4,7 @@ import { count } from "@/lib/contract";
 import type { DayPoint } from "@/lib/types";
 import { availability, missingText, nullReason } from "./availability";
 import { finite, fmtDate, fmtDayShort, fmtKm2, fmtPct, fmtPeople, fmtScore } from "./format";
-import { floodLabels, swathLine } from "./radar";
+import { floodLabels, scarHitDetail, swathLine } from "./radar";
 import { thresholdFor } from "./status";
 import { NOT_PUBLISHED, type CcBundle } from "./types";
 
@@ -440,6 +440,7 @@ export function handCheck(m: M): HandCheck | undefined {
 
 export interface Evidence {
   hasMetrics: boolean;
+  scarHit?: string; // WA-size inventories: the 500 m scar share (Details only)
   hand?: HandCheck;
   floodStats: Stat[];
   floodNote: string;
@@ -638,6 +639,7 @@ export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
     ],
     leadTime: leadTimeBlock(bundle, m),
     rainCheck: rainCheckLine(m),
+    scarHit: scarHitDetail(m),
     whyRadar: optical != null
       ? whyRadarText(100 - optical, String(m.cloud_pct_source ?? ""), bundle.reference_date)
       : "Cloud cover during the event is not reported for this case — SAR sees through either way.",
