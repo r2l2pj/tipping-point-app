@@ -40,7 +40,7 @@ Paste from `project-page.md` → "Detailed Project Description". Its sections ar
 - what it does
 - how it works
 - what NISAR shows and why
-- a testable hypothesis (double bounce in flooded towns and forests; HH vs HV)
+- a tested hypothesis (double bounce in flooded towns and forests; supported)
 - the future of NISAR for this problem
 - what's new vs LHASA / OPERA / GFMS
 - a validation table with n and caveats
@@ -77,6 +77,7 @@ Source: `nasa-data.md` (awaiting Lucas):
 > - MERIT Hydro: validation of the HAND proxy only.
 > - IBGE country and municipality outlines.
 > - UFRGS/Cemaden landslide inventory (RS 2024): validation.
+> - Copernicus Emergency Management Service, EMSR720 (© European Union): RS 2024 flood maps, validation only.
 > - Washington Geological Survey landslide inventory (licence to confirm): Washington validation.
 > - Basemap: CARTO Dark Matter (no labels) — © CARTO, © OpenStreetMap contributors.
 >

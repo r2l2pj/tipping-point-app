@@ -37,9 +37,11 @@
 - Who is affected: more than 229,000 people in critical areas (WA, Dec 12, 2025), ranked by priority area for Civil Defense; live view every 3 h over Southern Brazil
 - Prediction (supporting): "Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%)."
   - footnote (required): "Earlier runs (issued 51 and 75 hours before) showed 0%. Onset = first deaths, Apr 29, 2024 00:00 BRT. Anchor-sensitive: with onset Apr 30 the 24 h run shows 0%; the earlier May 1 anchor gave 88%. n = 16,027 UFRGS/Cemaden inventory points."
+- NISAR over time (WA, HH): flood candidates stable Nov 10 → Dec 4 (−9.7 dB), then −6.5 dB by Dec 16 when the river flooded; controls within 2.9 dB
+- RS flood index vs Copernicus EMS maps (Taquari valley, May 6): F1 0.31 — agreement during the flood; before onset only 0.21% (observed) / 6.6% (GFS) flagged
 - WA flood, honestly: none of the NISAR-flooded area was High in the forecasts issued 24 h or 48 h before onset (Dec 8, 2025); 0.14% in the run issued 72 h before — the index uses local rain only; rivers flood from rain upstream
 - Official warnings came before the index in both replays: the index adds where and who, not an earlier warning
-- Hypothesis (testable): radar misses flooded towns and forests because water + walls/trunks bounce the pulse back (double bounce) and HH brightens instead of darkening; test = HH vs HV over the missed cells (result pending)
+- Hypothesis tested — supported: of the flood our radar missed, 45% is in towns or forest (vs 5% of what it caught); flooded open land darkened 2.7 dB, towns 0.7 dB, forest 0.2 dB (double bounce cancels the darkening) → recall 25% open vs 3% towns, 1% forest
 - **Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar**
 - *Visual:* NISAR **Before / after** swipe still + **Replay check** panel (with **Show details: validation and impact** open) next to a small metrics table for both cases
 

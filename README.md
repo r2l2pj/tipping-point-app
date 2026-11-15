@@ -107,6 +107,30 @@ scene (Rio Grande do Sul, May 2024: 100% across 20 HLS scenes). The detector
 reads co-polarized darkening only, so flooded towns and forests (double
 bounce, brighter) are missed; that is the main reason recall is low.
 
+**Flood index vs Copernicus EMS (Rio Grande do Sul, May 2024).** Against the
+Copernicus Emergency Management Service EMSR720 flood maps (© European Union;
+Taquari valley only, 5 map areas, 32 km²; Porto Alegre was not mapped by EMS),
+the flood index at High or above with observed rain on May 6, 2024 scores
+IoU 0.19, F1 0.31, precision 0.46, recall 0.24. That is agreement during the
+flood, not a warning: before the onset only 0.21% (observed rain) / 6.6% (NOAA
+GFS forecast) of that flooded area was flagged.
+
+**NISAR time series (Washington, HH).** Over three passes the flood candidates
+read −9.7 dB (Nov 10) → −9.7 dB (Dec 4) → −16.2 dB (Dec 16): stable for a
+month, then a ~6.5 dB drop when the river flooded; control areas stayed within
+2.9 dB. The candidates were picked by the Dec 4 → Dec 16 drop, so the
+Nov 10 = Dec 4 match is the independent check.
+
+**Why recall is low — double-bounce hypothesis (Washington), supported.** Of
+the 60,936 OPERA new-flood pixels the NISAR HH-darkening detector missed, 45% are
+on urban or forest land (MODIS 500 m) vs 5% of the pixels it caught. Mean HH
+change Dec 4 → Dec 16: −2.72 dB flooded open land, −0.66 dB flooded urban,
+−0.18 dB flooded forest (dry controls +0.2 to +0.4 dB); recall 24.7% open vs
+3.4% urban and 1.3% forest. Double bounce cancels the darkening rather than
+brightening (+3 dB rule recovers 0.01% of misses), so the fix is HV, texture or
+land-cover-aware detection. Data: `data/wa_2025/nisar_hypothesis.json`
+(tipping-point-data).
+
 **Landslides: inventories.**
 - Rio Grande do Sul 2024: UFRGS/Cemaden inventory, 16,027 mapped landslide
   points. Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%). Earlier runs (issued 51 and 75 hours before) showed 0%.
