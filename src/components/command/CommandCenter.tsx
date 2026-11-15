@@ -11,6 +11,7 @@ import LayersColumn from "./LayersColumn";
 import MapStage from "./MapStage";
 import PanelSection from "./PanelSection";
 import { observedRows, type AlertList } from "./model/alerts";
+import { expandLayerUrls } from "./model/layerUrls";
 import { priorityAreas } from "./model/areas";
 import { availability, missingText } from "./model/availability";
 import { dataStatus, freshnessText } from "./model/dataStatus";
@@ -77,7 +78,7 @@ export default function CommandCenter(props: CommandCenterProps) {
 }
 
 export function CommandCenterView({
-  cases,
+  cases: rawCases,
   alertList,
   botUrl,
   fontClass = "",
@@ -93,6 +94,8 @@ export function CommandCenterView({
   nowMs?: number;
   initial?: Partial<ScreenState>; // tests
 }) {
+  // Layer URLs travel compacted (page budget): restore them once, here.
+  const cases = useMemo(() => rawCases.map(expandLayerUrls), [rawCases]);
   const reducer = useCallback(
     (s: ScreenState, a: Action) => reduce(s, a, cases),
     [cases]
@@ -197,6 +200,9 @@ export function CommandCenterView({
     : state.compareOpen === "night-lights" ? nightLights.pair
     : undefined;
   const snap = zoneSnapshot(bundle, step?.date);
+  // The ML card's global tables travel on one case only (page budget).
+  const sharedMl = cases.find((c) => c.ml?.when)?.ml;
+  const mergedMl = bundle.ml && sharedMl ? { ...sharedMl, ...bundle.ml } : bundle.ml;
   const tag = forecastTag(bundle);
   // The TPI frame on the map, one source of truth for the tiles and the
   // timeline chip: the "forecast issued this day" overlay when on, else the
@@ -369,7 +375,7 @@ export function CommandCenterView({
                   <EvidenceDetails
                     evidence={evidence(bundle, step?.day)}
                     swot={bundle.swot}
-                    ml={bundle.ml}
+                    ml={mergedMl}
                     mlImportance={bundle.mlImportance}
                     evidenceRows={rows.filter((r) => r.group === "Replay evidence")}
                     nightLights={nightLights}

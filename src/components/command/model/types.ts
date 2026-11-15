@@ -16,6 +16,9 @@ export type CcBundle = CaseBundle & {
   // so its risk outputs (TPI, probability, summary numbers) are not shown.
   // Radar observations stay. Set by CommandCenterLoader.
   riskPaused?: boolean;
+  // Shared prefix of the manifest layers' png/cog URLs while in transit
+  // (model/layerUrls.ts); restored by the screen before use.
+  layerUrlBase?: string;
   // Live: the observed cards, computed on the server from alerts.json
   // observed[] (see observedRows); the raw list is not sent to the browser.
   observedSummary?: import("./alerts").ObservedRow[];

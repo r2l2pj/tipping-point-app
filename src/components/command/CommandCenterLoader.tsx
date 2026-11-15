@@ -5,6 +5,7 @@ import { getAlerts, getCaseBundle, getEventsIndex, getMlArtifacts, getRootManife
 import { resolveAsset } from "@/lib/contract";
 import type { ManifestLayer } from "@/lib/types";
 import { buildMlView, groupImportance } from "./model/ml";
+import { compactLayerUrls } from "./model/layerUrls";
 import CommandCenter from "./CommandCenter";
 import { alertsPaused, buildAlertList, capAlertList, observedRows, pausedAlertList, runVerified } from "./model/alerts";
 import { nisarPasses, PASSES_SHOWN } from "./model/radar";
@@ -62,16 +63,24 @@ const slimZones = (fc: CcBundle["zones"]): CcBundle["zones"] =>
     })),
   };
 
-// Layer fields the screen never reads: the per-layer legend, `kind`, and
-// `forecast_source` on GFS frames (isGfsFrame knows them by id).
+// Layer fields the screen never reads: the per-layer legend, `kind`,
+// `forecast_source` on GFS frames (isGfsFrame knows them by id), and the
+// descriptive fields of P(trigger) frames (basis_label and low_skill stay).
 const GFS_ID = /_gfs_d[1-3]$/;
+const PTRIGGER_DROP = ["title", "serve_note", "domain", "model", "obs_days", "forecast_days",
+  "horizon_days", "obs_through", "gfs_issued", "basis", "partly_forecast"];
 function slimLayer(layer: NonNullable<CcBundle["manifest"]>["layers"][number]) {
   const { legend: _legend, ...rest } = layer as typeof layer & { kind?: unknown };
   const out = { ...rest } as Record<string, unknown>;
   delete out.kind;
   if (GFS_ID.test(layer.id)) delete out.forecast_source;
+  if (layer.id.startsWith("p_trigger")) for (const k of PTRIGGER_DROP) delete out[k];
   return out as unknown as typeof layer;
 }
+
+// metricsView keys the screen never reads (lead-ml / lead-analysis detail).
+const METRICS_DROP = ["landslide_ml", "lead_time_asavail", "scar_sensitivity", "scar_sensitivity_note",
+  "scar_method", "collections", "t_ml_note"];
 
 // T_ML (lead-ml ml/t_ml.json): one static layer, added as manifest layer
 // `t_ml` to every case its bounds overlap (RS Serra region). The PNG path is
@@ -109,19 +118,23 @@ function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
     ? { ...bundle.manifest, layers: bundle.manifest.layers.map(slimLayer) }
     : undefined;
   const zones = slimZones(bundle.zones);
+  const metricsView = bundle.metricsView
+    ? (Object.fromEntries(Object.entries(bundle.metricsView).filter(([k]) => !METRICS_DROP.includes(k))) as CcBundle["metricsView"])
+    : bundle.metricsView;
   // The raw metrics blob duplicates metricsView; the screen reads only its
   // `_null_reasons` (availability.nullReason).
   const rawMetrics = bundle.metrics as unknown as Record<string, unknown> | undefined;
   const metrics = rawMetrics && typeof rawMetrics === "object"
     ? ({ _null_reasons: rawMetrics._null_reasons } as unknown as CcBundle["metrics"])
     : bundle.metrics;
-  if (!isLive) return { ...bundle, manifest, zones, metrics };
+  if (!isLive) return { ...bundle, manifest, zones, metrics, metricsView };
   const passes = nisarPasses(bundle);
   return {
     ...bundle,
     manifest,
     zones,
     metrics,
+    metricsView,
     // The observed list (97 entries on 2026-11-15) is reduced here to the
     // per-source cards the public view shows; the raw list stays server-side.
     observedSummary: observedRows(bundle),
@@ -179,9 +192,18 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
   // Same verified gate as the alerts: an unverified live run shows no risk
   // map, no risk numbers; radar observations stay.
   const riskPaused = !runVerified(liveNode(root, now?.manifest));
-  const slim = cases.map((c) => {
-    const b = toClientBundle(withMl(c, mlArtifacts), c === live);
+  const slimmed = cases.map((c) => {
+    const b = compactLayerUrls(toClientBundle(withMl(c, mlArtifacts), c === live));
     return c === live && riskPaused ? { ...b, riskPaused: true } : b;
+  });
+  // The ML card's global tables (all TEST events) ride on the first case that
+  // has them; other cases keep only their own event rows (the screen merges).
+  let sharedMl = false;
+  const slim = slimmed.map((b) => {
+    if (!b.ml) return b;
+    if (!sharedMl) { sharedMl = true; return b; }
+    const { event, eventId } = b.ml;
+    return { ...b, ml: { event, eventId } as CcBundle["ml"] };
   });
 
   return (
