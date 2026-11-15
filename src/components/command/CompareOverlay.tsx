@@ -25,7 +25,38 @@ export interface CompareControls {
 // Before / after comparison over the map container (radar pair or
 // night-light pair). Mounted only while it is open: the only time more than
 // one map instance exists. Takes over the old SwipeCompare.
+// L42: HH | HV switch when the radar pair carries an HV pair; switching
+// remounts the two maps on the other images.
 export default function CompareOverlay({
+  pair,
+  onClose,
+  controlsRef,
+}: {
+  pair: ComparePair;
+  onClose: () => void;
+  controlsRef: MutableRefObject<CompareControls | null>;
+}) {
+  const [pol, setPol] = useState<"HH" | "HV">("HH");
+  const shown = pol === "HV" && pair.hv ? { ...pair, before: pair.hv.before, after: pair.hv.after } : pair;
+  const seg = (on: boolean) =>
+    `rounded-full px-2.5 py-0.5 text-xs font-semibold ${on ? "bg-cc-accent text-white" : "text-cc-ink"}`;
+  return (
+    <>
+      <CompareMaps key={pol} pair={shown} onClose={onClose} controlsRef={controlsRef} />
+      {pair.hv && (
+        <div role="group" aria-label="Polarization" data-polarization
+          className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full border border-cc-line-strong bg-white/95 p-[3px] shadow">
+          <span className="px-1.5 text-xs text-cc-muted">Polarization</span>
+          {(["HH", "HV"] as const).map((p) => (
+            <button key={p} type="button" aria-pressed={pol === p} onClick={() => setPol(p)} className={seg(pol === p)}>{p}</button>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function CompareMaps({
   pair,
   onClose,
   controlsRef,

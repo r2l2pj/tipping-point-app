@@ -55,11 +55,15 @@ export const AWAITING_PAIR_TEXT = "Awaiting a NISAR pair over the AOI.";
 export const GUNW_LIMIT_TEXT =
   "NISAR radar maps flood candidates only in this case; scar candidates come from post-event HLS optical — the GUNW pair spanning the event is a declared limitation.";
 
+export interface CompareSide { url: string; label: string; bounds?: BBox }
 export interface ComparePair {
   kind: "radar" | "night-lights";
   bounds: BBox;
-  before: { url: string; label: string; bounds?: BBox };
-  after: { url: string; label: string; bounds?: BBox };
+  before: CompareSide;
+  after: CompareSide;
+  // L42: the HV polarization pair (lead-analysis nisar_hv_pre/post); the
+  // swipe offers an HH | HV switch only when it exists.
+  hv?: { before: CompareSide; after: CompareSide };
 }
 
 export interface CompareOption {
@@ -78,7 +82,10 @@ function pairFor(
   kind: ComparePair["kind"],
   preId: string,
   postId: string,
-  word: string
+  word: string,
+  // L42a: plain labels ("NISAR radar before — Dec 4, 2025") instead of
+  // "pre-event <word> — date".
+  plain?: { before: string; after: string }
 ): CompareOption {
   const caseDir = canonicalCaseId(bundle.manifest?.event ?? bundle.id);
   const layers = bundle.manifest?.layers ?? [];
@@ -95,16 +102,21 @@ function pairFor(
     pair: {
       kind,
       bounds: unionBounds(pre.bounds, post.bounds) ?? bundle.bbox,
-      before: { url: preUrl, label: `pre-event ${word} — ${date(pre, preId)}`, bounds: pre.bounds },
-      after: { url: postUrl, label: `post-event ${word} — ${date(post, postId)}`, bounds: post.bounds },
+      before: { url: preUrl, label: `${plain?.before ?? `pre-event ${word}`} — ${date(pre, preId)}`, bounds: pre.bounds },
+      after: { url: postUrl, label: `${plain?.after ?? `post-event ${word}`} — ${date(post, postId)}`, bounds: post.bounds },
     },
   };
 }
 
-export const radarCompare = (bundle: CcBundle): CompareOption =>
-  availability(bundle, "radar").state === "not-applicable"
-    ? { kind: "radar", reason: NO_RADAR_TEXT }
-    : pairFor(bundle, "radar", "nisar_pre", "nisar_post", "NISAR radar backscatter");
+export function radarCompare(bundle: CcBundle): CompareOption {
+  if (availability(bundle, "radar").state === "not-applicable") return { kind: "radar", reason: NO_RADAR_TEXT };
+  const hv = pairFor(bundle, "radar", "nisar_hv_pre", "nisar_hv_post", "NISAR radar",
+    { before: "NISAR radar before (HV)", after: "NISAR radar after (HV)" }).pair;
+  const hh = pairFor(bundle, "radar", "nisar_pre", "nisar_post", "NISAR radar",
+    hv ? { before: "NISAR radar before (HH)", after: "NISAR radar after (HH)" }
+      : { before: "NISAR radar before", after: "NISAR radar after" });
+  return hh.pair && hv ? { ...hh, pair: { ...hh.pair, hv: { before: hv.before, after: hv.after } } } : hh;
+}
 
 export const nightLightsCompare = (bundle: CcBundle): CompareOption =>
   pairFor(bundle, "night-lights", "night_lights_pre", "night_lights_post", "night lights");

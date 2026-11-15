@@ -415,9 +415,23 @@ describe("radar card", () => {
     const option = radarCompare(b);
     expect(option.pair).toMatchObject({
       bounds: [-122.5, 47, -121, 48.5],
-      before: { url: "/data/wa_2025/png/nisar_pre.png", label: "pre-event NISAR radar backscatter — Dec 4, 2025" },
-      after: { label: "post-event NISAR radar backscatter — Dec 16, 2025" },
+      before: { url: "/data/wa_2025/png/nisar_pre.png", label: "NISAR radar before — Dec 4, 2025" },
+      after: { label: "NISAR radar after — Dec 16, 2025" },
     });
     expect(nightLightsCompare(b).reason).toBe("images not published yet");
+    expect(option.pair!.hv).toBeUndefined();
+  });
+
+  test("L42: the HV pair (lead-analysis nisar_hv_pre/post) adds an HH | HV choice", () => {
+    const b = bundle({ manifest: manifest([
+      { id: "nisar_pre", date: "2025-12-04", png: "wa_2025/png/nisar_pre.png", bounds: [-122, 47, -121, 48] },
+      { id: "nisar_post", date: "2025-12-16", png: "wa_2025/png/nisar_post.png", bounds: [-122, 47, -121, 48] },
+      { id: "nisar_hv_pre", date: "2025-12-04", png: "wa_2025/png/nisar_hv_pre_20251204.png", bounds: [-122, 47, -121, 48] },
+      { id: "nisar_hv_post", date: "2025-12-16", png: "wa_2025/png/nisar_hv_post_20251216.png", bounds: [-122, 47, -121, 48] },
+    ]) });
+    const p = radarCompare(b).pair!;
+    expect(p.before.label).toBe("NISAR radar before (HH) — Dec 4, 2025");
+    expect(p.hv!.before).toMatchObject({ url: "/data/wa_2025/png/nisar_hv_pre_20251204.png", label: "NISAR radar before (HV) — Dec 4, 2025" });
+    expect(p.hv!.after.label).toBe("NISAR radar after (HV) — Dec 16, 2025");
   });
 });
