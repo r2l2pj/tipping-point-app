@@ -5,7 +5,7 @@ import { canonicalCaseId } from "@/lib/contract";
 import type { Action } from "./state";
 import type { CcBundle } from "./model/types";
 
-// "Start here" (judge report #6, conductor): three stops that show the
+// "Start here" (judge report #6, conductor): four stops that show the
 // project in under a minute. Each one sets case, day, hazard and layers in
 // one step. Dismissed per browser (a convenience only: storage may fail).
 export interface TourStop {
@@ -13,36 +13,50 @@ export interface TourStop {
   title: string;
   what: string;
   action: Extract<Action, { type: "goTo" }>;
+  primary?: boolean; // L42: NISAR first and largest
 }
 
+// L42 (conductor, challenge core = NISAR): NISAR first (WA swipe, HH | HV
+// and the time series when published), then the live Southern Brazil NISAR
+// card, then the rain index (RS), then the forecast replay (WA).
 export function tourStops(cases: readonly CcBundle[]): TourStop[] {
   // Bundle ids may be the event ids ("wa-2025-12"); match the canonical key.
-  const idOf = (key: string) => cases.find((c) => c.mode !== "live" && canonicalCaseId(c.id) === key)?.id;
-  const wa = idOf("wa_2025");
-  const rs = idOf("rs_2024");
+  const caseOf = (key: string) => cases.find((c) => c.mode !== "live" && canonicalCaseId(c.id) === key);
+  const waCase = caseOf("wa_2025");
+  const wa = waCase?.id;
+  const rs = caseOf("rs_2024")?.id;
   const live = cases.find((c) => c.mode === "live");
-  const out: TourStop[] = [];
-  if (wa) out.push({
-    key: "wa", title: "1 · Washington, Dec 2025",
+  const hasHv = !!waCase?.manifest?.layers?.some((l) => l.id === "nisar_hv_pre");
+  const extras = [hasHv ? "switch HH | HV" : undefined, waCase?.nisarSeries ? "see the radar time series" : undefined]
+    .filter(Boolean).join(", then ");
+  const stops: Omit<TourStop, "title">[] = [];
+  if (wa) stops.push({
+    key: "wa-radar", primary: true,
+    what: `NISAR radar sees the flood through cloud: swipe before / after${extras ? `, ${extras}` : ""}`,
+    action: { type: "goTo", id: wa, hazard: "flood", compare: "radar" },
+  });
+  if (live) stops.push({
+    key: "now",
+    what: "Today's NISAR radar flood candidates, risk and public alerts (every 3 h)",
+    action: { type: "goTo", id: live.id },
+  });
+  if (rs) stops.push({
+    key: "rs",
+    what: "Rain warns: landslide risk on the event day, with landslide scar candidates seen from space",
+    action: { type: "goTo", id: rs, hazard: "slide", layer: "candidates" },
+  });
+  if (wa) stops.push({
+    key: "wa",
     what: "Replay: the landslide-risk forecast issued Dec 3 for Dec 6, as it was available then",
     action: { type: "goTo", id: wa, day: -7, hazard: "slide", lead: 3 },
   });
-  if (wa) out.push({
-    key: "wa-radar", title: "2 · Washington — NISAR radar",
-    what: "Swipe the NISAR radar images from before and after the flood",
-    action: { type: "goTo", id: wa, hazard: "flood", compare: "radar" },
-  });
-  if (rs) out.push({
-    key: "rs", title: "3 · Rio Grande do Sul, May 2024",
-    what: "Landslide risk on the event day, with landslide scar candidates seen from space",
-    action: { type: "goTo", id: rs, hazard: "slide", layer: "candidates" },
-  });
-  if (live) out.push({
-    key: "now", title: "4 · Now — Southern Brazil",
-    what: "Today's run: NISAR radar flood candidates, risk and public alerts",
-    action: { type: "goTo", id: live.id },
-  });
-  return out;
+  const titles: Record<string, string> = {
+    "wa-radar": "Washington, Dec 2025 — NISAR radar",
+    now: "Now — Southern Brazil, NISAR radar",
+    rs: "Rio Grande do Sul, May 2024 — rain index",
+    wa: "Washington, Dec 2025 — forecast replay",
+  };
+  return stops.map((s, i) => ({ ...s, title: `${i + 1} · ${titles[s.key]}` }));
 }
 
 const KEY = "tp-start-here-dismissed";
@@ -81,8 +95,8 @@ export default function StartHere({ cases, dispatch }: { cases: readonly CcBundl
         {stops.map((s) => (
           <li key={s.key}>
             <button type="button" onClick={() => dispatch(s.action)} data-tour={s.key}
-              className="w-full rounded-md border border-cc-line bg-cc-surface px-2 py-1 text-left hover:border-cc-accent">
-              <span className="block text-[13px] font-semibold">{s.title}</span>
+              className={`w-full rounded-md border bg-cc-surface text-left hover:border-cc-accent ${s.primary ? "border-2 border-cc-accent px-2.5 py-2" : "border-cc-line px-2 py-1"}`}>
+              <span className={`block font-semibold ${s.primary ? "text-[15px]" : "text-[13px]"}`}>{s.title}</span>
               <span className="block text-cc-muted">{s.what}</span>
             </button>
           </li>
