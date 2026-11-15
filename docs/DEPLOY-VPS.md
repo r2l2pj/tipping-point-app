@@ -19,7 +19,6 @@ VPS, build on another machine and `docker save | ssh vps docker load`.
 git clone https://github.com/r2l2pj/tipping-point-app.git && cd tipping-point-app
 git checkout freeze-1300            # or main
 docker build -t tipping-point-app \
-  --build-arg NEXT_PUBLIC_TELEGRAM_BOT_URL=https://t.me/<bot> \
   .
 docker run -d --name tp-app --restart unless-stopped \
   -p 127.0.0.1:3000:3000 \
@@ -76,25 +75,10 @@ they are **build** arguments, not runtime env.
 | `DATA_BASE_URL` | runtime | **Leave unset.** Unset already reads the GitHub raw `fallback` branch first (`https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`), then Neon, then the bundled copy. Setting it makes that URL the ONLY remote (no Neon fallback) — set it to the GitHub raw URL only if Neon must be skipped. |
 | `NEON_S3_ENDPOINT` | runtime | Optional, not a secret. Unset = built-in public bucket URL. |
 | `GEE_ENABLED` | runtime | **Unset** (L25: no Earth Engine at runtime). `GEE_PROJECT`, `GCP_SA_KEY` stay unset too. |
-| `DATABASE_URL` | runtime | Secret Neon `postgresql://…` string for the Telegram subscriber table (same value as on Vercel). Unset = SQLite file in `/app/.data` — keep the `tp-data` volume or subscribers are lost on rebuild. |
-| `TELEGRAM_TOKEN` | runtime | Bot token (BotFather). Secret. |
-| `TELEGRAM_SECRET` | runtime | Webhook shared secret (Telegram sends it as `X-Telegram-Bot-Api-Secret-Token`). Secret. |
 | `APP_URL` | runtime | The new public URL, e.g. `https://tipping-point.example.org` (no trailing slash). |
 | `PORT` | runtime | Default `3000`. Match the `-p` mapping and the proxy. |
 | `ALERTS_PAUSED` | runtime | Optional `1` pauses the public alerts panel. |
-| `NEXT_PUBLIC_TELEGRAM_BOT_URL` | **build arg** | `https://t.me/<bot>`; unset hides the Telegram card. |
 | `NEXT_PUBLIC_REFRESH_HOURS` | **build arg** | Live-run period in hours, default 3. |
-
-### Telegram webhook moves with the URL
-
-Telegram still posts to the old Vercel URL until the webhook is re-registered
-against the VPS (after TLS works):
-
-```bash
-curl -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/setWebhook" \
-  -d url="$APP_URL/api/telegram" -d secret_token="$TELEGRAM_SECRET"
-curl -s "https://api.telegram.org/bot$TELEGRAM_TOKEN/getWebhookInfo"   # url = new one, no last_error
-```
 
 ## 3. Reverse proxy and TLS
 
@@ -135,7 +119,7 @@ the app in a deploy workflow: choose one owner for the hostname. If moving
 the labels to the app, first ensure the replacement app is healthy, then
 remove the helper with `docker rm -f tipping-point-route` and validate HTTPS;
 restore the helper if the replacement route fails. Publishing the site does
-not change `APP_URL` or move the Telegram webhook; configure those separately.
+not change `APP_URL`; configure it separately.
 
 For a standalone Caddy installation instead, use a Caddyfile:
 
@@ -202,10 +186,8 @@ certificate.
 | `next/font/google` | Downloaded at **build** time → the build host needs internet; fonts are then served by the app. |
 | Streaming / PPR | Works with `next start`; the proxy must not buffer (section 3). |
 | Data cache (`"use cache"`) | In memory per process (section 4). |
-| Telegram webhook URL | Points at the old Vercel URL until re-registered (section 2). |
-| SQLite subscriber fallback (`node:sqlite`) | Needs Node ≥ 22.13 (image: Node 24) and the `/app/.data` volume. Production uses `DATABASE_URL` (Neon) anyway. |
 | Hard-coded `*.vercel.app` URLs | Only in docs (`docs/DEPLOY.md`, `docs/PLAN.md`) and submission links — update to `APP_URL`. Nothing in `src/`. |
 | GitHub Actions of the data repo | Unchanged: they publish data, they never call the app. |
 
 Nothing in the app breaks off Vercel; the only required actions are TLS,
-the env file, and the Telegram webhook.
+and the env file.

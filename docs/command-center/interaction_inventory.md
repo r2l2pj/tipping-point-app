@@ -91,7 +91,6 @@ Status words:
 | S19 | Replay check: details (not in prototype) | existing tab components | - | part | part | works; home for validation and impact content |
 | S20 | Opt-in: share approximate location | none | - | - | - | cut, or device-only region lookup |
 | S21 | Opt-in: consent checkbox | bot owns consent | - | - | - | relabel: consent text plus link |
-| S22 | Opt-in: Telegram button | bot URL (no env var yet) | - | - | - | works when a bot URL is set; hidden otherwise |
 | S23 | "Last saved data" notice (not in prototype) | `fallback` | - | - | - | works; keep, next to the status chip |
 
 ## Timeline

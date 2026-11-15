@@ -95,7 +95,6 @@ The app shows no AI-generated images, video or audio.
 | `src/app/alerts` | public alerts: the same Command Center screen with the public alert view in the right panel (in-app only) |
 | `src/app/api/events` | events index + per-event manifest |
 | `src/app/api/ee/status` | live-GEE health check (service account; opt-in — needs `GEE_ENABLED` = `1`/`true`, else 503) |
-| `src/app/api/telegram` + `src/lib/telegram/` | (inactive — not part of this submission) Telegram bot webhook + Neon (free) subscriber store via HTTPS SQL endpoint (plain fetch, no dep) — 503 until `TELEGRAM_TOKEN` + `TELEGRAM_SECRET` are set (cred-blocked) |
 | `src/lib/ee.ts` | server-only Earth Engine client (`GEE_PROJECT` + `GCP_SA_KEY` in `.env`; `GEE_SERVICE_ACCOUNT_KEY` (fallback) also accepted) — opt-in via `GEE_ENABLED`; EE API routes return 503 while disabled |
 | `public/data/<event>/`, `public/data/now/`, `public/data/alerts.json` | committed artifacts per SCHEMA.md — synced by `sync:data`; last-resort copy when every remote read misses |
 | `docs/`, `submission/` | `docs/{PLAN,app-contract,DEPLOY}.md` project doc + contract/deploy notes; `submission/{summary,nasa-data,ai-declaration,demo-script,slides-outline}.md` (incl. ≤30s demo script) |
@@ -106,14 +105,13 @@ Vercel (repo is public — Hobby plan can deploy public org repos). `prebuild`
 runs the data sync, so committed `public/data` is the last-resort deploy
 fallback. Read order: the `fallback` branch of `r2l2pj/tipping-point-data`
 (`raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`) is the
-primary source, Neon Object Storage is the fallback, and an explicit
-`DATA_BASE_URL` overrides both — runbook in `docs/DEPLOY.md`. Neon Postgres
-serves only the Telegram subscriber store.
+primary source, Neon Object Storage is the fallback (removed in the L53 merge), and an explicit
+`DATA_BASE_URL` overrides both — runbook in `docs/DEPLOY.md`.
 The `now.yml` live job refreshes data every 3 h: it computes TPI locally
 from IMERG Early / SMAP / NOAA GFS forecast rain and publishes the result as one
 force-pushed orphan commit per run (`manifest.json` last). The stale-data
 warning threshold is 6 h. Everything runs on free tiers: GitHub Actions,
-GitHub raw, Vercel Hobby, Earthdata, Telegram Bot API, Neon free.
+GitHub raw, Vercel Hobby, Earthdata, Neon free object storage (until the L53 merge).
 
 ## Credentials
 
@@ -123,11 +121,8 @@ Earthdata auth uses a bearer token: env var and GitHub secret
 (`now.yml`) fails loudly when the token dies. `EDL_USER`/`EDL_PASS`
 remain a local-only fallback, never in secrets.
 
-The Telegram subscriber store uses `DATABASE_URL` (Neon connection string,
-server-only) — set in Vercel env + GitHub secrets, never in repos.
-
-Full env list (`GCP_SA_KEY` canonical; `GEE_SERVICE_ACCOUNT_KEY` fallback;
-`DATABASE_URL` for the subscriber store): `docs/DEPLOY.md`.
+Full env list (`GCP_SA_KEY` canonical; `GEE_SERVICE_ACCOUNT_KEY` fallback): `docs/DEPLOY.md`.
+There is no database secret: Telegram and its subscriber store were removed (L55).
 
 ## Forecast & model
 
