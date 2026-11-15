@@ -1,5 +1,5 @@
 // @ts-expect-error -- bun:test resolves under `bun test`; bun-types isn't a dependency.
-import { afterEach, describe, expect, test } from "bun:test";
+import { beforeEach, afterEach, describe, expect, test } from "bun:test";
 import { GET } from "../app/api/metrics/route";
 import type { MetricsV4 } from "./contract";
 import {
@@ -85,7 +85,25 @@ afterEach(() => {
   setMetricsEeFactoryForTest(undefined);
 });
 
+let savedGeeEnabled: string | undefined;
+beforeEach(() => { savedGeeEnabled = process.env.GEE_ENABLED; process.env.GEE_ENABLED = "1"; });
+afterEach(() => {
+  if (savedGeeEnabled === undefined) delete process.env.GEE_ENABLED;
+  else process.env.GEE_ENABLED = savedGeeEnabled;
+});
+
 describe("GET /api/metrics", () => {
+  test("disabled runtime reads manifest only despite credentials and cached overlay", async () => {
+    await createMetricsService(fakeEe().ee, { readManifest: manifestOf({ iou: 0.99 }) }).getMetrics(QUERY);
+    let calls = 0;
+    setMetricsEeFactoryForTest(async () => { calls++; throw new Error("must not initialize"); });
+    const response = await withEnv({
+      GEE_ENABLED: undefined, GCP_SA_KEY: "{}", DATA_BASE_URL: "http://127.0.0.1:1",
+    }, () => GET(req()));
+    expect(response.status).toBe(200);
+    expect((await response.json()).sources).toEqual(["manifest"]);
+    expect(calls).toBe(0);
+  });
   test("missing or empty case returns 400", async () => {
     for (const query of ["", "case="]) {
       const response = await GET(req(query));

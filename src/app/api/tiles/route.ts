@@ -2,7 +2,7 @@
 // → { tiles: [urlFormat], expires_at, data_date, layer, case, date }. 503
 // when no service-account key is configured or an EE roundtrip times out;
 // 404 when the case asset or date band doesn't exist.
-import { credentialEnv } from "@/lib/ee";
+import { credentialEnv, geeEnabled } from "@/lib/ee";
 import { cachedTilesJson, noStoreJson } from "@/lib/http-cache";
 import {
   CredsError,
@@ -36,11 +36,13 @@ export async function GET(request: Request) {
   if (!date || !DATE_RE.test(date)) {
     return bad("param date must match YYYY-MM-DD");
   }
-  if (!credentialEnv()) {
+  if (!geeEnabled() || !credentialEnv()) {
     return noStoreJson(
       {
         error: "gee unavailable",
-        reason: "no service-account key (set GCP_SA_KEY)",
+        reason: geeEnabled()
+          ? "no service-account key (set GCP_SA_KEY)"
+          : "runtime GEE disabled (GEE_ENABLED unset)",
       },
       { status: 503 }
     );

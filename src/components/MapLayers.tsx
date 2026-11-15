@@ -23,8 +23,13 @@ import {
   fmtDataDate,
   fmtDate,
   geoUrl,
+  forecastChip,
   isForecastLayer,
+  isGfsFrame,
   manifestRaster,
+  pickTpiFrame,
+  probFrame,
+  type ProbHorizon,
   overlayPlan,
   pointInPolygons,
   rankedZonePoints,
@@ -55,6 +60,7 @@ export interface LayerState {
   imerg: boolean;
   smap: boolean;
   nisar: boolean;
+  pTrigger: boolean;
 }
 
 const SRC = {
@@ -72,6 +78,7 @@ const SRC = {
   opera: "tp-opera-img",
   nl: "tp-nl-img",
   tml: "tp-tml-img",
+  prob: "tp-prob-img",
   muni: "tp-muni",
   catalog: "tp-catalog",
   places: "tp-places",
@@ -100,6 +107,7 @@ const LYR = {
   opera: "tp-opera-lyr",
   nl: "tp-nl-lyr",
   tml: "tp-tml-lyr",
+  prob: "tp-prob-lyr",
   zonesFill: "tp-zones-fill",
   zonesLine: "tp-zones-line",
   muni: "tp-muni-line",
@@ -175,14 +183,18 @@ export function useMapLayers(
   // v4 image-source contract: when the manifest carries a pre-rendered
   // EPSG:3857 PNG for this day, show it as a raster layer — no raster in
   // the manifest means no pixels, never a synthetic grid.
-  const pngLayers = (bundle?.manifest?.layers ?? []).filter((l) => l.png);
   const wanted = layers.tpiSlide ? "slide" : layers.tpiFlood ? "flood" : null;
   const frameDate = resolveFrameDate(day?.date, options);
-  const candidates = frameDate
-    ? pngLayers.filter((l) => l.date === frameDate)
-    : [];
-  const activePng =
-    candidates.find((l) => wanted && l.id.includes(wanted)) ?? candidates[0];
+  // L22: on forecast days the real issued GFS frame wins over the
+  // perfect-forecast upper bound (see pickTpiFrame).
+  const activePng = pickTpiFrame(
+    bundle?.manifest?.layers,
+    frameDate
+      ? { date: frameDate, kind: day?.date === frameDate ? day?.kind : undefined }
+      : undefined,
+    wanted,
+    bundle?.series?.reference_date ?? bundle?.reference_date
+  );
   // Forecast frames never look observed: the manifest flag or a *_d[1-3] id
   // marks a forecast PNG, or the timeline day itself is a forecast day.
   const isForecast =
@@ -390,7 +402,10 @@ export function useMapLayers(
     // NASA toggle rasters (IMERG / SMAP / NISAR): pixels only when the
     // manifest ships a real raster for the layer — never synthetic data.
     const rasterToggle = (key: ToggleLayerKey, src: string, lyr: string) => {
-      const l = manifestRaster(bundle.manifest?.layers, key, frameDate);
+      const l =
+        key === "pTrigger"
+          ? probFrame(bundle.manifest?.layers, options?.probHorizon ?? "24h", frameDate)
+          : manifestRaster(bundle.manifest?.layers, key, frameDate);
       const url = assetUrl(caseDir, l?.png);
       if (l && url) {
         ensureImageLayer(
@@ -410,6 +425,10 @@ export function useMapLayers(
     rasterToggle("imerg", SRC.imerg, LYR.imerg);
     rasterToggle("smap", SRC.smap, LYR.smap);
     rasterToggle("nisar", SRC.nisar, LYR.nisar);
+    // L25: XGBoost P(trigger) probability frame — per-day raster under the
+    // muni lines at 0.7, same seam as the other toggle rasters. TPI stays
+    // the headline; this only paints when the manifest ships real frames.
+    rasterToggle("pTrigger", SRC.prob, LYR.prob);
 
     // Pre-rendered EPSG:3857 PNGs become image sources on demand; the raster
     // layer goes in at `before` so the doc order holds. `on` is applied after
@@ -590,7 +609,9 @@ export function useMapLayers(
       fcastMarker.current = new Marker({ element: el, anchor: "top" });
     }
     fcastMarker.current.getElement().textContent =
-      forecastSourceLabel(bundle.manifest?.forecast_source) ?? "forecast";
+      activePng && isGfsFrame(activePng)
+        ? forecastChip(activePng, undefined)
+        : (forecastSourceLabel(bundle.manifest?.forecast_source) ?? "forecast");
     if (tpiOn && isForecast) {
       const b = activePng?.bounds ?? bundle.bbox;
       fcastMarker.current
@@ -603,7 +624,7 @@ export function useMapLayers(
       console.warn("MapLayers update failed (map kept alive)", err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey]);
+  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, overlayKey, options?.probHorizon]);
 
   // Priority-zone pins — top 20 by rank (matches the side list), anchored
   // at the polygon label point (real files are Polygons, not Points).

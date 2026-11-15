@@ -1,6 +1,6 @@
 // Health report for GET /api/health. Always 200 — it reports, never gates.
 // env reports booleans only: a var is present or not, never its value.
-import { credentialEnv, earthEngine } from "./ee";
+import { credentialEnv, earthEngine, geeEnabled } from "./ee";
 import { errMessage, imageInfo, withTimeout } from "./ee-shared";
 import { getRootManifest } from "./data";
 import type { RootManifest } from "./types";
@@ -34,7 +34,7 @@ export interface HealthDeps {
 export interface HealthReport {
   ok: boolean;
   env: Record<(typeof HEALTH_ENV_VARS)[number], boolean>;
-  gee: { ready: boolean; latency_ms: number | null; reason: string | null };
+  gee: { enabled: boolean; creds: boolean; probe: "skipped" | "ok" | "failed"; ready: boolean; latency_ms: number | null; reason: string | null };
   data: {
     cases: Record<string, { updated_at: string | null }>;
     now: { updated_at: string | null };
@@ -64,8 +64,13 @@ export async function collectHealth(deps: HealthDeps = {}): Promise<HealthReport
     HEALTH_ENV_VARS.map((k) => [k, Boolean(env(k))])
   ) as HealthReport["env"];
 
-  const gee: HealthReport["gee"] = { ready: false, latency_ms: null, reason: null };
-  if (!hasCreds()) {
+  const gee: HealthReport["gee"] = {
+    enabled: geeEnabled(), creds: hasCreds(), probe: "skipped",
+    ready: false, latency_ms: null, reason: null,
+  };
+  if (!gee.enabled) {
+    gee.reason = "runtime GEE disabled (GEE_ENABLED unset)";
+  } else if (!gee.creds) {
     gee.reason = "no service-account key";
   } else {
     const start = now();
@@ -76,9 +81,11 @@ export async function collectHealth(deps: HealthDeps = {}): Promise<HealthReport
         timeoutMs,
         "health probe"
       );
+      gee.probe = "ok";
       gee.ready = true;
       gee.latency_ms = now() - start;
     } catch (e) {
+      gee.probe = "failed";
       gee.reason = errMessage(e);
       gee.latency_ms = now() - start;
     }
@@ -102,5 +109,12 @@ export async function collectHealth(deps: HealthDeps = {}): Promise<HealthReport
     // manifest read failure reports manifest=false, cases={}
   }
 
-  return { ok: envBools.GCP_SA_KEY && gee.ready, env: envBools, gee, data };
+  // GEE off (L25 default): healthy = the data store answers (root manifest
+  // read through the loader's GitHub -> Neon -> bundled chain) with a
+  // parseable now/ stamp. DATA_BASE_URL is NOT required — prod leaves it
+  // unset on purpose (setting it makes it the sole remote, L26).
+  const ok = gee.enabled
+    ? envBools.GCP_SA_KEY && gee.ready
+    : data.manifest && Number.isFinite(Date.parse(data.now.updated_at ?? ""));
+  return { ok, env: envBools, gee, data };
 }

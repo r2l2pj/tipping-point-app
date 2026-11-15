@@ -14,6 +14,11 @@ const SA_KEY_ENVS = [
 ] as const;
 export type CredentialEnv = (typeof SA_KEY_ENVS)[number];
 
+// L25 runtime default OFF.
+export function geeEnabled(): boolean {
+  return ["1", "true"].includes(process.env.GEE_ENABLED?.toLowerCase() ?? "");
+}
+
 // Which env currently provides the service-account key, or null when none
 // is set. Read at request time so the status route can report it.
 export function credentialEnv(): CredentialEnv | null {
@@ -61,6 +66,7 @@ let ready: Promise<typeof ee> | null = null;
 // endpoint, malformed key) must reject so callers degrade instead of pending
 // forever. GEE_INIT_TIMEOUT_MS overrides the 8s default.
 export function earthEngine(): Promise<typeof ee> {
+  if (!geeEnabled()) return Promise.reject(new Error("runtime GEE disabled (GEE_ENABLED unset)"));
   if (!ready) {
     const timeoutMs = Number(process.env.GEE_INIT_TIMEOUT_MS) || 8000;
     ready = Promise.race([

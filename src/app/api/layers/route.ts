@@ -3,7 +3,7 @@
 // 400 when `case` is missing; 503 when no service-account key is configured;
 // 502 on unexpected ee init/compute failures. `canonical` echoes the resolved
 // case id so hyphen aliases are visible; `layer=` probes a single layer.
-import { credentialEnv } from "@/lib/ee";
+import { credentialEnv, geeEnabled } from "@/lib/ee";
 import { cachedJson, noStoreJson } from "@/lib/http-cache";
 import {
   getLayerMeta,
@@ -24,11 +24,13 @@ export async function GET(request: Request) {
       { status: 400 }
     );
   }
-  if (!credentialEnv()) {
+  if (!geeEnabled() || !credentialEnv()) {
     return noStoreJson(
       {
         error: "gee unavailable",
-        reason: "no service-account key (set GCP_SA_KEY)",
+        reason: geeEnabled()
+          ? "no service-account key (set GCP_SA_KEY)"
+          : "runtime GEE disabled (GEE_ENABLED unset)",
       },
       { status: 503 }
     );

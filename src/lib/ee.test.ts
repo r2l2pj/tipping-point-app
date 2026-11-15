@@ -54,6 +54,26 @@ afterEach(async () => {
 // Snapshot env once so afterEach can restore what the developer had set.
 for (const k of SA_ENVS) saved.set(k, process.env[k]);
 
+describe("geeEnabled", () => {
+  test("only 1 or case-insensitive true explicitly enable runtime GEE", async () => {
+    const { geeEnabled, earthEngine } = await loadEe();
+    const original = process.env.GEE_ENABLED;
+    try {
+      for (const value of [undefined, "", "0", "false", "yes", " true "]) {
+        setEnv("GEE_ENABLED", value);
+        expect(geeEnabled()).toBe(false);
+      }
+      await expect(earthEngine()).rejects.toThrow("runtime GEE disabled");
+      for (const value of ["1", "true", "TRUE", "True"]) {
+        setEnv("GEE_ENABLED", value);
+        expect(geeEnabled()).toBe(true);
+      }
+    } finally {
+      setEnv("GEE_ENABLED", original);
+    }
+  });
+});
+
 describe("credentialEnv", () => {
   test("prefers GCP_SA_KEY, then GEE_SERVICE_ACCOUNT_KEY, then GAC", async () => {
     const { credentialEnv } = await loadEe();

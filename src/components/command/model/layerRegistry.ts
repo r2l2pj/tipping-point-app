@@ -210,4 +210,5 @@ export const layerStateFor = (on: readonly LayerId[], hazard: Hazard) => ({
   imerg: on.includes("imerg"),
   smap: on.includes("smap"),
   nisar: false,
+  pTrigger: false, // wired by the P(trigger) horizon unit
 });

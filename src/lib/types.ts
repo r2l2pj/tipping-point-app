@@ -32,6 +32,16 @@ export interface ManifestLayer {
   // Pipeline provenance for the frame ("final data, hindcast", …) —
   // shown under the layer's date chip when published.
   data_basis?: string;
+  // L25 probability frames: model run issue time + the forecast input
+  // ("NOAA GFS") the probability was computed against.
+  issued_at?: string;
+  forecast_source?: string;
+  // L22 issued-forecast frames (SCHEMA "Layer fields"): `issued` is the
+  // YYYY-MM-DD issue day (depicted date = issued + k); `upper_bound` marks
+  // perfect-forecast frames (labelled upper bound, never the headline).
+  issued?: string;
+  kind?: string;
+  upper_bound?: boolean;
 }
 
 export interface NisarPass {

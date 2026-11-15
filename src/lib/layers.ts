@@ -26,6 +26,69 @@ export function isForecastLayer(l: {
   );
 }
 
+// --- L22 issued-forecast (GFS) frames ----------------------------------------
+
+// A real issued forecast frame (L22): NOAA GFS source, or the `_gfs_d<k>` id
+// family when the source field is absent.
+export function isGfsFrame(l: {
+  id?: string;
+  forecast_source?: string;
+}): boolean {
+  return /gfs/i.test(l.forecast_source ?? "") || /_gfs_d[1-3]$/.test(l.id ?? "");
+}
+
+// The TPI PNG frame painted for a timeline day. `wanted` picks the family
+// ("slide" | "flood"; null = any). On a forecast day the real issued GFS
+// frame wins (L22: perfect-forecast frames are only a labelled upper bound,
+// never the headline) — the latest issue on or before the reference date,
+// so the replay never peeks at a forecast issued after the anchor day. On
+// observed days GFS frames never displace the observed frame; they are only
+// a last resort when nothing else depicts the date.
+export function pickTpiFrame(
+  layers: ManifestLayer[] | undefined,
+  day: { date: string; kind?: string } | undefined,
+  wanted: "slide" | "flood" | null,
+  referenceDate?: string
+): ManifestLayer | undefined {
+  if (!day) return undefined;
+  // A GFS run issued after the anchor day is never shown (no peeking).
+  const candidates = (layers ?? []).filter(
+    (l) =>
+      l.png &&
+      l.date === day.date &&
+      !(isGfsFrame(l) && referenceDate && l.issued && l.issued > referenceDate)
+  );
+  const fam = (l: ManifestLayer) => !wanted || l.id.includes(wanted);
+  if (day.kind === "forecast") {
+    const gfs = candidates
+      .filter((l) => isGfsFrame(l) && fam(l))
+      .sort((a, b) => (b.issued ?? "").localeCompare(a.issued ?? ""));
+    if (gfs[0]) return gfs[0];
+  }
+  const rest = candidates.filter((l) => !isGfsFrame(l));
+  return (
+    rest.find((l) => wanted && l.id.includes(wanted)) ??
+    rest[0] ??
+    candidates.find((l) => wanted && l.id.includes(wanted)) ??
+    candidates[0]
+  );
+}
+
+// Forecast chip text. A GFS frame names its issue day —
+// "forecast · GFS (issued Apr 22, 2024)"; otherwise the case/run source:
+// "forecast · perfect" (replay upper bound), "forecast · GEOS-FP" (live).
+export function forecastChip(
+  frame: ManifestLayer | undefined,
+  sourceLabel: string | undefined
+): string {
+  if (frame && isGfsFrame(frame)) {
+    return frame.issued
+      ? `forecast · GFS (issued ${fmtDate(frame.issued)})`
+      : "forecast · GFS";
+  }
+  return `forecast · ${sourceLabel === "perfect forecast" ? "perfect" : (sourceLabel ?? "day")}`;
+}
+
 // --- per-tab dynamic overlays ------------------------------------------------
 //
 // Which data overlays each side-panel tab turns on (project doc "Abas e
@@ -222,7 +285,7 @@ export function pointInPolygons(
 // --- asset URLs --------------------------------------------------------------
 
 // Manifest png/cog paths are bucket-relative; the bucket is served at /data
-// locally and at bundle.assetBase (Neon) when published. resolveAsset passes
+// locally and at bundle.assetBase (GitHub data branch, or Neon) when published. resolveAsset passes
 // through absolute http(s) URLs and does not double paths that already carry
 // the case dir.
 export const assetUrl = (
@@ -237,7 +300,13 @@ export const assetUrl = (
 // never synthetic data dressed up as a NASA product. Manifest layers match
 // by id prefix (imerg_* / smap_* / nisar_* / tpi_*); nisar excludes the
 // nisar_pre/nisar_post pair, which backs the radar before/after swipe.
-export type ToggleLayerKey = "tpiSlide" | "tpiFlood" | "imerg" | "smap" | "nisar";
+export type ToggleLayerKey =
+  | "tpiSlide"
+  | "tpiFlood"
+  | "imerg"
+  | "smap"
+  | "nisar"
+  | "pTrigger";
 
 const TOGGLE_PREFIX: Record<ToggleLayerKey, string> = {
   tpiSlide: "tpi_slide",
@@ -245,6 +314,10 @@ const TOGGLE_PREFIX: Record<ToggleLayerKey, string> = {
   imerg: "imerg_",
   smap: "smap_",
   nisar: "nisar_",
+  // L25: P(trigger) probability frames — XGBoost lead-time rasters
+  // published by lead-live as manifest layers (id prefix pending; if the
+  // shipped ids differ, only this prefix needs to change).
+  pTrigger: "p_trigger",
 };
 
 const NISAR_SWIPE_IDS = new Set(["nisar_pre", "nisar_post"]);
@@ -272,6 +345,61 @@ export function layerAvailable(
   key: ToggleLayerKey
 ): boolean {
   return manifestRaster(bundle?.manifest?.layers, key) !== undefined;
+}
+
+// L25 probability layer copy: "Model probability (XGBoost) · issued <time>
+// · forecast: NOAA GFS". The issued timestamp prefers the layer's issued_at;
+// the source falls back to the contract default until lead-live publishes a
+// forecast_source on the frame.
+export const PROB_LAYER_TITLE = "Model probability (XGBoost)";
+export const PROB_FORECAST_DEFAULT = "NOAA GFS";
+
+// P(trigger) horizons (L27): one manifest layer family per horizon, ids
+// `p_trigger_<h>` (per-day frames repeat the id with different dates).
+// 7 d / 14 d come from the long GFS range (to 384 h) — low forecast skill,
+// so the UI always carries a visible lower-confidence note on them.
+export const PROB_HORIZONS = ["24h", "48h", "72h", "7d", "14d"] as const;
+export type ProbHorizon = (typeof PROB_HORIZONS)[number];
+export const LONG_RANGE_HORIZONS: ReadonlySet<ProbHorizon> = new Set(["7d", "14d"]);
+export const LONG_RANGE_NOTE = "lower confidence: long-range forecast";
+export const PROB_HORIZON_LABEL: Record<ProbHorizon, string> = {
+  "24h": "24 h",
+  "48h": "48 h",
+  "72h": "72 h",
+  "7d": "7 d",
+  "14d": "14 d",
+};
+
+const probId = (h: ProbHorizon) => `p_trigger_${h}`;
+const isHorizonFrame = (l: ManifestLayer, h: ProbHorizon) =>
+  (l.id === probId(h) || l.id.startsWith(`${probId(h)}_`)) && Boolean(l.png || l.cog);
+
+// Horizons the manifest actually ships, in display order.
+export function probHorizonsAvailable(
+  layers: ManifestLayer[] | undefined
+): ProbHorizon[] {
+  return PROB_HORIZONS.filter((h) => (layers ?? []).some((l) => isHorizonFrame(l, h)));
+}
+
+// The probability frame for a horizon, preferring the selected day. When the
+// manifest ships no horizon-keyed ids at all (legacy single `p_trigger*`
+// family), fall back to the plain prefix match.
+export function probFrame(
+  layers: ManifestLayer[] | undefined,
+  horizon: ProbHorizon,
+  date?: string
+): ManifestLayer | undefined {
+  if (probHorizonsAvailable(layers).length === 0)
+    return manifestRaster(layers, "pTrigger", date);
+  const matches = (layers ?? []).filter((l) => isHorizonFrame(l, horizon));
+  return matches.find((l) => l.date === date) ?? matches[0];
+}
+
+export function probLayerNote(l?: ManifestLayer): string | undefined {
+  if (!l) return undefined;
+  const issued = l.issued_at ?? l.date;
+  const src = l.forecast_source ?? PROB_FORECAST_DEFAULT;
+  return issued ? `issued ${fmtDataDate(issued)} · forecast: ${src}` : `forecast: ${src}`;
 }
 
 // --- BRT date formatting ------------------------------------------------------
@@ -455,7 +583,7 @@ type ProductsLike = Record<string, string | null | undefined> | undefined;
 
 // URL for a geojson product: products map wins (explicit null = declared
 // absent -> undefined, never fetched), fixed filename as fallback. The base
-// is the bundle's remote assetBase when published (Neon), else the bundled
+// is the bundle's remote assetBase when published (GitHub or Neon), else the bundled
 // /data copy.
 export function geoUrl(
   bundle:

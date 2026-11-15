@@ -132,7 +132,7 @@ describe("layer budget", () => {
       operaValidation: false, mlHazard: false,
     });
     expect(layerStateFor(["tpi", "imerg"], "flood")).toEqual({
-      tpiSlide: false, tpiFlood: true, imerg: true, smap: false, nisar: false,
+      tpiSlide: false, tpiFlood: true, imerg: true, smap: false, nisar: false, pTrigger: false,
     });
     expect(layerStateFor(["imerg"], "slide").tpiSlide).toBe(false);
   });

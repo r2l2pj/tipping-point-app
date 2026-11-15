@@ -28,6 +28,9 @@ const HAS_CREDS =
       process.env.GEE_SERVICE_ACCOUNT_KEY ||
       process.env.GOOGLE_APPLICATION_CREDENTIALS
   ) && Boolean(process.env.GEE_PROJECT);
+// This suite IS the explicit opt-in for live GEE (L25): enable the flag so
+// earthEngine() runs even though runtime defaults it off.
+if (HAS_CREDS) process.env.GEE_ENABLED ??= "1";
 const itLive = test.skipIf(!HAS_CREDS);
 
 const INIT_TIMEOUT_MS = 30_000;

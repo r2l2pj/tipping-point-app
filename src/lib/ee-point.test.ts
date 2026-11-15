@@ -1,6 +1,6 @@
 // @ts-expect-error -- bun:test resolves under `bun test`; bun-types isn't a
 // dependency so tsc can't see its types.
-import { afterEach, describe, expect, test } from "bun:test";
+import { beforeEach, afterEach, describe, expect, test } from "bun:test";
 
 import { GET } from "../app/api/point/route";
 import {
@@ -116,6 +116,13 @@ const NO_MANIFEST = () => null;
 
 const makeService = (ee: EeLike, extra: Record<string, unknown> = {}) =>
   createPointService(ee, { assetRoot: "root", manifestAsset: NO_MANIFEST, ...extra });
+
+let savedGeeEnabled: string | undefined;
+beforeEach(() => { savedGeeEnabled = process.env.GEE_ENABLED; process.env.GEE_ENABLED = "1"; });
+afterEach(() => {
+  if (savedGeeEnabled === undefined) delete process.env.GEE_ENABLED;
+  else process.env.GEE_ENABLED = savedGeeEnabled;
+});
 
 describe("createPointService", () => {
   afterEach(() => clearPointCache());

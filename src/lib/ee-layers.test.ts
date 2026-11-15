@@ -1,6 +1,6 @@
 // @ts-expect-error -- bun:test resolves under `bun test`; bun-types isn't a
 // dependency so tsc can't see its types.
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { beforeEach, afterEach, describe, expect, mock, test } from "bun:test";
 
 import {
   createLayerService,
@@ -244,6 +244,13 @@ describe("createLayerService.probe", () => {
       declared: true,
     });
   });
+});
+
+let savedGeeEnabled: string | undefined;
+beforeEach(() => { savedGeeEnabled = process.env.GEE_ENABLED; process.env.GEE_ENABLED = "1"; });
+afterEach(() => {
+  if (savedGeeEnabled === undefined) delete process.env.GEE_ENABLED;
+  else process.env.GEE_ENABLED = savedGeeEnabled;
 });
 
 describe("getLayerMeta", () => {

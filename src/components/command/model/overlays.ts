@@ -1,3 +1,4 @@
+import type { ProbHorizon } from "@/lib/layers";
 // Pure part of the additive `options` argument of useMapLayers. Without
 // options the result equals what the hook computed before (tab plan, or
 // showFlood when there is no tab), so the old screen is not affected.
@@ -19,6 +20,8 @@ export interface MapLayerOptions {
   frameDate?: string;
   // When given, replaces overlayPlan(tab) and showFlood.
   overlays?: MapOverlays;
+  // P(trigger) horizon painted by the pTrigger toggle (default 24h).
+  probHorizon?: ProbHorizon;
 }
 
 export interface OverlayVisibility {

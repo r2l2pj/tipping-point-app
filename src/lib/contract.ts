@@ -67,8 +67,26 @@ export interface LandslideHit {
 // pipeline writes them from several steps and a case may ship a subset.
 export interface MetricsV4 {
   event?: string;
+  // Flood validation headline: like-for-like NISAR new flood vs OPERA
+  // DSWx-S1 new flood (validation_method). Ratios 0-1, never rescaled.
   iou?: number;
   f1?: number;
+  precision?: number;
+  recall?: number;
+  confusion?: { tp?: number; fp?: number; fn?: number };
+  validation_method?: string;
+  // Secondary: every OPERA water pixel incl. permanent/pre-existing water.
+  iou_raw?: number;
+  f1_raw?: number;
+  precision_raw?: number;
+  recall_raw?: number;
+  confusion_raw?: { tp?: number; fp?: number; fn?: number; observed_px?: number };
+  validation_method_raw?: string;
+  opera_fn_diagnosis?: string;
+  hls_iou?: number;
+  hls_f1?: number;
+  hls_method?: string;
+  cloud_pct_source?: string;
   cloud_pct?: number;
   landslide_hit_pct?: number;
   landslide_hit?: LandslideHit; // nested form; flattened by flattenLandslideHit
@@ -347,6 +365,7 @@ export function resolveAsset(
 export const FORECAST_SOURCE_LABELS: Record<string, string> = {
   "perfect-forecast": "perfect forecast", // replay cases
   "geos-fp": "GEOS-FP", // live now/ runs
+  "noaa-gfs": "NOAA GFS", // L22 issued-forecast replay frames
 };
 
 // UI label for a forecast_source value; unknown sources pass through

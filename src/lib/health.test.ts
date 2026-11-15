@@ -1,8 +1,12 @@
 // @ts-expect-error -- bun:test resolves under `bun test`; bun-types isn't a
 // dependency so tsc can't see its types.
-import { afterEach, describe, expect, test } from "bun:test";
+import { beforeEach, afterEach, describe, expect, test } from "bun:test";
 
 import { GET } from "../app/api/health/route";
+import { GET as tiles } from "../app/api/tiles/route";
+import { GET as layers } from "../app/api/layers/route";
+import { GET as numbers } from "../app/api/numbers/route";
+import { GET as point } from "../app/api/point/route";
 import {
   collectHealth,
   HEALTH_ENV_VARS,
@@ -51,6 +55,13 @@ function deps(over: HealthDeps = {}): HealthDeps {
     ...over,
   };
 }
+
+let savedGeeEnabled: string | undefined;
+beforeEach(() => { savedGeeEnabled = process.env.GEE_ENABLED; process.env.GEE_ENABLED = "1"; });
+afterEach(() => {
+  if (savedGeeEnabled === undefined) delete process.env.GEE_ENABLED;
+  else process.env.GEE_ENABLED = savedGeeEnabled;
+});
 
 describe("collectHealth", () => {
   test("env booleans are true per present var, and no value ever leaks", async () => {
@@ -119,6 +130,7 @@ describe("collectHealth", () => {
       })
     );
     expect(report.gee).toEqual({
+      enabled: true, creds: false, probe: "skipped",
       ready: false,
       latency_ms: null,
       reason: "no service-account key",
@@ -155,6 +167,61 @@ describe("collectHealth", () => {
     expect(report.data.manifest).toBe(false);
     expect(report.data.cases).toEqual({});
     expect(report.data.now).toEqual({ updated_at: null });
+  });
+});
+
+describe("runtime GEE disabled", () => {
+  for (const [name, handler, query] of [
+    ["tiles", tiles, "layer=tpi_slide&case=rs_2024&date=2024-05-01"],
+    ["layers", layers, "case=rs_2024"],
+    ["numbers", numbers, "case=rs_2024&date=2024-05-01"],
+    ["point", point, "case=rs_2024&date=2024-05-01&lat=0&lon=0"],
+  ] as const) {
+    test(`${name} returns disabled 503 with no-store`, async () => {
+      delete process.env.GEE_ENABLED;
+      const response = await handler(new Request(`http://localhost/api/${name}?${query}`));
+      expect(response.status).toBe(503);
+      expect(response.headers.get("cache-control")).toContain("no-store");
+      expect(await response.json()).toEqual({
+        error: "gee unavailable", reason: "runtime GEE disabled (GEE_ENABLED unset)",
+      });
+    });
+  }
+
+  test("health is ok without credentials and never initializes GEE", async () => {
+    delete process.env.GEE_ENABLED;
+    let calls = 0;
+    setHealthDepsForTest(deps({
+      env: envFrom({}),
+      hasCreds: () => false,
+      ee: async () => { calls++; throw new Error("must not initialize"); },
+      readManifest: async () => ({ updated_at: new Date().toISOString(), cases: {} }),
+    }));
+    try {
+      const response = await GET();
+      const body = await response.json();
+      expect(body.ok).toBe(true);
+      expect(body.gee).toMatchObject({ enabled: false, creds: false, probe: "skipped" });
+      expect(calls).toBe(0);
+    } finally {
+      setHealthDepsForTest(undefined);
+    }
+  });
+
+  test("GEE off: not ok when the data manifest can't be read", async () => {
+    delete process.env.GEE_ENABLED;
+    setHealthDepsForTest(deps({
+      env: envFrom({}),
+      hasCreds: () => false,
+      readManifest: async () => { throw new Error("all remotes down"); },
+    }));
+    try {
+      const body = await (await GET()).json();
+      expect(body.ok).toBe(false);
+      expect(body.data.manifest).toBe(false);
+    } finally {
+      setHealthDepsForTest(undefined);
+    }
   });
 });
 
