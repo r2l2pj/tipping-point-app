@@ -78,7 +78,8 @@ const KEEP_LEGEND = (id: string) => id.startsWith("imerg") || id === "hand_low";
 function slimLayer(layer: NonNullable<CcBundle["manifest"]>["layers"][number]) {
   const out = { ...layer } as Record<string, unknown>;
   if (!KEEP_LEGEND(layer.id)) delete out.legend;
-  delete out.kind;
+  // `kind` is read only for the NISAR layers (date stack, extras, change maps).
+  if (typeof out.kind !== "string" || !out.kind.startsWith("nisar")) delete out.kind;
   if (GFS_ID.test(layer.id)) delete out.forecast_source;
   if (layer.id.startsWith("p_trigger")) for (const k of PTRIGGER_DROP) delete out[k];
   return out as unknown as typeof layer;

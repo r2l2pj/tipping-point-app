@@ -132,7 +132,9 @@ export function CommandCenterView({
     : undefined;
   const [city, setCity] = useState<{ place: Place; dates: string[] }>();
   // L52 U1: right-panel tabs (content moved, nothing deleted).
-  const [tab, setTab] = useState<PanelTab | "all">(panelTab ?? (deepLink?.compare === "radar" ? "radar" : "overview"));
+  // The featured replay is the radar case: it opens on its Radar tab.
+  const [tab, setTab] = useState<PanelTab | "all">(panelTab ?? (deepLink?.compare === "radar" ||
+    (!!initialCase && /uruguai|uruguay/i.test(initialCase)) ? "radar" : "overview"));
   const show = (t: PanelTab) => tab === t || tab === "all";
   // Headline card (Lucas, "simple and WOW"): the live places file, once.
   const [places, setPlaces] = useState<Places>();

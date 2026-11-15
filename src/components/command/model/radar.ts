@@ -113,12 +113,24 @@ export function radarSensor(bundle: CcBundle): RadarSensor {
   return { nisar: true, name: "NISAR radar", ...(prov ? { note: "provisional" } : {}) };
 }
 
+export const otherGeometry = (l: Record<string, unknown>, role?: string): boolean =>
+  (typeof l.png === "string" && /_\d{3}[AD](_[^/]*)?\.png$/i.test(l.png)) ||
+  (typeof l.note === "string" && /context track/i.test(l.note)) ||
+  (typeof role === "string" && /other geometry|context pass/i.test(role));
+
 export interface NisarStack { dates: string[]; frames: Record<string, { HH?: CompareSide; HV?: CompareSide }>; title: string }
 
 export function nisarStack(bundle: CcBundle): NisarStack | undefined {
   const caseDir = canonicalCaseId(bundle.manifest?.event ?? bundle.id);
   const frames: NisarStack["frames"] = {};
   let allNisar = true;
+  // lead-analysis: every NISAR layer carries 'track'; the swipe stays on the
+  // main track (the one with the most frames, 010D for Uruguaiana).
+  const tracks = (bundle.manifest?.layers ?? []).map((x) => (x as unknown as Record<string, unknown>))
+    .filter((x) => x.kind === "nisar_frame" && typeof x.track === "string").map((x) => x.track as string);
+  const count = new Map<string, number>();
+  for (const t of tracks) count.set(t, (count.get(t) ?? 0) + 1);
+  const mainTrack = [...count.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
   for (const raw of bundle.manifest?.layers ?? []) {
     const l = raw as unknown as Record<string, unknown>;
     if (l.kind !== "nisar_frame" || typeof l.date !== "string" || typeof l.png !== "string") continue;
@@ -126,6 +138,9 @@ export function nisarStack(bundle: CcBundle): NisarStack | undefined {
     if (!url) continue;
     const pol = String(l.polarization ?? "HH").toUpperCase() === "HV" ? "HV" : "HH";
     const day = l.date.slice(0, 10);
+    // Conductor (Uruguaiana): one viewing geometry per swipe — context passes
+    // from other tracks (082D, 060A, 132A) are not compared with the pair track.
+    if (mainTrack && typeof l.track === "string" ? l.track !== mainTrack : otherGeometry(l, bundle.nisarSeries?.roles?.[day])) continue;
     const b = Array.isArray(l.bounds) && l.bounds.length === 4 ? (l.bounds as BBox) : undefined;
     const name = sensorName(sensorOf(l));
     if (name !== "NISAR radar") allNisar = false;

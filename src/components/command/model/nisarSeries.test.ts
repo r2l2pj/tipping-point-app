@@ -283,3 +283,20 @@ test("Uruguay: tpi_replay_note replaces 'No frames published yet' (timeline, cap
   expect(mapCaption(uy, [], 0, "flood", ["flood"]).text).toBe("No rain-index replay for this case");
   expect(noStepsText(bundle({ series: undefined } as never))).toBe("No frames published yet");
 });
+
+test("Uruguaiana swipe stack: one viewing geometry (main track, or no context passes)", async () => {
+  const { nisarStack } = await import("./radar");
+  const f = (date: string, png: string, extra: Record<string, unknown> = {}) =>
+    ({ id: `nisar_hh_${date}`, date, png, kind: "nisar_frame", polarization: "HH", ...extra });
+  const mk = (layers: unknown[]) => ({ id: "rs_uruguai_2026", mode: "replay", bbox: [-58, -30, -56, -29], manifest: { event: "rs_uruguai_2026", layers } }) as never;
+  const byTrack = nisarStack(mk([
+    f("2026-09-30", "png/a.png", { track: "010D" }), f("2026-10-05", "png/b_082D.png", { track: "082D" }),
+    f("2026-10-12", "png/c.png", { track: "010D" }), f("2026-10-28", "png/d.png", { track: "060A" }),
+  ]))!;
+  expect(byTrack.dates).toEqual(["2026-09-30", "2026-10-12"]);
+  const noTrack = nisarStack(mk([
+    f("2026-09-30", "png/a.png"), f("2026-10-05", "png/b_082D.png"), f("2026-10-12", "png/c.png"),
+    f("2026-10-17", "png/e.png", { note: "track 082 D frame 103; context track (082 D)" }),
+  ]))!;
+  expect(noTrack.dates).toEqual(["2026-09-30", "2026-10-12"]);
+});

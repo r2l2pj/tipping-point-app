@@ -52,12 +52,15 @@ export default function CompareOverlay({
   };
   const [bi, setBi] = useState(at(init?.before, 0));
   const [ai, setAi] = useState(at(init?.after, Math.max(0, n - 1)));
-  const sideAt = (i: number) => {
+  // Same tag wording as the pair: "NISAR radar before (HH) — Sep 30, 2026".
+  const sideAt = (i: number, side: "before" | "after") => {
     const f = stack!.frames[stack!.dates[i]];
-    return (pol === "HV" ? f.HV ?? f.HH : f.HH ?? f.HV)!;
+    const s = (pol === "HV" ? f.HV ?? f.HH : f.HH ?? f.HV)!;
+    const p = s === f.HV ? "HV" : "HH";
+    return { ...s, label: s.label.replace(/ (HH|HV) — /, ` ${side} (${p}) — `) };
   };
   const shown = stack
-    ? { ...pair, before: sideAt(bi), after: sideAt(ai) }
+    ? { ...pair, before: sideAt(bi, "before"), after: sideAt(ai, "after") }
     : pol === "HV" && pair.hv ? { ...pair, before: pair.hv.before, after: pair.hv.after } : pair;
   const hasHv = !!pair.hv || !!stack?.dates.some((d) => stack.frames[d].HV);
   const seg = (on: boolean) =>
@@ -67,7 +70,7 @@ export default function CompareOverlay({
     <>
       <CompareMaps key={`${pol}-${bi}-${ai}`} pair={shown} onClose={onClose} controlsRef={controlsRef} />
       {(hasHv || stack || forecastCtl) && (
-        <div className={`absolute left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1 ${forecastCtl ? "top-12" : "top-3"}`}>
+        <div className={`absolute left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1 ${forecastCtl || stack ? "top-12" : "top-3"}`}>
           {forecastCtl && (
             <div role="group" aria-label="Forecast lead" data-forecast-leads
               className="flex items-center gap-1 rounded-full border border-cc-line-strong bg-white/95 p-[3px] shadow">
