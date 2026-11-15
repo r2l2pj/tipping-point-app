@@ -223,7 +223,9 @@ export function Legend({
             Hatched: forecast
           </span>
         )}
-        {layerLegendRows(bundle, layers, probHorizon).map((r) => (
+        {layerLegendRows(bundle, layers, probHorizon, stepDate).map((r) => r.note ? (
+          <span key={r.id} className="pl-[32px] text-xs text-cc-muted" data-legend-note>{r.label}</span>
+        ) : (
           <span key={r.id} className="inline-flex items-center gap-2.5">
             <span aria-hidden="true" className={r.round ? "mx-[6px] inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black" : `${swatch} border border-[#9aa7a0]`} style={{ background: r.swatch }} />
             {r.label}

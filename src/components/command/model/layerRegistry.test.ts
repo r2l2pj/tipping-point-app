@@ -375,3 +375,17 @@ test("conductor: Now forecast day caption 'Rain index forecast for <day>'; an ML
   expect(s.probHorizon).toBe("72h");
   expect(s.dayIndex).toBe(initialState([live]).dayIndex);
 });
+
+test("rain legend follows the manifest stops and note (re-rendered imerg PNG)", async () => {
+  const { rainLegendRows } = await import("./legend");
+  const layer = { id: "imerg_20260930", date: "2026-09-30", png: "x.png", legend: { unit: "mm", note: "transparent below 20 mm; orange/red = cells above the 95th/99th percentile of the season's BASIN-AVERAGE 3-day rain",
+    stops: [{ v: 20, color: "#c6dbef", label: "20" }, { v: 62.5, color: "#fd8d3c", label: "62 (p95)" }, { v: 100, color: "#d7301f", label: "100 (p99)" }] } };
+  const b = liveBundle({ manifest: { layers: [layer] } as never });
+  const rows = layerLegendRows(b, ["imerg"], "24h", "2026-09-30");
+  expect(rows[0].label).toBe("Rain, 3 days (mm): 20 · 62 (p95) · 100 (p99)");
+  expect(rows[0].swatch).toContain("#fd8d3c");
+  expect(rows[1]).toMatchObject({ note: true });
+  expect(rows[1].label).toContain("basin-average");
+  expect(rainLegendRows(liveBundle(), "2026-09-30")).toBeUndefined();
+  expect(layerLegendRows(liveBundle(), ["imerg"])[0].label).toBe("Rain (GPM IMERG)");
+});

@@ -50,15 +50,15 @@ export default function TopBar({
       </span>
       <div className="grow" />
       {search && (
-        <div className="max-[899px]:order-last max-[899px]:basis-full min-[900px]:w-[min(260px,22vw)]">{search}</div>
+        <div className="max-[899px]:order-last max-[899px]:basis-full min-[900px]:max-w-[260px] min-[900px]:shrink min-[900px]:grow min-[900px]:basis-[120px]">{search}</div>
       )}
 
       <div role="group" aria-label="View" className="inline-flex rounded-full border border-cc-line-strong bg-cc-surface p-[3px]">
         <button type="button" aria-pressed={view === "command"} onClick={() => onView("command")} className={seg(view === "command")}>
-          <Icon d={ICON.command} /> Command Center
+          <span className="contents min-[1800px]:inline-flex max-[1799px]:hidden"><Icon d={ICON.command} /></span> Command Center
         </button>
         <button type="button" aria-pressed={view === "public"} onClick={() => onView("public")} className={seg(view === "public")}>
-          <Icon d={ICON.megaphone} /> Public Alerts
+          <span className="contents min-[1800px]:inline-flex max-[1799px]:hidden"><Icon d={ICON.megaphone} /></span> Public Alerts
         </button>
       </div>
 
@@ -80,7 +80,7 @@ export default function TopBar({
             aria-label="Past event"
             value={bundle.id}
             onChange={(e) => onSelectCase(e.target.value)}
-            className="h-[38px] max-w-[290px] border-0 bg-cc-surface px-1 text-sm font-semibold text-cc-ink"
+            className="h-[38px] max-w-[230px] border-0 min-[1800px]:max-w-[290px] bg-cc-surface px-1 text-sm font-semibold text-cc-ink"
           >
             {replays.map((c) => (
               <option key={c.id} value={c.id}>{c.title}</option>

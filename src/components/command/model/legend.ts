@@ -36,6 +36,28 @@ export interface LayerLegendRow {
   label: string;
   swatch: string; // CSS background
   round?: boolean;
+  note?: boolean; // a text line under the row before it, no swatch
+}
+
+// lead-ml/lead-analysis rain legend in the manifest: {unit, stops:[{v,color,
+// label}], note}. The drawn PNG uses these colors, so the legend must too.
+interface RainLegend { unit?: string; stops?: { color?: unknown; label?: unknown }[]; note?: unknown }
+export function rainLegendRows(bundle: CcBundle, stepDate?: string): LayerLegendRow[] | undefined {
+  const layers = (bundle.manifest?.layers ?? []) as unknown as { id?: string; date?: string; legend?: RainLegend }[];
+  const withStops = layers.filter((l) => l.id?.startsWith("imerg") && Array.isArray(l.legend?.stops) && l.legend!.stops!.length > 1);
+  const l = withStops.find((x) => stepDate && x.date === stepDate.slice(0, 10)) ?? withStops[0];
+  const stops = (l?.legend?.stops ?? []).filter((s): s is { color: string; label: string } => typeof s.color === "string" && typeof s.label === "string");
+  if (stops.length < 2) return undefined;
+  const w = 100 / stops.length;
+  const swatch = `linear-gradient(90deg, ${stops.map((s, i) => `${s.color} ${(i * w).toFixed(1)}% ${((i + 1) * w).toFixed(1)}%`).join(", ")})`;
+  const unit = typeof l!.legend!.unit === "string" ? ` (${l!.legend!.unit})` : "";
+  const rows: LayerLegendRow[] = [{ id: "imerg", label: `Rain, 3 days${unit}: ${stops.map((s) => s.label).join(" · ")}`, swatch }];
+  const note = l!.legend!.note;
+  if (typeof note === "string" && note.trim()) {
+    // Plain case on screen (the note shouts one word for the team).
+    rows.push({ id: "imerg-note", label: note.trim().replace(/\bBASIN-AVERAGE\b/g, "basin-average"), swatch: "", note: true });
+  }
+  return rows;
 }
 
 // lead-ml hand_low legend {stops:[{color,label}]}; default blue.
@@ -52,9 +74,11 @@ export function mlLowToday(bundle: CcBundle, horizon = "24h"): string | undefine
     ? `Low everywhere today (top 1% of land ≤ ${p99.toFixed(2)})` : undefined;
 }
 
-export function layerLegendRows(bundle: CcBundle, on: readonly LayerId[], probHorizon = "24h"): LayerLegendRow[] {
+export function layerLegendRows(bundle: CcBundle, on: readonly LayerId[], probHorizon = "24h", stepDate?: string): LayerLegendRow[] {
   const rows: LayerLegendRow[] = [];
-  if (on.includes("imerg")) rows.push({ id: "imerg", label: "Rain (GPM IMERG)", swatch: "linear-gradient(90deg, #e6f1fb, #2166ac)" });
+  if (on.includes("imerg")) {
+    rows.push(...(rainLegendRows(bundle, stepDate) ?? [{ id: "imerg", label: "Rain (GPM IMERG)", swatch: "linear-gradient(90deg, #e6f1fb, #2166ac)" }]));
+  }
   if (on.includes("hand")) rows.push({ id: "hand", label: "Low ground (HAND ≤ 5 m)", swatch: handSwatch(bundle) });
   if (on.includes("smap")) rows.push({ id: "smap", label: "Soil moisture (SMAP), 0 to 1", swatch: "linear-gradient(90deg, #f6e8c3, #8c510a)" });
   if (on.includes("ptrigger")) {

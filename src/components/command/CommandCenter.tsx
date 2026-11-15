@@ -306,7 +306,7 @@ export function CommandCenterView({
           }}
         />
         {city && live && view === "command" && (
-          <div className="pointer-events-auto absolute left-1/2 top-14 z-30 w-[min(360px,calc(100%-24px))] -translate-x-1/2">
+          <div className="pointer-events-auto z-30 mx-3 mt-3 min-[900px]:absolute min-[900px]:left-1/2 min-[900px]:top-14 min-[900px]:mx-0 min-[900px]:mt-0 min-[900px]:w-[360px] min-[900px]:-translate-x-1/2">
             <CityCard place={city.place} dates={city.dates}
               onShow={() => setFocus({ bbox: city.place.bbox, center: city.place.centroid, key: Date.now() })}
               onClose={() => { setCity(undefined); setCityParam(undefined); }} />

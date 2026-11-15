@@ -264,7 +264,7 @@ export default function MapStage({
       {/* Nav (Lucas): one click from any past event back to the live map. */}
       {!comparing && bundle.mode === "replay" && (
         <button type="button" data-back-to-live onClick={() => dispatch({ type: "setMode", mode: "now" })}
-          className={`absolute top-3 z-10 ${chip} !text-xs font-semibold text-cc-accent`} style={{ left: L(140) }}>
+          className={`absolute top-3 z-10 ${chip} !text-xs font-semibold text-cc-accent`} style={{ left: L(152) }}>
           ← Back to live<span className="max-[639px]:hidden"> (Now)</span>
         </button>
       )}

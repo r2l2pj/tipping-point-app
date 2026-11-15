@@ -66,15 +66,18 @@ const slimZones = (fc: CcBundle["zones"]): CcBundle["zones"] =>
     })),
   };
 
-// Layer fields the screen never reads: the per-layer legend, `kind`,
+// Layer fields the screen never reads: the per-layer legend (but see KEEP_LEGEND), `kind`,
 // `forecast_source` on GFS frames (isGfsFrame knows them by id), and the
 // descriptive fields of P(trigger) frames (basis_label and low_skill stay).
 const GFS_ID = /_gfs_d[1-3]$/;
 const PTRIGGER_DROP = ["title", "serve_note", "domain", "model", "obs_days", "forecast_days",
   "horizon_days", "obs_through", "gfs_issued", "basis", "partly_forecast"];
+// Kept: the rain legend (its stops are the colors of the re-rendered PNG)
+// and hand_low's swatch color.
+const KEEP_LEGEND = (id: string) => id.startsWith("imerg") || id === "hand_low";
 function slimLayer(layer: NonNullable<CcBundle["manifest"]>["layers"][number]) {
-  const { legend: _legend, ...rest } = layer as typeof layer & { kind?: unknown };
-  const out = { ...rest } as Record<string, unknown>;
+  const out = { ...layer } as Record<string, unknown>;
+  if (!KEEP_LEGEND(layer.id)) delete out.legend;
   delete out.kind;
   if (GFS_ID.test(layer.id)) delete out.forecast_source;
   if (layer.id.startsWith("p_trigger")) for (const k of PTRIGGER_DROP) delete out[k];
