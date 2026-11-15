@@ -267,6 +267,9 @@ function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
     const reason = none.reason ?? reasonOf("flooded_km2") ?? reasonOf("polygons");
     return {
       ...base,
+      // No usable pair (R2: mixed acquisition modes): the rejected pair's
+      // images and backscatter series are not shown as evidence.
+      ...(none.computed ? {} : { series: undefined, compare: { kind: "radar" as const, reason: "no comparable NISAR pair this pass" } }),
       pair: false,
       headline: `${none.label}${dates}`,
       flooded: { label: RESPONSE_AREA_LABEL, value: none.computed ? "none detected" : "not computed" },

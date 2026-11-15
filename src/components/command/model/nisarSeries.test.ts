@@ -134,6 +134,10 @@ describe("lead-analysis R2 status (nisar_meta.json)", () => {
     expect(card.people).toBeUndefined();
     expect(card.canShowOnMap).toBe(false);
     expect(JSON.stringify(card)).not.toMatch(/2\.3 km²|\b82\b/);
+    // the rejected pair's swipe and series are not shown as evidence
+    expect(card.series).toBeUndefined();
+    expect(card.compare.pair).toBeUndefined();
+    expect(card.compare.reason).toBe("no comparable NISAR pair this pass");
     expect(tourStops([live])[0].what).toContain("no flood candidates (no usable pair)");
     expect(tourStops([live])[0].title).toBe("1 · Now — Southern Brazil");
   });
