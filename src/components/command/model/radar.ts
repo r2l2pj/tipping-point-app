@@ -2,6 +2,7 @@
 // "NISAR" label needs a real pair, scars are always "candidates".
 import { canonicalCaseId } from "@/lib/contract";
 import { assetUrl } from "@/lib/layers";
+import { nisarSeriesView, type NisarSeriesView } from "./nisarSeries";
 import type { NisarPass } from "@/lib/types";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
 import { declared } from "./lazy";
@@ -206,6 +207,7 @@ export interface RadarCard {
   passCount: number; // all passes, also those not sent to the browser
   canShowOnMap: boolean;
   compare: CompareOption;
+  series?: NisarSeriesView; // L42, WA replay
 }
 
 // Live case with a published radar response (lead-live R2).
@@ -288,5 +290,6 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
       ? bundle.flood.features.length > 0
       : declared(bundle, "flood_confirmed"),
     compare: radarCompare(bundle),
+    series: nisarSeriesView(bundle),
   };
 }

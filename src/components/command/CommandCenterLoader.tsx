@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { canonicalCaseId } from "@/lib/contract";
-import { getAlerts, getCaseBundle, getEventsIndex, getMlArtifacts, getRootManifest } from "@/lib/data";
+import { getAlerts, getCaseBundle, getDataJson, getEventsIndex, getMlArtifacts, getRootManifest } from "@/lib/data";
+import { slimNisarSeries } from "./model/nisarSeries";
 import { resolveAsset } from "@/lib/contract";
 import type { ManifestLayer } from "@/lib/types";
 import { buildMlView, groupImportance } from "./model/ml";
@@ -204,9 +205,14 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
       getCaseBundle(e.id, e.title, e.bbox, e.reference_date).catch(() => null))),
     (getCaseBundle("now", "Now — Southern Brazil", NOW_BBOX) as Promise<CcBundle | null>).catch(() => null),
   ]);
+  // L42: NISAR time series product, only where the case lists it.
+  const series = await Promise.all(eventBundles.map((b) => {
+    const p = (b?.products as Record<string, unknown> | undefined)?.nisar_timeseries;
+    return typeof p === "string" ? getDataJson(p).then(slimNisarSeries).catch(() => undefined) : Promise.resolve(undefined);
+  }));
   const cases: CcBundle[] = [];
   eventBundles.forEach((bundle, i) => {
-    if (bundle) cases.push({ ...bundle, nullReasons: nullReasons(root, events[i].id) });
+    if (bundle) cases.push({ ...bundle, nullReasons: nullReasons(root, events[i].id), ...(series[i] ? { nisarSeries: series[i] } : {}) });
   });
   // Run time of the live case: the `updated_at` of the live node itself. The
   // loader falls back to the root manifest time, which is the time of the

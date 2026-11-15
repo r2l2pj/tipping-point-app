@@ -588,6 +588,13 @@ export const getMlArtifacts = async (): Promise<{
   return { card, importance, tml, base: ctx.lastBase ?? ctx.bases[0] };
 };
 
+// A small per-case JSON product (path relative to the data root, as the
+// manifest's products map gives it), e.g. wa_2025/nisar_timeseries.json.
+export const getDataJson = async (p: string): Promise<unknown> => {
+  await requestTime();
+  return readData<unknown>(newCtx(), "", p);
+};
+
 // One case = one entry in the root manifest's `cases` map (canonical
 // underscore keys; caseAlias maps the hyphen event ids used by events.json),
 // backed by a directory under public/data/<case-key>. Legacy per-case

@@ -2,6 +2,7 @@
 
 import { PASSES_SHOWN, type RadarCard as RadarModel } from "./model/radar";
 import { fmtBrt } from "./model/format";
+import NisarSeriesChart from "./NisarSeriesChart";
 import { Icon, ICON } from "./ui";
 
 // Radar confirmation. "NISAR" is only said for a real pair; scars are always
@@ -92,6 +93,7 @@ export default function RadarCard({
           {RADAR_SEES.map((l) => <p key={l} className="m-0 text-cc-muted">{l}</p>)}
         </div>
       )}
+      {radar.series && <NisarSeriesChart s={radar.series} />}
       {radar.pair && (
         <details className="mt-1.5 text-xs" data-nisar-why>
           <summary className="cursor-pointer font-semibold">What NISAR sees and why</summary>
