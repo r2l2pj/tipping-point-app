@@ -78,10 +78,16 @@ export const RESPONSE_LAYER_LABEL = "Flood candidates from radar (NISAR)";
 export const RESPONSE_NOTE =
   "Radar flood candidates from two NISAR passes — not yet checked on the ground.";
 
+const hasDswx = (bundle: CcBundle): boolean =>
+  typeof (bundle.products as Record<string, unknown> | undefined)?.flood_dswx === "string";
+
 export function floodLabels(bundle: CcBundle): { area: string; layer: string } {
   // Live case: the response polygons are radar candidates, never "confirmed".
-  if (bundle.mode === "live" && bundle.response) {
-    return { area: RESPONSE_AREA_LABEL, layer: RESPONSE_LAYER_LABEL };
+  if (bundle.mode === "live" && (bundle.response || hasDswx(bundle))) {
+    return {
+      area: RESPONSE_AREA_LABEL,
+      layer: hasDswx(bundle) ? "Flood candidates from radar (NISAR, OPERA DSWx-S1)" : RESPONSE_LAYER_LABEL,
+    };
   }
   const source = bundle.metricsView?.flood_source;
   if (hasNisarPair(bundle) || source === "nisar") {
@@ -140,6 +146,8 @@ export interface RadarCard {
   dates?: string; // "Dec 4, 2025 → Dec 16, 2025"
   flooded?: { label: string; value: string; swath?: string };
   people?: { label: string; value: string };
+  // Live: other satellite flood sources of the R3 summary (OPERA DSWx-S1).
+  others?: { label: string; value: string }[];
   note?: string; // live response: candidates + how old the radar pass is
   candidates: { label: string; value: string; note: string };
   limitation?: string;
@@ -177,8 +185,19 @@ function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
 }
 
 export function radarCard(bundle: CcBundle): RadarCard {
-  const card = baseRadarCard(bundle);
-  return bundle.mode === "live" && bundle.response ? responseCard(bundle, card) : card;
+  const base = baseRadarCard(bundle);
+  const card = bundle.mode === "live" && bundle.response ? responseCard(bundle, base) : base;
+  const others = (bundle.mode === "live" ? bundle.responseSources ?? [] : [])
+    .filter((s) => !/nisar/i.test(s.source))
+    .map((s) => ({
+      label: /dswx/i.test(s.source) ? "Also seen by OPERA DSWx-S1 radar (candidates)" : `Also seen by ${s.source} (candidates)`,
+      value: `${fmtKm2(s.flooded_km2)}` +
+        (finite(s.people_flooded) ? ` · ${Math.round(s.people_flooded).toLocaleString("en-US")} people (estimate)` : "") +
+        (s.latest_acquired ? ` · newest pass ${fmtDate(s.latest_acquired)}` : ""),
+    }));
+  return others.length
+    ? { ...card, others, canShowOnMap: card.canShowOnMap || hasDswx(bundle) }
+    : card;
 }
 
 function baseRadarCard(bundle: CcBundle): RadarCard {

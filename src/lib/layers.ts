@@ -582,6 +582,19 @@ export function fetchGeo(
 
 type ProductsLike = Record<string, string | null | undefined> | undefined;
 
+// Flood candidate files merged into one collection, "lower" confidence
+// polygons (R1: cropland / seasonal water) left out like in the headline
+// numbers. Missing files (null) are skipped.
+export function standardFlood(
+  parts: (GeoJSON.FeatureCollection | null | undefined)[]
+): GeoJSON.FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: parts.flatMap((fc) => fc?.features ?? [])
+      .filter((f) => f.properties?.confidence !== "lower"),
+  };
+}
+
 // One point per feature at the centre of its bounding box, properties kept.
 // Small polygons (radar flood candidates of ~1 km²) vanish at the regional
 // zoom; the map draws these as dots so they stay findable.
