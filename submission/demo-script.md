@@ -20,7 +20,7 @@ Same cut as v5 except beat C. Captions: `captions-v6-draft.srt` (55 words, team 
 
 | Beat | Time | On screen | Voiceover | Words |
 | --- | --- | --- | --- | --- |
-| C | 11–17.5 s | Live view `/` zoomed to Uruguaiana / Itaqui on the Uruguay River: the NISAR 12-day series ([TBD] pass dates) with the flood candidates ([TBD] km²) and the people inside ([TBD]); then **Public Alerts** (experimental). Overlay "Uruguay River · Uruguaiana, Rio Grande do Sul · NISAR every 12 days · [TBD] dates". Wording of "flooded" and "tracked the water" must match the published series (if the series shows no new water, change the line). | "This month the Uruguay River flooded Uruguaiana; NISAR tracked the water through cloud every 12 days." | 16 |
+| C | 11–17.5 s | Live view `/` zoomed to Uruguaiana / Itaqui on the Uruguay River: the NISAR 12-day series ([TBD] pass dates) with the flood candidates ([TBD] km²) and the people inside ([TBD]); then **Public Alerts** (experimental). Overlay "Uruguay River · Uruguaiana, Rio Grande do Sul · NISAR every 12 days · [TBD] dates". Wording of "flooded" and "tracked the water" must match the published series (if the series shows no new water, change the line). | "This month the Uruguay River flooded Uruguaiana; NISAR tracked it through cloud every 12 days." | 15 |
 
 Must-read for C: the Uruguaiana pass dates and "flood candidates" in the NISAR card. Fallback if the series is late or empty: ship v5 as recorded at 13:00.
 

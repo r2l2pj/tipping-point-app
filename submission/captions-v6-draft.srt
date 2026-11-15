@@ -8,7 +8,7 @@ In Washington, clouds hid 93% of the area from optical satellites; NISAR radar m
 
 3
 00:00:11,000 --> 00:00:17,500
-This month the Uruguay River flooded Uruguaiana; NISAR tracked the water through cloud every 12 days.
+This month the Uruguay River flooded Uruguaiana; NISAR tracked it through cloud every 12 days.
 
 4
 00:00:17,500 --> 00:00:25,500
