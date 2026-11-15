@@ -6,7 +6,7 @@
 // progress (or no live bundle exists yet).
 import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { keepForPublic } from "./sync-filter.mjs";
+import { keepForPublic, neededTifs } from "./sync-filter.mjs";
 
 const SRC = process.env.DATA_REPO
   ? path.join(process.env.DATA_REPO, "data")
@@ -19,10 +19,11 @@ if (!existsSync(SRC)) {
   process.exit(0);
 }
 mkdirSync(DEST, { recursive: true });
+const KEEP_TIF = neededTifs(SRC);
 cpSync(SRC, DEST, {
   recursive: true,
   filter: (src) =>
-    keepForPublic(src, SRC) &&
+    keepForPublic(src, SRC, KEEP_TIF) &&
     src !== NOW &&
     !src.startsWith(NOW + path.sep),
 });
@@ -36,7 +37,7 @@ if (!existsSync(nowManifest)) {
   if (updated_at == null) {
     console.log("sync-data: now/ updated_at is null (run in progress) — skipped");
   } else {
-    cpSync(NOW, path.join(DEST, "now"), { recursive: true, filter: (src) => keepForPublic(src, NOW) });
+    cpSync(NOW, path.join(DEST, "now"), { recursive: true, filter: (src) => keepForPublic(src, NOW, KEEP_TIF) });
     console.log("sync-data: now/ bundle synced");
   }
 }
