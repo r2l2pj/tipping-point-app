@@ -354,6 +354,47 @@ export function layerAvailable(
 export const PROB_LAYER_TITLE = "Model probability (XGBoost)";
 export const PROB_FORECAST_DEFAULT = "NOAA GFS";
 
+// P(trigger) horizons (L27): one manifest layer family per horizon, ids
+// `p_trigger_<h>` (per-day frames repeat the id with different dates).
+// 7 d / 14 d come from the long GFS range (to 384 h) — low forecast skill,
+// so the UI always carries a visible lower-confidence note on them.
+export const PROB_HORIZONS = ["24h", "48h", "72h", "7d", "14d"] as const;
+export type ProbHorizon = (typeof PROB_HORIZONS)[number];
+export const LONG_RANGE_HORIZONS: ReadonlySet<ProbHorizon> = new Set(["7d", "14d"]);
+export const LONG_RANGE_NOTE = "lower confidence: long-range forecast";
+export const PROB_HORIZON_LABEL: Record<ProbHorizon, string> = {
+  "24h": "24 h",
+  "48h": "48 h",
+  "72h": "72 h",
+  "7d": "7 d",
+  "14d": "14 d",
+};
+
+const probId = (h: ProbHorizon) => `p_trigger_${h}`;
+const isHorizonFrame = (l: ManifestLayer, h: ProbHorizon) =>
+  (l.id === probId(h) || l.id.startsWith(`${probId(h)}_`)) && Boolean(l.png || l.cog);
+
+// Horizons the manifest actually ships, in display order.
+export function probHorizonsAvailable(
+  layers: ManifestLayer[] | undefined
+): ProbHorizon[] {
+  return PROB_HORIZONS.filter((h) => (layers ?? []).some((l) => isHorizonFrame(l, h)));
+}
+
+// The probability frame for a horizon, preferring the selected day. When the
+// manifest ships no horizon-keyed ids at all (legacy single `p_trigger*`
+// family), fall back to the plain prefix match.
+export function probFrame(
+  layers: ManifestLayer[] | undefined,
+  horizon: ProbHorizon,
+  date?: string
+): ManifestLayer | undefined {
+  if (probHorizonsAvailable(layers).length === 0)
+    return manifestRaster(layers, "pTrigger", date);
+  const matches = (layers ?? []).filter((l) => isHorizonFrame(l, horizon));
+  return matches.find((l) => l.date === date) ?? matches[0];
+}
+
 export function probLayerNote(l?: ManifestLayer): string | undefined {
   if (!l) return undefined;
   const issued = l.issued_at ?? l.date;

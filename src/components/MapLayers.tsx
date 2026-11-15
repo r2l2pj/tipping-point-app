@@ -27,6 +27,8 @@ import {
   isGfsFrame,
   manifestRaster,
   pickTpiFrame,
+  probFrame,
+  type ProbHorizon,
   overlayPlan,
   pointInPolygons,
   rankedZonePoints,
@@ -134,7 +136,8 @@ export function useMapLayers(
   dayIndex: number,
   layers: LayerState,
   showFlood: boolean,
-  tab?: TabKey
+  tab?: TabKey,
+  probHorizon: ProbHorizon = "24h"
 ) {
   const fcastMarker = useRef<Marker | null>(null);
   const clickSeq = useRef(0);
@@ -380,7 +383,10 @@ export function useMapLayers(
     // NASA toggle rasters (IMERG / SMAP / NISAR): pixels only when the
     // manifest ships a real raster for the layer — never synthetic data.
     const rasterToggle = (key: ToggleLayerKey, src: string, lyr: string) => {
-      const l = manifestRaster(bundle.manifest?.layers, key, day?.date);
+      const l =
+        key === "pTrigger"
+          ? probFrame(bundle.manifest?.layers, probHorizon, day?.date)
+          : manifestRaster(bundle.manifest?.layers, key, day?.date);
       const url = assetUrl(caseDir, l?.png);
       if (l && url) {
         ensureImageLayer(
@@ -595,7 +601,7 @@ export function useMapLayers(
       console.warn("MapLayers update failed (map kept alive)", err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng]);
+  }, [map, bundle, dayIndex, layers, showFlood, tab, activePng, probHorizon]);
 
   // Priority-zone pins — top 20 by rank (matches the side list), anchored
   // at the polygon label point (real files are Polygons, not Points).

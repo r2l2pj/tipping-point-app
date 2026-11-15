@@ -5,9 +5,14 @@ import type { CaseBundle } from "@/lib/types";
 import {
   fmtDataDate,
   layerAvailable,
-  manifestRaster,
+  LONG_RANGE_HORIZONS,
+  LONG_RANGE_NOTE,
+  probFrame,
+  PROB_HORIZON_LABEL,
+  probHorizonsAvailable,
   probLayerNote,
   PROB_LAYER_TITLE,
+  type ProbHorizon,
   type ToggleLayerKey,
 } from "@/lib/layers";
 
@@ -42,6 +47,8 @@ export default function LayersPanel({
   budget,
   frameDate,
   frameBasis,
+  probHorizon = "24h",
+  onProbHorizon,
 }: {
   layers: LayerState;
   onToggle: (key: keyof LayerState) => void;
@@ -49,7 +56,10 @@ export default function LayersPanel({
   budget: number;
   frameDate?: string;
   frameBasis?: string;
+  probHorizon?: ProbHorizon;
+  onProbHorizon?: (h: ProbHorizon) => void;
 }) {
+  const horizons = probHorizonsAvailable(bundle.manifest?.layers);
   const dd = bundle.data_dates ?? {};
   // A row only exists when the manifest ships a real raster for the layer —
   // toggles never paint synthetic data as a NASA product.
@@ -109,12 +119,44 @@ export default function LayersPanel({
                   {isProb &&
                     (() => {
                       const note = probLayerNote(
-                        manifestRaster(bundle.manifest?.layers, "pTrigger", frameDate)
+                        probFrame(bundle.manifest?.layers, probHorizon, frameDate)
                       );
                       return note ? (
                         <span className="block text-xs text-zinc-500">{note}</span>
                       ) : null;
                     })()}
+                  {isProb && horizons.length > 0 && (
+                    <span
+                      role="radiogroup"
+                      aria-label="Probability horizon"
+                      className="mt-1 flex flex-wrap gap-1"
+                    >
+                      {horizons.map((h) => (
+                        <button
+                          key={h}
+                          type="button"
+                          role="radio"
+                          aria-checked={h === probHorizon}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onProbHorizon?.(h);
+                          }}
+                          className={`rounded border px-1.5 py-0.5 text-xs ${
+                            h === probHorizon
+                              ? "border-cyan-500 text-cyan-300"
+                              : "border-zinc-700 text-zinc-400 hover:text-zinc-200"
+                          }`}
+                        >
+                          {PROB_HORIZON_LABEL[h]}
+                        </button>
+                      ))}
+                    </span>
+                  )}
+                  {isProb && LONG_RANGE_HORIZONS.has(probHorizon) && (
+                    <span className="mt-1 block text-xs font-medium text-amber-400">
+                      {LONG_RANGE_NOTE}
+                    </span>
+                  )}
                 </span>
               </label>
             </li>

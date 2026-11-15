@@ -8,6 +8,8 @@ import {
   fmtDate,
   layerAvailable,
   pickTpiFrame,
+  probHorizonsAvailable,
+  type ProbHorizon,
   toggleBudget,
   type TabKey,
   type ToggleLayerKey,
@@ -70,6 +72,7 @@ export default function Dashboard({ cases, initialCase, initialDay }: { cases: C
   const [playing, setPlaying] = useState(false);
   const [tab, setTab] = useState<TabKey>("alert");
   const [map, setMap] = useState<MapInstance | null>(null);
+  const [probHorizon, setProbHorizon] = useState<ProbHorizon>("24h");
   const [layers, setLayers] = useState<LayerState>({
     tpiFlood: false,
     tpiSlide: true,
@@ -159,7 +162,13 @@ export default function Dashboard({ cases, initialCase, initialDay }: { cases: C
   }, [cases, selectCase]);
 
   const showFlood = tab === "radar";
-  const zones = useMapLayers(map, bundle, dayIndex, layers, showFlood, tab);
+  // P(trigger) horizon: the user's pick when this case ships it, else the
+  // shortest published horizon (24 h first).
+  const horizons = probHorizonsAvailable(bundle?.manifest?.layers);
+  const horizon: ProbHorizon = horizons.includes(probHorizon)
+    ? probHorizon
+    : (horizons[0] ?? "24h");
+  const zones = useMapLayers(map, bundle, dayIndex, layers, showFlood, tab, horizon);
 
   if (!bundle) {
     return (
@@ -196,6 +205,8 @@ export default function Dashboard({ cases, initialCase, initialDay }: { cases: C
             bundle={bundle}
             budget={budget}
             frameDate={days[dayIndex]?.date}
+            probHorizon={horizon}
+            onProbHorizon={setProbHorizon}
             frameBasis={(() => {
               // Frame provenance for the selected day: the active TPI
               // layer's own data_basis wins over the case-level field.
