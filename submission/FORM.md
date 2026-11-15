@@ -40,6 +40,8 @@ Paste from `project-page.md` → "Detailed Project Description". Its sections ar
 - what it does
 - how it works
 - what NISAR shows and why
+- a testable hypothesis (double bounce in flooded towns and forests; HH vs HV)
+- the future of NISAR for this problem
 - what's new vs LHASA / OPERA / GFMS
 - a validation table with n and caveats
 - limitations

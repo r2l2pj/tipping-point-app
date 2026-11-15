@@ -1,7 +1,7 @@
 # tipping-point-app
 
 Fullstack app for **Tipping Point** — NASA Space Apps Challenge 2026,
-"Dancing with the SARs". Rain warns. Radar confirms.
+"Dancing with the SARs". Rain warns. Radar sees through.
 
 Next.js 16 (App Router) + MapLibre + `@google/earthengine`. Serves the artifacts
 published by [`r2l2pj/tipping-point-data`](https://github.com/r2l2pj/tipping-point-data).
@@ -96,7 +96,7 @@ Every number below is read from the published `metrics.json`
 as model inputs.
 
 **Flood: NISAR vs OPERA DSWx-S1, like for like (Washington, Dec 2025).**
-NISAR GCOV pass pair Dec 4 → Dec 16, 2025 (track 172D, frame 064, BETA
+NISAR radar pass pair (GCOV backscatter product) Dec 4 → Dec 16, 2025 (track 172D, frame 064, BETA
 products) mapped 27.99 km² of new-flood candidates within the swath (the post
 pass covers 74% of the area of interest). Scored against OPERA DSWx-S1
 (Sentinel-1 radar water) on the same footing: new flood only (water on
@@ -152,6 +152,6 @@ replays; the index adds where and who, not an earlier warning.
   landslide marks are always candidates, never field confirmation.
 - The video demo is a replay of past events; the live view (`now/`) covers Southern Brazil only and refreshes every 3 h.
 - The rs_2024 case has no radar confirmation — the event predates NISAR.
-- The wa_2025 radar confirms flood only (NISAR GCOV). Landslide marks are
+- The wa_2025 radar maps flood candidates only (NISAR). Landslide marks are
   candidates from post-event HLS optical, and no GUNW pair spans the event
   (declared limitation).

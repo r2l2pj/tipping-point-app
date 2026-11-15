@@ -2,6 +2,18 @@
 
 One page. Full detail, sources and history: `submission/REVIEW.md`. Every number in the pack comes from published `metrics.json` (tipping-point-data); no placeholders are left. DRAFT banners stay on until you approve.
 
+## Compliance gate (L42) — click **Submit by ~20:00 BRT**, then keep editing until 23:59
+
+Fill these before you click (search the files for the brackets):
+1. `[TEAM NAME]`: `captions.srt` + `captions.pt-BR.srt` cue 1, video title card (`.crew/video/build-v5.sh` t0_team), `project-page.md` Tools/Team line, slide 1.
+2. Member names (`[member names]` on the page, `[names]` on slide 1). Every member must be registered at **Florianópolis** (not waitlisted) and on the **Members** tab; 1–6 people; nobody can be added after submission closes.
+3. `[APP URL]` (VPS, L39): FORM §4, project-page "Try it" (4 links), video close card (`APP_URL=… ./build-v5.sh`).
+4. `[VIDEO LINK]` in FORM §3, after upload (≤30 s, test it in a private window).
+5. Voice: if the VO is text-to-speech, replace `[if the VO is TTS, say so here]` on the page (Use of AI) and in `ai-declaration.md`; if it is a human voice, delete the bracket.
+6. Local Event is filled: Florianópolis (Founder Haus, Jurerê).
+
+Then tick both boxes (T&C + original work, all external code/text/images in References = FORM §8) and click **Submit**. Judges see only the last save.
+
 ## Submit today — deadline Sun Nov 15, 23:59, Local Event time (official 2026 guide)
 
 Paste every field from `submission/FORM.md`, tick "Terms and Conditions" and "Confirm All Work is Original", then click **Submit for Judging**. You can resubmit until the deadline, and only the last save counts. The video must be **≤30 s**; anything longer is not eligible for Global Judging.

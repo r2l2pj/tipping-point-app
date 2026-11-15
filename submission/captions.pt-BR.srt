@@ -16,4 +16,4 @@ O Tipping Point mapeia onde chuva, solo e declive medidos pela NASA indicam que 
 
 5
 00:00:25,500 --> 00:00:28,500
-A chuva avisa. O radar confirma.
+A chuva avisa. O radar enxerga através.

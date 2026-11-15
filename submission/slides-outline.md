@@ -3,11 +3,11 @@
 > **DRAFT — pending approval.**
 
 ## Slide 1 — Title
-- **Tipping Point** — *Rain warns. Radar confirms.*
+- **Tipping Point** — *Rain warns. Radar sees through.*
 - NASA Space Apps 2026 · Challenge: Dancing with the SARs
 - One line: three NASA missions, three layers, one tipping point
-- Team `[TEAM NAME]` · members `[names]` · Local Event `[EVENT]` (the guide requires the team name, the member names and the challenge on the slides)
-- *Visual:* our wordmark + tagline over a dark map (no NASA logos or insignia anywhere in the deck: guide rule); the header's "TIPPING POINT | Rain warns. Radar confirms." wordmark
+- Team `[TEAM NAME]` · members `[names]` · Local Event `Florianópolis (Founder Haus, Jurerê)` (the guide requires the team name, the member names and the challenge on the slides)
+- *Visual:* our wordmark + tagline over a dark map (no NASA logos or insignia anywhere in the deck: guide rule); the header's "TIPPING POINT | Rain warns. Radar sees through." wordmark
 
 ## Slide 2 — The problem
 - May 2024, Rio Grande do Sul floods: 478 municipalities affected, 185 deaths, 581,638 people displaced at the peak
@@ -30,7 +30,7 @@
 - Right panel: **Now on the ground** (NISAR radar card: "Check with NISAR radar →", **Before / after**), **Who is affected**, **Prediction**, **Replay check**; **Show details: validation and impact** opens **How early? (in replay)** / **Why radar** / **Impact**
 - Public feed `/alerts` (**Public Alerts** view): Civil-Defense-style alert cards ("Tipping Point: <level> <hazard> risk"), an **experimental research product, not official warnings** (official: Defesa Civil, SMS 40199)
 - Forecast rain = **NOAA GFS 0.25°** in replay and live, labelled "forecast · NOAA GFS (issued <date>)"; replay D+1..D+3 uses the forecast issued on each day
-- *Visual:* 2–3 real screenshots — **Tipping point reached** over the heated Taquari valley map (RS, Apr 30), NISAR **Before / after** GCOV swipe (WA), /alerts card
+- *Visual:* 2–3 real screenshots — **Tipping point reached** over the heated Taquari valley map (RS, Apr 30), NISAR radar **Before / after** swipe (WA), /alerts card
 
 ## Slide 5 — Did it work?
 - Headline (decided by conductor (delegated), L38): **"Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them."** — WA Dec 2025, 27.99 km² within the NISAR swath; landslides remain candidates only
@@ -39,6 +39,7 @@
   - footnote (required): "Earlier runs (issued 51 and 75 hours before) showed 0%. Onset = first deaths, Apr 29, 2024 00:00 BRT. Anchor-sensitive: with onset Apr 30 the 24 h run shows 0%; the earlier May 1 anchor gave 88%. n = 16,027 UFRGS/Cemaden inventory points."
 - WA flood, honestly: none of the NISAR-flooded area was High in the forecasts issued 24 h or 48 h before onset (Dec 8, 2025); 0.14% in the run issued 72 h before — the index uses local rain only; rivers flood from rain upstream
 - Official warnings came before the index in both replays: the index adds where and who, not an earlier warning
+- Hypothesis (testable): radar misses flooded towns and forests because water + walls/trunks bounce the pulse back (double bounce) and HH brightens instead of darkening; test = HH vs HV over the missed cells (result pending)
 - **Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar**
 - *Visual:* NISAR **Before / after** swipe still + **Replay check** panel (with **Show details: validation and impact** open) next to a small metrics table for both cases
 
@@ -51,8 +52,9 @@
 
 ## Slide 7 — Roadmap + credits
 - Roadmap: refresh on each IMERG update (today every 3 h) → NISAR confirmation trigger per pass → threshold calibration on the landslide catalog → WhatsApp/e-mail alerts
+- Future of NISAR: InSAR ground motion before slope failure · ~200 m soil moisture · flooding under forest canopy · 12-day radar coverage of Brazil
 - Global coverage at release — one config edit
-- NASA inputs: GPM IMERG · SMAP L4 · NASADEM · NISAR GCOV · HLS · VIIRS Black Marble · GPW · OPERA DSWx · OPERA DIST-ALERT · SWOT
+- NASA inputs: GPM IMERG · SMAP L4 · NASADEM · NISAR (L-band radar) · HLS · VIIRS Black Marble · GPW · OPERA DSWx · OPERA DIST-ALERT · SWOT
 - Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA
 - MERIT Hydro used as a validation reference only, not a NASA input
 - Repo + live app links; built with AI assistants under human review

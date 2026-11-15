@@ -5,7 +5,7 @@ Checked 2026-11-15 ~09:30 BRT by lead-submission. Rules come from the official 2
 | # | Rule | Status | Proof / what is left |
 |---|---|---|---|
 | a | Demo video ≤ 30 s, English (subtitles if not) | ✓ rough cut / ☐ final | `ffprobe` on `.crew/video/rough-cut-v1.mp4` = 29.500 s. Subtitles are burned in from `captions.srt`. The final is re-shot from a **local** production build of `freeze-1300` and must be re-measured before upload. |
-| b | Slide deck (if linked) ≤ 7 slides, with team name, member names and challenge | ✓ / ☐ names | `pdfinfo .crew/deck/slides.pdf` = 7 pages. Slide 1 shows the challenge plus the `[TEAM NAME]`, `[names]` and `[EVENT]` placeholders, which Lucas fills. |
+| b | Slide deck (if linked) ≤ 7 slides, with team name, member names and challenge | ✓ / ☐ names | `pdfinfo .crew/deck/slides.pdf` = 7 pages. Slide 1 shows the challenge, Local Event Florianópolis, and the `[TEAM NAME]` and `[names]` placeholders, which Lucas fills (MORNING.md compliance gate, L42). |
 | c | No copyrighted material without permission | ✓ | The news-style stills are gone from the cold open (b9e8325). Video and deck use only our own app screens. The basemap is credited (CARTO, © OpenStreetMap contributors) in FORM §8 and on the map. |
 | d | No images, video, audio or likeness of anyone under 18 | ✓ / ☐ VO | No people appear in any shot or slide. The voiceover must be read by an adult team member (Lucas). |
 | e | No NASA branding (logos, flags, mission identifiers) in team-made content | ✓ | The deck and video carry mission names as plain text only; there is no logo strip (slide 7 fixed). A grep of the app `src/`, `public/` and the deck HTML for meatball/logo/insignia found nothing. The app's mark is our own mountain glyph. |

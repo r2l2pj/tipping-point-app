@@ -10,7 +10,7 @@
 
 ## High-Level Project Summary (form field 2, ≤200 words)
 
-NISAR passes over Southern Brazil every 12 days, and its L-band radar sees through cloud and darkness. Tipping Point is built around that pass. Between passes, NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) feed a Tipping Point Index that maps where floods and landslides are about to happen. After each pass, NISAR shows where the ground actually flooded, as candidates for municipal Civil Defense to check first. Built for Southern Brazil, a live view refreshes every 3 hours with experimental (not official) area alerts, and two past disasters replay day by day with the forecast as it was issued. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them, and 229,782 people were in critical areas.
+NISAR's L-band radar maps new flooding through cloud and darkness. Tipping Point turns each 12-day NISAR pass into a priority list for municipal Civil Defense: where the ground newly flooded, as candidates to check first, and how many people live there. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them, and 229,782 people were in critical areas. NISAR also passes over Southern Brazil, our home region, and the live view shows the latest pass pair. Between passes, a Tipping Point Index built from NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) shows where to look next. The live view refreshes every 3 hours with experimental (not official) area alerts, and two past disasters replay day by day with the forecast as it was issued. We state a testable radar hypothesis (why flooded towns and forests are missed) and what future NISAR products would add.
 
 ## Detailed Project Description (form field 5)
 
@@ -32,7 +32,7 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 
   A geometric mean only reaches Critical (> 0.6) when all three agree.
 - **Forecast.** The next three days extend observed rain with the NOAA GFS 0.25° forecast. This is our only non-NASA input, and every map label says so. In replay we use the run actually issued that day.
-- **Radar response.** For each NISAR GCOV pass pair, we:
+- **Radar response.** For each pair of NISAR radar passes (before and after), we:
   - detect new open water as a drop in co-polarized backscatter (per-scene threshold);
   - gate it with height above drainage;
   - remove permanent water;
@@ -46,6 +46,18 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 - L-band (24 cm) also passes through cloud and rain, which is why it works when optical cannot.
 - Flooded towns and forests can do the opposite. Water under walls or trunks bounces the pulse straight back (double bounce), so they turn bright. Our current detector reads only the darkening in co-polarization, so it misses that flooding. This is a main reason recall is low (see Validation).
 - Landslide scars need a coherence (InSAR) pair spanning the event. No public NISAR pair spans the Washington storm, so scars stay optical candidates.
+
+### Hypothesis: why radar misses flooded towns and forests
+- **What we see.** Our NISAR flood candidates catch only 13% of the new water in OPERA's Sentinel-1 water map for the same days (recall 0.13; see Validation).
+- **Hypothesis.** Calm open floodwater acts like a mirror: both polarizations, HH (sent and received horizontally) and HV (sent horizontally, received vertically), go dark. In a flooded town or forest, the water and the walls or trunks bounce the pulse straight back to the satellite (double bounce), so HH gets *brighter* instead. Our detector only looks for darkening in HH, so it should miss flooding in built-up and forested places.
+- **Prediction.** The flood we miss clusters in built-up and forest cells, and there HH brightens between the passes while HV changes much less.
+- **Test.** Compare HH and HV before and after the storm over the missed cells, split by land cover. Both channels are in the same NISAR files we already use. The result is being computed and will be reported here; if it holds, a brightening rule for towns and forests is the next detector change.
+
+### The future of NISAR for this problem
+- **Ground motion before failure.** Repeat-pass radar interferometry (InSAR) can measure slopes creeping by centimetres before they collapse. Today our landslide marks are only optical candidates after the fact.
+- **Soil moisture at high resolution.** NISAR's planned soil-moisture product (about 200 m) is far finer than SMAP's ~9 km, which would sharpen the "soil" part of the index.
+- **Flooding under forest canopy.** L-band passes through leaves; the double-bounce signal in the hypothesis above is also how flooded forest becomes visible.
+- **Regular coverage of Brazil.** NISAR images Brazil on a 12-day repeat, ascending and descending, so every municipality can get a radar check after each storm without waiting for clear skies.
 
 ### What's new compared with existing NASA tools
 - **vs LHASA v2 and LHASA-F (NASA's landslide nowcast and forecast):** NASA already does the core of the landslide side. LHASA v2 uses XGBoost with IMERG rain and SMAP soil moisture (Stanley et al. 2021, doi:10.3389/feart.2021.640043). LHASA-F forecasts about 3 days ahead from GEOS-FP rain (Khan et al. 2022, doi:10.3389/feart.2022.878996). So a machine-learning, soil-moisture or forecast-driven landslide model is **not** new here. What we add:
@@ -101,7 +113,7 @@ We used AI coding assistants (Anthropic Claude via Claude Code, Cognition Devin,
 - **App:** TypeScript, Next.js 16, React 19, MapLibre GL, Recharts, Tailwind (self-hosted on a VPS).
 - **Pipeline:** Python with uv, earthaccess, asf_search, xarray/rioxarray, rasterio, h5py, geopandas, scikit-image, XGBoost/scikit-learn/SHAP, cfgrib/ecCodes.
 - **Platforms:** Google Earth Engine (one-off compute), GitHub Actions (3-hourly live job), Neon Postgres (alert subscribers).
-- **Team:** `[TEAM NAME]` — `[member names]` — Local Event `[EVENT]`.
+- **Team:** `[TEAM NAME]` — `[member names]` — Local Event `Florianópolis (Founder Haus, Jurerê)`.
 
 ## NASA Data (form field 7) and References (form field 8)
 See `FORM.md` §7–§8 (unchanged).

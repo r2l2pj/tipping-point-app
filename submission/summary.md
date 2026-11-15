@@ -2,7 +2,7 @@
 
 > **DRAFT — pending approval.**
 
-**Rain warns. Radar confirms.**
+**Rain warns. Radar sees through.**
 
 NASA Space Apps 2026 — Challenge: **Dancing with the SARs**
 
@@ -14,7 +14,7 @@ NASA Space Apps 2026 — Challenge: **Dancing with the SARs**
 
 ## Summary (~240 words)
 
-In May 2024, floods hit Rio Grande do Sul: 478 municipalities affected, 185 deaths and 581,638 people displaced at the peak (Government of Rio Grande do Sul, SOS Rio Grande do Sul, updated Aug 19, 2025). Alerts covered entire municipalities, and optical satellites were blind behind storm clouds: in the critical first hours, no one knew which slopes had failed or which neighborhoods were under water. Tipping Point closes that gap. Our Tipping Point Index (TPI) is the geometric mean of three normalized scores in [0,1] — Rain (GPM IMERG vs per-pixel climatology), Soil (SMAP root-zone moisture), Terrain (NASADEM slope and drainage height) — classified Low (<0.2), Moderate, High, or Critical (>0.6). The 2024 flood predates NISAR, so radar confirmation is demonstrated on a second case: in Washington State, December 2025, NISAR GCOV passes before and after the storm confirm flooded area through clouds and darkness, while landslide sites appear only as "candidates" from post-event HLS optical imagery. Built for municipal Civil Defense in Southern Brazil (RS/SC/PR), the demo replays both events end-to-end, and a live Southern Brazil view refreshes every 3 hours. Washington's flooded places were not flagged ahead: the index uses local rain only, and those rivers flooded from rain upstream.
+In May 2024, floods hit Rio Grande do Sul: 478 municipalities affected, 185 deaths and 581,638 people displaced at the peak (Government of Rio Grande do Sul, SOS Rio Grande do Sul, updated Aug 19, 2025). Alerts covered entire municipalities, and optical satellites were blind behind storm clouds: in the critical first hours, no one knew which slopes had failed or which neighborhoods were under water. Tipping Point closes that gap. Our Tipping Point Index (TPI) is the geometric mean of three normalized scores in [0,1] — Rain (GPM IMERG vs per-pixel climatology), Soil (SMAP root-zone moisture), Terrain (NASADEM slope and drainage height) — classified Low (<0.2), Moderate, High, or Critical (>0.6). The 2024 flood predates NISAR, so radar confirmation is demonstrated on a second case: in Washington State, December 2025, NISAR radar passes before and after the storm map flood candidates through clouds and darkness, while landslide sites appear only as "candidates" from post-event HLS optical imagery. Built for municipal Civil Defense in Southern Brazil (RS/SC/PR), the demo replays both events end-to-end, and a live Southern Brazil view refreshes every 3 hours. Washington's flooded places were not flagged ahead: the index uses local rain only, and those rivers flooded from rain upstream.
 
 ## Target awards
 

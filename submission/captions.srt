@@ -16,4 +16,4 @@ Tipping Point maps where NASA rain, soil and slope data tip toward failure.
 
 5
 00:00:25,500 --> 00:00:28,500
-Rain warns. Radar confirms.
+Rain warns. Radar sees through.
