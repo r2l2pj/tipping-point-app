@@ -16,7 +16,7 @@
 - *Visual:* the Uruguaiana NISAR map from the app ([TBD] screenshot once the series is published)
 
 ## Slide 3 — Prevent the disaster, not the flood: when · where · who (Uruguaiana, Oct 2026)
-- **When:** our index, fed by NASA satellite rain (GPM IMERG), turned the Uruguay River corridor Critical on Sep 30, five days before Uruguaiana reached flood stage (Oct 5); NOAA's forecast the day before already showed High. Caveat: the near-real-time rain runs wetter than the final product, so this may be optimistic
+- **When:** our index, fed by NASA satellite rain (GPM IMERG), turned the Uruguay River corridor Critical on Sep 30, five days before Uruguaiana reached flood stage (Oct 5); NOAA's forecast the day before already showed High. Near-real-time rain; holds when scaled to the final product (still Critical on Sep 30 and Oct 1). NISAR then saw the water through cloud
 - **Where:** it flagged the low-lying river corridor, which holds 54% of the about 1.8 km² a teammate's NISAR change map (Sep 30 → Oct 12; 7 polygons, small sample) shows newly flooded, in 36% of the land (1.5× chance); our stricter automatic check did not reproduce that map
 - **Who:** about 20,900 people live in that corridor (about 29 inside the teammate's flood polygons)
 - **Also tested (post-event):** upstream-basin rain was above its 99th percentile on Sep 30; the upstream term is not yet live (on Washington it added 32% more false Critical area); an experimental upstream-aware model adds lead time, not location (it flags 82–88% of the area). No claim of being earlier than official warnings
