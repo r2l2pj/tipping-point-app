@@ -281,3 +281,21 @@ describe("Copernicus EMS flood layer (RS)", () => {
     expect(layerLegendRows(rs, ["ems"])[0].label).toBe("Flooded area (Copernicus EMS; © European Union, Copernicus EMS)");
   });
 });
+
+describe("L48: ML likelihood is the Now landslide default", () => {
+  const pLayers = [{ id: "p_trigger_24h", date: "2026-11-15", png: "png/p_trigger_24h.png", kind: "forecast" },
+    { id: "p_trigger_72h", date: "2026-11-15", png: "png/p_trigger_72h.png", kind: "forecast" },
+    { id: "tpi_slide_d0", date: "2026-11-15", png: "png/tpi_slide_d0.png" }, { id: "tpi_flood_d0", date: "2026-11-15", png: "png/tpi_flood_d0.png" }];
+  test("Now + landslide -> ptrigger; replay or flood -> TPI; hazard switch swaps", async () => {
+    const { defaultLayersFor, swapForHazard, ML_SKILL_LINE, mlHorizonTip } = await import("./layerRegistry");
+    const live = liveBundle({ manifest: { layers: pLayers } } as never);
+    expect(defaultLayersFor(live, "slide")).toEqual(["ptrigger"]);
+    expect(defaultLayersFor(live, "flood")).toEqual(["tpi"]);
+    expect(defaultLayersFor(bundle(), "slide")).toEqual(["tpi"]);
+    expect(swapForHazard(live, ["ptrigger", "flood"], "flood")).toEqual(["tpi", "flood"]);
+    expect(swapForHazard(live, ["tpi", "flood"], "slide")).toEqual(["ptrigger", "flood"]);
+    expect(ML_SKILL_LINE).toContain("Missed RS 2024 and Petrópolis.");
+    expect(mlHorizonTip("24h", "2026-11-14", "2026-11-15T00:00:00Z")).toContain("observed IMERG to Nov 14, 2026 and the NOAA GFS run of Nov 15, 2026");
+    expect(mlHorizonTip("7d")).toContain("never as a warning");
+  });
+});

@@ -28,6 +28,39 @@ export type LayerGroup = "Analysis" | "Observations" | "Replay evidence";
 
 export const MAX_LAYERS = MAX_DATA_LAYERS;
 export const DEFAULT_LAYERS: LayerId[] = ["tpi"];
+
+// L48 (conductor, Lucas idea): in Now the landslide view opens on the ML
+// likelihood (p_trigger × NOAA GFS forecast) when published; the landslide
+// TPI becomes the secondary rain-index toggle. Flood stays TPI.
+export const ML_SKILL_LINE =
+  "Tested on unseen events: catches 65% of landslides on the day, 48% 3 days ahead (rain index: 27% / 16%, but fewer false alarms). Missed RS 2024 and Petrópolis.";
+
+// lead-ml: one line per horizon (relative index, not a probability).
+export function mlHorizonTip(h: string, obsThrough?: string, gfsIssued?: string): string {
+  const obs = obsThrough ? fmtDate(obsThrough.slice(0, 10)) : "the latest day";
+  const gfs = gfsIssued ? fmtDate(gfsIssued.slice(0, 10)) : "the latest run";
+  switch (h) {
+    case "24h": return `Landslide trigger, next 24 h: ML (XGBoost on rain + soil) using observed IMERG to ${obs} and the NOAA GFS run of ${gfs}, weighted by landslide susceptibility. Higher = more likely than elsewhere today; not a % chance.`;
+    case "48h": return `Landslide trigger, next 48 h: same model over the next two forecast days (GFS ${gfs}). In tests it ranked landslide sites about as well as a simple forecast-rain-vs-local-extreme rule, and better than TPI.`;
+    case "72h": return "Landslide trigger, next 72 h: same model over three forecast days. Forecast skill falls with lead time; read it as an outlook.";
+    case "7d": return "Landslide trigger, next 7 days: low forecast skill beyond ~3 days (GFS); use only as a heads-up, never as a warning.";
+    default: return "Relative index, not a probability.";
+  }
+}
+export function defaultLayersFor(bundle: CcBundle, hazard: Hazard): LayerId[] {
+  if (bundle.mode === "live" && hazard === "slide" && layerAvailable(bundle, "ptrigger", hazard)) return ["ptrigger"];
+  return [...DEFAULT_LAYERS];
+}
+// Hazard switch in Now: the ML layer is landslide-only — flood gets the TPI,
+// back to landslide gets the ML layer again (when the TPI stood in for it).
+export function swapForHazard(bundle: CcBundle, on: readonly LayerId[], hazard: Hazard): LayerId[] {
+  if (bundle.mode !== "live") return [...on];
+  if (hazard === "flood" && on.includes("ptrigger")) return on.map((id) => (id === "ptrigger" ? "tpi" : id)).filter((id, i, a) => a.indexOf(id) === i);
+  if (hazard === "slide" && on.includes("tpi") && !on.includes("ptrigger") && layerAvailable(bundle, "ptrigger", hazard)) {
+    return on.map((id) => (id === "tpi" ? "ptrigger" : id));
+  }
+  return [...on];
+}
 export const NO_MAP_LAYER_TEXT = "no map layer for this case";
 
 export const BUDGET_RULE_TEXT =
@@ -138,7 +171,8 @@ export function layerRows(
   const passDates = [dateOf(bundle, "nisar_pre"), dateOf(bundle, "nisar_post")]
     .filter((d): d is string => !!d).map((d) => fmtDate(d));
   const label: Record<LayerId, string> = {
-    tpi: `TPI index (${HAZARD_LABEL[hazard]})`,
+    tpi: bundle.mode === "live" && hazard === "slide" && layerAvailable(bundle, "ptrigger", hazard)
+      ? "Rain index (TPI, landslide)" : `TPI index (${HAZARD_LABEL[hazard]})`,
     imerg: "Rain (GPM IMERG)",
     smap: "Soil moisture (SMAP)",
     tml: "Modeled landslide hazard (XGBoost)",

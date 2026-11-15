@@ -11,7 +11,7 @@ import {
   type ProbHorizon,
 } from "@/lib/layers";
 import {
-  BUDGET_RULE_TEXT, REFERENCE_TEXT, type LayerGroup, type LayerId, type LayerRow,
+  BUDGET_RULE_TEXT, ML_SKILL_LINE, mlHorizonTip, REFERENCE_TEXT, type LayerGroup, type LayerId, type LayerRow,
 } from "./model/layerRegistry";
 import { classRows, HATCH_SWATCH, layerLegendRows } from "./model/legend";
 import { fmtDataDate } from "./model/format";
@@ -118,6 +118,12 @@ export default function LayersColumn({
                     <span className={`min-w-0 flex-1 text-[13px] leading-tight ${r.available ? "" : "text-cc-muted"}`}>
                       {r.label}
                       {sub && <span className="block text-xs text-cc-faint">{sub}</span>}
+                      {prob && (
+                        <span className="block text-xs" data-ml-skill>
+                          <span className="font-semibold text-cc-warn">Experimental</span>{" "}
+                          <span className="text-cc-muted">{ML_SKILL_LINE}</span>
+                        </span>
+                      )}
                       {prob && probHorizons.length > 0 && (
                         <span role="radiogroup" aria-label="Horizon" className="mt-1 flex flex-wrap gap-1">
                           {probHorizons.map((h) => (
@@ -126,6 +132,9 @@ export default function LayersColumn({
                               type="button"
                               role="radio"
                               aria-checked={h === probHorizon}
+                              title={mlHorizonTip(h,
+                                typeof bundle.data_dates?.imerg_obs_through === "string" ? bundle.data_dates.imerg_obs_through as string : undefined,
+                                typeof bundle.data_dates?.gfs_issued === "string" ? bundle.data_dates.gfs_issued as string : undefined)}
                               onClick={() => onProbHorizon(h)}
                               className={`rounded border px-1.5 py-0.5 text-xs ${
                                 h === probHorizon

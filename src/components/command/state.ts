@@ -6,6 +6,8 @@ import { probHorizonsAvailable, type ProbHorizon } from "@/lib/layers";
 import {
   confirmRadarLayers,
   DEFAULT_LAYERS,
+  defaultLayersFor,
+  swapForHazard,
   keepAvailable,
   layerAvailable,
   toggleLayer,
@@ -152,7 +154,7 @@ export function initialState(
     dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first)),
     playing: false,
     hazard,
-    layers: first ? withRadarDefault(first, keepAvailable(first, DEFAULT_LAYERS, hazard), hazard) : [],
+    layers: first ? withRadarDefault(first, keepAvailable(first, defaultLayersFor(first, hazard), hazard), hazard) : [],
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
     issueLead: 0,
@@ -211,7 +213,7 @@ export function reduce(
     let next = reduce({ ...state, compareOpen: null, selectedArea: null }, { type: "selectCase", id: action.id }, cases);
     // Each stop starts from the case's own opening layers, not the last stop's.
     const hazard = action.hazard && caseHasHazard(target, action.hazard) ? action.hazard : next.hazard;
-    next = { ...next, hazard, layers: withRadarDefault(target, keepAvailable(target, DEFAULT_LAYERS, hazard), hazard), layerNotice: null };
+    next = { ...next, hazard, layers: withRadarDefault(target, keepAvailable(target, defaultLayersFor(target, hazard), hazard), hazard), layerNotice: null };
     const day = linkedDay(target, action.day) ?? defaultStepIndex(stepsFor(target));
     next = reduce(next, { type: "seek", index: day }, cases);
     next = reduce(next, { type: "setIssueLead", lead: action.lead ?? 0 }, cases);
@@ -261,7 +263,7 @@ export function reduce(
     }
     case "setHazard": {
       if (!bundle || action.hazard === state.hazard) return state;
-      return { ...state, hazard: action.hazard };
+      return { ...state, hazard: action.hazard, layers: swapForHazard(bundle, state.layers, action.hazard) };
     }
     case "setProbHorizon":
       return { ...state, probHorizon: action.horizon };
