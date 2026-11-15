@@ -249,3 +249,12 @@ test("lead-analysis 8212136: v0 renamed radar_pre/radar_post + sensor -> 'Radar'
   expect(card.dates).toBe("Sep 30, 2026 → Oct 12, 2026");
   expect(card.compare.pair!.before).toMatchObject({ url: "/data/rs_uruguai_2026/png/radar_pre.png", label: "Radar before — Sep 30, 2026" });
 });
+
+test("radar-only replay (Uruguay v0) opens with the flooded-area layer on", async () => {
+  const { initialState } = await import("../state");
+  const L = (id: string, date: string) => ({ id, date, png: `rs_uruguai_2026/png/${id}.png`, bounds: [-57.08, -29.76, -57.0, -29.7], sensor: "unconfirmed (likely Sentinel-1)" });
+  const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, series: undefined, products: { flood_confirmed: "rs_uruguai_2026/geojson/flood_confirmed.geojson" },
+    metricsView: { flooded_km2: 1.817, flood_source: "radar" } as never,
+    manifest: { event: "rs_uruguai_2026", layers: [L("radar_post", "2026-10-12"), L("radar_pre", "2026-09-30")] } } as never);
+  expect(initialState([uy]).layers).toEqual(["flood"]);
+});
