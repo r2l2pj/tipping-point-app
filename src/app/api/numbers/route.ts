@@ -2,7 +2,7 @@
 // → { case, date, km2_critical, people_exposed, flooded_km2?, people_flooded?,
 //     data_date?, source }. 503 when no service-account key is configured or
 // an EE roundtrip times out; 404 when the case asset or date band is absent.
-import { credentialEnv } from "@/lib/ee";
+import { credentialEnv, geeEnabled } from "@/lib/ee";
 import { cachedJson, noStoreJson } from "@/lib/http-cache";
 import {
   CredsError,
@@ -29,11 +29,13 @@ export async function GET(request: Request) {
   if (!date || !DATE_RE.test(date)) {
     return bad("param date must match YYYY-MM-DD");
   }
-  if (!credentialEnv()) {
+  if (!geeEnabled() || !credentialEnv()) {
     return noStoreJson(
       {
         error: "gee unavailable",
-        reason: "no service-account key (set GCP_SA_KEY)",
+        reason: geeEnabled()
+          ? "no service-account key (set GCP_SA_KEY)"
+          : "runtime GEE disabled (GEE_ENABLED unset)",
       },
       { status: 503 }
     );

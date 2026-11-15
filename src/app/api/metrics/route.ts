@@ -1,6 +1,8 @@
+import { geeEnabled } from "@/lib/ee";
 import { cachedJson, noStoreJson } from "@/lib/http-cache";
 import {
   CredsError,
+  createMetricsService,
   getMetrics,
   MetricsNotFoundError,
   MetricsTimeoutError,
@@ -16,7 +18,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    return cachedJson(await getMetrics({ caseId }), caseId);
+    const result = geeEnabled()
+      ? await getMetrics({ caseId })
+      : await createMetricsService(undefined, { ttlMs: 0, negTtlMs: 0 }).getMetrics({ caseId });
+    return cachedJson(result, caseId);
   } catch (error) {
     if (error instanceof MetricsNotFoundError) {
       return noStoreJson({ error: error.message }, { status: 404 });

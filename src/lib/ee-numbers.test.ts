@@ -1,6 +1,6 @@
 // @ts-expect-error -- bun:test resolves under `bun test`; bun-types isn't a
 // dependency so tsc can't see its types.
-import { afterEach, describe, expect, test } from "bun:test";
+import { beforeEach, afterEach, describe, expect, test } from "bun:test";
 
 import { GET } from "../app/api/numbers/route";
 import {
@@ -116,6 +116,13 @@ async function withoutEnv<T>(
 
 const QUERY = { caseId: "rs-2024-05", date: "2024-05-01" } as const;
 const NO_LAYERS = () => undefined;
+
+let savedGeeEnabled: string | undefined;
+beforeEach(() => { savedGeeEnabled = process.env.GEE_ENABLED; process.env.GEE_ENABLED = "1"; });
+afterEach(() => {
+  if (savedGeeEnabled === undefined) delete process.env.GEE_ENABLED;
+  else process.env.GEE_ENABLED = savedGeeEnabled;
+});
 
 describe("createNumbersService", () => {
   afterEach(() => clearNumbersCache());
