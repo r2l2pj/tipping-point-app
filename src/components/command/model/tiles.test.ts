@@ -119,3 +119,18 @@ describe("live summary v3 (lead-analysis 022dbd6: strict critical, alert_km2)", 
     expect(t.note).toBe("in Critical areas, today or tomorrow");
   });
 });
+
+describe("Priority areas people: replay lower bound (conductor)", () => {
+  test("'≥ 7,700' with the GPW tooltip in replay; exact in Now", async () => {
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { createElement } = await import("react");
+    const PriorityAreas = (await import("../PriorityAreas")).default;
+    const areas = [{ rank: 1, label: "Caxias do Sul #1", cls: 3, tpi: 1, people: 7700.6, areaKm2: 1 }] as never;
+    const props = { areas, missingText: "", expanded: true, selected: null, dimmed: false, onToggleAll: () => {}, onSelect: () => {} };
+    const replay = renderToStaticMarkup(createElement(PriorityAreas, { ...props, lowerBound: true }));
+    expect(replay).toMatch(/≥ (<!-- -->)?7,700/);
+    expect(replay).toContain('title="GPW ~1 km resample, ~12% low"');
+    const live = renderToStaticMarkup(createElement(PriorityAreas, props));
+    expect(live).not.toContain("≥");
+  });
+});

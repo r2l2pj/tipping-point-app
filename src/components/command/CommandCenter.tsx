@@ -343,6 +343,7 @@ export function CommandCenterView({
                   dimmed={snap.dimmed}
                   onToggleAll={() => dispatch({ type: "toggleList" })}
                   onSelect={(rank) => dispatch({ type: "selectArea", rank })}
+                  lowerBound={bundle.mode === "replay"}
                 />
               </PanelSection>
 

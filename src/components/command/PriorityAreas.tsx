@@ -2,6 +2,7 @@
 
 import { LIST_COLLAPSED, type PriorityArea } from "./model/areas";
 import { fmtPeople } from "./model/format";
+import { PEOPLE_LOWER_BOUND_TITLE } from "./model/tiles";
 import { NOT_PUBLISHED } from "./model/types";
 import { ClassChip, Icon, ICON } from "./ui";
 
@@ -16,6 +17,7 @@ export default function PriorityAreas({
   dimmed,
   onToggleAll,
   onSelect,
+  lowerBound = false,
 }: {
   areas: PriorityArea[];
   missingText: string; // shown when the case has no zones
@@ -25,6 +27,8 @@ export default function PriorityAreas({
   dimmed: boolean;
   onToggleAll: () => void;
   onSelect: (rank: number) => void;
+  // Replay (conductor): GPW ~1 km counts are ~12% low -> "≥ 7,700".
+  lowerBound?: boolean;
 }) {
   const rows = expanded ? areas : areas.slice(0, LIST_COLLAPSED);
   return (
@@ -62,7 +66,9 @@ export default function PriorityAreas({
                 <Icon d={ICON.people} size={16} strokeWidth={1.8} className="text-cc-muted" />
                 {a.people === null
                   ? <span className="text-xs italic text-cc-faint">{NOT_PUBLISHED}</span>
-                  : fmtPeople(a.people)}
+                  : lowerBound
+                    ? <span title={PEOPLE_LOWER_BOUND_TITLE}>≥ {Math.floor(a.people).toLocaleString("en-US")}</span>
+                    : fmtPeople(a.people)}
               </span>
             </button>
           ))}
