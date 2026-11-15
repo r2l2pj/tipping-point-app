@@ -339,7 +339,8 @@ export default function MapStage({
       {/* L52: the TPI class colours stay readable while the forecast swipe
           is open (both sides paint TPI frames). */}
       {comparePair?.kind === "forecast" && (
-        <div className="absolute z-30 flex items-end gap-2" style={{ right: R(14), bottom: B(12) }}>
+        // Wide screens: the Layers column already shows this legend.
+        <div className="absolute z-30 flex items-end gap-2 min-[900px]:hidden" style={{ right: R(14), bottom: B(12) }}>
           <Legend bundle={bundle} layers={["tpi"]} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact
             className="rounded-[10px] bg-white/95 px-2.5 py-2 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)] max-[639px]:hidden" />
           <details data-legend-phone className="min-[640px]:hidden rounded-[10px] bg-white/95 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]">

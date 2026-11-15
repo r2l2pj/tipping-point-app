@@ -67,7 +67,7 @@ export default function CompareOverlay({
     <>
       <CompareMaps key={`${pol}-${bi}-${ai}`} pair={shown} onClose={onClose} controlsRef={controlsRef} />
       {(hasHv || stack || forecastCtl) && (
-        <div className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 flex-col items-center gap-1">
+        <div className={`absolute left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1 ${forecastCtl ? "top-12" : "top-3"}`}>
           {forecastCtl && (
             <div role="group" aria-label="Forecast lead" data-forecast-leads
               className="flex items-center gap-1 rounded-full border border-cc-line-strong bg-white/95 p-[3px] shadow">
