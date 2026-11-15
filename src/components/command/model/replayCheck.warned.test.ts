@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { anchorShort, warnedRow } from "./replayCheck";
+import { anchorShort, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
 
 // lead-analysis fallback bb125cf values (authored 0-100).
 describe("warned before the damage (lead-analysis)", () => {
@@ -92,5 +92,26 @@ describe("warned before the damage (lead-analysis)", () => {
   });
   test("no published value: no row", () => {
     expect(warnedRow({ flood_warned_pct: null })).toBeUndefined();
+  });
+});
+
+describe("L37 onset lead time (forecast_lead_time_onset)", () => {
+  const real = JSON.parse(readFileSync(join(import.meta.dir, "../../../../test/fixtures/metrics-l37.json"), "utf8")).cases;
+  test("labelled 'Critical anywhere in the region', never 'at the damage'", () => {
+    const rs = onsetLead(real.rs_2024)!;
+    expect(rs.text).toBe("2 of 7 forecast runs reached it, 147 h and 27 h ahead");
+    expect(rs.lines).toEqual(["Event start: the first deaths (Apr 29, 2024)", "Earliest forecast run that reached it: Apr 23, 2024 (00Z)"]);
+    const wa = onsetLead(real.wa_2025)!;
+    expect(wa.text).toBe("median 80 h (IQR 56–104 h, 5 of 8 forecast runs)");
+    expect(ONSET_LEAD_NAME).toContain("Critical anywhere in the region");
+    expect(ONSET_LEAD_SCOPE).toContain("not at the damage sites");
+  });
+  test("held unless onset-anchored AND defined as 'anywhere' in the region", () => {
+    const o = real.wa_2025.forecast_lead_time_onset;
+    expect(onsetLead({ forecast_lead_time_onset: { ...o, anchor_basis: "king_county_update" } })).toBeUndefined();
+    expect(onsetLead({ forecast_lead_time_onset: { ...o, definition: "TPI Critical at the damage points" } })).toBeUndefined();
+    expect(onsetLead({})).toBeUndefined();
+    expect(onsetLead({ forecast_lead_time_onset: { ...o, n_warned: 0, issue_days: [] } })!.text)
+      .toBe("none of 8 forecast runs reached Critical before the event start");
   });
 });

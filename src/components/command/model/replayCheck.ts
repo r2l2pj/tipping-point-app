@@ -115,6 +115,39 @@ export function leadTimeText(bundle: CcBundle): string {
   return `median ${hours(f.median)} (${range}${ofDays(f)})`;
 }
 
+// L37 (conductor): lead-analysis's onset-anchored lead time
+// (forecast_lead_time_onset) replaces the held 'How early?' only labelled for
+// what it measures: TPI Critical ANYWHERE in the case region before the event
+// start — not at the damage sites (the warned row covers those).
+export const ONSET_LEAD_NAME = "Critical anywhere in the region before the event start (NOAA GFS replay)";
+export const ONSET_LEAD_SCOPE = "Critical anywhere in the region — not at the damage sites (see the High-or-Critical row for those).";
+export interface OnsetLead { text: string; lines: string[] }
+export function onsetLead(m: M): OnsetLead | undefined {
+  const o = m.forecast_lead_time_onset;
+  if (!isRecord(o) || o.anchor_basis !== "onset") return undefined;
+  if (!/anywhere/i.test(String(o.definition ?? ""))) return undefined;
+  if (!finite(o.n_warned) || !finite(o.n_issue_days) || o.n_issue_days < 1) return undefined;
+  const runs = `${o.n_warned} of ${o.n_issue_days} forecast runs`;
+  const leads = (Array.isArray(o.issue_days) ? o.issue_days : [])
+    .filter((d): d is M => isRecord(d) && d.warned === true && finite(d.lead_h))
+    .map((d) => d.lead_h as number).sort((a, b) => b - a);
+  let text: string;
+  if (o.n_warned === 0) text = `none of ${o.n_issue_days} forecast runs reached Critical before the event start`;
+  else if (o.n_warned >= 3 && finite(o.lead_h_median)) {
+    const iqr = Array.isArray(o.lead_h_iqr) && o.lead_h_iqr.length === 2 && o.lead_h_iqr.every(finite)
+      ? `IQR ${round(o.lead_h_iqr[0])}–${round(o.lead_h_iqr[1])} h, ` : "";
+    text = `median ${hours(o.lead_h_median)} (${iqr}${runs})`;
+  } else text = `${runs} reached it, ${leads.map(hours).join(" and ")} ahead`;
+  const day = typeof o.anchor_local === "string" && /^\d{4}-\d{2}-\d{2}/.test(o.anchor_local)
+    ? o.anchor_local.slice(0, 10) : typeof o.anchor_utc === "string" ? o.anchor_utc.slice(0, 10) : undefined;
+  const lines = [
+    `Event start: ${anchorShort(o)}${day ? ` (${fmtDate(day)})` : ""}`,
+    typeof o.earliest_critical_issue === "string"
+      ? `Earliest forecast run that reached it: ${fmtDate(o.earliest_critical_issue)} (00Z)` : undefined,
+  ].filter((x): x is string => !!x);
+  return { text, lines };
+}
+
 const isPlaceholder = (m: M): boolean => {
   const a = m.lead_time_assumptions;
   return !!a && typeof a === "object" && (a as M).quality === "placeholder";
@@ -145,7 +178,10 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
       missing: false,
     });
   } else {
-    rows.push({ id: "lead-time", name: LEAD_TIME_NAME, value: LEAD_TIME_PENDING, missing: true });
+    const onset = onsetLead(m);
+    rows.push(onset
+      ? { id: "lead-time", name: ONSET_LEAD_NAME, value: onset.text, detail: [ONSET_LEAD_SCOPE, ...onset.lines].join(" "), missing: false }
+      : { id: "lead-time", name: LEAD_TIME_NAME, value: LEAD_TIME_PENDING, missing: true });
   }
   // "% of zones warned first" was dropped (Lucas, 2026-11-15): no row.
   optional("flood-agreement", "Flood agreement with the reference", "iou", () => {
@@ -307,6 +343,16 @@ const stat = (bundle: CcBundle, label: string, key: string, format: (v: unknown)
 function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
   if (!bundle.metricsView) return undefined;
   if (!hasLeadTime(bundle)) {
+    const onset = onsetLead(m);
+    if (onset) {
+      return {
+        placeholder: false,
+        median: `Using the forecast available at the time: ${onset.text}`,
+        iqr: "", shares: [], histogram: undefined,
+        lines: [ONSET_LEAD_SCOPE, ...onset.lines],
+        note: "",
+      };
+    }
     return {
       missing: `Lead time: ${LEAD_TIME_PENDING}.`,
       placeholder: false, median: "", iqr: "", shares: [], lines: [], histogram: undefined, note: "",
