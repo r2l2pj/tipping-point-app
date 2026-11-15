@@ -543,6 +543,15 @@ describe("public view (P1 to P5) and routes", () => {
     expect(html).not.toContain("Call 199");
   });
 
+  test("G4: SMAP on the card is the date plus its age, never lead-live's Portuguese label", () => {
+    const g4 = buildAlertList({ now: liveBundle({ updated_at: "2026-11-15T09:00:00Z",
+      data_dates: { imerg: "2026-11-14", smap: "2026-11-10T22:30:00Z", smap_age_days: 5, smap_label: "SMAP de 10/11, 5 dias" } as never,
+      nowAlerts: { candidates: [{ class: 3, label: "landslide", pixels: 80, hold: true }] } }) });
+    const html = render(liveBundle(), {}, "public", g4);
+    expect(html).toContain("SMAP Nov 10, 2026 (5 days old)");
+    expect(html).not.toContain("SMAP de");
+  });
+
   test("paused alerts: a neutral notice, no card, no EMERGENCY", () => {
     const html = render(liveBundle(), {}, "public", { state: "paused", alerts: [], dataTime: "2026-11-15T04:15:23Z" });
     expect(html).toContain("Alerts paused while we verify today&#x27;s data");

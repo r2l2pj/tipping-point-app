@@ -245,6 +245,13 @@ async function readFs<T>(key: string): Promise<T | undefined> {
   }
 }
 
+export const isEmptySeedManifest = (p: string, v: unknown): boolean =>
+  /(^|\/)manifest\.json$/.test(p) &&
+  isRecord(v) &&
+  v.updated_at === null &&
+  Array.isArray(v.layers) &&
+  v.layers.length === 0;
+
 // One logical file: each remote base in order (GitHub data branch, then
 // Neon — or the DATA_BASE_URL override alone), then the last-resort bundled
 // copy under public/data. `p` is
@@ -270,7 +277,10 @@ async function readData<T>(
     }
     ctx.remoteTries++;
     const remote = await fetchJson<T>(url).catch(() => undefined);
-    if (remote !== undefined) {
+    // G6 (lead-live): a storage copy that never got published is the empty
+    // seed manifest (updated_at null, layers []) — a miss, so the next base
+    // or the bundled copy serves instead of a "no data" page.
+    if (remote !== undefined && !isEmptySeedManifest(p, remote)) {
       ctx.lastBase = base;
       return remote;
     }

@@ -192,3 +192,13 @@ describe("alertDataDates", () => {
     })).toEqual({ imerg: "2026-11-14", smap: "2026-11-10", gfs_issued: "2026-11-15T00:00:00Z" });
   });
 });
+
+describe("alertDataDates (G4: SMAP ISO + age)", () => {
+  test("ISO smap stays, age in days rides along, the Portuguese label is not used", () => {
+    expect(alertDataDates({
+      smap: "2026-11-10T22:30:00Z",
+      smap_age_days: 4.6,
+      smap_label: "SMAP de 10/11, 5 dias",
+    })).toMatchObject({ smap: "2026-11-10T22:30:00Z", smap_age_days: "5" });
+  });
+});

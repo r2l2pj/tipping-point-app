@@ -109,6 +109,11 @@ export function alertDataDates(
   if (!dd) return undefined;
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(dd)) {
+    // G4 (lead-live): SMAP's age in days rides along for the card.
+    if (k === "smap_age_days" && typeof v === "number" && Number.isFinite(v)) {
+      out[k] = String(Math.round(v));
+      continue;
+    }
     if (typeof v !== "string") continue;
     // L28b: the IMERG stamp is the end of the window; observed rain runs
     // through imerg_obs_through (the day before).

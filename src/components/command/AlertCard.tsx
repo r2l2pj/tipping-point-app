@@ -29,6 +29,10 @@ export default function AlertCard({
   const held = heldLabel(a);
   const imerg = a.data_dates?.imerg;
   const smap = a.data_dates?.smap;
+  // G4: lead-live's smap_label is Portuguese; the UI is English (rule 8), so
+  // the card builds the same fact from the ISO date + smap_age_days.
+  const smapAge = Number(a.data_dates?.smap_age_days);
+  const smapAgeText = Number.isFinite(smapAge) && smapAge >= 1 ? ` (${smapAge} day${smapAge === 1 ? "" : "s"} old)` : "";
   const tag = "rounded border border-cc-line-strong bg-cc-surface px-1.5 py-0.5";
   return (
     <li className={`rounded-[10px] border px-3.5 py-3 ${style.border}`}>
@@ -64,7 +68,7 @@ export default function AlertCard({
         <p className="mt-1 text-xs text-cc-muted">
           NASA data: {imerg ? `IMERG through ${fmtDate(imerg)}` : ""}
           {imerg && smap ? " · " : ""}
-          {smap ? `SMAP ${fmtDate(smap)}` : ""}
+          {smap ? `SMAP ${fmtDate(smap)}${smapAgeText}` : ""}
         </p>
       )}
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-cc-muted">

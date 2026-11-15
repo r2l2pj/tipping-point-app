@@ -7,7 +7,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import realMetrics from "../../test/fixtures/metrics-19c56df.json";
-import { getAlerts, getCaseBundle, getEventsIndex, getMetrics, getRootManifest } from "./data";
+import { getAlerts, getCaseBundle, getEventsIndex, getMetrics, getRootManifest, isEmptySeedManifest } from "./data";
 import type { MetricsV4 } from "./contract";
 
 // bun-types isn't installed — declare the Bun.serve surface the tests use.
@@ -583,6 +583,45 @@ describe("default remote bases (no DATA_BASE_URL)", () => {
     } finally {
       remote.mockRestore();
     }
+  });
+
+  // G6: GitHub down, Neon serves the empty seed manifest (bucket over quota)
+  // -> the seed is a miss and the bundled manifest serves, never 'no data'.
+  test("github miss, neon empty seed manifest: bundled manifest serves", async () => {
+    delete process.env.DATA_BASE_URL;
+    process.env.NEON_S3_ENDPOINT = "https://neon-s3.example.com";
+    const NEON = "https://neon-s3.example.com/tipping-point-data/data/";
+    const fixtures = path.join(process.cwd(), "test/fixtures/public-data");
+    process.env.DATA_FS_DIR = fixtures;
+    const remote = spyOn(globalThis, "fetch").mockImplementation(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (!url.startsWith(NEON)) return new Response("down", { status: 503 });
+      if (url.endsWith("/manifest.json") && !url.endsWith("data/manifest.json")) {
+        return new Response(JSON.stringify({ updated_at: null, layers: [] }));
+      }
+      try {
+        return new Response(await readFile(path.join(fixtures, url.slice(NEON.length)), "utf-8"));
+      } catch {
+        return new Response("not found", { status: 404 });
+      }
+    });
+    try {
+      const b = await getCaseBundle("rs-2024-05", "RS", RS_BBOX, "2024-05-02");
+      expect(b.manifest?.event_id).toBe("rs-2024-05");
+      expect(b.manifest?.layers.length).toBeGreaterThan(0);
+      // L27: the banner follows the ROOT manifest only (served by Neon here).
+      expect(b.fallback).toBe(false);
+    } finally {
+      remote.mockRestore();
+    }
+  });
+
+  test("isEmptySeedManifest: only an unpublished manifest.json seed", () => {
+    expect(isEmptySeedManifest("now/manifest.json", { updated_at: null, layers: [] })).toBe(true);
+    expect(isEmptySeedManifest("manifest.json", { updated_at: null, layers: [] })).toBe(true);
+    expect(isEmptySeedManifest("now/manifest.json", { updated_at: "2026-11-15T09:00:00Z", layers: [] })).toBe(false);
+    expect(isEmptySeedManifest("now/manifest.json", { updated_at: null, layers: [{ id: "x" }] })).toBe(false);
+    expect(isEmptySeedManifest("now/summary.json", { updated_at: null, layers: [] })).toBe(false);
   });
 });
 
