@@ -11,7 +11,14 @@ Paste every field from `submission/FORM.md`, tick "Terms and Conditions" and "Co
 3. **Host the video:** YouTube Unlisted, or Drive "anyone with the link". Test it in a private window and paste it into FORM §3.
 4. **Confirm the AI declaration** (`ai-declaration.md`): the tool list, that the idea doc was written by the team, and human voice vs TTS.
 5. **RS event facts need a source** (446 of 497 municipalities, 185 dead, 581,000+ displaced, R$88.9 bn). Public totals differ (e.g. 183 deaths, 478 municipalities). Either cite one official source or cut the figures.
-6. Backup demo: `.crew/deck/slides.pdf` (7 slides), used only if the video slips. Optional: FortiGuard classification for the vercel.app URL.
+6. **New choices awaiting you (win-odds review; details in REVIEW.md):**
+   - Headline candidate to replace the on-hold lead time: "Using the forecast available at the time, 88% of the 16,027 landslides mapped in Rio Grande do Sul were already in High or Critical areas 24 h before May 1, 2024." If you use it, the 48 h run's 0.3% must be stated too.
+   - `project-page.md`: the NISAR-led page text, which judges read first.
+   - The alternative 54-word VO.
+   - Tagline: keep "Radar confirms", or "Radar sees through."
+   - Calling public alerts "experimental, not official".
+   - Rule-by-rule status: `COMPLIANCE.md`.
+7. Backup demo: `.crew/deck/slides.pdf` (7 slides), used only if the video slips. Optional: FortiGuard classification for the vercel.app URL.
 
 ## Only you can do (2)
 
