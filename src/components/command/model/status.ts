@@ -1,3 +1,4 @@
+import { tpiReplayNote } from "./steps";
 // Status chip of the Situation panel. Reads the series (replay) or the
 // summary (live). The browser computes no TPI and no class.
 import { forecastSourceLabel, liveCriticalKm2 } from "@/lib/contract";
@@ -103,8 +104,8 @@ export function statusChip(
   if (!bundle.series || !day || pending("series") || pending("priority_zones")) {
     return {
       kind: "no-data",
-      label: "No data for this event",
-      sentence: "No daily series is published for this event.",
+      label: tpiReplayNote(bundle) ? "No rain-index replay" : "No data for this event",
+      sentence: tpiReplayNote(bundle) ?? "No daily series is published for this event.",
     };
   }
   // A day without a TPI value is a gap, never a zero.

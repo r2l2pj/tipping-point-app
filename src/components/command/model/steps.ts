@@ -93,6 +93,13 @@ export function defaultStepIndex(steps: Step[]): number {
 }
 
 export const NO_STEPS_TEXT = "No frames published yet";
+// lead-analysis (Uruguay): a case whose rain index is deliberately not
+// replayed says why (metrics tpi_replay_note) instead of "not published yet".
+export const tpiReplayNote = (bundle: CcBundle | undefined): string | undefined => {
+  const n = (bundle?.metricsView as Record<string, unknown> | undefined)?.tpi_replay_note;
+  return typeof n === "string" && n.trim() ? n.trim() : undefined;
+};
+export const noStepsText = (bundle: CcBundle | undefined): string => tpiReplayNote(bundle) ?? NO_STEPS_TEXT;
 
 // Forecast source named by the data ("perfect forecast" in Replay,
 // "NOAA GFS" in Now). Never a fixed name.
@@ -294,7 +301,7 @@ export function mapCaption(
     const l = manifestRaster(bundle.manifest?.layers, "imerg", step?.date);
     if (l) return { text: imergCaption(l), forecast: false };
   }
-  if (!step) return { text: NO_STEPS_TEXT, forecast: false };
+  if (!step) return { text: tpiReplayNote(bundle) ? "No rain-index replay for this case" : NO_STEPS_TEXT, forecast: false };
   const when = `${fmtDate(step.date)}${step.sub ? ` (${step.sub})` : ""}`;
   if (issueLead > 0 && on.includes("tpi")) {
     const f = issuedFrame(bundle, step.date, hazard, issueLead);

@@ -25,7 +25,9 @@ export default function TimelineBar({
   onNext,
   onPlayToggle,
   children,
+  emptyText = NO_STEPS_TEXT,
 }: {
+  emptyText?: string;
   steps: Step[];
   marks: StepMark[];
   dayIndex: number;
@@ -94,7 +96,7 @@ export default function TimelineBar({
 
       <div ref={track} className="min-w-0 flex-[1_1_460px] overflow-x-auto">
         {n === 0 ? (
-          <p className="py-3 text-[13px] italic text-cc-faint">{NO_STEPS_TEXT}</p>
+          <p className="py-3 text-[13px] italic text-cc-faint" data-no-steps>{emptyText}</p>
         ) : (
           <div className="relative flex px-2 pt-5" style={{ minWidth: Math.max(470, n * (dense ? STEP_DENSE_PX : STEP_PX)) }} role="group" aria-label="Timeline steps">
             {firstFc >= 0 && (

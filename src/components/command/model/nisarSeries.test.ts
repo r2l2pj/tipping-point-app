@@ -274,3 +274,12 @@ test("lead-analysis 1665f79: 'NISAR (GCOV provisional)' -> NISAR wording, headli
   expect(card.compare.pair!.before.label).toBe("NISAR radar before — Sep 30, 2026");
   expect(card.flooded!.label).toBe("Flooded area (NISAR)");
 });
+
+test("Uruguay: tpi_replay_note replaces 'No frames published yet' (timeline, caption, status)", async () => {
+  const { noStepsText, mapCaption } = await import("./steps");
+  const note = "Local rain index not replayed for this case; local rain at Uruguaiana never reached its own P99 — the flood was driven by upstream-basin rain (see forecast_proof).";
+  const uy = bundle({ id: "rs_uruguai_2026", series: undefined, metricsView: { tpi_replay_note: note } as never } as never);
+  expect(noStepsText(uy)).toBe(note);
+  expect(mapCaption(uy, [], 0, "flood", ["flood"]).text).toBe("No rain-index replay for this case");
+  expect(noStepsText(bundle({ series: undefined } as never))).toBe("No frames published yet");
+});
