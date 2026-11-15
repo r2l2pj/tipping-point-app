@@ -97,6 +97,18 @@ describe("status chip (now)", () => {
     expect(chip(b, 0, "slide").label).toBe("Tipping point reached");
     expect(chip(b, 0, "flood").label).toBe("Below the tipping point");
   });
+
+  test("on a forecast step the live status is named as today's, not the day's", () => {
+    const b = liveBundle({
+      summary: { critical_km2: { slide: 12.5, flood: 0, any: 12.5 } },
+      manifest: manifest([frame("tpi_slide_d0", "2026-11-14"), frame("tpi_slide_d1", "2026-11-15", true)]),
+    });
+    expect(chip(b, 0, "slide").label).toBe("Tipping point reached");
+    const forecast = chip(b, 1, "slide");
+    expect(forecast.label).toBe("Tipping point reached today");
+    expect(forecast.sentence).toContain("no status is published for Nov 15, 2026");
+    expect(chip(b, 1, "flood").label).toBe("Below the tipping point today");
+  });
 });
 
 describe("steps", () => {

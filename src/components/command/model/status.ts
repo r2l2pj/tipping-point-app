@@ -58,12 +58,20 @@ export function statusChip(
         sentence: "The live run has not published a summary. Nothing here means the risk is low.",
       };
     }
+    // The summary describes the day of the run. On a forecast step it is not
+    // the status of the selected day: the chip says "today" and the sentence
+    // says that no status is published for forecast days.
+    const step = steps[dayIndex];
+    const today = step?.forecast ? " today" : "";
+    const note = step?.forecast
+      ? ` This is the status of the latest run; no status is published for ${fmtDate(step.date)}.`
+      : "";
     return value > 0
-      ? { kind: "reached", label: "Tipping point reached", sentence: REACHED_SENTENCE }
+      ? { kind: "reached", label: `Tipping point reached${today}`, sentence: `${REACHED_SENTENCE}${note}` }
       : {
           kind: "below",
-          label: "Below the tipping point",
-          sentence: "The live summary reports no Critical area for this hazard.",
+          label: `Below the tipping point${today}`,
+          sentence: `The live summary reports no Critical area for this hazard.${note}`,
         };
   }
 
