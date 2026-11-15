@@ -59,6 +59,8 @@ export interface LoadedCaseBundle extends CaseBundle {
   criticalAreas?: GeoJSON.FeatureCollection;
   // Upcoming NISAR passes for the live bundle (hoisted by toNowView).
   nisarPasses?: NisarPass[];
+  // Replay: data/<case>/forecast_lead_time.json, raw (read by the model).
+  forecastLeadTime?: unknown;
   // Live GEE layer metadata (L8); present when the probe answered, even
   // when the layers array is empty (GEE up, nothing published).
   liveLayers?: LayerMeta[];
@@ -508,6 +510,7 @@ export async function getCaseBundle(
     summary,
     nowAlerts,
     responseRaw,
+    forecastLeadTime,
   ] = await Promise.all([
     loadMetrics(ctx, entry?.metrics ?? `metrics.json#${canonical}`, dirs),
     loadProduct<SeriesDaily>(
@@ -531,6 +534,10 @@ export async function getCaseBundle(
     now
       ? loadProduct<unknown>(ctx, canonical, rawProducts, "nisar_meta", NISAR_META)
       : undefined,
+    // Replay lead time of the NOAA GFS forecast replay (lead-analysis).
+    now
+      ? undefined
+      : loadProduct<unknown>(ctx, canonical, rawProducts, "forecast_lead_time", "forecast_lead_time.json"),
   ]);
 
   // The response polygons ride the flood_confirmed slot the map and the
@@ -664,6 +671,7 @@ export async function getCaseBundle(
     summary,
     nowAlerts,
     response,
+    forecastLeadTime,
     nisarPasses: now?.nisar_passes,
     swot,
     products: bundleProducts,

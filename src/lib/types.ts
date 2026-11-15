@@ -151,6 +151,10 @@ export interface DayPoint {
   critical_slide_km2?: number;
   critical_flood_km2?: number;
   people_critical?: number;
+  // NOAA GFS forecast 3-day rain total ending this day, from the run issued
+  // on gfs_rain3_issued (day-2). Compares with imerg_mm (observed 3-day).
+  gfs_rain3_mm?: number | null;
+  gfs_rain3_issued?: string | null;
 }
 
 export interface SeriesDaily {

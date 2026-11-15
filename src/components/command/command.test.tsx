@@ -4,6 +4,8 @@
 // @ts-expect-error -- bun:test resolves under `bun test`; bun-types isn't a
 // dependency so tsc can't see its types.
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { AreaCard } from "./AreaCallout";
@@ -40,6 +42,9 @@ const render = (
 // The panel with the evidence details open (old Validation and Impact tabs).
 const details = (b: CcBundle) => render(b, { detailsOpen: true });
 const mv = (m: Record<string, unknown>) => m as CcBundle["metricsView"];
+
+const WA_LEAD = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/lead/forecast_lead_time_wa_2025.json"), "utf8"));
+const RS_LEAD = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/lead/forecast_lead_time_rs_2024.json"), "utf8"));
 
 const FULL_METRICS = mv({
   iou: 0.71, f1: 0.83, cloud_pct: 0.95, landslide_hit_pct: 0.62, hand_validation: 0.78,
@@ -115,44 +120,35 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
   });
 
   test("learned vs manual slope rule and integer lead hours", () => {
-    const html = details(bundle({ metricsView: FULL_METRICS }));
+    const html = details(bundle({ metricsView: FULL_METRICS, forecastLeadTime: WA_LEAD }));
     for (const text of ["learned vs manual slope rule", "ML model AUC (XGBoost)", "Manual slope-rule AUC",
-      "0.91", "0.74", "IQR", "52 h", "no cloud pixels"]) {
+      "0.91", "0.74", "IQR 55–115 h", "85 h", "no cloud pixels"]) {
       expect(html).toContain(text);
     }
   });
 
-  const metrics = (extra: Record<string, unknown> = {}) => mv({
-    lead_time_median_h: 30, lead_time_iqr_h: [18, 42], lead_time_n: 12,
-    warned_before_pct: 0.8, warned_24h_pct: 0.6, never_critical_pct: 0.2, ...extra,
-  });
-
-  test("median is contextualized with IQR, sample size and English replay copy", () => {
-    const html = details(bundle({ metricsView: metrics({
-      official_warning_delta_h: 6, event_lead_h: 24,
-      critical_area_with_damage_pct: 0.25, critical_area_km2: 40,
-      anchor_precision: "mixed", lead_time_assumptions: { quality: "placeholder" },
-    }) }));
-    for (const text of ["How early? (in replay)", "Tipping Point would have warned 30 hours earlier",
-      "IQR 18–42 h · n = 12", "mixed-precision anchors", "Never crossed Critical", "20%",
-      "vs first official warning: +6 h", "Event-level anchor lead: 24 h",
-      "Critical area that had damage: 25%", "40 km²", "Illustrative numbers",
-      "Median 30 h · IQR 18–42 h · n = 12"]) {
+  test("WA: the card and the row carry the submission headline words", () => {
+    const html = details(bundle({ metricsView: mv({ critical_area_with_damage_pct: 0.25, critical_area_km2: 40 }),
+      forecastLeadTime: WA_LEAD }));
+    for (const text of ["How early? (in replay)",
+      "Using the forecast available at the time: median 85 h (IQR 55–115 h, 6 of 8 forecast days)",
+      "Lead time before the damage (NOAA GFS forecast replay)",
+      "Earliest forecast run that flagged it: Dec 3, 2025 (00Z)", "Damage anchor: Dec 9, 2025 00:35 UTC",
+      "Critical area that had damage: 25%", "40 km²"]) {
       expect(html).toContain(text);
     }
     expect(html).not.toMatch(/Mediana|antecedência|deslizamentos|Avisados|Crítico/);
     // "% warned first" was dropped (Lucas, 2026-11-15): never shown.
     expect(html).not.toContain("Flagged before damage");
-    expect(html).not.toContain("Warned &gt;= 24 h early");
     expect(html).not.toContain("Zones warned before the event");
-    expect(html).not.toContain(">30<");
+    expect(html).not.toContain("84.6");
+    expect(html).not.toContain("would have warned");
   });
 
-  test("hours render whole — 47.5 shows as '48 h', never '47.5'", () => {
-    const html = details(bundle({ metricsView: metrics({ lead_time_median_h: 47.5 }) }));
-    expect(html).toContain("Tipping Point would have warned 48 hours earlier");
-    expect(html).toContain("Median 48 h · IQR");
-    expect(html).not.toContain("47.5");
+  test("RS: one flagging forecast day, never a median", () => {
+    const html = details(bundle({ id: "rs_2024", metricsView: mv({}), forecastLeadTime: RS_LEAD }));
+    expect(html).toContain("1 of 4 forecast days flagged it, 111 h ahead");
+    expect(html).not.toMatch(/median 111|Median 111/);
   });
 
   test("no median or no n: the row and the card read 'pending: forecast rebuild'; no metrics hides the card", () => {
@@ -160,6 +156,7 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
     // median -57 h, IQR -57–-57, n null) is pending too.
     for (const m of [{}, { lead_time_median_h: null },
       { lead_time_median_h: -57, lead_time_iqr_h: [-57, -57], lead_time_n: null },
+      { lead_time_median_h: -57, lead_time_iqr_h: [-57, -57], lead_time_n: 5678 },
       { lead_time_median_h: 0 }]) {
       const html = details(bundle({ metricsView: mv(m as never) }));
       expect(html).toContain("How early? (in replay)");
@@ -173,10 +170,9 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
     expect(none).toMatch(/data-check="lead-time".*?pending: forecast rebuild/);
   });
 
-  test("both histogram shapes render", () => {
+  test("both histogram shapes normalize", () => {
     for (const hist of [[{ h_from: -6, n: 2 }, { h_from: 0, n: 5 }], { bin_h: 6, from_h: -6, counts: [2, 5] }]) {
       expect(normalizeLeadTimeHist(hist)).toEqual([{ h_from: -6, n: 2 }, { h_from: 0, n: 5 }]);
-      expect(details(bundle({ metricsView: metrics({ lead_time_hist: hist }) }))).toContain("Lead time histogram");
     }
     expect(normalizeLeadTimeHist(null)).toEqual([]);
   });

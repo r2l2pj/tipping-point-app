@@ -114,6 +114,20 @@ export function issuedForecastLabel(bundle: CcBundle): string | undefined {
 
 export const UPPER_BOUND_TEXT = "perfect forecast · upper bound";
 
+// Legend of the GFS 3-day forecast bars: "Forecast rain 3-day (NOAA GFS,
+// issued May 1, 2024)", or the range of issue dates when the forecast days
+// come from several runs. Undefined when no forecast day has a value.
+export function gfsRain3Label(days: readonly { gfs_rain3_mm?: number | null; gfs_rain3_issued?: string | null }[]): string | undefined {
+  const issued = days
+    .filter((d) => typeof d.gfs_rain3_mm === "number" && typeof d.gfs_rain3_issued === "string")
+    .map((d) => d.gfs_rain3_issued as string)
+    .sort();
+  if (!issued.length) return undefined;
+  const first = fmtDate(issued[0]);
+  const last = fmtDate(issued[issued.length - 1]);
+  return `Forecast rain 3-day (NOAA GFS, issued ${first === last ? first : `${first} – ${last}`})`;
+}
+
 // Source of the forecast-day values in the chart (series). Perfect forecast
 // is copied observation: it is only ever labelled as the upper bound.
 export function chartForecastLabel(bundle: CcBundle): string | undefined {

@@ -9,7 +9,7 @@ import StatusBlock from "../StatusBlock";
 import TimelineBar from "../TimelineBar";
 import { bundle, frame, liveBundle, manifest } from "./fixtures";
 import { statusChip } from "./status";
-import { forecastTag, frameFor, mapCaption, stepLabel, stepsFor } from "./steps";
+import { forecastTag, frameFor, gfsRain3Label, mapCaption, stepLabel, stepsFor } from "./steps";
 
 // The brief's case: reference 2024-05-02; on 2024-05-03 an observed frame,
 // a perfect-forecast upper bound and a GFS run issued 2024-05-02; on
@@ -143,5 +143,18 @@ describe("L22 issued GFS frames", () => {
       />
     );
     expect(observed).toContain("Step: May 2 (EVENT) · observed");
+  });
+});
+
+describe("gfsRain3Label", () => {
+  test("names the issue date, or the range of runs", () => {
+    expect(gfsRain3Label([{ gfs_rain3_mm: 130.3, gfs_rain3_issued: "2024-05-01" }]))
+      .toBe("Forecast rain 3-day (NOAA GFS, issued May 1, 2024)");
+    expect(gfsRain3Label([
+      { gfs_rain3_mm: 130.3, gfs_rain3_issued: "2024-05-01" },
+      { gfs_rain3_mm: 12.9, gfs_rain3_issued: "2024-05-05" },
+      { gfs_rain3_mm: null, gfs_rain3_issued: "2024-05-06" },
+    ])).toBe("Forecast rain 3-day (NOAA GFS, issued May 1, 2024 – May 5, 2024)");
+    expect(gfsRain3Label([{ gfs_rain3_mm: null, gfs_rain3_issued: "2024-05-01" }])).toBeUndefined();
   });
 });

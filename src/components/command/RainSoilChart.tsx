@@ -5,6 +5,7 @@ import {
   Bar, CartesianGrid, Cell, ComposedChart, Line, ReferenceLine,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
+import { gfsRain3Label } from "./model/steps";
 import { thresholdFor } from "./model/status";
 import type { Step } from "./model/steps";
 import { NOT_PUBLISHED, type CcBundle } from "./model/types";
@@ -15,6 +16,7 @@ const cell = (v: unknown, digits: number): string =>
 
 const RAIN = "#2166AC";
 const RAIN_FC = "#9ECAE1";
+const RAIN_GFS = "#7570B3";
 const SOIL = "#8C510A";
 const TPI = "#BD0026";
 
@@ -55,6 +57,10 @@ function RainSoilChart({
   const data = days.map((s, i) => ({
     label: s.top,
     imerg_mm: s.day!.imerg_mm,
+    // Forecast days only: the issued NOAA GFS 3-day total beside the
+    // observed 3-day bar (the 1-day gfs_mm is not plotted: ~3x too dry
+    // next to a 3-day total).
+    gfs3: s.forecast && typeof s.day!.gfs_rain3_mm === "number" ? s.day!.gfs_rain3_mm : null,
     tpi: s.day!.tpi,
     // The observed soil line ends where the forecast line starts.
     smapObs: !s.forecast || i === firstFc ? s.day!.smap : null,
@@ -64,6 +70,8 @@ function RainSoilChart({
   const event = days.find((s) => s.offset === 0);
   const current = days.find((s) => s.index === dayIndex);
   const hasFc = firstFc >= 0;
+  const gfsLabel = gfsRain3Label(days.filter((s) => s.forecast).map((s) => s.day!));
+  const hasGfs = gfsLabel !== undefined && data.some((d) => d.gfs3 !== null);
 
   return (
     <section aria-label={title}>
@@ -80,7 +88,8 @@ function RainSoilChart({
             <thead>
               <tr className="text-right text-cc-muted">
                 <th scope="col" className="px-1 py-px text-left font-semibold">Date</th>
-                <th scope="col" className="px-1 py-px font-semibold">Rain (mm)</th>
+                <th scope="col" className="px-1 py-px font-semibold">Rain 3-day (mm)</th>
+                {hasGfs && <th scope="col" className="px-1 py-px font-semibold">GFS forecast 3-day (mm)</th>}
                 <th scope="col" className="px-1 py-px font-semibold">Soil moisture</th>
                 <th scope="col" className="px-1 py-px font-semibold">TPI</th>
                 <th scope="col" className="px-1 py-px text-left font-semibold">Kind</th>
@@ -97,6 +106,7 @@ function RainSoilChart({
                     {s.sub === "EVENT" ? " (event)" : ""}
                   </th>
                   <td className="px-1 py-px">{cell(s.day!.imerg_mm, 1)}</td>
+                  {hasGfs && <td className="px-1 py-px">{s.forecast ? cell(s.day!.gfs_rain3_mm, 1) : ""}</td>}
                   <td className="px-1 py-px">{cell(s.day!.smap, 2)}</td>
                   <td className="px-1 py-px">{cell(s.day!.tpi, 2)}</td>
                   <td className="px-1 py-px text-left">{s.kind === "observed" ? "observed" : `${s.kind} (${forecastLabel})`}</td>
@@ -133,14 +143,19 @@ function RainSoilChart({
                   contentStyle={{ background: "#ffffff", border: "1px solid #cfd6cf", fontSize: 12, color: "#16242b" }}
                   formatter={(v, name) =>
                     typeof v !== "number" ? [String(v ?? "—"), String(name)]
-                    : name === "Rain (mm)" ? [`${v.toFixed(1)} mm`, name] : [v.toFixed(2), name]}
+                    : String(name).startsWith("Rain") || String(name).startsWith("Forecast rain")
+                      ? [`${v.toFixed(1)} mm`, name] : [v.toFixed(2), name]}
                 />
-                <Bar yAxisId="rain" isAnimationActive={false} dataKey="imerg_mm" name="Rain (mm)" radius={[3, 3, 0, 0]} cursor="pointer"
+                <Bar yAxisId="rain" isAnimationActive={false} dataKey="imerg_mm" name="Rain 3-day (mm)" radius={[3, 3, 0, 0]} cursor="pointer"
                   onClick={(_, i) => {
                     if (days[i]) onSeek(days[i].index);
                   }}>
                   {data.map((d) => <Cell key={d.label} fill={d.forecast ? RAIN_FC : RAIN} />)}
                 </Bar>
+                {hasGfs && (
+                  <Bar yAxisId="rain" isAnimationActive={false} dataKey="gfs3" name="Forecast rain 3-day (NOAA GFS)"
+                    fill={RAIN_GFS} radius={[3, 3, 0, 0]} />
+                )}
                 <Line yAxisId="idx" type="monotone" dataKey="smapObs" isAnimationActive={false} name="Soil moisture (SMAP)" stroke={SOIL} strokeWidth={2} dot={false} connectNulls={false} />
                 <Line yAxisId="idx" type="monotone" dataKey="smapFc" isAnimationActive={false} name="Soil moisture (forecast days)" stroke={SOIL} strokeWidth={2} strokeDasharray="6 5" dot={false} connectNulls={false} legendType="none" />
                 {/* null is a gap, never a zero. */}
@@ -157,8 +172,9 @@ function RainSoilChart({
             </ResponsiveContainer>
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5 pt-1 text-xs">
-            <Swatch color={RAIN} label="Rain (IMERG) - observed" block />
-            {hasFc && <Swatch color={RAIN_FC} label={`Rain - forecast days (${forecastLabel})`} block />}
+            <Swatch color={RAIN} label="Rain 3-day (IMERG) - observed" block />
+            {hasFc && <Swatch color={RAIN_FC} label={`Rain 3-day - forecast days (${forecastLabel})`} block />}
+            {hasGfs && <Swatch color={RAIN_GFS} label={gfsLabel!} block />}
             <Swatch color={SOIL} label="Soil moisture (SMAP)" />
             {hasFc && <Swatch color={SOIL} dashed label="Soil moisture - forecast days" />}
             <Swatch color={TPI} label="TPI (risk index)" />
