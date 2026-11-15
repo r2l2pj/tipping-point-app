@@ -1,0 +1,19 @@
+1
+00:00:00,000 --> 00:00:02,500
+Time [TEAM NAME], Brasil.
+
+2
+00:00:02,500 --> 00:00:11,000
+Em outubro, a previsão da NOAA indicou chuva extrema rio acima [N] dias antes de o rio Uruguai atingir a cota de inundação em Uruguaiana.
+
+3
+00:00:11,000 --> 00:00:19,000
+Depois, o radar NISAR viu as ruas alagadas através das nuvens, a cada 12 dias; cerca de [X] pessoas moravam ali.
+
+4
+00:00:19,000 --> 00:00:25,500
+Em Washington, o NISAR mapeou candidatos a área alagada sob 93% de nuvens.
+
+5
+00:00:25,500 --> 00:00:28,500
+A chuva avisa. O radar enxerga através.

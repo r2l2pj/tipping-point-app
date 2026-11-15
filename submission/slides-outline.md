@@ -15,12 +15,12 @@
 - Context: May 2024, Rio Grande do Sul floods — 478 municipalities affected, 185 deaths, 581,638 people displaced at the peak (Government of Rio Grande do Sul, SOS Rio Grande do Sul, updated Aug 19, 2025)
 - *Visual:* the Uruguaiana NISAR map from the app ([TBD] screenshot once the series is published)
 
-## Slide 3 — The solution
-- **Radar change first:** for each NISAR pass pair, new water = HH backscatter drop of more than 3 dB to below a per-scene threshold, on low ground near rivers, patches ≥ 3 ha → flood candidates through cloud, with the people inside them
-- **Between passes, where to look next:** Tipping Point Index TPI = (R·S·T)^(1/3) from GPM IMERG rain, SMAP soil moisture and NASADEM terrain; Critical > 0.6 only when all three agree
-- Builds on NASA's LHASA: LHASA v2 already uses XGBoost + IMERG + SMAP (doi:10.3389/feart.2021.640043) and LHASA-F forecasts ~3 days (doi:10.3389/feart.2022.878996); new here: no-look-ahead GFS replay, explicit horizons, held-out events with published misses, radar response on the same screen
-- An experimental XGBoost trigger model sits beside the index (independent audit: about as good as a simple forecast-rain-vs-local-extreme rule)
-- *Visual:* NISAR before/after swipe on the left; the TPI gauge small on the right
+## Slide 3 — The solution: forecast → radar → people (Uruguaiana, Oct 2026)
+- **1 · Forecast:** the NOAA GFS forecast flagged extreme rain over the upstream Uruguay basin [N] days before the river reached flood stage at Uruguaiana ([date]) — it could have given about [N] days' notice
+- **2 · Radar:** NISAR passes every 12 days (Sep 18 → Nov 5, 2026, provisional products) saw the flooded streets through cloud — [km²] km² of flood candidates at the crest (new water = HH backscatter drop > 3 dB below a per-scene threshold, low ground near rivers, ≥ 3 ha)
+- **3 · People:** about [X] people inside the flood candidates, ranked by area for responders
+- Between passes, the Tipping Point Index TPI = (R·S·T)^(1/3) (GPM IMERG rain, SMAP soil, NASADEM terrain) shows where to look next; builds on NASA's LHASA (doi:10.3389/feart.2021.640043; LHASA-F doi:10.3389/feart.2022.878996); an experimental XGBoost trigger model sits beside it
+- *Visual:* three-step strip — forecast rain map → NISAR flood candidates → people count
 
 ## Slide 4 — The demo
 - **Uruguaiana, Oct–Nov 2026:** NISAR pass pair Oct 24 → Nov 5, 2026 (HH + HV) over the Uruguay River — flood candidates [TBD] km², about [TBD] people inside; Itaqui is outside the swath

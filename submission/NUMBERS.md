@@ -61,3 +61,6 @@ CORRECTION (conductor, 12:5x): the Sep 30 → Oct 12 pair IS NISAR (provisional 
 - Slide 4: "NISAR every 12 days over Uruguaiana (track 010D: Sep 18, Sep 30, Oct 12, Oct 24, Nov 5, 2026): flood candidates [km²] km² at the crest, about [people] people"
 - Video C VO: "In October the Uruguay River flooded Uruguaiana; NISAR tracked it through cloud every 12 days." (15 words; VO total 55). Overlay "Uruguay River · Uruguaiana · NISAR every 12 days · Sep 18 → Nov 5, 2026".
 Pick C over A/B when the series keys land; A/B remain for the single Oct 24 → Nov 5 pair.
+
+## Uruguaiana forecast proof (lead-ml `uruguai-forecast-proof.md`, ~14:30)
+Fill [N] (days between the GFS run that flagged extreme upstream rain and the date the river reached flood stage at Uruguaiana), the two dates, and [X] (people inside the NISAR flood candidates, from `rs_uruguai_2026` — only under version A/C). Wording: "could have given about [N] days' notice" — never "prevented" or "warned". Locations: captions-v6-draft (EN/PT), demo-script v6 beats B/C, slide 3, page lead (if the conductor moves it there).

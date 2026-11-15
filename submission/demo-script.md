@@ -14,15 +14,17 @@ Voiceover: **55 words** (team name counted as one word), 5 cues, numbers 93% and
 
 Honesty rules for this VO: NISAR is spoken only over the Washington case (the RS event predates NISAR); flood polygons are "candidates"; landslides are never "confirmed"; live alerts are experimental, not official; no lead time or "warned before" claim is spoken or captioned (the official warnings came before the index in both replays). Tagline (L42): "Rain warns. Radar sees through." ("Radar confirms" is retired: next to "candidates" it read as an overclaim).
 
-## v6 draft — Uruguaiana main case (conductor 2026-11-15; render ~15:00 if lead-analysis's series lands by 14:30)
+## v6 — Uruguaiana main case (conductor 2026-11-15: v5 skipped; render once ~14:45–15:30 from main with the Uruguay data)
 
-Same cut as v5 except beat C. Captions: `captions-v6-draft.srt` (52 words, team name as one word; "Responders, like Civil Defense" leaves the VO — the page keeps it).
+Story: forecast → radar → people. Numbers [N] / [X] from lead-ml's `uruguai-forecast-proof.md` and lead-analysis's `rs_uruguai_2026` keys (~14:30); pick wording from NUMBERS.md (A/B/C). Captions: `captions-v6-draft.srt` (53 words, team name as one word) + `captions-v6-draft.pt-BR.srt`. Never "prevented"; on the page and slide: "could have given about [N] days' notice".
 
 | Beat | Time | On screen | Voiceover | Words |
 | --- | --- | --- | --- | --- |
-| C | 11–17.5 s | Uruguaiana on the Uruguay River: the NISAR pass pair **Oct 24 → Nov 5, 2026** (HH + HV) with its flood candidates ([TBD] km²) and the people inside ([TBD]); then **Public Alerts** (experimental). Overlay "Uruguay River · Uruguaiana, Rio Grande do Sul · NISAR Oct 24 → Nov 5, 2026". The Sep 30 → Oct 12 pair IS NISAR (provisional GCOV, conductor correction); the 010D stack Sep 18 / Sep 30 / Oct 12 / Oct 24 / Nov 5 is a 12-day series — use version C in NUMBERS.md ("…NISAR tracked it through cloud every 12 days") when lead-analysis's series lands. | "At Uruguaiana, NISAR saw the Uruguay River through cloud in late October." | 12 |
-
-Must-read for C: "Oct 24" and "Nov 5, 2026" and "flood candidates" in the NISAR card. Fallback if the series is late or empty: ship v5 as recorded at 13:00.
+| A | 0–2.5 s | Title card (team, challenge) over the Uruguaiana map | "Team [TEAM NAME], Brazil." | 3 |
+| B | 2.5–11 s | Forecast proof: the NOAA GFS run issued [date] with extreme rain over the upstream Uruguay basin (rain/TPI layer, forecast label visible), then the river-gauge date it reached flood stage at Uruguaiana ([date]). Overlay "NOAA GFS forecast, issued [date] → flood stage at Uruguaiana [date]: [N] days". | "In October, NOAA's forecast flagged extreme rain upstream [N] days before the Uruguay River reached flood stage at Uruguaiana." | 19 |
+| C | 11–19 s | NISAR at Uruguaiana: the 12-day passes (Sep 18 → Nov 5, 2026, provisional products) through the mid-October crest; flood candidates over the streets; **Who is affected** ([X] people). Overlay "NISAR every 12 days · Sep 18 → Nov 5, 2026 · flood candidates · about [X] people". If only version B holds (darkening, no gated candidates), the VO becomes "NISAR radar then saw the river spread through cloud, every 12 days." and no people number. | "NISAR radar then saw the flooded streets through cloud, every 12 days; about [X] people lived inside." | 17 |
+| D | 19–25.5 s | Supporting case: WA NISAR before/after swipe (Dec 4 → Dec 16, 2025), overlay "Washington · Dec 2025 · 27.99 km² of flood candidates within the swath". | "In Washington, NISAR mapped flood candidates under 93% cloud." | 9 |
+| E | 25.5–28.5 s | Wordmark card + data credits (+ app URL when known) | "Rain warns. Radar sees through." | 4 |
 
 ## Production notes
 

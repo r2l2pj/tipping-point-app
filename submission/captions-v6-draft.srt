@@ -4,15 +4,15 @@ Team [TEAM NAME], Brazil.
 
 2
 00:00:02,500 --> 00:00:11,000
-In Washington, clouds hid 93% of the area from optical satellites; NISAR radar mapped flood candidates through them.
+In October, NOAA's forecast flagged extreme rain upstream [N] days before the Uruguay River reached flood stage at Uruguaiana.
 
 3
-00:00:11,000 --> 00:00:17,500
-At Uruguaiana, NISAR saw the Uruguay River through cloud in late October.
+00:00:11,000 --> 00:00:19,000
+NISAR radar then saw the flooded streets through cloud, every 12 days; about [X] people lived inside.
 
 4
-00:00:17,500 --> 00:00:25,500
-The forecast shows where risk is rising; NISAR shows when radar will check it.
+00:00:19,000 --> 00:00:25,500
+In Washington, NISAR mapped flood candidates under 93% cloud.
 
 5
 00:00:25,500 --> 00:00:28,500
