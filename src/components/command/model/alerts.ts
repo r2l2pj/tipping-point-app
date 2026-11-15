@@ -3,6 +3,7 @@
 // Wraps src/lib/alerts.ts; takes over the sort order of the old alerts page.
 import { alertDataDates, candidatesToAlerts, type AlertCardData } from "@/lib/alerts";
 import type { AlertsFile } from "@/lib/types";
+import { finite, fmtBrt, fmtKm2 } from "./format";
 import type { CcBundle } from "./types";
 
 export type AlertListState = "alerts" | "none" | "unavailable" | "paused";
@@ -52,6 +53,8 @@ export function buildAlertList(input: {
   const { now, legacy } = input;
   const dataTime = now?.updated_at ?? now?.summary?.generated_at;
   const candidates = now?.nowAlerts?.candidates;
+  // The run marked itself paused (checks failed): no card from it.
+  if (now?.nowAlerts?.paused === true) return { state: "paused", alerts: [], dataTime };
   if (now && Array.isArray(candidates)) {
     const alerts = candidatesToAlerts(candidates, {
       places: now.places ?? now.municipalities,
@@ -81,6 +84,67 @@ export function alertsPaused(node: Record<string, unknown> | undefined, env = pr
   if (env === "1" || env === "true") return true;
   if (!node) return true;
   return node.alerts_paused === true || node.verified !== true;
+}
+
+// "Observed by radar (candidates)" on the public view: satellite flood
+// candidates grouped per source and municipality (alerts.json observed[]),
+// else the NISAR response summary. Observations, never alerts: no level.
+export interface ObservedRow {
+  key: string;
+  place: string;
+  source: string;
+  acquired?: string; // formatted
+  area: string;
+  people?: string;
+  polygons?: number;
+}
+
+export const OBSERVED_TITLE = "Observed by radar (candidates)";
+export const OBSERVED_NOTE =
+  "Flood seen by satellite between two passes — candidates, not yet checked on the ground. Not an alert.";
+export const OBSERVED_SHOWN = 10;
+
+const SOURCE_LABEL: Array<[RegExp, string]> = [
+  [/nisar/i, "NISAR radar"],
+  [/dswx[-_]?s1/i, "OPERA DSWx-S1 radar"],
+  [/dswx/i, "OPERA DSWx"],
+];
+const sourceLabel = (s?: string): string =>
+  (s && SOURCE_LABEL.find(([re]) => re.test(s))?.[1]) ?? s ?? "satellite";
+
+// People counts are estimates: shown exactly, labelled by the caller.
+const people = (v: unknown) => (finite(v) ? Math.round(v).toLocaleString("en-US") : undefined);
+
+export function observedRows(bundle: CcBundle | undefined): ObservedRow[] {
+  if (!bundle || bundle.mode !== "live") return [];
+  const observed = bundle.nowAlerts?.observed;
+  if (Array.isArray(observed) && observed.length) {
+    return observed
+      .filter((o) => (o.kind === undefined || o.kind === "observed") && finite(o.area_km2))
+      .sort((a, b) => (b.area_km2 as number) - (a.area_km2 as number))
+      .map((o, i) => ({
+        key: `${o.source ?? "src"}-${o.municipality ?? i}-${i}`,
+        place: o.municipality ? `${o.municipality}${o.uf ? `, ${o.uf}` : ""}` : "monitored region",
+        source: sourceLabel(o.source),
+        acquired: o.acquired ? fmtBrt(o.acquired) : undefined,
+        area: fmtKm2(o.area_km2),
+        people: people(o.people),
+        polygons: finite(o.polygons) ? o.polygons : undefined,
+      }));
+  }
+  const r = bundle.response;
+  if (r && finite(r.flooded_km2)) {
+    return [{
+      key: "response",
+      place: "monitored region",
+      source: sourceLabel(r.source),
+      acquired: r.post_acquired ? fmtBrt(r.post_acquired) : undefined,
+      area: fmtKm2(r.flooded_km2),
+      people: people(r.people_flooded),
+      polygons: r.polygons,
+    }];
+  }
+  return [];
 }
 
 // The live run was checked and marked verified by lead-live.

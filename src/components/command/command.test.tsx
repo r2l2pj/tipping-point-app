@@ -536,6 +536,17 @@ describe("public view (P1 to P5) and routes", () => {
     expect(html).not.toContain("No active alerts");
   });
 
+  test("observed flood candidates: a neutral section, shown also while alerts are paused", () => {
+    const live = liveBundle({ nowAlerts: { observed: [{ kind: "observed", hazard: "flood", source: "nisar-gcov",
+      acquired: "2026-11-06T21:16:03Z", municipality: "Cananéia", uf: "SP", area_km2: 8.5, people: 343, polygons: 14 }] } as never });
+    const html = render(live, {}, "public", { state: "paused", alerts: [] });
+    expect(html).toContain("Observed by radar (candidates)");
+    expect(html).toContain("Cananéia, SP");
+    expect(html).toContain("343 people (estimate)");
+    expect(html).toContain("Not an alert.");
+    expect(html).not.toContain("EMERGENCY");
+  });
+
   test("the public view changes the right panel only", () => {
     const html = render(liveBundle(), {}, "public", alerts);
     expect(html).toContain('aria-label="Map layers"');

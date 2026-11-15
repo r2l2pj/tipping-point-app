@@ -1,6 +1,6 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
-import { alertsByRegion, alertsPaused, buildAlertList, capAlertList, moreAlertsText, pausedAlertList } from "./alerts";
+import { alertsByRegion, alertsPaused, buildAlertList, capAlertList, moreAlertsText, observedRows, pausedAlertList } from "./alerts";
 import { bundle, liveBundle } from "./fixtures";
 import { ageText, classLabel, fmtBrt, fmtDate, fmtHours, sourceTime } from "./format";
 import { sourceRows } from "./sources";
@@ -182,5 +182,48 @@ describe("alerts paused until the live run is verified", () => {
   test("a paused list carries no card, keeps the run time", () => {
     const p = pausedAlertList({ state: "alerts", alerts: [{ id: "x" } as never], dataTime: "2026-11-15T04:15:23Z" });
     expect(p).toEqual({ state: "paused", alerts: [], dataTime: "2026-11-15T04:15:23Z" });
+  });
+});
+
+describe("lead-live alerts.json (2026-11-15): tpi candidates, observed[], paused", () => {
+  const file = {
+    candidates: [
+      { kind: "tpi", hazard: "flood", class: 3, label: "Crítico", municipality: "Canoas", uf: "RS", area_km2: 4.2, when: "d1" },
+      { kind: "observed", hazard: "flood", class: 3, label: "observed flood candidate" },
+    ],
+    observed: [
+      { kind: "observed", hazard: "flood", label: "observed flood candidate", source: "nisar-gcov",
+        acquired: "2026-11-06T21:16:03Z", municipality: "Iguape", uf: "SP", area_km2: 3.54, people: 41, polygons: 2 },
+      { kind: "observed", hazard: "flood", source: "nisar-gcov", acquired: "2026-11-06T21:16:03Z",
+        municipality: "Cananéia", uf: "SP", area_km2: 8.5, people: 343, polygons: 14 },
+    ],
+  };
+  const live = (over: Record<string, unknown> = {}) =>
+    liveBundle({ updated_at: "2026-11-15T12:00:00Z", nowAlerts: { ...file, ...over } as never });
+
+  test("only TPI candidates become cards, with place, area and day", () => {
+    const list = buildAlertList({ now: live() });
+    expect(list.alerts).toHaveLength(1);
+    expect(list.alerts[0]).toMatchObject({ region: "Canoas, RS", hazard: "flood", level: "emergency", area_km2: 4.2, when: "d1" });
+    expect(list.alerts[0].title).toBe("Tipping Point: CRITICAL flood risk");
+  });
+
+  test("paused: true in the file pauses the list", () => {
+    expect(buildAlertList({ now: live({ paused: true, paused_reason: "checks failed", candidates: [] }) }).state).toBe("paused");
+  });
+
+  test("observed rows: biggest first, labelled source, exact people, no level", () => {
+    const rows = observedRows(live());
+    expect(rows.map((r) => r.place)).toEqual(["Cananéia, SP", "Iguape, SP"]);
+    expect(rows[0]).toMatchObject({ source: "NISAR radar", area: "8.5 km²", people: "343", polygons: 14 });
+    expect(JSON.stringify(rows)).not.toMatch(/emergency|critical/i);
+  });
+
+  test("without observed[], the NISAR response summary is one row; replay has none", () => {
+    const rows = observedRows(liveBundle({ response: { source: "nisar-gcov", flooded_km2: 12.06, people_flooded: 384,
+      post_acquired: "2026-11-06T21:16:03Z", polygons: 16 } }));
+    expect(rows).toEqual([{ key: "response", place: "monitored region", source: "NISAR radar",
+      acquired: "Nov 6, 06:16 PM BRT", area: "12.1 km²", people: "384", polygons: 16 }]);
+    expect(observedRows(bundle({ response: { source: "nisar-gcov", flooded_km2: 1 } }))).toEqual([]);
   });
 });

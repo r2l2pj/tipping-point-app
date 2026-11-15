@@ -8,7 +8,7 @@ import GetAlertsCard from "./GetAlertsCard";
 import LayersColumn from "./LayersColumn";
 import MapStage from "./MapStage";
 import PanelSection from "./PanelSection";
-import type { AlertList } from "./model/alerts";
+import { observedRows, type AlertList } from "./model/alerts";
 import { priorityAreas } from "./model/areas";
 import { availability, missingText } from "./model/availability";
 import { dataStatus, freshnessText } from "./model/dataStatus";
@@ -158,6 +158,7 @@ export function CommandCenterView({
   const areas = useMemo(() => priorityAreas(bundle), [bundle]);
   const marks = useMemo(() => (bundle ? stepMarks(bundle, steps) : []), [bundle, steps]);
   const radar = useMemo(() => (bundle ? radarCard(bundle) : undefined), [bundle]);
+  const observed = useMemo(() => observedRows(bundle), [bundle]);
 
   const seek = useCallback((index: number) => dispatch({ type: "seek", index }), []);
   const toggleTable = useCallback(() => dispatch({ type: "toggleTable" }), []);
@@ -266,6 +267,9 @@ export function CommandCenterView({
               live={live}
               onGoToNow={() => dispatch({ type: "setMode", mode: "now" })}
               onViewOnMap={viewOnMap}
+              observed={observed}
+              observedOn={state.layers.includes("flood")}
+              onShowObserved={() => dispatch({ type: "toggleLayer", id: "flood" })}
             >
               <GetAlertsCard botUrl={botUrl} />
             </PublicAlertsPanel>

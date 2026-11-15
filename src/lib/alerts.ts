@@ -11,6 +11,8 @@ import type { Alert, AlertLevel } from "./types";
 // the rendered message title and the quiet-hours flags.
 export interface AlertCardData extends Alert {
   title?: string;
+  area_km2?: number;
+  when?: string; // "today" | "d1"
   held?: boolean; // held by the quiet-hours rule (23:00–06:00 BRT)
   quiet?: boolean; // issued during quiet hours — Critical still goes out
 }
@@ -121,6 +123,9 @@ export function candidatesToAlerts(
 
   const out: AlertCardData[] = [];
   (candidates ?? []).forEach((c, i) => {
+    // Observations are never alerts: only TPI candidates (kind "tpi", or
+    // no kind in runs before the field) become cards.
+    if (c.kind !== undefined && c.kind !== "tpi") return;
     const level = levelForClass(c.class);
     if (!level) return;
 
@@ -128,6 +133,7 @@ export function candidatesToAlerts(
     const held = c.hold === true || (quiet && level === "warning");
     const quietFlag = quiet && level === "emergency";
     const region =
+      (c.municipality ? `${c.municipality}${c.uf ? `, ${c.uf}` : ""}` : undefined) ??
       (c.centroid
         ? nearestPlace(ctx.places, c.centroid[0], c.centroid[1])
         : undefined) ?? "monitored region";
@@ -163,6 +169,8 @@ export function candidatesToAlerts(
         `${ALERT_LEVEL_WORDS[level]} ${hazard} risk in your region. ` +
         `${advice}${urgency}.${notes} ${ALERT_FOOTER}`,
       data_dates: ctx.dataDates,
+      ...(typeof c.area_km2 === "number" && Number.isFinite(c.area_km2) ? { area_km2: c.area_km2 } : {}),
+      ...(c.when === "today" || c.when === "d1" ? { when: c.when } : {}),
     });
   });
   return out;
