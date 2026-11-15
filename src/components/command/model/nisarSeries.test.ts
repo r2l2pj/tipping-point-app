@@ -300,3 +300,13 @@ test("Uruguaiana swipe stack: one viewing geometry (main track, or no context pa
   ]))!;
   expect(noTrack.dates).toEqual(["2026-09-30", "2026-10-12"]);
 });
+
+test("Uruguaiana change maps (kind nisar_change) join the NISAR extras, HH only, plain dates", async () => {
+  const { nisarExtras } = await import("./nisarExtras");
+  const b = { id: "rs_uruguai_2026", mode: "replay", bbox: [-58, -30, -56, -29], manifest: { event: "rs_uruguai_2026", layers: [
+    { id: "nisar_hh_change_20261012", kind: "nisar_change", date: "2026-10-12", png: "rs_uruguai_2026/png/nisar_hh_change_20261012.png", label: "NISAR HH change (Sep 30 → 10-12)", legend: ["Baixo"] },
+    { id: "nisar_hv_change_20261012", kind: "nisar_change", date: "2026-10-12", png: "rs_uruguai_2026/png/nisar_hv_change_20261012.png", label: "NISAR HV change (Sep 30 → 10-12)" },
+  ] } } as never;
+  const x = nisarExtras(b);
+  expect(x.map((e) => e.label)).toEqual(["NISAR HH change (Sep 30 → Oct 12)"]);
+});

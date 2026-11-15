@@ -5,6 +5,7 @@
 import { canonicalCaseId } from "@/lib/contract";
 import { assetUrl, fmtDate } from "@/lib/layers";
 import type { CcBundle } from "./types";
+import { plainText } from "./plain";
 
 type M = Record<string, unknown>;
 const isRecord = (v: unknown): v is M => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -19,11 +20,17 @@ export interface NisarExtra {
   note?: string;
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 export function nisarExtras(bundle: CcBundle): NisarExtra[] {
   const caseDir = canonicalCaseId(bundle.manifest?.event ?? bundle.id);
   return (bundle.manifest?.layers ?? []).flatMap((raw) => {
     const l = raw as unknown as M;
-    if (l.kind !== "nisar_extra" || typeof l.png !== "string" || typeof l.id !== "string") return [];
+    // Conductor (Uruguaiana): the 010D change maps (lead-analysis kind
+    // 'nisar_change') show here too — HH only; HV is one tap away in the swipe.
+    const change = l.kind === "nisar_change";
+    if ((l.kind !== "nisar_extra" && !change) || typeof l.png !== "string" || typeof l.id !== "string") return [];
+    if (change && /_hv_/i.test(l.id)) return [];
     const url = assetUrl(caseDir, l.png);
     if (!url) return [];
     const legend = Array.isArray(l.legend)
@@ -32,12 +39,13 @@ export function nisarExtras(bundle: CcBundle): NisarExtra[] {
       : [];
     return [{
       id: l.id,
-      label: typeof l.label === "string" ? l.label : l.id.replace(/_/g, " "),
+      label: plainText(typeof l.label === "string" ? l.label : l.id.replace(/_/g, " "))
+        .replace(/→ (\d{2})-(\d{2})\)/, (_m, mm: string, dd: string) => `→ ${MONTHS[Number(mm) - 1] ?? mm} ${Number(dd)})`),
       url,
       date: typeof l.date === "string" ? fmtDate(l.date) : undefined,
       legend,
       attribution: typeof l.attribution === "string" ? l.attribution : undefined,
-      note: typeof l.note === "string" ? l.note : undefined,
+      note: typeof l.note === "string" ? plainText(l.note) : undefined,
     }];
   });
 }
