@@ -44,6 +44,7 @@ import SourceAges from "./SourceAges";
 import { initialState, linkParams, PLAYBACK_MS, reduce, type Action, type ScreenState, type DeepLink, isFeatured } from "./state";
 import StatusBlock from "./StatusBlock";
 import { hideMissingFor } from "./model/sparse";
+import { plainText } from "./model/plain";
 import Tiles from "./Tiles";
 import TimelineBar from "./TimelineBar";
 import TopBar, { type View } from "./TopBar";
@@ -286,6 +287,9 @@ export function CommandCenterView({
   // Area by class of the selected hazard (summary v2), or the v1 union.
   const classesKm2 = bundle.riskPaused ? [] : Object.entries(liveClasses(bundle.summary, state.hazard) ?? {});
   const headlineData = live && places ? headlineFor(places) : undefined;
+  // lead-analysis (WA): one honest line on forecast vs the NISAR flood area.
+  const fnn = (bundle.metricsView as Record<string, unknown> | undefined)?.forecast_nisar_overlap_note;
+  const forecastNisarNote = typeof fnn === "string" && fnn.trim() ? plainText(fnn.trim()) : undefined;
   const tabsShown: PanelTab[] = ["overview", "forecast", "radar", ...(!sparse || areas.length > 0 ? ["places" as const] : []), "sources"];
   const areaTile = criticalAreaTile(bundle, state.hazard, step?.date, step?.day, overlayFrame);
   const peopleT = peopleTile(bundle, step?.date, step?.day, overlayFrame);
@@ -433,6 +437,11 @@ export function CommandCenterView({
                   onCompare={() =>
                     dispatch(state.compareOpen === "radar" ? { type: "closeCompare" } : { type: "openCompare", kind: "radar" })}
                 />
+                {forecastNisarNote && (
+                  <p className="m-0 rounded-lg border border-cc-line bg-cc-well px-2.5 py-1.5 text-xs" data-forecast-nisar-note>
+                    <span className="font-semibold">Forecast vs NISAR: </span>{forecastNisarNote}
+                  </p>
+                )}
                 </PanelSection>
               )}
               {show("places") && (
