@@ -6,15 +6,15 @@
 - **Tipping Point** — *Rain warns. Radar confirms.*
 - NASA Space Apps 2026 · Challenge: Dancing with the SARs
 - One line: three NASA missions, three layers, one tipping point
-- Team name + local event
-- *Visual:* app logo + tagline over a dark map; the header's "TIPPING POINT | Rain warns. Radar confirms." wordmark
+- Team `[TEAM NAME]` · members `[names]` · Local Event `[EVENT]` (the guide requires the team name, the member names and the challenge on the slides)
+- *Visual:* our wordmark + tagline over a dark map (no NASA logos or insignia anywhere in the deck: guide rule); the header's "TIPPING POINT | Rain warns. Radar confirms." wordmark
 
 ## Slide 2 — The problem
 - May 2024, Rio Grande do Sul: worst floods in state history — 446 of 497 municipalities hit
 - 185 dead, 581,000+ displaced, ~R$88.9 billion in damage
 - Alerts cover whole municipalities — they say where it *could* happen, not where it *did*
 - Optical satellites were blind: 100% cloud cover across 20 HLS scenes during the event
-- *Visual:* RS-2024 flood photo or dark map of the Taquari valley with the cloud-cover stat
+- *Visual:* dark map (our own screen; no third-party news photos unless licensed and credited) of the Taquari valley with the cloud-cover stat
 
 ## Slide 3 — The solution
 - TPI = geometric mean of Rain · Soil · Terrain scores, each in [0,1] — if any factor is zero, risk is zero
@@ -51,10 +51,10 @@
 ## Slide 7 — Roadmap + credits
 - Roadmap: refresh on each IMERG update (today every 3 h) → NISAR confirmation trigger per pass → threshold calibration on the landslide catalog → WhatsApp/e-mail alerts
 - Global coverage at release — one config edit
-- NASA inputs: GPM IMERG · SMAP L4 · NASADEM · NISAR GCOV · HLS · VIIRS Black Marble · GPW · OPERA DSWx
+- NASA inputs: GPM IMERG · SMAP L4 · NASADEM · NISAR GCOV · HLS · VIIRS Black Marble · GPW · OPERA DSWx · OPERA DIST-ALERT · SWOT
 - Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA
 - MERIT Hydro used as a validation reference only, not a NASA input
 - Repo + live app links; built with AI assistants under human review
-- *Visual:* mission-logo strip / data-source grid + QR code to the repo
+- *Visual:* data-source grid as plain text (no mission or agency logos: the 2026 guide forbids NASA branding in team-made content) + QR code to the app/repo
 
 *Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Slide 5 flood score is from the published `metrics.json` (tipping-point-data 864cf95, GitHub `fallback` branch) (Lucas's wording, 2026-11-15); "% warned" is dropped. Lead time from tipping-point-data 0dc5b58 (`forecast_lead_time`, rebuilt L28/L28b): WA median 85 h, IQR 55–115 h, 6 of 8 forecast days; RS 111 h on 1 of 4 forecast days (never a median).*
