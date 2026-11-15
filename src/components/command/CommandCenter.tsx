@@ -273,6 +273,8 @@ export function CommandCenterView({
               observed={observed}
               observedOn={state.layers.includes("flood")}
               onShowObserved={() => dispatch({ type: "toggleLayer", id: "flood" })}
+              bundle={bundle}
+              stepDate={step?.date}
             >
               <GetAlertsCard botUrl={botUrl} />
             </PublicAlertsPanel>
