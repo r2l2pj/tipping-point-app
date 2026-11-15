@@ -9,12 +9,11 @@
 - Team `[TEAM NAME]` · members `[names]` · Local Event `Florianópolis (Founder Haus, Jurerê)` (the guide requires the team name, the member names and the challenge on the slides)
 - *Visual:* our wordmark + tagline over a dark map (no NASA logos or insignia anywhere in the deck: guide rule); the header's "TIPPING POINT | Rain warns. Radar sees through." wordmark
 
-## Slide 2 — The problem
-- May 2024, Rio Grande do Sul floods: 478 municipalities affected, 185 deaths, 581,638 people displaced at the peak
-  - footnote: Government of Rio Grande do Sul, "SOS Rio Grande do Sul — Situação nos municípios", updated Aug 19, 2025
-- Alerts cover whole municipalities — they say where it *could* happen, not where it *did*
-- Optical satellites were blind: 100% cloud cover across 20 HLS scenes during the event
-- *Visual:* dark map (our own screen; no third-party news photos unless licensed and credited) of the Taquari valley with the cloud-cover stat
+## Slide 2 — The problem (main case: Uruguay River, Uruguaiana and Itaqui)
+- The Uruguay River floods our home state's western border towns again and again: red alerts for Itaqui and Uruguaiana on Jul 26–29, 2026 (Defesa Civil RS) and a new flood in October–November 2026 ([TBD: river level vs flood level + official source; press reported 9.89 m vs the 8.5 m flood level at Uruguaiana on Oct 13])
+- Clouds hide the river from optical satellites during the flood; alerts cover whole municipalities, not which streets are under water
+- Context: May 2024, Rio Grande do Sul floods — 478 municipalities affected, 185 deaths, 581,638 people displaced at the peak (Government of Rio Grande do Sul, SOS Rio Grande do Sul, updated Aug 19, 2025)
+- *Visual:* the Uruguaiana NISAR map from the app ([TBD] screenshot once the series is published)
 
 ## Slide 3 — The solution
 - **Radar change first:** for each NISAR pass pair, new water = HH backscatter drop of more than 3 dB to below a per-scene threshold, on low ground near rivers, patches ≥ 3 ha → flood candidates through cloud, with the people inside them
@@ -24,6 +23,7 @@
 - *Visual:* NISAR before/after swipe on the left; the TPI gauge small on the right
 
 ## Slide 4 — The demo
+- **Uruguaiana, Oct–Nov 2026:** NISAR passes every 12 days over the Uruguay River — [TBD] dates, flood candidates [TBD] km², about [TBD] people inside (live view, Southern Brazil)
 - Ops dashboard `/` (**Command Center**): top-bar **Now / Replay** switch + **Past event** selector, timeline D-10 → EVENT → D+n, Play control; map control **Forecast issued this day: Off / +1 d / +2 d / +3 d** replays each day's GFS run
 - **Tipping point reached** (Situation overview) + ranked **Priority areas** (Critical and High)
 - Right panel: **Now on the ground** (NISAR radar card: "Check with NISAR radar →", **Before / after**), **Who is affected**, **Prediction**, **Replay check**; **Show details: validation and impact** opens **How early? (in replay)** / **Why radar** / **Impact**

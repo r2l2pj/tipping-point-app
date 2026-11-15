@@ -14,6 +14,16 @@ Voiceover: **55 words** (team name counted as one word), 5 cues, numbers 93% and
 
 Honesty rules for this VO: NISAR is spoken only over the Washington case (the RS event predates NISAR); flood polygons are "candidates"; landslides are never "confirmed"; live alerts are experimental, not official; no lead time or "warned before" claim is spoken or captioned (the official warnings came before the index in both replays). Tagline (L42): "Rain warns. Radar sees through." ("Radar confirms" is retired: next to "candidates" it read as an overclaim).
 
+## v6 draft — Uruguaiana main case (conductor 2026-11-15; render ~15:00 if lead-analysis's series lands by 14:30)
+
+Same cut as v5 except beat C. Captions: `captions-v6-draft.srt` (55 words, team name as one word; "Responders, like Civil Defense" leaves the VO — the page keeps it).
+
+| Beat | Time | On screen | Voiceover | Words |
+| --- | --- | --- | --- | --- |
+| C | 11–17.5 s | Live view `/` zoomed to Uruguaiana / Itaqui on the Uruguay River: the NISAR 12-day series ([TBD] pass dates) with the flood candidates ([TBD] km²) and the people inside ([TBD]); then **Public Alerts** (experimental). Overlay "Uruguay River · Uruguaiana, Rio Grande do Sul · NISAR every 12 days · [TBD] dates". Wording of "flooded" and "tracked the water" must match the published series (if the series shows no new water, change the line). | "This month the Uruguay River flooded Uruguaiana; NISAR tracked the water through cloud every 12 days." | 16 |
+
+Must-read for C: the Uruguaiana pass dates and "flood candidates" in the NISAR card. Fallback if the series is late or empty: ship v5 as recorded at 13:00.
+
 ## Production notes
 
 - WA flooded figure (now in published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15)): 27.99 km2 flooded within the NISAR swath (Dec 4 -> Dec 16, 2025); clusters in the Snohomish/Skykomish valleys; Skagit had receded before the pass. The post scene covers only 74.1% of the AOI (SW cut off) — always say within the NISAR swath when quoting it. Beat 3 VO (Lucas, 2026-11-15) says "28 square kilometers of flood candidates"; the on-screen 27.99 km² stays "within the NISAR swath".

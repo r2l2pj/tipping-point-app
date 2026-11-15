@@ -1,0 +1,19 @@
+1
+00:00:00,000 --> 00:00:02,500
+Team [TEAM NAME], Brazil.
+
+2
+00:00:02,500 --> 00:00:11,000
+In Washington, clouds hid 93% of the area from optical satellites; NISAR radar mapped flood candidates through them.
+
+3
+00:00:11,000 --> 00:00:17,500
+This month the Uruguay River flooded Uruguaiana; NISAR tracked the water through cloud every 12 days.
+
+4
+00:00:17,500 --> 00:00:25,500
+The forecast shows where risk is rising; NISAR shows when radar will check it.
+
+5
+00:00:25,500 --> 00:00:28,500
+Rain warns. Radar sees through.
