@@ -229,20 +229,25 @@ export function Legend({
   className?: string;
 }) {
   const swatch = "inline-block h-4 w-[22px] shrink-0 rounded-[3px]";
+  const tpiOn = layers.includes("tpi");
   return (
     <div className={className} data-legend={compact ? "compact" : "full"}>
-      <div className={`mb-1.5 font-semibold ${compact ? "text-xs" : "text-sm"}`}>{legendTitle(hazard, compact)}</div>
+      {/* The TPI classes only when the TPI is on (Now's ML view has its own
+          legend row; two scales on screen contradict each other). */}
+      {tpiOn && <div className={`mb-1.5 font-semibold ${compact ? "text-xs" : "text-sm"}`}>{legendTitle(hazard, compact)}</div>}
       <div className={`flex flex-col gap-1 ${compact ? "text-xs" : "text-[13px]"}`}>
-        {classRows(bundle).map((c) => (
+        {tpiOn && classRows(bundle).map((c) => (
           <span key={c.key} className="inline-flex items-center gap-2.5">
             <span aria-hidden="true" className={swatch} style={{ background: c.color, border: c.key === "low" ? "1px solid #cfcf7a" : undefined }} />
             {c.label} ({c.range})
           </span>
         ))}
-        <span className="inline-flex items-center gap-2.5">
-          <span aria-hidden="true" className={swatch} style={{ background: HATCH_SWATCH }} />
-          Hatched: forecast
-        </span>
+        {tpiOn && (
+          <span className="inline-flex items-center gap-2.5">
+            <span aria-hidden="true" className={swatch} style={{ background: HATCH_SWATCH }} />
+            Hatched: forecast
+          </span>
+        )}
         {layerLegendRows(bundle, layers).map((r) => (
           <span key={r.id} className="inline-flex items-center gap-2.5">
             <span aria-hidden="true" className={r.round ? "mx-[6px] inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black" : `${swatch} border border-[#9aa7a0]`} style={{ background: r.swatch }} />
@@ -251,9 +256,11 @@ export function Legend({
         ))}
       </div>
       {/* Rule 3: units, NASA source and date with the legend. */}
-      <p className="mt-1.5 text-xs text-cc-muted" data-legend-source>
-        {legendSource(stepDate)}
-      </p>
+      {tpiOn && (
+        <p className="mt-1.5 text-xs text-cc-muted" data-legend-source>
+          {legendSource(stepDate)}
+        </p>
+      )}
     </div>
   );
 }

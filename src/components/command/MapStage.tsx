@@ -241,7 +241,7 @@ export default function MapStage({
       )}
 
       {comparePair && (
-        <CompareOverlay key={`${bundle.id}-${comparePair.kind}`} pair={comparePair}
+        <CompareOverlay key={`${bundle.id}-${comparePair.kind}`} pair={comparePair} init={state.compareInit}
           controlsRef={compare} onClose={() => dispatch({ type: "closeCompare" })} />
       )}
 

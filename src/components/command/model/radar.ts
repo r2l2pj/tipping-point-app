@@ -84,6 +84,52 @@ export interface ComparePair {
   hv?: { before: CompareSide; after: CompareSide };
   // Jhonatan: the radar flood polygons over the swipe, in their own colour.
   flood?: { url: string; label: string };
+  // Uruguay (L-freeze-1500): NISAR frames on several dates (manifest layers
+  // kind 'nisar_frame' {id, date, polarization, png, bounds}) — the swipe
+  // picks any two dates, HH or HV.
+  stack?: NisarStack;
+}
+// Conductor blocker: say "NISAR" only for NISAR data. Radar layers carry a
+// `sensor` field (lead-analysis); a layer without it keeps the old meaning
+// (WA's NISAR pair). Anything else is "Radar" with its sensor note.
+export interface RadarSensor { nisar: boolean; name: string; note?: string }
+const sensorOf = (l: unknown): string | undefined => {
+  const s = (l as Record<string, unknown> | undefined)?.sensor;
+  return typeof s === "string" && s.trim() ? s.trim() : undefined;
+};
+export const sensorName = (s?: string): string => (!s || /^nisar\b/i.test(s) ? "NISAR radar" : "Radar");
+export function radarSensor(bundle: CcBundle): RadarSensor {
+  const layers = bundle.manifest?.layers ?? [];
+  const radarLayers = layers.filter((l) => /^(nisar|radar)_(pre|post|hv_pre|hv_post)$/.test(l.id) ||
+    (l as unknown as Record<string, unknown>).kind === "nisar_frame");
+  const sensors = radarLayers.map(sensorOf);
+  const other = sensors.find((s) => s && !/^nisar\b/i.test(s));
+  if (other) return { nisar: false, name: "Radar", note: other };
+  // "NISAR (GCOV provisional)": say provisional on the card.
+  const prov = sensors.find((s) => s && /provisional/i.test(s));
+  return { nisar: true, name: "NISAR radar", ...(prov ? { note: "provisional GCOV" } : {}) };
+}
+
+export interface NisarStack { dates: string[]; frames: Record<string, { HH?: CompareSide; HV?: CompareSide }>; title: string }
+
+export function nisarStack(bundle: CcBundle): NisarStack | undefined {
+  const caseDir = canonicalCaseId(bundle.manifest?.event ?? bundle.id);
+  const frames: NisarStack["frames"] = {};
+  let allNisar = true;
+  for (const raw of bundle.manifest?.layers ?? []) {
+    const l = raw as unknown as Record<string, unknown>;
+    if (l.kind !== "nisar_frame" || typeof l.date !== "string" || typeof l.png !== "string") continue;
+    const url = assetUrl(caseDir, l.png);
+    if (!url) continue;
+    const pol = String(l.polarization ?? "HH").toUpperCase() === "HV" ? "HV" : "HH";
+    const day = l.date.slice(0, 10);
+    const b = Array.isArray(l.bounds) && l.bounds.length === 4 ? (l.bounds as BBox) : undefined;
+    const name = sensorName(sensorOf(l));
+    if (name !== "NISAR radar") allNisar = false;
+    (frames[day] ??= {})[pol] = { url, label: `${name} ${pol} — ${fmtDate(day)}`, bounds: b };
+  }
+  const dates = Object.keys(frames).filter((d) => frames[d].HH || frames[d].HV).sort();
+  return dates.length >= 2 ? { dates, frames, title: allNisar ? "NISAR radar dates" : "Radar dates" } : undefined;
 }
 
 export interface CompareOption {
@@ -129,13 +175,27 @@ function pairFor(
 }
 
 export function radarCompare(bundle: CcBundle): CompareOption {
-  if (availability(bundle, "radar").state === "not-applicable") return { kind: "radar", reason: NO_RADAR_TEXT };
-  const hv = pairFor(bundle, "radar", "nisar_hv_pre", "nisar_hv_post", "NISAR radar",
-    { before: "NISAR radar before (HV)", after: "NISAR radar after (HV)" }).pair;
-  const hh = pairFor(bundle, "radar", "nisar_pre", "nisar_post", "NISAR radar",
-    hv ? { before: "NISAR radar before (HH)", after: "NISAR radar after (HH)" }
-      : { before: "NISAR radar before", after: "NISAR radar after" });
-  const withHv = hh.pair && hv ? { ...hh, pair: { ...hh.pair, hv: { before: hv.before, after: hv.after } } } : hh;
+  const stack = nisarStack(bundle);
+  if (availability(bundle, "radar").state === "not-applicable" && !stack) return { kind: "radar", reason: NO_RADAR_TEXT };
+  const n = radarSensor(bundle).name;
+  const hv = pairFor(bundle, "radar", "nisar_hv_pre", "nisar_hv_post", n,
+    { before: `${n} before (HV)`, after: `${n} after (HV)` }).pair;
+  const labels = hv ? { before: `${n} before (HH)`, after: `${n} after (HH)` } : { before: `${n} before`, after: `${n} after` };
+  const nisarHh = pairFor(bundle, "radar", "nisar_pre", "nisar_post", n, labels);
+  // A non-NISAR pair (lead-analysis radar_pre/radar_post) when no NISAR pair.
+  const hh = nisarHh.pair ? nisarHh : (() => {
+    const r = pairFor(bundle, "radar", "radar_pre", "radar_post", n, labels);
+    return r.pair ? r : nisarHh;
+  })();
+  let withHv: CompareOption = hh.pair && hv ? { ...hh, pair: { ...hh.pair, hv: { before: hv.before, after: hv.after } } } : hh;
+  if (stack) {
+    // Frames only (no fixed pair): the swipe starts on the first and last date.
+    const side = (d: string) => (stack.frames[d].HH ?? stack.frames[d].HV)!;
+    const first = side(stack.dates[0]);
+    const last = side(stack.dates[stack.dates.length - 1]);
+    const base = withHv.pair ?? { kind: "radar" as const, bounds: unionBounds(first.bounds, last.bounds) ?? bundle.bbox, before: first, after: last };
+    withHv = { kind: "radar", pair: { ...base, stack } };
+  }
   const floodUrl = productUrl(bundle, "flood_confirmed");
   return withHv.pair && floodUrl
     ? { ...withHv, pair: { ...withHv.pair, flood: { url: floodUrl, label: floodLabels(bundle).layer } } }
@@ -168,10 +228,13 @@ export function floodLabels(bundle: CcBundle): { area: string; layer: string } {
       layer: hasDswx(bundle) ? "Flooded area (NISAR + OPERA Sentinel-1 radar, candidates)" : RESPONSE_LAYER_LABEL,
     };
   }
-  const source = bundle.metricsView?.flood_source;
-  if (hasNisarPair(bundle) || source === "nisar") {
+  const source = bundle.metricsView?.flood_source as string | undefined;
+  if (hasNisarPair(bundle) || source === "nisar" || source === "radar") {
     // Radar flood polygons are candidates (never "confirmed"), replay too.
-    return { area: "Flooded area (NISAR)", layer: "Flooded area (NISAR radar, candidates)" };
+    // "NISAR" only for NISAR data (sensor field).
+    return radarSensor(bundle).nisar && source !== "radar"
+      ? { area: "Flooded area (NISAR)", layer: "Flooded area (NISAR radar, candidates)" }
+      : { area: "Flooded area (radar, candidates)", layer: "Flooded area (radar, candidates)" };
   }
   if (source === "opera") {
     return { area: "Flooded area (optical/OPERA reference)", layer: "Flooded area (OPERA reference)" };
@@ -222,6 +285,7 @@ export const PASSES_SHOWN = 5;
 
 export interface RadarCard {
   pair: boolean;
+  nisar: boolean; // the pair is NISAR data (sensor field)
   headline: string; // status line of the card
   dates?: string; // "Dec 4, 2025 → Dec 16, 2025"
   flooded?: { label: string; value: string; swath?: string };
@@ -342,16 +406,22 @@ export function radarCard(bundle: CcBundle): RadarCard {
 
 function baseRadarCard(bundle: CcBundle): RadarCard {
   const dd = bundle.data_dates ?? {};
-  const pre = typeof dd.nisar_pre === "string" ? dd.nisar_pre : null;
-  const post = typeof dd.nisar_post === "string" ? dd.nisar_post : null;
+  // data_dates first; else the NISAR layers' own dates (Uruguay v0 has none).
+  const layerDate = (id: string) => bundle.manifest?.layers?.find((l) => l.id === id || l.id === id.replace(/^nisar_/, "radar_"))?.date ?? null;
+  const stack = nisarStack(bundle);
+  const pre = typeof dd.nisar_pre === "string" ? dd.nisar_pre : layerDate("nisar_pre") ?? stack?.dates[0] ?? null;
+  const post = typeof dd.nisar_post === "string" ? dd.nisar_post : layerDate("nisar_post") ?? stack?.dates[stack.dates.length - 1] ?? null;
   const pair = hasNisarPair(bundle);
   const flooded = bundle.metricsView?.flooded_km2;
   const labels = floodLabels(bundle);
   const cand = candidatesBlock(bundle);
   return {
     pair,
+    nisar: radarSensor(bundle).nisar,
     headline: pair
-      ? "NISAR pair available"
+      ? (radarSensor(bundle).nisar
+          ? `NISAR pair available${radarSensor(bundle).note ? ` (${radarSensor(bundle).note})` : ""}`
+          : `Radar pair available — sensor ${radarSensor(bundle).note}`)
       : bundle.mode === "live" ? AWAITING_PAIR_TEXT : `${NO_RADAR_TEXT}.`,
     dates: pre && post ? `${fmtDate(pre)} → ${fmtDate(post)}` : undefined,
     flooded: pair || finite(flooded)
@@ -361,13 +431,19 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
           swath: swathLine(bundle),
         }
       : undefined,
+    // Replay: people inside the radar flood candidates when published
+    // (Uruguay v0: people_flooded, GPW native grid, exact cell fractions).
+    people: bundle.mode !== "live" && finite(bundle.metricsView?.people_flooded)
+      ? { label: "People in the flooded area (estimate)", value: Math.round(bundle.metricsView!.people_flooded as number).toLocaleString("en-US") }
+      : undefined,
     candidates: {
       label: CANDIDATES_LABEL,
       value: cand.value,
       note: CANDIDATES_NOTE,
       lines: cand.lines,
     },
-    limitation: pair ? GUNW_LIMIT_TEXT : undefined,
+    // WA's declared limitation (GUNW pair) — not for other cases.
+    limitation: pair && canonicalCaseId(bundle.manifest?.event ?? bundle.id) === "wa_2025" ? GUNW_LIMIT_TEXT : undefined,
     passes: nisarPasses(bundle),
     passCount: Math.max(bundle.nisarPassCount ?? 0, nisarPasses(bundle).length),
     canShowOnMap: bundle.flood

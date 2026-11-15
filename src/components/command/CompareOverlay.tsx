@@ -10,6 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { boundsToImageCoordinates } from "@/lib/tpi";
 import { cameraPatch, clipPathFor, dragStep, pctFromClientX, SWIPE_MAX_PCT, SWIPE_MIN_PCT } from "@/lib/swipe";
 import { FLOODED_FILL, FLOODED_OUTLINE, type ComparePair } from "./model/radar";
+import { fmtDate } from "./model/format";
 
 // Same worker fix and the same dark basemap as Map.tsx.
 setWorkerUrl("/maplibre-gl-worker.js");
@@ -31,25 +32,62 @@ export default function CompareOverlay({
   pair,
   onClose,
   controlsRef,
+  init,
 }: {
   pair: ComparePair;
   onClose: () => void;
   controlsRef: MutableRefObject<CompareControls | null>;
+  init?: { before?: string; after?: string; pol?: "HH" | "HV" };
 }) {
-  const [pol, setPol] = useState<"HH" | "HV">("HH");
-  const shown = pol === "HV" && pair.hv ? { ...pair, before: pair.hv.before, after: pair.hv.after } : pair;
+  const [pol, setPol] = useState<"HH" | "HV">(init?.pol ?? "HH");
+  const stack = pair.stack;
+  const n = stack?.dates.length ?? 0;
+  const at = (d: string | undefined, fallback: number) => {
+    const i = d && stack ? stack.dates.indexOf(d.slice(0, 10)) : -1;
+    return i >= 0 ? i : fallback;
+  };
+  const [bi, setBi] = useState(at(init?.before, 0));
+  const [ai, setAi] = useState(at(init?.after, Math.max(0, n - 1)));
+  const sideAt = (i: number) => {
+    const f = stack!.frames[stack!.dates[i]];
+    return (pol === "HV" ? f.HV ?? f.HH : f.HH ?? f.HV)!;
+  };
+  const shown = stack
+    ? { ...pair, before: sideAt(bi), after: sideAt(ai) }
+    : pol === "HV" && pair.hv ? { ...pair, before: pair.hv.before, after: pair.hv.after } : pair;
+  const hasHv = !!pair.hv || !!stack?.dates.some((d) => stack.frames[d].HV);
   const seg = (on: boolean) =>
     `rounded-full px-2.5 py-0.5 text-xs font-semibold ${on ? "bg-cc-accent text-white" : "text-cc-ink"}`;
+  const day = (i: number) => fmtDate(stack!.dates[i]);
   return (
     <>
-      <CompareMaps key={pol} pair={shown} onClose={onClose} controlsRef={controlsRef} />
-      {pair.hv && (
-        <div role="group" aria-label="Polarization" data-polarization
-          className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full border border-cc-line-strong bg-white/95 p-[3px] shadow">
-          <span className="px-1.5 text-xs text-cc-muted">Polarization</span>
-          {(["HH", "HV"] as const).map((p) => (
-            <button key={p} type="button" aria-pressed={pol === p} onClick={() => setPol(p)} className={seg(pol === p)}>{p}</button>
-          ))}
+      <CompareMaps key={`${pol}-${bi}-${ai}`} pair={shown} onClose={onClose} controlsRef={controlsRef} />
+      {(hasHv || stack) && (
+        <div className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 flex-col items-center gap-1">
+          {hasHv && (
+            <div role="group" aria-label="Polarization" data-polarization
+              className="flex items-center gap-1 rounded-full border border-cc-line-strong bg-white/95 p-[3px] shadow">
+              <span className="px-1.5 text-xs text-cc-muted">Polarization</span>
+              {(["HH", "HV"] as const).map((p) => (
+                <button key={p} type="button" aria-pressed={pol === p} onClick={() => setPol(p)} className={seg(pol === p)}>{p}</button>
+              ))}
+            </div>
+          )}
+          {stack && (
+            <div data-radar-dates className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-cc-line-strong bg-white/95 px-2.5 py-1 text-xs text-cc-ink shadow">
+              <span className="font-semibold">{stack.title}</span>
+              <label className="flex items-center gap-1">Before
+                <input type="range" min={0} max={n - 1} step={1} value={bi} aria-label="Before date"
+                  onChange={(e) => setBi(Math.min(Number(e.target.value), ai))} />
+                <span className="tabular-nums">{day(bi)}</span>
+              </label>
+              <label className="flex items-center gap-1">After
+                <input type="range" min={0} max={n - 1} step={1} value={ai} aria-label="After date"
+                  onChange={(e) => setAi(Math.max(Number(e.target.value), bi))} />
+                <span className="tabular-nums">{day(ai)}</span>
+              </label>
+            </div>
+          )}
         </div>
       )}
     </>

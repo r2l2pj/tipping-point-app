@@ -273,6 +273,9 @@ export const keepAvailable = (
 // (L27: what is on the ground first), next to the TPI index. Replay cases and
 // a Now without a pair keep the layers they were given.
 export function withRadarDefault(bundle: CcBundle, on: readonly LayerId[], hazard: Hazard): LayerId[] {
+  // A replay with no index layer (Uruguay v0: radar only) opens on its
+  // flooded-area layer instead of an empty map.
+  if (bundle.mode !== "live" && on.length === 0 && layerAvailable(bundle, "flood", hazard)) return ["flood"];
   if (bundle.mode !== "live" || on.includes("flood")) return [...on];
   if (!hasNisarPair(bundle) && !declared(bundle, "flood_dswx")) return [...on];
   if (!layerAvailable(bundle, "flood", hazard)) return [...on];

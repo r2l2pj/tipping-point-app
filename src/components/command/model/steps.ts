@@ -291,6 +291,10 @@ export function mapCaption(
     const calm = calmToday(bundle, f?.hazard ?? hazard, f?.layer.id) ? ` · ${CALM_TODAY}` : "";
     return { text: `${HAZARD_LABEL[f?.hazard ?? hazard]} TPI · ${short} (partly forecast)${calm}`, forecast: true };
   }
+  // L48: the ML likelihood is the Now landslide view — the caption names it.
+  if (!on.includes("tpi") && on.includes("ptrigger")) {
+    return { text: `Landslide likelihood (ML, experimental) · ${when} · NOAA GFS forecast`, forecast: true };
+  }
   if (!on.includes("tpi")) return { text: `TPI off · ${when}`, forecast: false };
   const frame = frameFor(bundle, step.date, hazard);
   // The map hook shows its own note for a missing frame; the caption stays short.

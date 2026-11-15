@@ -177,3 +177,100 @@ describe("More NISAR products (kind 'nisar_extra')", () => {
     expect(radarCard(bundle()).extras).toEqual([]);
   });
 });
+
+describe("Uruguay: NISAR multi-date stack (kind 'nisar_frame')", () => {
+  const frame = (date: string, pol: string) => ({ id: `nisar_${pol.toLowerCase()}_${date.replace(/-/g, "")}`, kind: "nisar_frame", date, polarization: pol,
+    png: `rs_uruguai_2026/png/nisar_${pol.toLowerCase()}_${date.replace(/-/g, "")}.png`, bounds: [-57.25, -29.85, -56.45, -29.05] });
+  test("stub stack (WA pair as 2 frames) + HV; frames-only case still gets a swipe; Passes from layer dates", () => {
+    const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, manifest: { event: "rs_uruguai_2026", layers: [
+      frame("2026-10-24", "HH"), frame("2026-10-24", "HV"), frame("2026-11-05", "HH"), frame("2026-11-05", "HV"), frame("2026-10-12", "HH"),
+    ] } } as never);
+    const p = radarCompare(uy).pair!;
+    expect(p.stack!.dates).toEqual(["2026-10-12", "2026-10-24", "2026-11-05"]);
+    expect(p.stack!.frames["2026-11-05"].HV!.label).toBe("NISAR radar HV — Nov 5, 2026");
+    expect(p.before.url).toBe("/data/rs_uruguai_2026/png/nisar_hh_20261012.png");
+    expect(p.after.url).toBe("/data/rs_uruguai_2026/png/nisar_hh_20261105.png");
+    expect(radarCard(uy).dates).toBe("Oct 12, 2026 → Nov 5, 2026");
+  });
+  test("real v0 node: teammate pair layers (no data_dates) -> pair + Passes; no stack; no 'before NISAR launch'", () => {
+    const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, products: { flood_confirmed: "rs_uruguai_2026/geojson/flood_confirmed.geojson" },
+      manifest: { event: "rs_uruguai_2026", layers: [
+        { id: "nisar_post", date: "2026-10-12", png: "rs_uruguai_2026/png/nisar_post_20261012.png", bounds: [-57.079983, -29.757373, -57.008572, -29.700131], kind: "observed" },
+        { id: "nisar_pre", date: "2026-09-30", png: "rs_uruguai_2026/png/nisar_pre_20260930.png", bounds: [-57.079983, -29.757373, -57.008572, -29.700131], kind: "observed" },
+      ] } } as never);
+    const card = radarCard(uy);
+    expect(card.headline).toBe("NISAR pair available");
+    expect(card.dates).toBe("Sep 30, 2026 → Oct 12, 2026");
+    expect(card.compare.pair!.stack).toBeUndefined();
+    expect(card.compare.pair!.before.label).toBe("NISAR radar before — Sep 30, 2026");
+  });
+});
+
+describe("conductor blocker: 'NISAR' only for NISAR data (layer sensor field)", () => {
+  const pairLayers = (sensor?: string) => [
+    { id: "nisar_pre", date: "2026-09-30", png: "rs_uruguai_2026/png/nisar_pre_20260930.png", bounds: [-57.08, -29.76, -57.0, -29.7], ...(sensor ? { sensor } : {}) },
+    { id: "nisar_post", date: "2026-10-12", png: "rs_uruguai_2026/png/nisar_post_20261012.png", bounds: [-57.08, -29.76, -57.0, -29.7], ...(sensor ? { sensor } : {}) },
+  ];
+  test("teammate pair 'unconfirmed (likely Sentinel-1)' -> 'Radar …' everywhere; flood 'radar, candidates'", async () => {
+    const { tourStops } = await import("../StartHere");
+    const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, metricsView: { flooded_km2: 1.817, flood_source: "radar" } as never,
+      manifest: { event: "rs_uruguai_2026", layers: pairLayers("unconfirmed (likely Sentinel-1)") } } as never);
+    const card = radarCard(uy);
+    expect(card.nisar).toBe(false);
+    expect(card.headline).toBe("Radar pair available — sensor unconfirmed (likely Sentinel-1)");
+    expect(card.compare.pair!.before.label).toBe("Radar before — Sep 30, 2026");
+    expect(card.flooded!.label).toBe("Flooded area (radar, candidates)");
+    expect(card.limitation).toBeUndefined();
+    expect(JSON.stringify(card)).not.toContain("NISAR radar");
+    const stop = tourStops([uy])[0];
+    expect(stop.title).toBe("1 · Untitled — radar".replace("Untitled", uy.title ?? "Uruguay River flood"));
+    expect(stop.what).toMatch(/^Radar maps the river flood/);
+  });
+  test("sensor 'NISAR' or no field (WA) keeps NISAR wording; mixed stack -> 'Radar dates'", () => {
+    const n = bundle({ id: "rs_uruguai_2026", data_dates: {}, manifest: { event: "rs_uruguai_2026", layers: pairLayers("NISAR") } } as never);
+    expect(radarCard(n).headline).toBe("NISAR pair available");
+    expect(radarCard(n).compare.pair!.before.label).toBe("NISAR radar before — Sep 30, 2026");
+    const f = (date: string, sensor: string) => ({ id: `f_${date}`, kind: "nisar_frame", date, polarization: "HH", png: `x/${date}.png`, sensor, bounds: [0, 0, 1, 1] });
+    const mixed = bundle({ manifest: { event: "x", layers: [f("2026-10-12", "unconfirmed (likely Sentinel-1)"), f("2026-10-24", "NISAR"), f("2026-11-05", "NISAR")] } } as never);
+    const st = radarCompare(mixed).pair!.stack!;
+    expect(st.title).toBe("Radar dates");
+    expect(st.frames["2026-10-12"].HH!.label).toBe("Radar HH — Oct 12, 2026");
+    expect(st.frames["2026-11-05"].HH!.label).toBe("NISAR radar HH — Nov 5, 2026");
+  });
+});
+
+test("lead-analysis 8212136: v0 renamed radar_pre/radar_post + sensor -> 'Radar' pair works", () => {
+  const L = (id: string, date: string) => ({ id, date, png: `rs_uruguai_2026/png/${id}.png`, bounds: [-57.08, -29.76, -57.0, -29.7], sensor: "unconfirmed (likely Sentinel-1)", source: "teammate" });
+  const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, metricsView: { flooded_km2: 1.817, flood_source: "radar" } as never,
+    manifest: { event: "rs_uruguai_2026", layers: [L("radar_post", "2026-10-12"), L("radar_pre", "2026-09-30")] } } as never);
+  const card = radarCard(uy);
+  expect(card.pair).toBe(true);
+  expect(card.headline).toBe("Radar pair available — sensor unconfirmed (likely Sentinel-1)");
+  expect(card.dates).toBe("Sep 30, 2026 → Oct 12, 2026");
+  expect(card.compare.pair!.before).toMatchObject({ url: "/data/rs_uruguai_2026/png/radar_pre.png", label: "Radar before — Sep 30, 2026" });
+});
+
+test("radar-only replay (Uruguay v0) opens with the flooded-area layer on", async () => {
+  const { initialState } = await import("../state");
+  const L = (id: string, date: string) => ({ id, date, png: `rs_uruguai_2026/png/${id}.png`, bounds: [-57.08, -29.76, -57.0, -29.7], sensor: "unconfirmed (likely Sentinel-1)" });
+  const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, series: undefined, products: { flood_confirmed: "rs_uruguai_2026/geojson/flood_confirmed.geojson" },
+    metricsView: { flooded_km2: 1.817, flood_source: "radar" } as never,
+    manifest: { event: "rs_uruguai_2026", layers: [L("radar_post", "2026-10-12"), L("radar_pre", "2026-09-30")] } } as never);
+  expect(initialState([uy]).layers).toEqual(["flood"]);
+});
+
+test("replay radar card shows people in the flooded area when published (Uruguay v0: 28)", () => {
+  const uy = bundle({ id: "rs_uruguai_2026", metricsView: { flooded_km2: 1.817, people_flooded: 28, flood_source: "radar" } as never } as never);
+  expect(radarCard(uy).people).toEqual({ label: "People in the flooded area (estimate)", value: "28" });
+  expect(radarCard(bundle({ metricsView: { flooded_km2: 28 } as never } as never)).people).toBeUndefined();
+});
+
+test("lead-analysis 1665f79: 'NISAR (GCOV provisional)' -> NISAR wording, headline says provisional", () => {
+  const L = (id: string, date: string) => ({ id, date, png: `rs_uruguai_2026/png/${id}.png`, bounds: [-57.08, -29.76, -57.0, -29.7], sensor: "NISAR (GCOV provisional)", source: "teammate" });
+  const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, metricsView: { flooded_km2: 1.817, people_flooded: 28, flood_source: "nisar" } as never,
+    manifest: { event: "rs_uruguai_2026", layers: [L("radar_post", "2026-10-12"), L("radar_pre", "2026-09-30")] } } as never);
+  const card = radarCard(uy);
+  expect(card.headline).toBe("NISAR pair available (provisional GCOV)");
+  expect(card.compare.pair!.before.label).toBe("NISAR radar before — Sep 30, 2026");
+  expect(card.flooded!.label).toBe("Flooded area (NISAR)");
+});

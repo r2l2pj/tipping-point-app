@@ -35,7 +35,7 @@ import RainSoilChart from "./RainSoilChart";
 import ReplayCheck from "./ReplayCheck";
 import SituationPanel from "./SituationPanel";
 import SourceAges from "./SourceAges";
-import { initialState, linkParams, PLAYBACK_MS, reduce, type Action, type ScreenState } from "./state";
+import { initialState, linkParams, PLAYBACK_MS, reduce, type Action, type ScreenState, type DeepLink } from "./state";
 import StatusBlock from "./StatusBlock";
 import Tiles from "./Tiles";
 import TimelineBar from "./TimelineBar";
@@ -52,6 +52,7 @@ export interface CommandCenterProps {
   initialCase?: string;
   // `?day=<offset>` deep link: day offset from the event day.
   initialDay?: number | string;
+  deepLink?: DeepLink;
 }
 
 // Browser clock, minute steps. Undefined on the server and during hydration,
@@ -87,6 +88,7 @@ export function CommandCenterView({
   fontClass = "",
   initialCase,
   initialDay,
+  deepLink,
   view,
   onView,
   nowMs,
@@ -104,7 +106,7 @@ export function CommandCenterView({
     [cases]
   );
   const [state, dispatch] = useReducer(reducer, undefined, () => ({
-    ...initialState(cases, initialCase, initialDay),
+    ...initialState(cases, initialCase, initialDay, deepLink),
     ...initial,
   }));
   const [drawer, setDrawer] = useState(false); // Layers drawer, narrow screens
