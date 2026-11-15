@@ -1,9 +1,12 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { toMetricsView } from "../../../lib/contract";
 import { bundle, liveBundle, manifest, point } from "./fixtures";
 import { nightLightsCompare, radarCard, radarCompare } from "./radar";
 import { sourceRows } from "./sources";
-import { evidence, replayCheckRows } from "./replayCheck";
+import { evidence, opticalSeenPct, replayCheckRows } from "./replayCheck";
 import type { CcBundle } from "./types";
 
 const mv = (m: Record<string, unknown>) => m as CcBundle["metricsView"];
@@ -55,6 +58,17 @@ describe("replay check rows", () => {
     expect(row(b, "flood-agreement")!.value).toBe("not published yet (no reference mask)");
   });
 
+  test("flood agreement reads the like-for-like headline scores incl. P/R", () => {
+    const wa = bundle({ metricsView: mv({
+      iou: 0.08159565666049996, f1: 0.1508801485250636,
+      precision: 0.18729061306361094, recall: 0.1263223039392064,
+    }) });
+    expect(row(wa, "flood-agreement")!.value).toBe("IoU 0.08 · F1 0.15 · P 0.19 · R 0.13");
+    // P/R drop out of the row when absent.
+    expect(row(bundle({ metricsView: mv({ iou: 0.5, f1: 0.6 }) }), "flood-agreement")!.value)
+      .toBe("IoU 0.50 · F1 0.60");
+  });
+
   test("no rows in Now", () => {
     expect(replayCheckRows(liveBundle())).toEqual([]);
   });
@@ -64,6 +78,82 @@ describe("evidence", () => {
   test("cloud_pct 0.95 gives 'the optical saw only 5%'", () => {
     expect(evidence(bundle({ metricsView: mv({ cloud_pct: 0.95 }) })).whyRadar)
       .toContain("the optical saw only 5%");
+  });
+
+  test("opticalSeenPct accepts 0-1 and 0-100 cloud_pct, never out of range", () => {
+    expect(opticalSeenPct(0.95)).toBe(5);
+    expect(opticalSeenPct(92.89292282546754)).toBe(7);
+    expect(opticalSeenPct(100)).toBe(0);
+    expect(opticalSeenPct(1)).toBe(0); // normalized 1.0 = 100% cloud
+    expect(opticalSeenPct(0)).toBe(100);
+    expect(opticalSeenPct(null)).toBeNull();
+    expect(opticalSeenPct(undefined)).toBeNull();
+    expect(opticalSeenPct(-3)).toBeNull();
+    expect(opticalSeenPct(250)).toBeNull();
+    expect(opticalSeenPct("92")).toBeNull();
+  });
+
+  test("published wa_2025 keys: like-for-like headline, *_raw secondary block", () => {
+    const e = evidence(bundle({ metricsView: mv({
+      iou: 0.08159565666049996, f1: 0.1508801485250636,
+      precision: 0.18729061306361094, recall: 0.1263223039392064,
+      validation_method: "like-for-like: NISAR new-flood mask vs OPERA DSWx-S1 new flood",
+      iou_raw: 0.007528697499424659, f1_raw: 0.014944879521764607,
+      precision_raw: 0.1981733990568252, recall_raw: 0.007765240364435442,
+      opera_fn_diagnosis: "raw FN 1.19M px = permanent/pre-existing water",
+      cloud_pct: 92.89292282546754,
+    }) }));
+    expect(e.floodStats.slice(0, 4).map((s) => `${s.label} ${s.value}`)).toEqual([
+      "IoU 0.08", "F1 0.15", "Precision 0.19", "Recall 0.13",
+    ]);
+    // validation_method replaces the clear-sky note.
+    expect(e.floodNote).toBe("like-for-like: NISAR new-flood mask vs OPERA DSWx-S1 new flood");
+    expect(e.floodSecondary).toEqual({
+      line: "IoU 0.01 · F1 0.01 · P 0.20 · R 0.01",
+      diagnosis: "raw FN 1.19M px = permanent/pre-existing water",
+    });
+    // a raw 0-100 cloud_pct is rescaled once, never double-scaled
+    expect(e.whyRadar).toContain("the optical saw only 7%");
+  });
+
+  test("no *_raw keys -> no secondary block; no validation_method -> clear-sky note", () => {
+    const e = evidence(bundle({ metricsView: mv({ iou: 0.5 }) }));
+    expect(e.floodSecondary).toBeUndefined();
+    expect(e.floodNote).toContain("clear-sky reference cells only");
+    // one *_raw key alone is enough to render the block
+    expect(evidence(bundle({ metricsView: mv({ iou_raw: 0.01 }) })).floodSecondary).toBeDefined();
+  });
+
+  test("out-of-range cloud_pct yields no 'optical saw' sentence", () => {
+    for (const cloud_pct of [-3, 250]) {
+      const w = evidence(bundle({ metricsView: mv({ cloud_pct }) })).whyRadar;
+      expect(w).not.toContain("the optical saw");
+      expect(w).toContain("not reported");
+    }
+  });
+
+  test("rs_2024: cloud_pct 100 -> 'the optical saw only 0%'", () => {
+    expect(evidence(bundle({ metricsView: mv({ cloud_pct: 100 }) })).whyRadar)
+      .toContain("the optical saw only 0%");
+  });
+
+  test("real public/data/metrics.json renders a sane optical % for every case", () => {
+    const real = JSON.parse(
+      readFileSync(join(import.meta.dir, "../../../../public/data/metrics.json"), "utf8")
+    ) as { cases: Record<string, Record<string, unknown>> };
+    for (const raw of Object.values(real.cases)) {
+      if (raw.cloud_pct == null) continue;
+      const cloud = Number(raw.cloud_pct);
+      // metrics.json authors *_pct 0-100 (SCHEMA)
+      const expected = Math.round(100 - cloud);
+      // normalized path (what the loader builds via toMetricsView)
+      expect(evidence(bundle({ metricsView: toMetricsView(raw) })).whyRadar)
+        .toContain(`the optical saw only ${expected}%`);
+      // raw path: an un-normalized value must not leak a negative percent
+      const viaRaw = evidence(bundle({ metricsView: mv({ cloud_pct: cloud }) })).whyRadar;
+      expect(viaRaw).toContain(`the optical saw only ${expected}%`);
+      expect(viaRaw).not.toMatch(/saw only -/);
+    }
   });
 
   test("the lead-time block: hidden without metrics, 'not published yet' without a median", () => {
