@@ -122,7 +122,8 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
     const card = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/ml/ml_card_v2.json"), "utf8"));
     const html = details(bundle({ id: "rs_2024", metricsView: mv({}), ml: buildMlView(card, "rs_2024", "xgb_all") }));
     expect(html).toContain("VAL PR-AUC");
-    expect(html).toContain("Not a headline yet — independent overfit audit pending.");
+    expect(html).toContain("Independent audit: no leakage found.");
+    expect(html).not.toContain("audit pending");
     expect(html).toContain("Model version v2");
     expect(html).not.toContain("Provisional — being re-scored");
     expect(html).toContain("Retrained without any Rio Grande do Sul 2024 point.");

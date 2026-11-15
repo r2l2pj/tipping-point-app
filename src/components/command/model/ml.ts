@@ -39,6 +39,9 @@ export const SOURCE_LABEL: Record<string, string> = {
 // prefers v2 and the view carries `provisional` per card.
 export const ML_PROVISIONAL = true; // v1 card (no version key)
 export const isV2 = (card: unknown) => isRecord(card) && card.version === "v2";
+// L40 (conductor): independent audit result, shown on the v2 card.
+export const ML_AUDIT_TEXT =
+  "Independent audit: no leakage found. The test events are extreme storms, so these scores overstate everyday skill; a simple rain-vs-local-extreme rule performs about as well.";
 // lead-ml (model-metrics.md v2): the no-rain/soil baseline carries terrain,
 // land cover, soil texture and day of year; on RS its score is a test-design
 // artefact, not skill.
@@ -298,8 +301,13 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
   }
   const view: MlView = {
     version: typeof card.version === "string" ? card.version : undefined,
-    headlineHeld: typeof card.headline_status === "string" && /^held/i.test(card.headline_status)
-      ? `Not a headline yet — ${card.headline_status.replace(/^held:\s*/i, "")}.` : undefined,
+    // L40: the audit result. lead-ml's headline_status once republished with
+    // the result; while it still says 'held / pending', the conductor's text.
+    headlineHeld: v2
+      ? (typeof card.headline_status === "string" && card.headline_status.trim() && !/^held|pending/i.test(card.headline_status)
+          ? card.headline_status.trim()
+          : ML_AUDIT_TEXT)
+      : undefined,
     valNote: typeof card.val_vs_test_note === "string" ? card.val_vs_test_note : undefined,
     servedLine: servedTrig ? `The live layer runs ${labels[servedTrig]?.replace(/ — the model live$/, "") ?? servedTrig}.` : undefined,
     servedNote: isRecord(card.served) && typeof card.served.note === "string" ? card.served.note : undefined,
