@@ -3,58 +3,56 @@
 > **DRAFT — pending approval.**
 
 ## Slide 1 — Title
-- **Tipping Point** — *Rain warns. Radar confirms.*
+- **Tipping Point** — *Rain warns. Radar sees through.*
 - NASA Space Apps 2026 · Challenge: Dancing with the SARs
-- One line: three NASA missions, three layers, one tipping point
-- Team `[TEAM NAME]` · members `[names]` · Local Event `[EVENT]` (the guide requires the team name, the member names and the challenge on the slides)
-- *Visual:* our wordmark + tagline over a dark map (no NASA logos or insignia anywhere in the deck: guide rule); the header's "TIPPING POINT | Rain warns. Radar confirms." wordmark
+- One line: NISAR radar sees new flooding through cloud; we turn each pass into a priority list
+- Team `[TEAM NAME]` · members `[names]` · Local Event `Florianópolis (Founder Haus, Jurerê)` (the guide requires the team name, the member names and the challenge on the slides)
+- *Visual:* our wordmark + tagline over a dark map (no NASA logos or insignia anywhere in the deck: guide rule); the header's "TIPPING POINT | Rain warns. Radar sees through." wordmark
 
 ## Slide 2 — The problem
-- May 2024, Rio Grande do Sul: worst floods in state history — 446 of 497 municipalities hit
-- 185 dead, 581,000+ displaced, ~R$88.9 billion in damage
+- May 2024, Rio Grande do Sul floods: 478 municipalities affected, 185 deaths, 581,638 people displaced at the peak
+  - footnote: Government of Rio Grande do Sul, "SOS Rio Grande do Sul — Situação nos municípios", updated Aug 19, 2025
 - Alerts cover whole municipalities — they say where it *could* happen, not where it *did*
 - Optical satellites were blind: 100% cloud cover across 20 HLS scenes during the event
 - *Visual:* dark map (our own screen; no third-party news photos unless licensed and credited) of the Taquari valley with the cloud-cover stat
 
 ## Slide 3 — The solution
-- TPI = geometric mean of Rain · Soil · Terrain scores, each in [0,1] — if any factor is zero, risk is zero
-- Three missions, three layers: GPM IMERG (rain vs climatology), SMAP (soil saturation), NASADEM (slope + drainage height)
-- Classes: Low <0.2 · Moderate · High · Critical >0.6 — Critical = the tipping point
-- Same logic family as NASA's LHASA landslide model
-- Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h); on held-out events it never saw (Rio Grande do Sul, May 2024, plus 8 Washington reports), driven by the NOAA GFS forecast, it reached PR-AUC [X] vs [Y] for the TPI > 0.6 rule (base rate [B]) [numbers pending v2 re-score, ~12:00] — TPI stays the headline
-- *Visual:* formula `TPI = (R·S·T)^(1/3)` with three icons (cloud/satellite, soil, terrain) feeding one gauge
+- **Radar change first:** for each NISAR pass pair, new water = HH backscatter drop of more than 3 dB to below a per-scene threshold, on low ground near rivers, patches ≥ 3 ha → flood candidates through cloud, with the people inside them
+- **Between passes, where to look next:** Tipping Point Index TPI = (R·S·T)^(1/3) from GPM IMERG rain, SMAP soil moisture and NASADEM terrain; Critical > 0.6 only when all three agree
+- Builds on NASA's LHASA: LHASA v2 already uses XGBoost + IMERG + SMAP (doi:10.3389/feart.2021.640043) and LHASA-F forecasts ~3 days (doi:10.3389/feart.2022.878996); new here: no-look-ahead GFS replay, explicit horizons, held-out events with published misses, radar response on the same screen
+- An experimental XGBoost trigger model sits beside the index (independent audit: about as good as a simple forecast-rain-vs-local-extreme rule)
+- *Visual:* NISAR before/after swipe on the left; the TPI gauge small on the right
 
 ## Slide 4 — The demo
 - Ops dashboard `/` (**Command Center**): top-bar **Now / Replay** switch + **Past event** selector, timeline D-10 → EVENT → D+n, Play control; map control **Forecast issued this day: Off / +1 d / +2 d / +3 d** replays each day's GFS run
 - **Tipping point reached** (Situation overview) + ranked **Priority areas** (Critical and High)
 - Right panel: **Now on the ground** (NISAR radar card: "Check with NISAR radar →", **Before / after**), **Who is affected**, **Prediction**, **Replay check**; **Show details: validation and impact** opens **How early? (in replay)** / **Why radar** / **Impact**
-- Public feed `/alerts` (**Public Alerts** view): Civil-Defense-style alert cards ("Tipping Point: <level> <hazard> risk")
+- Public feed `/alerts` (**Public Alerts** view): Civil-Defense-style alert cards ("Tipping Point: <level> <hazard> risk"), an **experimental research product, not official warnings** (official: Defesa Civil, SMS 40199)
 - Forecast rain = **NOAA GFS 0.25°** in replay and live, labelled "forecast · NOAA GFS (issued <date>)"; replay D+1..D+3 uses the forecast issued on each day
-- *Visual:* 2–3 real screenshots — **Tipping point reached** over the heated Taquari valley map (RS, Apr 30), NISAR **Before / after** GCOV swipe (WA), /alerts card
+- *Visual:* 2–3 real screenshots — **Tipping point reached** over the heated Taquari valley map (RS, Apr 30), NISAR radar **Before / after** swipe (WA), /alerts card
 
 ## Slide 5 — Did it work?
-- WA Dec 2025: "Optical satellites were 92.9% blind under the clouds. On the 7% they could see, our radar flood map overlaps at F1 0.15 (precision 0.19, recall 0.13, new flood only). Radar maps the rest." — 27.99 km² flooded within the NISAR swath; landslides remain candidates only
-- Early warning headline: **"Using the forecast available at the time, Tipping Point flagged the area [X] hours before the damage."** (wording decided by Lucas 2026-11-15; the number is [ON HOLD — L35, re-score ~12:00])
-- "With the forecast available at the time, the index marked the area as critical before the damage, adding a map of where and who to the official warnings."
-  - supporting line (footnote): "In replay with the NOAA GFS forecast issued each day (no look-ahead), Washington (Dec 2025) reached Critical a median of [X] h before the damage (IQR [IQR]; [n] of [N] forecast days flagged it); in Rio Grande do Sul (May 2024), [n] of [N] forecast days flagged it, [Y] h ahead. [ON HOLD — L35, re-score ~12:00]"
-- RS replay (no radar — event predates NISAR, so no flood-overlap score): [Y] h ahead on [n] of [N] forecast days [ON HOLD — L35, re-score ~12:00] — too few to call a median
-- **Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar**
-- *Visual:* **Replay check** panel (with **Show details: validation and impact** open) screenshot next to a small metrics table for both cases
+- **NISAR, Washington Dec 2025:** "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them" — home to about 950 people. Sentinel-1 radar sees open flood through cloud too (our reference); NISAR's L-band also reaches water under vegetation
+- **Radar physics checked:** candidates stable Nov 10 → Dec 4 (−9.7 dB), then −6.5 dB by Dec 16; double-bounce hypothesis supported — 45% of the missed flood is in towns or forest (vs 5% of what we caught), recall 25% open land vs 3% towns, 1% forest
+- **Prediction, tied to NISAR:** the forecast shows where risk is rising; NISAR shows when radar will check it. Washington: the GFS run issued Dec 3, 2025 showed Critical landslide risk for Dec 6. Rio Grande do Sul: the forecast issued a day before the first deaths flagged only 4% of the case area as High risk, and that 4% held 36% of the 16,027 landslides that followed (8.8× better than chance); runs issued 51 and 75 h before: 0%; Washington's flooded places were not flagged ahead (upstream rain)
+- **Official warnings came first** in both replays; the index adds where and who. RS flood index vs Copernicus EMS maps during the flood: F1 0.31 (Taquari valley)
+- *Visual:* NISAR before/after swipe still + a 4-row metrics table
 
 ## Slide 6 — Impact + honest limitations
-- Impact numbers the demo reports: 229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, peak day May 3, 2024)
-- Limitations: thresholds calibrated on a single event; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days; lead time counts the area as flagged when any pixel crosses Critical on a D+1..D+3 forecast frame (lenient); GFS under-forecast the RS peak by about half; official warnings still came before the index
+- Impact: WA about 950 people inside the NISAR flood candidates; 254,263 in index-critical areas and night-light drop 44% (Dec 12, 2025); RS 1,681,783 in index-critical areas + 33% (peak day May 3, 2024) — night lights indicative only (cloud/snow)
+- Limitations: Thresholds are not yet calibrated for Brazil; validated on 2 replay events + 11 disaster events for the ML; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days; GFS under-forecast the RS peak by about half; official warnings still came before the index
 - The video demo is a replay; the live view covers Southern Brazil every 3 h. The replay forecast is NOAA GFS as issued at the time (our only non-NASA input) — perfect-forecast frames appear only as a labelled upper bound
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event
 - *Visual:* **Impact** block (under **Show details: validation and impact**) + a short "What we don't claim" callout box
 
 ## Slide 7 — Roadmap + credits
-- Roadmap: refresh on each IMERG update (today every 3 h) → NISAR confirmation trigger per pass → threshold calibration on the landslide catalog → WhatsApp/e-mail alerts
-- Global coverage at release — one config edit
-- NASA inputs: GPM IMERG · SMAP L4 · NASADEM · NISAR GCOV · HLS · VIIRS Black Marble · GPW · OPERA DSWx · OPERA DIST-ALERT · SWOT
+- Roadmap: refresh on each IMERG update (today every 3 h) → NISAR check per pass → threshold calibration on the landslide catalog
+- Future of NISAR: InSAR slow slope motion (flags some creeping slopes; fast shallow slides often give no warning) · ~200 m soil moisture · flooding under forest canopy · 12-day radar coverage of Brazil
+- Other regions after local threshold calibration
+- NASA inputs: GPM IMERG · SMAP L4 · NASADEM · NISAR (L-band radar) · HLS · VIIRS Black Marble · GPW · OPERA DSWx · OPERA DIST-ALERT · SWOT
 - Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA
 - MERIT Hydro used as a validation reference only, not a NASA input
 - Repo + live app links; built with AI assistants under human review
 - *Visual:* data-source grid as plain text (no mission or agency logos: the 2026 guide forbids NASA branding in team-made content) + QR code to the app/repo
 
-*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Slide 5 flood score is from the published `metrics.json` (tipping-point-data 864cf95, GitHub `fallback` branch) (Lucas's wording, 2026-11-15); "% warned" is dropped. Lead time from tipping-point-data 0dc5b58 (`forecast_lead_time`, rebuilt L28/L28b): WA median [X] h, IQR [IQR], [n] of [N] forecast days; RS [Y] h on [n] of [N] forecast days (never a median).*
+*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Slide 5 flood score is from the published `metrics.json` (tipping-point-data 864cf95, GitHub `fallback` branch) (Lucas's wording, 2026-11-15); "% warned" is dropped. RS forecast result from the published `metrics.json` (tipping-point-data b5c21df): `cases.rs_2024.slide_warned_gfs_24h_pct` 36.45 (Critical 1.87; run issued 2024-04-28), `_48h_pct` 0, `_72h_pct` 0, anchor onset 2024-04-29 03Z; WA `flood_warned_gfs_{24,48,72}h_pct` 0 / 0 / 0.14, onset 2025-12-08 08Z. The WA lead-time median is retired (L35).*

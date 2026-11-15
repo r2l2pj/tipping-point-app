@@ -10,22 +10,22 @@ Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is N
 - **SMAP L4 SPL4SMGP/008** — root-zone soil moisture (`sm_rootzone_wetness`, Soil score)
 - **NASADEM** — slope + HAND proxy (Terrain score)
 
-## Confirmation (radar + optical)
+## Radar response (flood candidates) + optical
 
-- **NISAR GCOV** — flood confirmation, before/after backscatter (track 172D frame 064, BETA products)
+- **NISAR L2 GCOV** — flood candidates from the HH before/after backscatter change; HV published for comparison (track 172D frame 064, BETA products)
 - **HLS (Harmonized Landsat Sentinel-2)** — post-event landslide *candidates* when clouds clear
 
 ## Live response (every 3 h, Southern Brazil)
 
 - **OPERA Land Surface Disturbance Alert from HLS (DIST-ALERT-HLS) V1** (LP DAAC, `OPERA_L3_DIST-ALERT-HLS_V1`) — vegetation-loss alerts used to flag landslide scar candidates (RS replay and live); always "candidates"
 - **OPERA DSWx-S1** — near-real-time flood candidates against a 60-day water-frequency baseline (always "candidates")
-- **NISAR GCOV** — radar flood candidates on the latest pass pair over the domain, same change detection as the WA case
+- **NISAR GCOV** — the latest pass pair over the domain is checked every run; flood candidates are computed only for comparable pairs (same acquisition mode, per-scene threshold found, away from the scene edge), with the same change detection as the WA case. No comparable pair over Southern Brazil yet (Oct 25 → Nov 6, 2026 rejected: modes differ)
 - **MODIS MCD12Q1 land cover** — removes permanent wetland/water and marks cropland as lower confidence; also a feature of the trigger model, never a TPI input
 
 ## Impact
 
 - **VIIRS Black Marble VNP46A2** — lights-out (power-loss) estimate
-- **GPW v4 (SEDAC Gridded Population of the World)** — population exposure
+- **GPW v4.11 population count, 2020 (SEDAC Gridded Population of the World)** — population exposure
 
 ## Forecast
 
@@ -35,9 +35,10 @@ Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is N
 
 - **OPERA DSWx** — surface water product used for validation
 - **SWOT Hydrocron** — river levels for the "Did we get it right?" river chart
-- **GLC (Global Landslide Catalog / COOLR)** — validation reference for the landslide-hit metric (WA case)
+- **GLC (Global Landslide Catalog / COOLR)** — ML training labels (2,348+ dated points worldwide) and NASA event inventories for the Petrópolis, Angra dos Reis and São Sebastião TEST events. Not used for the Washington replay points (Washington Geological Survey).
 
 ## Non-NASA context and reference layers (never index inputs)
+- **Washington Geological Survey landslide inventory (licence to confirm)** — validation reference for the landslide-hit metric (Washington case)
 
 - **JRC Global Surface Water v1.4** — marks seasonal water as lower confidence in the live flood candidates
 - **IBGE country and municipality outlines** — Brazil clip, municipality ranking of priority zones
