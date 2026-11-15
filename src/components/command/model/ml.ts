@@ -31,6 +31,8 @@ export const SOURCE_LABEL: Record<string, string> = {
   perfect: "observed rain (perfect forecast · upper bound)",
 };
 // Below this many positives a TEST score is labelled fragile.
+// L32: shown under the T_ML 'where' table until lead-ml's re-export.
+export const TML_RETRAIN_NOTE = "Terrain model being retrained without RS 2024 points; numbers will update.";
 export const FEW_POSITIVES = 30; // WA 2025: 8 dated reports (8–24 positive samples by horizon)
 
 export interface MlRow {

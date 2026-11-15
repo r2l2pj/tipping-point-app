@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FEW_POSITIVES, mlCaveats, SOURCE_LABEL, type MlTable, type MlView } from "./model/ml";
+import { FEW_POSITIVES, mlCaveats, SOURCE_LABEL, TML_RETRAIN_NOTE, type MlTable, type MlView } from "./model/ml";
 
 const caseTitle = (id?: string) => (id === "rs_2024" ? "RS 2024" : id === "wa_2025" ? "WA 2025" : id ?? "this event");
 
@@ -112,6 +112,9 @@ export default function MlCard({ ml }: { ml: MlView }) {
         <div className="mt-2 border-t border-cc-rule pt-1.5">
           <p className="font-semibold">Where: landslide-prone ground (T_ML susceptibility)</p>
           <div className="mt-1"><Table t={ml.where} caption="TEST blocks" /></div>
+          {/* L32 (conductor): the terrain model is being retrained without the
+              RS 2024 points; this table and the T_ML layer stay meanwhile. */}
+          <p className="mt-1 text-cc-warn">{TML_RETRAIN_NOTE}</p>
           {ml.calibrationNote && <p className="mt-1 text-cc-muted">{ml.calibrationNote}</p>}
           {ml.split3a && <p className="mt-1 text-cc-faint">TEST: {ml.split3a}</p>}
         </div>
