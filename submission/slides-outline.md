@@ -21,7 +21,7 @@
 - Three missions, three layers: GPM IMERG (rain vs climatology), SMAP (soil saturation), NASADEM (slope + drainage height)
 - Classes: Low <0.2 · Moderate · High · Critical >0.6 — Critical = the tipping point
 - Builds on NASA's LHASA: LHASA v2 already uses XGBoost + IMERG + SMAP (doi:10.3389/feart.2021.640043) and LHASA-F forecasts ~3 days (doi:10.3389/feart.2022.878996); new here: no-look-ahead GFS replay, 24 h/48 h/72 h/7 d horizons, held-out events with onset-anchored lead time and published misses, index + radar response on one screen
-- Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h), driven by the NOAA GFS forecast; its evaluation on held-out disaster events is in progress — TPI stays the headline
+- Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide within 24 h (up to 14 days, low skill past 72 h), driven by the NOAA GFS forecast; experimental: median per-event ROC 0.93 across 9 held-out disasters, but an independent audit found it about as good as a simple forecast-rain-vs-local-extreme rule (~4–5 alarm-days per site per year) — TPI stays the headline
 - *Visual:* formula `TPI = (R·S·T)^(1/3)` with three icons (cloud/satellite, soil, terrain) feeding one gauge
 
 ## Slide 4 — The demo
