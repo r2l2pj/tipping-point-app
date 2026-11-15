@@ -3,16 +3,16 @@
 Time [TEAM NAME], Brasil.
 
 2
-00:00:02,500 --> 00:00:11,000
-[N] dias antes de o rio Uruguai atingir a cota de inundação, o mapa de previsão da NOAA apontou os bairros em risco.
+00:00:02,500 --> 00:00:10,000
+Cinco dias antes de o rio Uruguai atingir a cota de inundação em Uruguaiana, a chuva medida por satélite da NASA rio acima já era extrema.
 
 3
-00:00:11,000 --> 00:00:17,500
-Depois, o radar NISAR mapeou as áreas alagadas através das nuvens; cerca de [X] pessoas moram ali.
+00:00:10,000 --> 00:00:18,500
+Ela apontava o corredor do rio, onde moram cerca de 20.900 pessoas; depois o NISAR mapeou a cheia através das nuvens.
 
 4
-00:00:17,500 --> 00:00:25,000
-O rio ainda transborda; ajudamos a evitar o desastre: quando, onde e quem.
+00:00:18,500 --> 00:00:25,000
+O rio ainda transborda; ajudamos a evitar o desastre: quando, onde, quem.
 
 5
 00:00:25,000 --> 00:00:28,000

@@ -16,12 +16,12 @@
 - *Visual:* the Uruguaiana NISAR map from the app ([TBD] screenshot once the series is published)
 
 ## Slide 3 — Prevent the disaster, not the flood: when · where · who (Uruguaiana, Oct 2026)
-- **When:** the NOAA GFS forecast flagged extreme rain over the upstream Uruguay basin [N] days before the river reached flood stage at Uruguaiana ([date]) — about [N] days' notice
-- **Where:** the forecast's High and Critical areas covered [P]% of the area that then flooded ([lift]× the share expected by chance)
-- **Who:** about [X] people lived in those areas, ranked by area for responders
-- **Then radar:** NISAR passes every 12 days (Sep 18 → Nov 5, 2026, provisional products) mapped where it flooded through cloud — [km²] km² of flood candidates (HH backscatter drop > 3 dB below a per-scene threshold, low ground near rivers, ≥ 3 ha)
-- How: Tipping Point Index TPI = (R·S·T)^(1/3) from GPM IMERG rain, SMAP soil, NASADEM terrain on the NOAA GFS forecast; builds on NASA's LHASA (doi:10.3389/feart.2021.640043; LHASA-F doi:10.3389/feart.2022.878996); an experimental XGBoost trigger model sits beside it
-- *Visual:* three columns WHEN / WHERE / WHO over the forecast map, then the NISAR flood map
+- **When:** five days before the Uruguay River reached flood stage at Uruguaiana (Oct 5), NASA satellite rain (GPM IMERG) over the upstream basin was already extreme — 5 days' notice (6 days before the second rise, Oct 29)
+- **Where:** it pointed to the low-lying river corridor, which holds 54% of the area NISAR later saw newly flooded, in 36% of the land (1.5× chance)
+- **Who:** about 20,900 people live in that corridor (about 29 inside the radar flood candidates)
+- **What we added:** local rain never hit its own extreme level, so a local-rain index alone would have missed it; the upstream signal is our addition (post-event test, Nov 15). NOAA GFS alone under-forecast both rises. No claim of being earlier than official warnings
+- **Then radar:** NISAR mapped where it flooded through cloud (HH backscatter drop > 3 dB below a per-scene threshold, low ground near rivers, ≥ 3 ha)
+- How: Tipping Point Index of NASA rain (IMERG), soil (SMAP) and terrain (NASADEM); builds on NASA's LHASA (doi:10.3389/feart.2021.640043; LHASA-F doi:10.3389/feart.2022.878996); an experimental XGBoost trigger model sits beside it
 
 ## Slide 4 — The demo
 - **Uruguaiana, Oct–Nov 2026:** NISAR pass pair Oct 24 → Nov 5, 2026 (HH + HV) over the Uruguay River — flood candidates [TBD] km², about [TBD] people inside; Itaqui is outside the swath
