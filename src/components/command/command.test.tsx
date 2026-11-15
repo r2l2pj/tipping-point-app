@@ -320,6 +320,41 @@ describe("banned strings, both views", () => {
   });
 });
 
+describe("response-first section order (L27)", () => {
+  const b = bundle({
+    series: series([0.9]),
+    metricsView: mv({ flooded_km2: 41.6, people_critical: 8400 }),
+    data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" },
+  });
+
+  test("Now on the ground precedes Prediction; ground facts precede the TPI chip", () => {
+    const html = render(b);
+    const at = (s: string) => html.indexOf(s);
+    // The response section opens the panel.
+    expect(at("Now on the ground")).toBeGreaterThanOrEqual(0);
+    expect(at("Prediction")).toBeGreaterThan(at("Now on the ground"));
+    // What is flooded/sliding and who is exposed come before the TPI chip.
+    for (const s of ["Radar confirmation", "Flooded area (NISAR)", "Who is affected", "People potentially exposed", "Priority areas"]) {
+      expect(at(s)).toBeGreaterThanOrEqual(0);
+      expect(at(s)).toBeLessThan(at("Tipping point reached"));
+    }
+    // Inside Prediction: the chip stays the headline, then the chart, then
+    // the pointer to the probability horizons in the Layers column.
+    expect(at("Tipping point reached")).toBeGreaterThan(at("Prediction"));
+    expect(at("Rain, Soil Moisture and TPI")).toBeGreaterThan(at("Tipping point reached"));
+    expect(at("Model probabilities (24 h–14 d) are in the Layers column.")).toBeGreaterThan(at("Rain, Soil Moisture and TPI"));
+    // Replay check and the source ages keep their place at the end.
+    expect(at("Replay check")).toBeGreaterThan(at("Prediction"));
+    expect(at("Data sources (NASA)")).toBeGreaterThan(at("Replay check"));
+  });
+
+  test("the sections belong to the command view only", () => {
+    const html = render(b, {}, "public");
+    expect(html).not.toContain("Now on the ground");
+    expect(html).not.toContain(">Prediction<");
+  });
+});
+
 describe("data status (M2, S23)", () => {
   const shown = { series: series([0.2]) };
 
