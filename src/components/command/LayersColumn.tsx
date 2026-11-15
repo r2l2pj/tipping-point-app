@@ -118,7 +118,7 @@ export default function LayersColumn({
                       {r.label}
                       {sub && <span className="block text-xs text-cc-faint">{sub}</span>}
                       {prob && probHorizons.length > 0 && (
-                        <span role="radiogroup" aria-label="Probability horizon" className="mt-1 flex flex-wrap gap-1">
+                        <span role="radiogroup" aria-label="Horizon" className="mt-1 flex flex-wrap gap-1">
                           {probHorizons.map((h) => (
                             <button
                               key={h}

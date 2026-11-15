@@ -35,7 +35,7 @@ describe("P(trigger) row and horizon selector", () => {
   test("the selector lists only the horizons the case ships", () => {
     const html = column(prob, ["ptrigger"]);
     expect(html).toContain("Relative likelihood of a rain-triggered landslide within");
-    expect(html).toContain('aria-label="Probability horizon"');
+    expect(html).toContain('aria-label="Horizon"');
     for (const l of [">24 h<", ">48 h<", ">72 h<", ">7 d<", ">14 d<"]) expect(html).toContain(l);
     expect(html).toContain('aria-checked="true"');
     const partial = column(
@@ -57,14 +57,14 @@ describe("P(trigger) row and horizon selector", () => {
   test("without p_trigger frames the row is unavailable and there is no selector", () => {
     const html = column(bundle({ manifest: manifest([frame("tpi_slide", "2025-12-10")]) }), []);
     expect(html).toContain("Relative likelihood of a rain-triggered landslide within");
-    expect(html).not.toContain("Probability horizon");
+    expect(html).not.toContain('aria-label="Horizon"');
     expect(html).not.toContain(">24 h<");
   });
 
   test("a legacy single p_trigger family is available but has no horizon selector", () => {
     const html = column(bundle({ manifest: manifest([frame("p_trigger", "2025-12-10")]) }), ["ptrigger"]);
     expect(html).toContain("Relative likelihood of a rain-triggered landslide within");
-    expect(html).not.toContain("Probability horizon");
+    expect(html).not.toContain('aria-label="Horizon"');
     expect(html).not.toContain(">24 h<");
   });
 });

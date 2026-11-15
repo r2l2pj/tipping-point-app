@@ -697,3 +697,14 @@ describe("'when' = d1 with today's class (lead-live 20e51bc)", () => {
     expect(html).toContain("today:</span> below High");
   });
 });
+
+describe("P(trigger) row title follows the selected horizon", () => {
+  test("7d selected: the row reads 'within 7 days'", () => {
+    const live = liveBundle({ manifest: { ...manifest([]), layers: [
+      { id: "p_trigger_24h", date: "2026-11-15", png: "a.png" }, { id: "p_trigger_7d", date: "2026-11-15", png: "b.png", low_skill: true },
+    ] } as never });
+    const html = render(live, { probHorizon: "7d", layers: ["ptrigger"] });
+    expect(html).toContain("Relative likelihood of a rain-triggered landslide within 7 days (when × where)");
+    expect(html).not.toContain("within 24 h (when");
+  });
+});

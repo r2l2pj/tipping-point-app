@@ -406,7 +406,12 @@ export function probLayerNote(l?: ManifestLayer): string | undefined {
   // lead-live P(trigger) frames carry their own basis_label (observed days +
   // NOAA GFS forecast days, issue time): it wins.
   const label = (l as ManifestLayer & { basis_label?: unknown }).basis_label;
-  if (typeof label === "string" && label) return label;
+  // lead-live prefixes its own title ("Relative likelihood … — observed …"):
+  // the row already shows the title, so only the basis part is kept.
+  if (typeof label === "string" && label) {
+    const dash = label.indexOf(" — ");
+    return /^relative likelihood/i.test(label) && dash > 0 ? label.slice(dash + 3) : label;
+  }
   const issued = l.issued_at ?? l.date;
   const src = l.forecast_source ?? PROB_FORECAST_DEFAULT;
   return issued ? `issued ${fmtDataDate(issued)} · forecast: ${src}` : `forecast: ${src}`;

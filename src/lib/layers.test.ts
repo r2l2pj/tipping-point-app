@@ -775,3 +775,12 @@ describe("probLayerNote", () => {
       .toBe("observed Nov 8–14 + NOAA GFS forecast Nov 15–17 (issued 2026-11-15 00:00 UTC)");
   });
 });
+
+
+describe("probLayerNote drops lead-live's title prefix", () => {
+  test("only the basis part stays", () => {
+    expect(probLayerNote({ id: "p_trigger_7d", basis_label:
+      "Relative likelihood of a rain-triggered landslide within 7d (when x where) — observed IMERG to Nov 14 + NOAA GFS forecast to Nov 21 (issued 2026-11-15 00:00 UTC)" } as never))
+      .toBe("observed IMERG to Nov 14 + NOAA GFS forecast to Nov 21 (issued 2026-11-15 00:00 UTC)");
+  });
+});
