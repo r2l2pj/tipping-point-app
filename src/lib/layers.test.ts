@@ -767,3 +767,11 @@ describe("featureCenters", () => {
     expect(out.features[0].properties).toEqual({ area_km2: 3.54 });
   });
 });
+
+
+describe("probLayerNote", () => {
+  test("a published basis_label wins", () => {
+    expect(probLayerNote({ id: "p_trigger_72h", date: "2026-11-15", basis_label: "observed Nov 8–14 + NOAA GFS forecast Nov 15–17 (issued 2026-11-15 00:00 UTC)" } as never))
+      .toBe("observed Nov 8–14 + NOAA GFS forecast Nov 15–17 (issued 2026-11-15 00:00 UTC)");
+  });
+});

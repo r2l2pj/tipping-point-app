@@ -398,6 +398,10 @@ export function probFrame(
 
 export function probLayerNote(l?: ManifestLayer): string | undefined {
   if (!l) return undefined;
+  // lead-live P(trigger) frames carry their own basis_label (observed days +
+  // NOAA GFS forecast days, issue time): it wins.
+  const label = (l as ManifestLayer & { basis_label?: unknown }).basis_label;
+  if (typeof label === "string" && label) return label;
   const issued = l.issued_at ?? l.date;
   const src = l.forecast_source ?? PROB_FORECAST_DEFAULT;
   return issued ? `issued ${fmtDataDate(issued)} · forecast: ${src}` : `forecast: ${src}`;
