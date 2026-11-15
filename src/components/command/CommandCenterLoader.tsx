@@ -89,11 +89,11 @@ const WARNED_KEEP = ["n_points", "confirmed_flood_km2", "explanation", "anchor_u
 function slimWarned(v: unknown): unknown {
   if (!isRecord(v)) return v;
   const out: Record<string, unknown> = Object.fromEntries(Object.entries(v).filter(([k]) => WARNED_KEEP.includes(k)));
-  // The runs inside the 24-48 h window, three fields each (conductor: the
-  // 24 h and 48 h runs are shown side by side).
+  // The runs up to 72 h before the damage, three fields each (L36: the
+  // 24, 48 and 72 h runs side by side — single runs vary).
   if (Array.isArray(v.by_issue_gfs)) {
     out.by_issue_gfs = v.by_issue_gfs
-      .filter((r): r is Record<string, unknown> => isRecord(r) && typeof r.hours_before_anchor === "number" && r.hours_before_anchor < 49)
+      .filter((r): r is Record<string, unknown> => isRecord(r) && typeof r.hours_before_anchor === "number" && r.hours_before_anchor < 73)
       .map((r) => ({ issue: r.issue, hours_before_anchor: r.hours_before_anchor, alto_or_critico_pct: r.alto_or_critico_pct }));
   }
   return out;

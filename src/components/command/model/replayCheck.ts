@@ -183,7 +183,11 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
 // contract's PCT_KEYS (whose >= 1 heuristic turned 0.98 into 98%): they are
 // printed as published.
 const pct100 = (v: number) => `${v < 1 && v > 0 ? v.toFixed(2) : v.toFixed(1)}%`;
-export const WARNED_NAME = { slide: "Landslides flagged before the damage", flood: "Flood area flagged before the damage" };
+// L36 headline wording (lead-submission): "forecast as issued".
+export const WARNED_NAME = {
+  slide: "Mapped landslides in High or Critical areas (forecast as issued)",
+  flood: "Flooded area in High or Critical areas (forecast as issued)",
+};
 export function warnedRow(m: M): CheckRow | undefined {
   for (const hz of ["slide", "flood"] as const) {
     const v = m[`${hz}_warned_pct`];
@@ -192,18 +196,20 @@ export function warnedRow(m: M): CheckRow | undefined {
     const crit = m[`${hz}_warned_critical_pct`];
     const obs = m[`${hz}_warned_observed_pct`];
     const of = hz === "slide"
-      ? (finite(obj.n_points) ? ` of ${obj.n_points.toLocaleString("en-US")} inventoried landslides` : " of inventoried landslides")
+      ? (finite(obj.n_points) ? ` of ${obj.n_points.toLocaleString("en-US")} mapped landslides` : " of mapped landslides")
       : (finite(obj.confirmed_flood_km2) ? ` of ${fmtKm2(obj.confirmed_flood_km2)} radar-mapped flood` : " of the radar-mapped flood");
     const anchor = typeof obj.anchor_utc === "string" ? fmtDate(obj.anchor_utc.slice(0, 10)) : undefined;
-    // Per forecast run inside the window, nearest first: "24 h before
-    // 88.1% · 48 h before 0.3%" (data-driven — the L35 re-score may move it).
+    // Per forecast run up to 72 h, nearest first: "24 h before 88.1% ·
+    // 48 h before 0.27% · 72 h before 70.9%" (data-driven — the L35
+    // re-score may move it); single runs vary (L36).
     const runs = (Array.isArray(obj.by_issue_gfs) ? obj.by_issue_gfs as M[] : [])
-      .filter((r) => finite(r.hours_before_anchor) && finite(r.alto_or_critico_pct) && r.hours_before_anchor < 49)
+      .filter((r) => finite(r.hours_before_anchor) && finite(r.alto_or_critico_pct) && r.hours_before_anchor < 73)
       .sort((a, b) => (a.hours_before_anchor as number) - (b.hours_before_anchor as number))
       .map((r) => `${Math.round(r.hours_before_anchor as number)} h before ${pct100(r.alto_or_critico_pct as number)}`);
     const detail = [
-      `TPI High or above in the NOAA GFS forecasts issued 24–48 h before the damage${anchor ? ` (${anchor})` : ""}` +
-        (runs.length > 1 ? ` — by run: ${runs.join(" · ")}` : "") +
+      (runs.length
+        ? `NOAA GFS runs before ${anchor ?? "the damage"}: ${runs.join(" · ")}${runs.length > 1 ? " — single runs vary" : ""}`
+        : `TPI High or above in the NOAA GFS forecast issued 24 h before ${anchor ?? "the damage"}`) +
         (finite(obs) ? `; with observed rain instead: ${pct100(obs)}` : "") + ".",
       typeof obj.explanation === "string" ? obj.explanation : undefined,
     ].filter(Boolean).join(" ");
