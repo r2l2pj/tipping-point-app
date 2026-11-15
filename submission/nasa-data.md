@@ -25,7 +25,7 @@ Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is N
 ## Impact
 
 - **VIIRS Black Marble VNP46A2** — lights-out (power-loss) estimate
-- **GPW v4 (SEDAC Gridded Population of the World)** — population exposure
+- **GPW v4.11 population count, 2020 (SEDAC Gridded Population of the World)** — population exposure
 
 ## Forecast
 

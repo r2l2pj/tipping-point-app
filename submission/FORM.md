@@ -63,7 +63,7 @@ Source: `nasa-data.md` (awaiting Lucas):
 > - **Radar response (flood candidates):** NISAR L2 GCOV, HH (HV published for comparison), track 172D frame 064, BETA; post-event optical: HLS.
 > - **Live flood and scar candidates:** OPERA DSWx-S1 and OPERA DIST-ALERT-HLS V1 (vegetation-loss alerts used to flag landslide scar candidates).
 > - **Land cover:** MODIS MCD12Q1.
-> - **Impact:** VIIRS Black Marble VNP46A2; GPW v4 (SEDAC).
+> - **Impact:** VIIRS Black Marble VNP46A2; GPW v4.11 population count (2020, SEDAC).
 > - **Validation:** OPERA DSWx, SWOT (Hydrocron river levels).
 > - **Landslide labels:** NASA Global Landslide Catalog / COOLR (ML training labels: 2,348+ dated landslide points worldwide; NASA event inventories for the Petrópolis, Angra dos Reis and São Sebastião TEST events).
 >
