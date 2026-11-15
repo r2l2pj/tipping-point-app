@@ -202,6 +202,8 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
       : undefined);
   const ems = emsRow(m);
   if (ems) rows.push(ems);
+  const emsSlides = emsLandslideRow(m);
+  if (emsSlides) rows.push(emsSlides);
   const warned = warnedRow(m);
   if (warned) rows.push(warned);
   // Model scores are shown only with their n, in the 'Did we get it right?'
@@ -241,6 +243,30 @@ export function liftLine(areaShare: unknown, lift: unknown, what: string): strin
 
 export const EMS_ROW_NAME = "Flood map vs Copernicus EMS (Taquari valley only)";
 export const EMS_ATTRIBUTION = "© European Union, Copernicus Emergency Management Service";
+// Conductor (page quotes it): EMS EMSR720 landslides (Taquari) vs the
+// NOAA GFS run issued a day before the onset. The centroid share is the fair
+// headline; any-touched-cell in brackets (lead-analysis).
+export const EMS_SLIDES_NAME = "Copernicus EMS landslides (Taquari valley only)";
+export function emsLandslideRow(m: M): CheckRow | undefined {
+  const c = m.landslide_ems_warned_gfs_24h_centroid_pct;
+  const area = m.landslide_ems_warned_gfs_24h_centroid_area_share_pct;
+  const lift = m.landslide_ems_warned_gfs_24h_centroid_lift;
+  if (!finite(c) || !finite(area)) return undefined;
+  const any = m.landslide_ems_warned_gfs_24h_pct;
+  const anyLift = m.landslide_ems_warned_gfs_24h_lift;
+  const n = finite(m.landslide_ems_n) ? `${Math.round(m.landslide_ems_n).toLocaleString("en-US")} ` : "";
+  return {
+    id: "ems-slides",
+    name: EMS_SLIDES_NAME,
+    value: `${`${Math.round(c)}%`} at slide centre${finite(lift) && lift > 0 ? ` · ${lift.toFixed(1)}× chance` : ""}`,
+    detail: `${`${Math.round(c)}%`} of the ${n}EMS landslides had their centre inside the area the day-before NOAA GFS forecast flagged High or above, which covered ${`${Math.round(area)}%`} of the EMS area` +
+      (finite(lift) && lift > 0 ? ` — ${lift.toFixed(1)}× chance` : "") +
+      (finite(any) ? ` (any touched cell: ${`${Math.round(any)}%`}${finite(anyLift) && anyLift > 0 ? `, ${anyLift.toFixed(1)}×` : ""})` : "") +
+      `. ${EMS_ATTRIBUTION}.`,
+    missing: false,
+  };
+}
+
 const emsLift = (m: M): string => {
   const l = m.flood_ems_flagged_before_onset_lift;
   const a = m.flood_ems_flagged_before_onset_area_share_pct;

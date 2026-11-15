@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { anchorShort, catalogHitsDetail, emsRow, handCheck, liftLine, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
+import { anchorShort, catalogHitsDetail, emsLandslideRow, emsRow, handCheck, liftLine, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
 
 // lead-analysis fallback bb125cf values (authored 0-100).
 describe("warned before the damage (lead-analysis)", () => {
@@ -189,5 +189,17 @@ describe("L43 lift (lead-analysis f2b7ff3)", () => {
     const m = { ...JSON.parse(readFileSync(join(import.meta.dir, "../../../../test/fixtures/rs-ems.json"), "utf8")),
       flood_ems_flagged_before_onset_lift: 2.23, flood_ems_flagged_before_onset_area_share_pct: 2.94 };
     expect(emsRow(m)!.detail).toStartWith("Before the onset the GFS run flagged 2.9% of the mapped Taquari area as High or above but 6.6% of the EMS flood: 2.2× chance. Flood index");
+  });
+});
+
+describe("RS EMS landslides row (lead-analysis f2b7ff3 keys)", () => {
+  test("centroid 57% in 27% area, 2.1×; any-cell 81%, 3.0×; absent -> no row", () => {
+    const r = emsLandslideRow({ landslide_ems_n: 497, landslide_ems_warned_gfs_24h_pct: 81.09, landslide_ems_warned_gfs_24h_lift: 3.03,
+      landslide_ems_warned_gfs_24h_centroid_pct: 56.94, landslide_ems_warned_gfs_24h_centroid_area_share_pct: 26.72,
+      landslide_ems_warned_gfs_24h_centroid_lift: 2.13 })!;
+    expect(r.name).toBe("Copernicus EMS landslides (Taquari valley only)");
+    expect(r.value).toBe("57% at slide centre · 2.1× chance");
+    expect(r.detail).toBe("57% of the 497 EMS landslides had their centre inside the area the day-before NOAA GFS forecast flagged High or above, which covered 27% of the EMS area — 2.1× chance (any touched cell: 81%, 3.0×). © European Union, Copernicus Emergency Management Service.");
+    expect(emsLandslideRow({})).toBeUndefined();
   });
 });
