@@ -10,6 +10,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { boundsToImageCoordinates } from "@/lib/tpi";
 import { cameraPatch, clipPathFor, dragStep, pctFromClientX, SWIPE_MAX_PCT, SWIPE_MIN_PCT } from "@/lib/swipe";
 import { FLOODED_FILL, FLOODED_OUTLINE, type ComparePair } from "./model/radar";
+import { ISSUE_LEADS, type IssueLead } from "./model/steps";
 import { fmtDate } from "./model/format";
 
 // Same worker fix and the same dark basemap as Map.tsx.
@@ -33,11 +34,14 @@ export default function CompareOverlay({
   onClose,
   controlsRef,
   init,
+  forecastCtl,
 }: {
   pair: ComparePair;
   onClose: () => void;
   controlsRef: MutableRefObject<CompareControls | null>;
   init?: { before?: string; after?: string; pol?: "HH" | "HV" };
+  // L52 (forecast swipe): the lead chips; `lead` is the pair's own lead.
+  forecastCtl?: { lead: IssueLead; leads: readonly IssueLead[]; onLead: (k: IssueLead) => void };
 }) {
   const [pol, setPol] = useState<"HH" | "HV">(init?.pol ?? "HH");
   const stack = pair.stack;
@@ -62,8 +66,20 @@ export default function CompareOverlay({
   return (
     <>
       <CompareMaps key={`${pol}-${bi}-${ai}`} pair={shown} onClose={onClose} controlsRef={controlsRef} />
-      {(hasHv || stack) && (
+      {(hasHv || stack || forecastCtl) && (
         <div className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 flex-col items-center gap-1">
+          {forecastCtl && (
+            <div role="group" aria-label="Forecast lead" data-forecast-leads
+              className="flex items-center gap-1 rounded-full border border-cc-line-strong bg-white/95 p-[3px] shadow">
+              <span className="px-1.5 text-xs text-cc-muted">Lead</span>
+              {ISSUE_LEADS.map((k) => (
+                <button key={k} type="button" aria-pressed={forecastCtl.lead === k}
+                  disabled={!forecastCtl.leads.includes(k)}
+                  onClick={() => forecastCtl.onLead(k)}
+                  className={`${seg(forecastCtl.lead === k)} disabled:opacity-40`}>{k} d</button>
+              ))}
+            </div>
+          )}
           {hasHv && (
             <div role="group" aria-label="Polarization" data-polarization
               className="flex items-center gap-1 rounded-full border border-cc-line-strong bg-white/95 p-[3px] shadow">

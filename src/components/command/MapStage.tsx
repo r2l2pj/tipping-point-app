@@ -14,6 +14,7 @@ import LocatorInset from "./LocatorInset";
 import MapTools from "./MapTools";
 import { pinAreas, type PriorityArea } from "./model/areas";
 import { STATUS_WORD, type DataStatus } from "./model/dataStatus";
+import { forecastCompare, hasGfsFrames, swipeLeadsFor } from "./model/forecastCompare";
 import { layerStateFor, overlaysFor } from "./model/layerRegistry";
 import type { ComparePair } from "./model/radar";
 import { assetUrl } from "@/lib/layers";
@@ -85,6 +86,9 @@ export default function MapStage({
     [bundle, step?.date, state.hazard, state.issueLead]
   );
   const leads = useMemo(() => issueLeadsFor(bundle, step?.date, state.hazard), [bundle, step?.date, state.hazard]);
+  // L52 forecast-vs-observed swipe: leads with a full pair for the day.
+  const swipeLeads = useMemo(() => swipeLeadsFor(bundle, step?.date, state.hazard), [bundle, step?.date, state.hazard]);
+  const gfsAny = useMemo(() => hasGfsFrames(bundle), [bundle]);
   const options = useMemo(
     () => ({
       zoneMarkers: false,
@@ -298,6 +302,20 @@ export default function MapStage({
         </div>
       )}
 
+      {/* L52: forecast-vs-observed swipe. Offered in Replay when the case
+          ships issued GFS frames; disabled (with the reason) on a day with
+          no pair. Sits a row above the issue-lead chips. */}
+      {!comparing && bundle.mode === "replay" && gfsAny && (
+        <button type="button" data-forecast-swipe
+          disabled={swipeLeads.length === 0}
+          title={swipeLeads.length ? undefined : forecastCompare(bundle, step?.date, state.hazard, state.issueLead).reason}
+          onClick={() => dispatch({ type: "openCompare", kind: "forecast" })}
+          className={`absolute z-10 ${chip} !py-1 !text-xs disabled:opacity-50`}
+          style={{ left: L(14), bottom: B(showLeads ? 104 : 70) }}>
+          Forecast vs observed
+        </button>
+      )}
+
       {!comparing && (
         <span data-caption className={`absolute z-10 max-w-[46%] ${chip} ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`} style={{ left: L(14), bottom: B(36) }}>
           {caption.text}
@@ -318,8 +336,24 @@ export default function MapStage({
         </div>
       )}
 
+      {/* L52: the TPI class colours stay readable while the forecast swipe
+          is open (both sides paint TPI frames). */}
+      {comparePair?.kind === "forecast" && (
+        <div className="absolute z-30 flex items-end gap-2" style={{ right: R(14), bottom: B(12) }}>
+          <Legend bundle={bundle} layers={["tpi"]} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact
+            className="rounded-[10px] bg-white/95 px-2.5 py-2 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)] max-[639px]:hidden" />
+          <details data-legend-phone className="min-[640px]:hidden rounded-[10px] bg-white/95 text-cc-ink shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+            <summary className="cursor-pointer list-none px-2.5 py-1.5 text-xs font-semibold">Legend</summary>
+            <Legend bundle={bundle} layers={["tpi"]} hazard={state.hazard} stepDate={step?.date} probHorizon={state.probHorizon} compact className="max-h-[50vh] overflow-y-auto px-2.5 pb-2" />
+          </details>
+        </div>
+      )}
+
       {comparePair && (
-        <CompareOverlay key={`${bundle.id}-${comparePair.kind}`} pair={comparePair} init={state.compareInit}
+        <CompareOverlay key={`${bundle.id}-${comparePair.kind}-${comparePair.before.url}-${comparePair.after.url}`} pair={comparePair} init={state.compareInit}
+          forecastCtl={comparePair.kind === "forecast"
+            ? { lead: comparePair.lead ?? 0, leads: swipeLeads, onLead: (k) => dispatch({ type: "setIssueLead", lead: k }) }
+            : undefined}
           controlsRef={compare} onClose={() => dispatch({ type: "closeCompare" })} />
       )}
 

@@ -26,6 +26,7 @@ import { dataStatus, freshnessText } from "./model/dataStatus";
 import { classLabel, fmtKm2 } from "./model/format";
 import { layerRows, visibleLayerRows } from "./model/layerRegistry";
 import { caseDirOf, declared, effectiveBundle, productUrl, withLazy, zonesAreTrimmed } from "./model/lazy";
+import { forecastCompare } from "./model/forecastCompare";
 import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
 import { sourceRows } from "./model/sources";
@@ -261,7 +262,11 @@ export function CommandCenterView({
   const comparePair =
     state.compareOpen === "radar" ? radar.compare.pair
     : state.compareOpen === "night-lights" ? nightLights.pair
-    : undefined;
+    // L52: forecast vs observed — the pair follows the timeline day and
+    // the lead chips (state.issueLead); both sides change together.
+    : state.compareOpen === "forecast"
+      ? forecastCompare(bundle, step?.date, state.hazard, state.issueLead).pair
+      : undefined;
   const snap = zoneSnapshot(bundle, step?.date);
   // The ML card's global tables travel on one case only (page budget).
   const sharedMl = cases.find((c) => c.ml?.when)?.ml;

@@ -196,7 +196,7 @@ export function initialState(
     issueLead: [1, 2, 3].includes(Number(link.lead)) && first && layerAvailable(first, "tpi", hazard) ? Number(link.lead) as 1 | 2 | 3 : 0,
     selectedArea: null,
     calloutExpanded: false,
-    compareOpen: link.compare === "radar" ? "radar" : null,
+    compareOpen: link.compare === "radar" ? "radar" : link.compare === "forecast" ? "forecast" : null,
     compareInit: { before: link.before, after: link.after, pol: link.pol === "HV" ? "HV" : link.pol === "HH" ? "HH" : undefined },
     detailsOpen: false,
     layersOpen: true,

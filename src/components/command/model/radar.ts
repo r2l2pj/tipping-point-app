@@ -9,6 +9,7 @@ import type { NisarPass } from "@/lib/types";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
 import { declared, productUrl } from "./lazy";
 import { finite, fmtDate, fmtKm2 } from "./format";
+import type { IssueLead } from "./steps";
 import type { CcBundle } from "./types";
 
 type BBox = [number, number, number, number];
@@ -75,10 +76,12 @@ export const GUNW_LIMIT_TEXT =
 
 export interface CompareSide { url: string; label: string; bounds?: BBox }
 export interface ComparePair {
-  kind: "radar" | "night-lights";
+  kind: "radar" | "night-lights" | "forecast";
   bounds: BBox;
   before: CompareSide;
   after: CompareSide;
+  // L52 (forecast swipe): the lead the pair was built for (1–3 days).
+  lead?: IssueLead;
   // L42: the HV polarization pair (lead-analysis nisar_hv_pre/post); the
   // swipe offers an HH | HV switch only when it exists.
   hv?: { before: CompareSide; after: CompareSide };
