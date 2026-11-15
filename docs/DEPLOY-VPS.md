@@ -32,11 +32,13 @@ curl -s localhost:3000/api/health      # {"ok":true}
 The image: bun installs and builds (same lockfile and build as Vercel, the
 data sync step skips and keeps the committed `public/data`), then Node 24
 runs `next start` as the non-root `node` user. `HEALTHCHECK` calls
-`/api/health`, which answers 200 `{"ok":true}` whenever the server is up — a
-liveness check, nothing else in the body. GitHub Actions
-(`.github/workflows/keepalive.yml`) pings
-`https://tippingpoint.l17s.dev/api/health` every 10 minutes; a failed ping
-fails the run and GitHub emails the repo owner.
+`/api/health?live=1` (liveness: 200 `{"ok":true}` whenever the server
+answers). Plain `/api/health` is what the uptime monitor and the GitHub
+Actions keepalive (`.github/workflows/keepalive.yml`, every 10 minutes,
+`https://tippingpoint.l17s.dev/api/health`) poll: 200 `{"ok":true}`, or 503
+`{"ok":false}` = **server up but live data older than 6 h** (two missed
+3-hourly runs) or unreadable. A failed ping fails the workflow run and GitHub
+emails the repo owner. The body never carries the timestamp or any data.
 
 Update: `git pull && docker build … && docker rm -f tp-app && docker run …`
 (a few seconds of downtime; fine for one instance).
@@ -56,7 +58,7 @@ podman rm -f tp-smoke
 
 | Check | Result |
 | --- | --- |
-| `/api/health` | 200 `{"ok":true}`, up 2 s after start (liveness only since 2026-11-15) |
+| `/api/health` | 200 `{"ok":true}` (503 `{"ok":false}` when the live data is older than 6 h); `?live=1` = liveness |
 | `/` | 200, 282 KB (first request 2.8 s, cold cache) |
 | `/alerts` | 200, 280 KB |
 | `/?case=rs_2024`, `/?case=wa_2025` | 200, 291 KB / 297 KB; RS page shows the onset row ("36.5% of 16,027") |
