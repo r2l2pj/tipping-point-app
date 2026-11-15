@@ -32,7 +32,7 @@ Open https://tipping-point-app.vercel.app on a real phone: the headless capture 
 17. "229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, peak day May 3, 2024)" — *slides-outline.md: slide 6*
 18. nasa-data.md: "Live response" section (OPERA DSWx-S1, NISAR GCOV, MODIS MCD12Q1) + "Non-NASA context and reference layers (never index inputs)": JRC GSW v1.4, IBGE outlines, UFRGS/Cemaden inventory, MERIT Hydro — *nasa-data.md*
 19. Limitations + roadmap + NASA-inputs lines — *slides-outline.md: slides 6–7*
-20. "Alongside the index, a learned XGBoost model gives P(landslide trigger in 24/48/72 h); TPI stays the headline" — *slides-outline.md: slide 3*
+20. The ML sentence on slide 3 — see the draft at the end of "ML results" above — *slides-outline.md: slide 3*
 
 ## ML results (final: data ea5b2cd, `.crew/research/model-metrics.md`)
 
