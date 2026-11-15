@@ -9,6 +9,7 @@ import EvidenceDetails from "./EvidenceDetails";
 import GetAlertsCard from "./GetAlertsCard";
 import LayersColumn from "./LayersColumn";
 import MapStage, { type MapFocus } from "./MapStage";
+import StartHere from "./StartHere";
 import PanelSection from "./PanelSection";
 import { observedRows, type AlertList } from "./model/alerts";
 import { expandLayerUrls } from "./model/layerUrls";
@@ -302,6 +303,7 @@ export function CommandCenterView({
             </PublicAlertsPanel>
           ) : (
             <>
+              <StartHere cases={cases} dispatch={dispatch} />
               {/* Response first, prediction second (ruling L27). */}
               <PanelSection label="Now on the ground">
                 <RadarCard

@@ -118,6 +118,20 @@ describe("replay: forecast issued this day (beat 2)", () => {
       .toBe("No NOAA GFS forecast issued Dec 3, 2025 for 1 day ahead");
   });
 
+  test("Start here: one goTo sets case, day, hazard and the forecast lead (beat 2)", () => {
+    const c = [waG, nowPair];
+    const start = initialState(c);
+    expect(start.activeId).toBe("now");
+    const day = stepsFor(waG)[1].date.slice(0, 10);
+    const s = reduce(start, { type: "goTo", id: "wa_2025", day, hazard: "slide", lead: 3 }, c);
+    expect(s).toMatchObject({ activeId: "wa_2025", hazard: "slide", issueLead: 3 });
+    expect(stepsFor(waG)[s.dayIndex].date.slice(0, 10)).toBe(day);
+    expect(s.layers).toContain("tpi");
+    const back = reduce(reduce(s, { type: "toggleLayer", id: "flood" }, c), { type: "goTo", id: "now" }, c);
+    expect(back).toMatchObject({ activeId: "now", issueLead: 0, layers: initialState(c).layers });
+    expect(reduce(s, { type: "goTo", id: "nope" }, c)).toBe(s);
+  });
+
   test("choosing a lead turns the TPI index on; a case change resets it", () => {
     const c = [waG, nowPair];
     let s = reduce(initialState(c, "wa_2025"), { type: "toggleLayer", id: "tpi" }, c);
