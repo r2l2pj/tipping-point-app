@@ -89,6 +89,52 @@ alongside TPI, which stays the headline index; longer-range horizons carry
 a visible lower-confidence label. The model is evaluated against a
 RandomForest and a TPI-threshold baseline on held-out data.
 
+## Validation
+
+Every number below is read from the published `metrics.json`
+(tipping-point-data). References are used only to score the outputs, never
+as model inputs.
+
+**Flood: NISAR vs OPERA DSWx-S1, like for like (Washington, Dec 2025).**
+NISAR GCOV pass pair Dec 4 → Dec 16, 2025 (track 172D, frame 064, BETA
+products) mapped 27.99 km² of new-flood candidates within the swath (the post
+pass covers 74% of the area of interest). Scored against OPERA DSWx-S1
+(Sentinel-1 radar water) on the same footing: new flood only (water on
+Dec 15/17, minus water on Dec 1–7), permanent water removed.
+Result: F1 0.15, precision 0.19, recall 0.13, IoU 0.08. Against optical
+OPERA DSWx-HLS the overlap is F1 0.026 because clouds covered 92.9% of the
+scene (Rio Grande do Sul, May 2024: 100% across 20 HLS scenes). The detector
+reads co-polarized darkening only, so flooded towns and forests (double
+bounce, brighter) are missed; that is the main reason recall is low.
+
+**Landslides: inventories.**
+- Rio Grande do Sul 2024: UFRGS/Cemaden inventory, 16,027 mapped landslide
+  points. Share of points in High or Critical cells with the NOAA GFS
+  forecast issued before the event: `[X]`% `[ON HOLD — being re-anchored to
+  the documented event start, L37]`. Post-event OPERA DIST-ALERT-HLS scar
+  candidates: 2,849 (20.0 km²); 46% of inventory points lie within 500 m of
+  one.
+- Washington 2025: NASA Global Landslide Catalog / COOLR, 15 points; 66.7%
+  fall in Critical cells on the peak day (Dec 12, 2025). The points are
+  undated, so this is agreement after the damage, not a forecast.
+
+**Flood forecast (Washington).** Only 0.14% of the NISAR-mapped flood area
+was High (none Critical) in the GFS forecasts issued 24–48 h before the
+damage: the index uses local rain only, and these rivers flooded from rain
+upstream. An upstream-rain term is being tested.
+
+**Machine-learning trigger model.** XGBoost is trained and tested on
+separate events: the TEST set holds out whole events the model never saw,
+including Rio Grande do Sul 2024 and Washington 2025. The susceptibility
+layer is being retrained without Rio Grande do Sul points to remove a
+leak found on Nov 15; scores that used the leaked layer are withdrawn. Scores are compared with a RandomForest and the TPI > 0.6 rule at
+the same base rate. `[v2 scores pending — L33]`
+
+**Anchor dates (L37).** "Before the damage" is measured from the documented
+start of each event (the first dated reports of landslides or flooding), not
+from a later peak day. Official warnings came before the index in both
+replays; the index adds where and who, not an earlier warning.
+
 ## Limitations
 
 - Thresholds were calibrated on a single event — no broad statistical validation.
