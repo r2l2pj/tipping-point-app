@@ -159,6 +159,40 @@ describe("steps", () => {
     expect(forecastTag(bundle())).toBe("Forecast");
   });
 
+  test("a forecast chip names the issued GFS run the map paints (L22)", () => {
+    const b = bundle({
+      reference_date: "2024-05-02",
+      series: {
+        event: "wa_2025",
+        reference_date: "2024-05-02",
+        tpi_threshold: 0.6,
+        days: [
+          { date: "2024-05-02", offset: 0, kind: "observed" as const, tpi: 0.2, imerg_mm: 10, smap: 0.9 },
+          { date: "2024-05-03", offset: 1, kind: "forecast" as const, tpi: 0.9, imerg_mm: 10, smap: 0.9 },
+          { date: "2024-05-04", offset: 2, kind: "forecast" as const, tpi: 0.9, imerg_mm: 10, smap: 0.9 },
+        ],
+      },
+      manifest: manifest([
+        frame("tpi_flood", "2024-05-03"),
+        { ...frame("tpi_flood_d1", "2024-05-03"), upper_bound: true },
+        { ...frame("tpi_flood_gfs_d1", "2024-05-03"), issued: "2024-05-02", forecast_source: "noaa-gfs" },
+        { ...frame("tpi_flood_gfs_d2", "2024-05-04"), issued: "2024-05-03", forecast_source: "noaa-gfs" },
+      ], { forecast_source: "perfect-forecast" }),
+    });
+    expect(chip(b, 1, "flood")).toMatchObject({
+      kind: "forecast",
+      source: "NOAA GFS (issued May 2, 2024)",
+    });
+    // A forecast announced from an observed day names the later step's frame.
+    expect(chip(b, 0, "flood")).toMatchObject({
+      kind: "forecast-later",
+      source: "NOAA GFS (issued May 2, 2024)",
+    });
+    // A run issued after the reference date is never named: the day keeps
+    // the case-level source.
+    expect(chip(b, 2, "flood").source).toBe("perfect forecast");
+  });
+
   test("frameFor mirrors the hook pick and reports the hazard that is drawn", () => {
     const b = bundle({ manifest: manifest([
       frame("tpi_slide", "2025-12-10"), frame("tpi_flood", "2025-12-10"),
