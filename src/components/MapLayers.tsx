@@ -191,7 +191,7 @@ export function useMapLayers(
   const frameDate = resolveFrameDate(day?.date, options);
   // L22: on forecast days the real issued GFS frame wins over the
   // perfect-forecast upper bound (see pickTpiFrame).
-  const activePng = pickTpiFrame(
+  const activePng = options?.frameLayer ?? pickTpiFrame(
     bundle?.manifest?.layers,
     frameDate
       ? { date: frameDate, kind: day?.date === frameDate ? day?.kind : undefined }

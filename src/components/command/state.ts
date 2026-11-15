@@ -13,7 +13,7 @@ import {
   type LayerId,
 } from "./model/layerRegistry";
 import type { ComparePair } from "./model/radar";
-import { caseHasHazard, defaultStepIndex, stepsFor } from "./model/steps";
+import { caseHasHazard, defaultStepIndex, stepsFor, type IssueLead } from "./model/steps";
 import type { CcBundle, Hazard } from "./model/types";
 
 export interface ScreenState {
@@ -27,6 +27,10 @@ export interface ScreenState {
   layers: LayerId[];
   layerNotice: string | null; // names the layer that was turned off
   probHorizon: ProbHorizon; // P(trigger) horizon painted by the probability layer
+  // Replay: 0 paints the day's own frame; k paints the NOAA GFS forecast
+  // issued that day for D+k. Kept while stepping so a demo can walk the
+  // issue days at a fixed lead.
+  issueLead: IssueLead;
   selectedArea: number | null; // zone rank
   calloutExpanded: boolean;
   compareOpen: ComparePair["kind"] | null;
@@ -46,6 +50,7 @@ export type Action =
   | { type: "tick" }
   | { type: "setHazard"; hazard: Hazard }
   | { type: "setProbHorizon"; horizon: ProbHorizon }
+  | { type: "setIssueLead"; lead: IssueLead }
   | { type: "toggleLayer"; id: LayerId }
   | { type: "confirmRadar" }
   | { type: "selectArea"; rank: number }
@@ -138,6 +143,7 @@ export function initialState(
     layers: first ? withRadarDefault(first, keepAvailable(first, DEFAULT_LAYERS, hazard), hazard) : [],
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
+    issueLead: 0,
     selectedArea: null,
     calloutExpanded: false,
     compareOpen: null,
@@ -163,14 +169,18 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
     // The TPI index is the default layer: a case change never leaves the
     // map without it when the new case has the raster.
     // Now with a NISAR pair adds the radar flood candidates (L27).
+    // The TPI index is the default layer: a case change always brings it
+    // back when the new case has the raster (arriving from a paused Now
+    // with only the flood candidates on must not open a replay without it).
     layers: withRadarDefault(
       bundle,
-      kept.length || !layerAvailable(bundle, "tpi", hazard) ? kept : ["tpi"],
+      !layerAvailable(bundle, "tpi", hazard) || kept.includes("tpi") ? kept : toggleLayer(kept, "tpi").layers,
       hazard
     ),
     layerNotice: null,
     // The horizon the new case ships first (display order), else the default.
     probHorizon: probHorizonsAvailable(bundle.manifest?.layers)[0] ?? "24h",
+    issueLead: 0,
     selectedArea: null,
     calloutExpanded: false,
     compareOpen: null,
@@ -227,6 +237,13 @@ export function reduce(
     }
     case "setProbHorizon":
       return { ...state, probHorizon: action.horizon };
+    case "setIssueLead": {
+      // A forecast lead needs the TPI index on the map.
+      const tpiOn = state.layers.includes("tpi");
+      const canTpi = !!bundle && layerAvailable(bundle, "tpi", state.hazard);
+      const layers = action.lead > 0 && !tpiOn && canTpi ? toggleLayer(state.layers, "tpi").layers : state.layers;
+      return { ...state, issueLead: action.lead, layers };
+    }
     case "toggleLayer": {
       if (!bundle) return state;
       if (!state.layers.includes(action.id) && !layerAvailable(bundle, action.id, state.hazard)) {
