@@ -3,7 +3,7 @@
 import { ALERT_FOOTER, ALERT_LEVEL_WORDS, type AlertCardData } from "@/lib/alerts";
 import AlertCard, { LEVEL_STYLE } from "./AlertCard";
 import {
-  ALERTS_UNAVAILABLE_TEXT, alertsByRegion, NO_ALERTS_TEXT, NO_RUN_TEXT,
+  ALERTS_UNAVAILABLE_TEXT, alertsByRegion, moreAlertsText, NO_ALERTS_TEXT, NO_RUN_TEXT,
   REPLAY_NO_FEED_TEXT, type AlertList,
 } from "./model/alerts";
 import { fmtBrt } from "./model/format";
@@ -63,9 +63,12 @@ export default function PublicAlertsPanel({
               <AlertCard key={a.id} alert={a} onViewOnMap={onViewOnMap} />
             ))}
           </ul>
+          {moreAlertsText(alertList) && (
+            <p data-alerts-more className="text-[13px] text-cc-muted">{moreAlertsText(alertList)}</p>
+          )}
           <section aria-label="Alerts by region">
             <h2 className="m-0 mb-0.5 text-base font-semibold">Alerts by region</h2>
-            {alertsByRegion(alertList.alerts).map((r) => (
+            {(alertList.regions ?? alertsByRegion(alertList.alerts)).map((r) => (
               <div key={r.region} className="flex min-h-10 items-center gap-2.5 border-t border-cc-rule px-1.5 py-1 text-sm">
                 <span className={`w-[84px] shrink-0 rounded-[5px] py-0.5 text-center text-xs font-bold ${LEVEL_STYLE[r.level]?.chip ?? ""}`}>
                   {ALERT_LEVEL_WORDS[r.level] ?? r.level}

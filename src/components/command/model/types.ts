@@ -10,6 +10,8 @@ export type CcBundle = CaseBundle & {
   dataDate?: string;
   tpiCuts?: readonly number[];
   nisarPasses?: NisarPass[];
+  // Number of passes before the list was cut to the cards shown (A10).
+  nisarPassCount?: number;
   // `_null_reasons` of the case node in the root manifest. The loader in
   // src/lib does not carry it, so CommandCenterLoader attaches it.
   nullReasons?: Record<string, string>;

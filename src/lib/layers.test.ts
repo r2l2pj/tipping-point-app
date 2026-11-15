@@ -7,6 +7,7 @@ import type { DayPoint } from "./types";
 import {
   assetUrl,
   capToggleQueue,
+  featureCenters,
   fmtDate,
   fmtDateTime,
   isForecastLayer,
@@ -747,5 +748,22 @@ describe("resilient sources: dropSource / safeImageUpdate / geoUrl / fetchGeo", 
     await fetchGeo(`http://localhost:${srv.port}/ok.geojson`);
     expect(hits.filter((h) => h === "/ok.geojson").length).toBe(1);
     srv.stop();
+  });
+});
+
+describe("featureCenters", () => {
+  test("one bbox-centre point per feature, properties kept, empty geometry skipped", () => {
+    const out = featureCenters({
+      type: "FeatureCollection",
+      features: [
+        { type: "Feature", properties: { area_km2: 3.54 },
+          geometry: { type: "Polygon", coordinates: [[[-48, -24], [-47, -24], [-47, -23], [-48, -24]]] } },
+        { type: "Feature", properties: {},
+          geometry: { type: "MultiPolygon", coordinates: [[[[0, 0], [2, 0], [2, 2], [0, 0]]], [[[4, 4], [5, 4], [5, 5], [4, 4]]]] } },
+        { type: "Feature", properties: {}, geometry: null as never },
+      ],
+    });
+    expect(out.features.map((f) => f.geometry.coordinates)).toEqual([[-47.5, -23.5], [2.5, 2.5]]);
+    expect(out.features[0].properties).toEqual({ area_km2: 3.54 });
   });
 });

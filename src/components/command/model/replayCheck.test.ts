@@ -264,7 +264,7 @@ describe("radar card", () => {
     expect(card.headline).toBe("NISAR pair available");
     expect(card.dates).toBe("Oct 25, 2026 → Nov 6, 2026");
     expect(card.flooded).toEqual({ label: "Flooded area (NISAR radar, candidates)", value: "12.1 km²" });
-    expect(card.people).toEqual({ label: "People in the flooded area", value: "400" });
+    expect(card.people).toEqual({ label: "People in the flooded area (estimate)", value: "384" });
     expect(card.note).toContain("not yet checked on the ground");
     expect(card.note).toContain("100 h after the radar pass");
     expect(card.limitation).toBeUndefined();
@@ -297,6 +297,13 @@ describe("radar card", () => {
       { date: "2026-11-13T21:25:37Z", track: "125", note: "descending" },
     ]);
     expect(sourceRows(b).find((r) => r.id === "nisar")?.date).toBe("Nov 14, 06:37 AM BRT");
+  });
+
+  test("the pass count survives the list cut to the cards shown", () => {
+    const passes = [{ date: "2026-11-14T09:37:37Z", track: "132" }];
+    const card = radarCard(bundle({ mode: "live", nisarPasses: passes, nisarPassCount: 118 }));
+    expect(card.passes).toHaveLength(1);
+    expect(card.passCount).toBe(118);
   });
 
   test("a published image pair enables the comparison", () => {

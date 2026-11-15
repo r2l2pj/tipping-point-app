@@ -582,6 +582,34 @@ export function fetchGeo(
 
 type ProductsLike = Record<string, string | null | undefined> | undefined;
 
+// One point per feature at the centre of its bounding box, properties kept.
+// Small polygons (radar flood candidates of ~1 km²) vanish at the regional
+// zoom; the map draws these as dots so they stay findable.
+export function featureCenters(fc: GeoJSON.FeatureCollection): GeoJSON.FeatureCollection<GeoJSON.Point> {
+  const features: GeoJSON.Feature<GeoJSON.Point>[] = [];
+  for (const f of fc.features ?? []) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    const walk = (c: unknown): void => {
+      if (!Array.isArray(c)) return;
+      if (typeof c[0] === "number" && typeof c[1] === "number") {
+        minX = Math.min(minX, c[0]); maxX = Math.max(maxX, c[0]);
+        minY = Math.min(minY, c[1]); maxY = Math.max(maxY, c[1]);
+        return;
+      }
+      c.forEach(walk);
+    };
+    const g = f.geometry as { coordinates?: unknown } | null;
+    walk(g?.coordinates);
+    if (!Number.isFinite(minX) || !Number.isFinite(minY)) continue;
+    features.push({
+      type: "Feature",
+      properties: f.properties ?? {},
+      geometry: { type: "Point", coordinates: [(minX + maxX) / 2, (minY + maxY) / 2] },
+    });
+  }
+  return { type: "FeatureCollection", features };
+}
+
 // URL for a geojson product: products map wins (explicit null = declared
 // absent -> undefined, never fetched), fixed filename as fallback. The base
 // is the bundle's remote assetBase when published (GitHub or Neon), else the bundled

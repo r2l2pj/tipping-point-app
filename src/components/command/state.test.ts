@@ -21,6 +21,32 @@ const cases = [wa, rs, now];
 const run = (state: ScreenState, ...actions: Action[]) =>
   actions.reduce((s, a) => reduce(s, a, cases), state);
 
+// Now with a published NISAR pair and its flood candidate polygons.
+const nowPair = liveBundle({
+  manifest: manifest([frame("tpi_slide", "2026-11-15")]),
+  data_dates: { nisar_pre: "2026-10-25T21:16:03Z", nisar_post: "2026-11-06T21:16:03Z" },
+  products: { flood_confirmed: "response/flood_nisar.geojson" },
+  response: { source: "nisar-gcov", flooded_km2: 12.06 },
+});
+
+describe("Now radar default (L27)", () => {
+  test("Now with a NISAR pair opens with the flood candidates on, next to the TPI index", () => {
+    expect(initialState([wa, rs, nowPair]).layers).toEqual(["tpi", "flood"]);
+  });
+  test("switching back to Now turns them on; replay and Now without a pair do not", () => {
+    const c = [wa, rs, nowPair];
+    const s = initialState(c, "wa_2025");
+    expect(s.layers).toEqual(["tpi"]);
+    expect(reduce(s, { type: "selectCase", id: "now" }, c).layers).toEqual(["tpi", "flood"]);
+    expect(initialState([wa, rs, now]).layers).toEqual([]);
+  });
+  test("the user can still turn them off", () => {
+    const c = [nowPair];
+    const s = reduce(initialState(c), { type: "toggleLayer", id: "flood" }, c);
+    expect(s.layers).toEqual(["tpi"]);
+  });
+});
+
 describe("initial state", () => {
   test("opens on Now when a live case is loaded, else on the first case", () => {
     expect(initialState(cases)).toMatchObject({ activeId: "now", dayIndex: 0, playing: false, layers: [] });

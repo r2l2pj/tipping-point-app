@@ -3,7 +3,8 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import { canonicalCaseId } from "@/lib/contract";
 import { getAlerts, getCaseBundle, getEventsIndex, getRootManifest } from "@/lib/data";
 import CommandCenter from "./CommandCenter";
-import { buildAlertList } from "./model/alerts";
+import { buildAlertList, capAlertList } from "./model/alerts";
+import { nisarPasses, PASSES_SHOWN } from "./model/radar";
 import type { CcBundle } from "./model/types";
 
 const body = Inter({ variable: "--cc-font-body", subsets: ["latin"] });
@@ -32,6 +33,22 @@ function liveRunTime(root: unknown): string | undefined {
   const cases = isRecord(root) && isRecord(root.cases) ? root.cases : undefined;
   const node = cases?.now;
   return isRecord(node) && typeof node.updated_at === "string" ? node.updated_at : undefined;
+}
+
+// The bundle as the browser needs it (A10 page budget).
+function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
+  const manifest = bundle.manifest
+    ? { ...bundle.manifest, layers: bundle.manifest.layers.map(({ legend: _legend, ...l }) => l) }
+    : undefined;
+  if (!isLive) return { ...bundle, manifest };
+  const passes = nisarPasses(bundle);
+  return {
+    ...bundle,
+    manifest,
+    nowAlerts: bundle.nowAlerts ? { ...bundle.nowAlerts, candidates: [] } : undefined,
+    nisarPasses: passes.slice(0, PASSES_SHOWN),
+    nisarPassCount: passes.length,
+  };
 }
 
 // Loads the case bundles and builds the alert list once, on the server, for
@@ -70,11 +87,16 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
   if (live) cases.push(live);
 
   const legacy = await getAlerts().catch(() => null);
-  const alertList = buildAlertList({ now: live, legacy });
+  const alertList = capAlertList(buildAlertList({ now: live, legacy }));
+
+  // Page budget (A10): every byte of `cases` rides in the HTML. The alert
+  // candidates were turned into alertList above; the pass list is cut to
+  // the cards shown plus its count; per-layer legends are not read.
+  const slim = cases.map((c) => toClientBundle(c, c === live));
 
   return (
     <CommandCenter
-      cases={cases}
+      cases={slim}
       alertList={alertList}
       botUrl={process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || undefined}
       fontClass={fontClass}
