@@ -26,7 +26,7 @@
 
 ## Slide 4 — The demo
 - Ops dashboard `/` (**Command Center**): top-bar **Now / Replay** switch + **Past event** selector, timeline D-10 → EVENT → D+n, Play control
-- **Tipping point reached** (Situation overview) + ranked **Priority areas** (TPI ≥ 0.60)
+- **Tipping point reached** (Situation overview) + ranked **Priority areas** (Critical and High)
 - Right panel: **Now on the ground** (NISAR radar card: "Confirm with NISAR radar →", **Before / after**), **Who is affected**, **Prediction**, **Replay check**; **Show details: validation and impact** opens **How early? (in replay)** / **Why radar** / **Impact**
 - Public feed `/alerts` (**Public Alerts** view): Civil-Defense-style alert cards ("Tipping Point: <level> <hazard> risk")
 - Forecast rain = **NOAA GFS 0.25°** in replay and live, labelled "forecast · NOAA GFS (issued <date>)"; replay D+1..D+3 uses the forecast issued on each day
@@ -44,12 +44,12 @@
 ## Slide 6 — Impact + honest limitations
 - Impact numbers the demo reports: 229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, May 2, 2024)
 - Limitations: thresholds calibrated on a single event; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days; lead time counts the area as flagged when any pixel crosses Critical on a D+1..D+3 forecast frame (lenient); GFS under-forecast the RS peak by about half; official warnings still came before the index
-- Demo is a replay, not live ops; the replay forecast is NOAA GFS as issued at the time (our only non-NASA input) — perfect-forecast frames appear only as a labelled upper bound
+- The video demo is a replay; the live view covers Southern Brazil every 3 h. The replay forecast is NOAA GFS as issued at the time (our only non-NASA input) — perfect-forecast frames appear only as a labelled upper bound
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event
 - *Visual:* **Impact** block (under **Show details: validation and impact**) + a short "What we don't claim" callout box
 
 ## Slide 7 — Roadmap + credits
-- Roadmap: auto-pipeline on each IMERG update → NISAR confirmation trigger per pass → threshold calibration on the landslide catalog → WhatsApp/e-mail alerts → OPERA water integration
+- Roadmap: refresh on each IMERG update (today every 3 h) → NISAR confirmation trigger per pass → threshold calibration on the landslide catalog → WhatsApp/e-mail alerts
 - Global coverage at release — one config edit
 - NASA inputs: GPM IMERG · SMAP L4 · NASADEM · NISAR GCOV · HLS · VIIRS Black Marble · GPW · OPERA DSWx
 - Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA
