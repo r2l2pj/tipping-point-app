@@ -269,3 +269,21 @@ describe("observed cards precomputed on the server", () => {
     expect(observedRows(liveBundle({ observedSummary: rows }))).toBe(rows);
   });
 });
+
+describe("observed: flood from R3 (standard confidence), DIST landslide in its own section", () => {
+  test("R3 totals win over observed[] for flood; DIST entries become landslide rows", () => {
+    const b = liveBundle({
+      responseSources: [{ source: "opera-dswx-s1", flooded_km2: 129.5, people_flooded: 494 }],
+      observedPlaces: { "opera-dswx-s1": ["Iguatemi, MS"] },
+      nowAlerts: { observed: [
+        { kind: "observed", hazard: "flood", source: "opera-dswx-s1", municipality: "Avaré", uf: "SP", area_km2: 288.1 },
+        { kind: "observed", hazard: "landslide", source: "opera-dist-alert-hls", municipality: "Saudades", uf: "SC", area_km2: 3.3, people: 70, polygons: 685 },
+      ] } as never,
+    });
+    const rows = observedRows(b);
+    expect(rows.map((r) => [r.hazard, r.source, r.area])).toEqual([
+      ["flood", "OPERA DSWx-S1 radar", "129.5 km²"],
+      ["landslide", "OPERA DIST-ALERT-HLS (optical, vegetation loss)", "3.3 km²"],
+    ]);
+  });
+});

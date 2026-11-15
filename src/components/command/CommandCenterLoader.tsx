@@ -108,12 +108,19 @@ function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
     ? { ...bundle.manifest, layers: bundle.manifest.layers.map(slimLayer) }
     : undefined;
   const zones = slimZones(bundle.zones);
-  if (!isLive) return { ...bundle, manifest, zones };
+  // The raw metrics blob duplicates metricsView; the screen reads only its
+  // `_null_reasons` (availability.nullReason).
+  const rawMetrics = bundle.metrics as unknown as Record<string, unknown> | undefined;
+  const metrics = rawMetrics && typeof rawMetrics === "object"
+    ? ({ _null_reasons: rawMetrics._null_reasons } as unknown as CcBundle["metrics"])
+    : bundle.metrics;
+  if (!isLive) return { ...bundle, manifest, zones, metrics };
   const passes = nisarPasses(bundle);
   return {
     ...bundle,
     manifest,
     zones,
+    metrics,
     // The observed list (97 entries on 2026-11-15) is reduced here to the
     // per-source cards the public view shows; the raw list stays server-side.
     observedSummary: observedRows(bundle),

@@ -200,8 +200,11 @@ export interface RadarCard {
 function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
   const r = bundle.response!;
   const reasonOf = (key: string) => r.null_reasons?.[key];
+  // The R3 summary's NISAR figures win when present: the same numbers the
+  // public view shows (R3 counts people on one shared grid for all sources).
+  const r3 = bundle.responseSources?.find((x) => /nisar/i.test(x.source));
   const value = (key: "flooded_km2" | "people_flooded", fmt: (n: number) => string) => {
-    const v = r[key];
+    const v = r3 && finite(r3[key]) ? r3[key] : r[key];
     return finite(v)
       ? fmt(v)
       : missingText(reasonOf(key) ? { state: "absent", reason: reasonOf(key) } : { state: "pending" });

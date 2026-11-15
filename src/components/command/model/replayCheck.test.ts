@@ -304,6 +304,15 @@ describe("radar card", () => {
     expect(JSON.stringify([card.flooded, card.note, card.headline])).not.toMatch(/confirmed/i);
   });
 
+  test("the R3 NISAR figures win over the meta (same numbers as the public view)", () => {
+    const card = radarCard(liveBundle({
+      response: { source: "nisar-gcov", flooded_km2: 2.3, people_flooded: 82 },
+      responseSources: [{ source: "nisar-gcov", flooded_km2: 2.31, people_flooded: 43 }],
+      data_dates: { nisar_pre: "2026-10-25", nisar_post: "2026-11-06" },
+    }));
+    expect(card.people?.value).toBe("43");
+  });
+
   test("live response with a null area shows the short reason, never the raw note", () => {
     const card = radarCard(liveBundle({
       response: { source: "nisar-gcov", null_reasons: { flooded_km2: "No local labeled feature for x" } },
