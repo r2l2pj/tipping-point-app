@@ -16,13 +16,13 @@ Tipping Point
 
 ## 2. High-Level Project Summary
 
-Paste from `project-page.md` → "High-Level Project Summary". That is the NISAR-led version, 155 words plus the headline. The headline is ON HOLD (L35); the RS 88% candidate is awaiting Lucas. The older 240-word version in `summary.md` is kept as an alternative (awaiting Lucas).
+Paste from `project-page.md` → "High-Level Project Summary". That is the NISAR-led version plus the RS 88% landslide headline and its 48 h caveat (L36). The older 240-word version in `summary.md` is kept as an alternative (awaiting Lucas).
 
 ## 3. Link to Project Demo
 
 `[VIDEO LINK — YouTube Unlisted/Public or Google Drive "anyone with the link"; ≤30 s; test it in a private window]`
 
-The video is built from `storyboard.md` + `captions.srt`. The backup is the 7-slide PDF (`slides.pdf`), linked from GitHub; use it only if the video is missing. A video longer than 30 s, or a deck longer than 7 slides, is not eligible for Global Judging.
+The video is built from `storyboard.md` + `captions.srt` (L36 4-beat VO, EN; PT-BR track `captions.pt-BR.srt`). The backup is the 7-slide PDF (`slides.pdf`), linked from GitHub; use it only if the video is missing. A video longer than 30 s, or a deck longer than 7 slides, is not eligible for Global Judging.
 
 ## 4. Link to Final Project
 
@@ -77,7 +77,7 @@ Source: `nasa-data.md` (awaiting Lucas):
 > - NASA Global Landslide Catalog / COOLR: WA validation (also listed under NASA Data).
 > - Basemap: CARTO Dark Matter (no labels) — © CARTO, © OpenStreetMap contributors.
 >
-> **Event facts** (446 of 497 municipalities, 185 dead, 581,000+ displaced, ~R$88.9 billion damage): `[SOURCE NEEDED — these figures have no citation in our docs, and public sources give different totals (e.g. 183 deaths and 478 municipalities in later Defesa Civil RS counts; R$19 bn property damage on Wikipedia). Cite one official source (Defesa Civil RS final bulletin) and align the copy to it, or cut the figures.]`
+> **Event facts (RS 2024):** 478 municipalities affected, 185 deaths and, at the peak (May 19, 2024), 581,638 people displaced (Government of Rio Grande do Sul, "SOS Rio Grande do Sul — Situação nos municípios", last updated Aug 19, 2025, https://sosenchentes.rs.gov.br/situacao-nos-municipios). No other event figures are used.
 >
 > **Code and tools (open source):** Next.js, React, MapLibre GL, Recharts, Tailwind CSS, geotiff/georaster, the Google Earth Engine API, earthaccess, asf_search, xarray, rioxarray, rasterio, h5py, NumPy, SciPy, pandas, geopandas, scikit-image, scikit-learn, XGBoost, SHAP, cfgrib/ecCodes, Playwright (demo recording) and ffmpeg.
 >

@@ -1,27 +1,19 @@
 1
-00:00:00,000 --> 00:00:04,000
-Maio de 2024, Rio Grande do Sul. Alertas diziam onde poderia alagar, não onde alagou.
+00:00:00,000 --> 00:00:05,500
+Time [TEAM NAME], Brasil. Maio de 2024: enchentes no Rio Grande do Sul.
 
 2
-00:00:04,000 --> 00:00:08,000
-O Tipping Point reproduz o evento: chuva extrema, solo saturado —
+00:00:05,500 --> 00:00:12,500
+Com a previsão disponível na época, 88% dos deslizamentos mapeados já estavam em risco alto 24 horas antes.
 
 3
-00:00:08,000 --> 00:00:11,000
-Área sinalizada [X] horas antes dos danos.
+00:00:12,500 --> 00:00:21,500
+Em Washington, nuvens esconderam 93% da área dos satélites ópticos; o radar NISAR mapeou candidatos a área alagada através delas.
 
 4
-00:00:11,000 --> 00:00:16,000
-O radar NISAR vê através das nuvens: 28 km² de candidatos a área alagada.
+00:00:21,500 --> 00:00:26,000
+Pessoas em risco, priorizadas para a Defesa Civil.
 
 5
-00:00:16,000 --> 00:00:22,000
-As nuvens esconderam 93% da área dos satélites ópticos.
-
-6
-00:00:22,000 --> 00:00:27,000
-230.000 pessoas em áreas críticas, priorizadas para a Defesa Civil.
-
-7
-00:00:27,000 --> 00:00:29,500
+00:00:26,000 --> 00:00:28,500
 A chuva avisa. O radar confirma.

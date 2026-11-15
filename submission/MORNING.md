@@ -7,14 +7,14 @@ One page. Full detail, sources and history: `submission/REVIEW.md`. Every number
 Paste every field from `submission/FORM.md`, tick "Terms and Conditions" and "Confirm All Work is Original", then click **Submit for Judging**. You can resubmit until the deadline, and only the last save counts. The video must be **≤30 s**; anything longer is not eligible for Global Judging.
 
 1. **Identity:** team name, member names, Local Event. All members must be confirmed at the same event. No one under 18 appears on camera.
-2. **Voiceover:** read `submission/captions.srt` (64 words, about 29 s) over the rough cut. Rough cut: `.crew/video/rough-cut-v1.mp4`; the final is re-shot from the 13:00 `freeze-1300` build. If you use TTS instead of your voice, it must be declared (see `ai-declaration.md`).
+2. **Voiceover (L36):** read `submission/captions.srt` (4 beats, 54 words + team name, 28.5 s) over the final cut. The final cut is recorded from a local build of `freeze-1300`. If you use TTS instead of your voice, it must be declared (see `ai-declaration.md`). You can still swap lines; the old 7-beat VO is retired.
 3. **Host the video:** YouTube Unlisted, or Drive "anyone with the link". Test it in a private window and paste it into FORM §3.
 4. **Confirm the AI declaration** (`ai-declaration.md`): the tool list, that the idea doc was written by the team, and human voice vs TTS.
-5. **RS event facts need a source** (446 of 497 municipalities, 185 dead, 581,000+ displaced, R$88.9 bn). Public totals differ (e.g. 183 deaths, 478 municipalities). Either cite one official source or cut the figures.
+5. **RS event facts — done (L36d):** one official source, Government of RS "SOS Rio Grande do Sul" (updated Aug 19, 2025): 478 municipalities affected, 185 deaths, 581,638 displaced at the peak. "446 of 497" and "R$88.9 bn" are cut.
 6. **New choices awaiting you (win-odds review; details in REVIEW.md):**
-   - Headline candidate to replace the on-hold lead time: "Using the forecast available at the time, 88% of the 16,027 landslides mapped in Rio Grande do Sul were already in High or Critical areas 24 h before May 1, 2024." If you use it, the 48 h run's 0.3% must be stated too.
+   - **Decided (L36, delegated by you):** headline "Using the forecast available at the time, 88% of the 16,027 landslides mapped in Rio Grande do Sul were already in High or Critical areas 24 h before May 1, 2024." with the caveat wherever it appears: "Single forecast runs vary: the NOAA GFS run issued 48 h before flagged only 0.27% of them; the run issued 72 h before, 70.9%." The app's Replay check row shows the same numbers (lead-app dc08551). The old "…marked the area as critical before the damage" sentence is retired everywhere.
    - `project-page.md`: the NISAR-led page text, which judges read first.
-   - The alternative 54-word VO.
+   - **Decided (L36):** the 4-beat VO is now the video VO (team at 0:00, 88% headline, your flood line). LICENSE: Apache-2.0 ships in the app repo.
    - Tagline: keep "Radar confirms", or "Radar sees through."
    - Calling public alerts "experimental, not official".
    - Rule-by-rule status: `COMPLIANCE.md`.
@@ -34,18 +34,18 @@ Open https://tipping-point-app.vercel.app on a real phone: the headless capture 
 1. "Tipping Point turns NASA rainfall and soil moisture data into a near real-time landslide and flood warning, then uses NISAR radar to confirm where the ground actually moved or flooded, so civil defense teams know where to act first." — *summary.md: Theme sentence (verbatim from docs/PLAN.md)* — doc-verbatim (L18); note: the UI swept "confirm" to "candidates", only this sentence and the tagline keep "confirm"
 2. "Rain warns. Radar confirms." — *summary.md: tagline; demo-script.md: close VO + on-screen; slides-outline.md: slide 1*
 3. "Three NASA missions, three layers, one tipping point." — *summary.md: one-liner; slides-outline.md: slide 1*
-4. "In May 2024, Rio Grande do Sul suffered the worst floods in state history — 446 of 497 municipalities hit, hundreds of thousands displaced." — *summary.md: Summary ¶*
-5. "In replay with the NOAA GFS forecast issued each day (no look-ahead), Washington (Dec 2025) reached Critical a median of [X] h before the damage (IQR [IQR]; [n] of [N] forecast days flagged it); in Rio Grande do Sul (May 2024), [n] of [N] forecast days flagged it, [Y] h ahead. [ON HOLD — L35, re-score ~12:00]" — *summary.md: Summary ¶ (supporting); demo-script.md: beat 2 sub-caption + production note; slides-outline.md: slide 5 footnote*
-6. "Tipping Point replays it: extreme rain, saturated soil —" — *demo-script.md: beat 1 VO*
-7. "230,000 people in critical areas, prioritized for Civil Defense." — *demo-script.md: beat 5 VO (+ on-screen 229,782, night-light drop 44%)*
-8. "May 2024, Rio Grande do Sul: worst floods in state history — 446 of 497 municipalities hit / 185 dead, 581,000+ displaced, ~R$88.9 billion in damage" — *slides-outline.md: slide 2*
+4. "In May 2024, floods hit Rio Grande do Sul: 478 municipalities affected, 185 deaths and 581,638 people displaced at the peak (Government of Rio Grande do Sul, SOS Rio Grande do Sul, updated Aug 19, 2025)." — *summary.md: Summary ¶* (L36d)
+5. "Using the forecast available at the time, 88% of the 16,027 landslides mapped in Rio Grande do Sul were already in High or Critical areas 24 h before May 1, 2024. Single forecast runs vary: …0.27%… 70.9%." — *summary.md, project-page.md, slides 5, video beat B* (decided, L36a)
+6. Video VO (L36b): "Team [TEAM NAME], Brazil. May 2024: Rio Grande do Sul floods. / With the forecast available then, 88% of mapped landslides were already high-risk 24 hours ahead. / In Washington, clouds hid 93% of the area from optical satellites; NISAR radar mapped flood candidates through them. / People at risk, ranked for Civil Defense. Rain warns. Radar confirms." — *captions.srt*
+7. (retired: "230,000 people…" is no longer spoken; 229,782 stays on screen in beat D)
+8. "May 2024, Rio Grande do Sul floods: 478 municipalities affected, 185 deaths, 581,638 people displaced at the peak" + source footnote — *slides-outline.md: slide 2* (L36d)
 9. "Built for municipal Civil Defense in Southern Brazil (RS/SC/PR), the demo replays both events end-to-end, and a live Southern Brazil view refreshes every 3 hours." — *summary.md: Summary ¶* — was "the live operational pipeline is on our roadmap", no longer true (Now job runs every 3 h)
 10. "Alerts cover whole municipalities — they say where it could happen, not where it did" — *slides-outline.md: slide 2*
 11. "Optical satellites were blind: 100% cloud cover across 20 HLS scenes during the event" — *slides-outline.md: slide 2*
 12. "TPI = geometric mean of Rain · Soil · Terrain scores, each in [0,1]" + class bands — *slides-outline.md: slide 3*
 13. "WA Dec 2025: <flood sentence> — 27.99 km² flooded within the NISAR swath; landslides remain candidates only" — *slides-outline.md: slide 5*
-14. "RS replay (no radar — event predates NISAR, so no flood-overlap score): [Y] h ahead on [n] of [N] forecast days [ON HOLD — L35, re-score ~12:00] — too few to call a median" — *slides-outline.md: slide 5*
-15. "lead time counts the area as flagged when any pixel crosses Critical on a D+1..D+3 forecast frame (lenient); GFS under-forecast the RS peak by about half; official warnings still came before the index" — *slides-outline.md: slide 6 limitations* — new honesty caveats; "official warnings still came before the index" is the comparison you had kept out — keep or cut
+14. "WA flood, honestly: 0.14% of the NISAR-flooded area was High (none Critical) in the forecasts issued 24–48 h before — the index uses local rain only" — *slides-outline.md: slide 5* (L36a)
+15. "GFS under-forecast the RS peak by about half; official warnings still came before the index" — *slides-outline.md: slide 6 limitations*
 16. "Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar" — *slides-outline.md: slide 5; demo-script.md beat 4 on-screen (7%)*
 17. "229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, peak day May 3, 2024)" — *slides-outline.md: slide 6*
 18. nasa-data.md: "Live response" section (OPERA DSWx-S1, NISAR GCOV, MODIS MCD12Q1) + "Non-NASA context and reference layers (never index inputs)": JRC GSW v1.4, IBGE outlines, UFRGS/Cemaden inventory, MERIT Hydro — *nasa-data.md*
@@ -67,13 +67,11 @@ TEST = events never seen in training: one Rio Grande do Sul storm (3,000 invento
 
 ## Decided by you (2026-11-15)
 
-- **ON HOLD (L35)** "Using the forecast available at the time, Tipping Point flagged the area [X] hours before the damage." — *summary.md: Summary ¶; demo-script.md: beat 2 on-screen caption + production notes; slides-outline.md: slide 5 headline*
 - "May 2024, Rio Grande do Sul. Alerts said where floods could happen, not where." — *demo-script.md: cold open VO*
-- **ON HOLD (L35)** "Flagged [X] hours before the damage." — *demo-script.md: beat 2 VO (short form; full headline on screen)*
 - "NISAR radar sees through the clouds: 28 square kilometers of flood candidates." — *demo-script.md: beat 3 VO (+ on-screen 27.99 km² within the NISAR swath)*
 - "Clouds hid 93% of the area from optical satellites." — *demo-script.md: beat 4 VO (9-word cut of Lucas's flood sentence, to fit 6 s; beat 3 already says the 28 km²)*
 - "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." — *demo-script.md: beat 4 on-screen caption; slides-outline.md: slide 5*
-- "With the forecast available at the time, the index marked the area as critical before the damage, adding a map of where and who to the official warnings." — *demo-script.md: beat 4 on-screen caption; slides-outline.md: slide 5*
+- RETIRED (L36): "…the index marked the area as critical before the damage…" — removed from the script and slide 5.
 - "Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is NASA" (replay uses the GFS forecast issued each day; live uses the latest run; GEOS-FP removed) — *README: Forecast & model, live job; slides-outline.md: slides 4, 6, 7; nasa-data.md: intro + Forecast; demo-script.md production note*
 
 ## Decided overnight without you (logged in REVIEW.md, revertible)
