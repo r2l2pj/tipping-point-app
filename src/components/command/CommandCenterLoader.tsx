@@ -124,7 +124,9 @@ function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
     // The observed list (97 entries on 2026-11-15) is reduced here to the
     // per-source cards the public view shows; the raw list stays server-side.
     observedSummary: observedRows(bundle),
-    nowAlerts: bundle.nowAlerts ? { ...bundle.nowAlerts, candidates: [], observed: undefined } : undefined,
+    nowAlerts: bundle.nowAlerts
+      ? { ...bundle.nowAlerts, candidates: [], active: undefined, notifications: undefined, observed: undefined }
+      : undefined,
     nisarPasses: passes.slice(0, PASSES_SHOWN),
     nisarPassCount: passes.length,
   };

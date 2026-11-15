@@ -340,3 +340,29 @@ describe("lead-live basis fields win", () => {
     expect(a.data_dates?.imerg).toBe("2026-11-14");
   });
 });
+
+describe("alerts.json 'active': the public page shows every current High/Critical area", () => {
+  const base = { updated_at: "2026-11-15T06:33:00Z", data_dates: { forecast_from: "2026-11-15", gfs_issued: "2026-11-15T00:00:00Z" } };
+  test("active wins over candidates; no held/quiet state; first issued kept", () => {
+    const list = buildAlertList({ now: liveBundle({ ...base, nowAlerts: {
+      candidates: [],
+      active: [
+        { kind: "tpi", hazard: "flood", class: 3, label: "Crítico", municipality: "Florianópolis", uf: "SC", area_km2: 122.5,
+          when: "today", hold: true, first_issued_at: "2026-11-15T05:56:26Z", last_confirmed_at: "2026-11-15T06:33:00Z" },
+        { kind: "tpi", hazard: "landslide", class: 2, label: "Alto", municipality: "Santo Amaro da Imperatriz", uf: "SC", area_km2: 26.3,
+          when: "today", hold: true, first_issued_at: "2026-11-15T05:56:26Z" },
+      ],
+      notifications: [],
+    } as never }) });
+    expect(list.state).toBe("alerts");
+    expect(list.alerts).toHaveLength(2);
+    expect(list.alerts.every((a) => a.held === false && a.quiet === false)).toBe(true);
+    expect(list.alerts[0]).toMatchObject({ region: "Florianópolis, SC", first_issued_at: "2026-11-15T05:56:26Z",
+      last_confirmed_at: "2026-11-15T06:33:00Z", valid_from: "2026-11-15T05:56:26.000Z" });
+    expect(list.alerts[0].guidance).not.toContain("quiet hours");
+  });
+  test("without active the old candidates behaviour stays", () => {
+    const list = buildAlertList({ now: liveBundle({ ...base, nowAlerts: { candidates: [] } as never }) });
+    expect(list.state).toBe("none");
+  });
+});

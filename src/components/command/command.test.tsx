@@ -668,3 +668,18 @@ describe("timeline chip never shows a bare 'perfect forecast'", () => {
     expect(html).not.toContain(">Forecast (perfect forecast)<");
   });
 });
+
+describe("public page: active area-alerts", () => {
+  test("cards show 'First issued' and no held badge", () => {
+    const list = buildAlertList({ now: liveBundle({ updated_at: "2026-11-15T06:33:00Z", nowAlerts: { active: [
+      { kind: "tpi", hazard: "flood", class: 3, label: "Crítico", municipality: "Florianópolis", uf: "SC", area_km2: 122.5,
+        when: "today", hold: true, first_issued_at: "2026-11-15T05:56:26Z", last_confirmed_at: "2026-11-15T06:33:00Z" },
+    ] } as never }) });
+    const html = render(liveBundle(), {}, "public", list);
+    expect(html).toContain("First issued");
+    expect(html).toContain("Nov 15, 02:56 AM BRT");
+    expect(html).toContain("Florianópolis, SC");
+    expect(html).not.toContain(">held<");
+    expect(html).not.toContain("No active alerts");
+  });
+});

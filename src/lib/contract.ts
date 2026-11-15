@@ -324,6 +324,11 @@ export interface NowAlertCandidate {
   area_km2?: number;
   bbox?: [number, number, number, number];
   when?: string;
+  // `active` entries (lead-live): when the area was first alerted and last
+  // confirmed by a run.
+  first_issued_at?: string;
+  last_confirmed_at?: string;
+  basis_note?: string;
 }
 
 // Satellite flood candidates grouped per source and municipality: shown as
@@ -346,6 +351,11 @@ export interface NowAlertsFile {
   schema?: string;
   generated_at?: string;
   candidates?: NowAlertCandidate[];
+  // Every current High/Critical area-alert (what the public page shows);
+  // `notifications` = what was sent this run (send rules: upgrades only,
+  // one per 6 h, quiet hours).
+  active?: NowAlertCandidate[];
+  notifications?: NowAlertCandidate[];
   observed?: NowObserved[];
   // true: the run did not pass its checks; candidates is empty.
   paused?: boolean;

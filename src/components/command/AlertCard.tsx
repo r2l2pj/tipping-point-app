@@ -2,7 +2,7 @@
 
 import { ALERT_FOOTER, ALERT_LEVEL_WORDS, heldLabel, type AlertCardData } from "@/lib/alerts";
 import type { AlertLevel } from "@/lib/types";
-import { fmtDate, fmtKm2 } from "./model/format";
+import { fmtBrt, fmtDate, fmtKm2 } from "./model/format";
 
 export const LEVEL_STYLE: Record<AlertLevel, { chip: string; border: string }> = {
   emergency: { chip: "bg-[#bd0026] text-white", border: "border-[#e2a3ad] bg-cc-danger-soft" },
@@ -37,6 +37,14 @@ export default function AlertCard({
         <span className={`shrink-0 rounded-[5px] px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${style.chip}`}>{a.level}</span>
       </div>
       <p className="mt-1.5 text-[13px]"><span className="text-cc-muted">Region:</span> {a.region ?? a.area}</p>
+      {a.first_issued_at && (
+        <p className="mt-1 text-[13px]">
+          <span className="text-cc-muted">First issued</span> {fmtBrt(a.first_issued_at)}
+          {a.last_confirmed_at && a.last_confirmed_at !== a.first_issued_at && (
+            <> · <span className="text-cc-muted">confirmed</span> {fmtBrt(a.last_confirmed_at)}</>
+          )}
+        </p>
+      )}
       {a.basis && (
         <p className="mt-1 text-[13px] font-semibold text-cc-forecast-ink">{a.basis.charAt(0).toUpperCase() + a.basis.slice(1)}</p>
       )}

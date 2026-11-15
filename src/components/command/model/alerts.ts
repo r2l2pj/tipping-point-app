@@ -53,11 +53,15 @@ export function buildAlertList(input: {
 }): AlertList {
   const { now, legacy } = input;
   const dataTime = now?.updated_at ?? now?.summary?.generated_at;
-  const candidates = now?.nowAlerts?.candidates;
+  // `active` (every current High/Critical area) is what the public page
+  // shows; the send rules only decide notifications. Older runs: candidates.
+  const active = now?.nowAlerts?.active;
+  const candidates = Array.isArray(active) ? active : now?.nowAlerts?.candidates;
   // The run marked itself paused (checks failed): no card from it.
   if (now?.nowAlerts?.paused === true) return { state: "paused", alerts: [], dataTime };
   if (now && Array.isArray(candidates)) {
     const alerts = candidatesToAlerts(candidates, {
+      mode: Array.isArray(active) ? "active" : "candidates",
       places: now.places ?? now.municipalities,
       issuedAt: dataTime,
       dataDates: alertDataDates(now.data_dates),

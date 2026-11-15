@@ -14,6 +14,8 @@ export interface AlertCardData extends Alert {
   // Rain behind the alert when it is (partly) forecast: "based on forecast
   // rain (NOAA GFS, issued Nov 15, 00:00 UTC)".
   basis?: string;
+  first_issued_at?: string;
+  last_confirmed_at?: string;
   area_km2?: number;
   when?: string; // "today" | "d1"
   held?: boolean; // held by the quiet-hours rule (23:00–06:00 BRT)
@@ -27,6 +29,9 @@ export interface AlertsContext {
   // L28b: the frames behind "today" and "d1" alerts use NOAA GFS forecast
   // rain; this text ("NOAA GFS, issued Nov 15, 00:00 UTC") goes on the card.
   forecastBasis?: string;
+  // "active": the public list of every current High/Critical area — the
+  // send-rule states (held, quiet hours) do not apply to it.
+  mode?: "candidates" | "active";
 }
 
 // Badge word per level — shared by the generated message title and the card
@@ -142,8 +147,9 @@ export function candidatesToAlerts(
     if (!level) return;
 
     const hazard = hazardFor(c);
-    const held = c.hold === true || (quiet && level === "warning");
-    const quietFlag = quiet && level === "emergency";
+    const active = ctx.mode === "active";
+    const held = !active && (c.hold === true || (quiet && level === "warning"));
+    const quietFlag = !active && quiet && level === "emergency";
     const region =
       (c.municipality ? `${c.municipality}${c.uf ? `, ${c.uf}` : ""}` : undefined) ??
       (c.centroid
@@ -175,7 +181,10 @@ export function candidatesToAlerts(
       certainty: certaintyFor(c.pixels),
       held,
       quiet: quietFlag,
-      valid_from: issued.toISOString(),
+      valid_from: (active && c.first_issued_at && !Number.isNaN(Date.parse(c.first_issued_at))
+        ? new Date(c.first_issued_at) : issued).toISOString(),
+      ...(active && c.first_issued_at ? { first_issued_at: c.first_issued_at } : {}),
+      ...(active && c.last_confirmed_at ? { last_confirmed_at: c.last_confirmed_at } : {}),
       valid_to: validTo.toISOString(),
       guidance:
         `${ALERT_LEVEL_WORDS[level]} ${hazard} risk in your region. ` +
