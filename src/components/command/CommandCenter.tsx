@@ -156,6 +156,8 @@ export function CommandCenterView({
   const onCity = useCallback((place: Place, all: Places) => {
     onView("command");
     if (liveCase && activeRef.current !== liveCase.id) dispatch({ type: "setMode", mode: "now" });
+    // L52 (Lucas): city zoom-ins on the satellite basemap with labels.
+    dispatch({ type: "setBasemap", basemap: "satellite" });
     setCity({ place, dates: all.dates });
     setFocus({ bbox: place.bbox, center: place.centroid, key: Date.now() });
     setCityParam(place.id);
@@ -363,6 +365,10 @@ export function CommandCenterView({
           onProbHorizon={(horizon) => dispatch({ type: "setProbHorizon", horizon })}
           onClose={() => setDrawer(false)}
           onView={(v) => dispatch({ type: "setView", view: v })}
+          satellite={{
+            on: state.basemap === "satellite",
+            toggle: () => dispatch({ type: "setBasemap", basemap: state.basemap === "satellite" ? "dark" : "satellite" }),
+          }}
           className={`${drawer ? "max-[899px]:flex" : "max-[899px]:hidden"} ${state.layersOpen ? "min-[900px]:flex" : "min-[900px]:hidden"}`}
         />
 
