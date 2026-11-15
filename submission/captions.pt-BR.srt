@@ -4,7 +4,7 @@ Time [TEAM NAME], Brasil. Maio de 2024: enchentes no Rio Grande do Sul.
 
 2
 00:00:05,500 --> 00:00:12,500
-Com a previsão disponível na época, 88% dos deslizamentos mapeados já estavam em risco alto 24 horas antes.
+Com a previsão disponível na época, [X]% dos deslizamentos mapeados já estavam em risco alto [H] horas antes.
 
 3
 00:00:12,500 --> 00:00:21,500

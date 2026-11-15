@@ -16,7 +16,7 @@ Tipping Point
 
 ## 2. High-Level Project Summary
 
-Paste from `project-page.md` → "High-Level Project Summary". That is the NISAR-led version plus the RS 88% landslide headline and its 48 h caveat (L36). The older 240-word version in `summary.md` is kept as an alternative (awaiting Lucas).
+Paste from `project-page.md` → "High-Level Project Summary". That is the NISAR-led version plus the RS landslide headline and its per-run caveat (L36; numbers ON HOLD, L37). The older 240-word version in `summary.md` is kept as an alternative (awaiting Lucas).
 
 ## 3. Link to Project Demo
 

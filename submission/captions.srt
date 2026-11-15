@@ -4,7 +4,7 @@ Team [TEAM NAME], Brazil. May 2024: Rio Grande do Sul floods.
 
 2
 00:00:05,500 --> 00:00:12,500
-With the forecast available then, 88% of mapped landslides were already high-risk 24 hours ahead.
+With the forecast available then, [X]% of mapped landslides were already high-risk [H] hours ahead.
 
 3
 00:00:12,500 --> 00:00:21,500

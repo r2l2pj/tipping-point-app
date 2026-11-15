@@ -34,8 +34,8 @@
 
 ## Slide 5 — Did it work?
 - WA Dec 2025: "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." — 27.99 km² flooded within the NISAR swath; landslides remain candidates only
-- Headline (L36): **"Using the forecast available at the time, 88% of the 16,027 landslides mapped in Rio Grande do Sul were already in High or Critical areas 24 h before May 1, 2024."**
-  - footnote (required): "Single forecast runs vary: the NOAA GFS run issued 48 h before flagged only 0.27% of them; the run issued 72 h before, 70.9%. n = 16,027 UFRGS/Cemaden inventory points; anchor May 1, 2024 00Z."
+- Headline (L36): **"Using the forecast available at the time, [X]% of the 16,027 landslides mapped in Rio Grande do Sul were already in High or Critical areas [H] h before [ONSET]."**
+  - footnote (required): "Single forecast runs vary: [per-run values — ON HOLD, L37]. n = 16,027 UFRGS/Cemaden inventory points; anchor = documented onset [ONSET]."
 - WA flood, honestly: 0.14% of the NISAR-flooded area was High (none Critical) in the forecasts issued 24–48 h before — the index uses local rain only; rivers flood from rain upstream
 - Official warnings came before the index in both replays: the index adds where and who, not an earlier warning
 - **Optical saw only 7% of the scene in WA (92.9% cloud) and 0% in RS (100% cloud) — that is why radar**
@@ -57,4 +57,4 @@
 - Repo + live app links; built with AI assistants under human review
 - *Visual:* data-source grid as plain text (no mission or agency logos: the 2026 guide forbids NASA branding in team-made content) + QR code to the app/repo
 
-*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Slide 5 flood score is from the published `metrics.json` (tipping-point-data 864cf95, GitHub `fallback` branch) (Lucas's wording, 2026-11-15); "% warned" is dropped. RS headline from the published `metrics.json` (tipping-point-data origin/main): `cases.rs_2024.slide_warned_gfs_24h_pct` 88.13 (Critical 69.07), `_48h_pct` 0.27, `_72h_pct` 70.89, n 16,027. The WA lead-time median is retired (L35/L36).*
+*Note: cloud %, optical %, people and night-light figures come from the published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15). Slide 5 flood score is from the published `metrics.json` (tipping-point-data 864cf95, GitHub `fallback` branch) (Lucas's wording, 2026-11-15); "% warned" is dropped. RS headline numbers ON HOLD (L37): recomputed by lead-analysis from the documented onset (the May 1 anchor was likely after onset). The WA lead-time median is retired (L35/L36).*
