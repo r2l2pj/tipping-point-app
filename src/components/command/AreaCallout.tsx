@@ -152,7 +152,7 @@ export function AreaCard({
           : partsNote && area.people !== null && area.areaKm2 !== null
             ? <>{Math.round(area.people).toLocaleString("en-US")} people in the at-risk part ({fmtKm2(area.areaKm2)}) of {area.name}</>
             : area.people !== null && area.areaKm2 !== null
-            ? <>People: at least {Math.floor(area.people).toLocaleString("en-US")} in {fmtKm2(area.areaKm2)}</>
+            ? <>People: {Math.round(area.people).toLocaleString("en-US")} in {fmtKm2(area.areaKm2)} (estimate)</>
             : <>People: {area.people === null ? NOT_PUBLISHED : fmtPeople(area.people)}</>}
       </div>
       {expanded && (

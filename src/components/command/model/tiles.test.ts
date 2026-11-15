@@ -56,13 +56,13 @@ describe("tiles", () => {
     });
     const withMetrics = bundle({ ...withZones, metricsView: { critical_area_km2: 40, people_critical: 8400 } });
     expect(criticalAreaTile(withMetrics, "slide")).toMatchObject({ value: "40.0 km²", note: undefined });
-    expect(peopleTile(withMetrics).value).toBe("at least 8,400");
-    expect(peopleTile(withMetrics).title).toBe("GPW ~1 km resample, ~12% low");
+    expect(peopleTile(withMetrics).value).toBe("8,400 (estimate)");
+    expect(peopleTile(withMetrics).title).toBe("GPW v4.11 population count, native 30″ grid, exact cell fractions");
   });
 
   test("people sum only when no Critical zone is null", () => {
     const all = bundle({ zones: zones([zone(1, { people: 300 }), zone(2, { people: 450 })]) });
-    expect(peopleTile(all)).toMatchObject({ value: "at least 750", note: "in priority zones" });
+    expect(peopleTile(all)).toMatchObject({ value: "750 (estimate)", note: "in priority zones" });
   });
 
   test("the tiles are dimmed, not recomputed, off the snapshot day", () => {
@@ -80,13 +80,13 @@ describe("tiles", () => {
       // the tile follows the map hazard (external review)
       value: "<0.1 km²", note: "flood hazard", asOf: "Dec 12, 2025", dimmed: false,
     });
-    expect(peopleTile(b, "2025-12-12", day)).toMatchObject({ value: "at least 5,300", asOf: "Dec 12, 2025" });
+    expect(peopleTile(b, "2025-12-12", day)).toMatchObject({ value: "5,300 (estimate)", asOf: "Dec 12, 2025" });
     const bare = { ...day, critical_km2: undefined, people_critical: -2.3e38 };
     expect(criticalAreaTile(b, "slide", "2025-12-12", bare)).toMatchObject({
       value: "900.0 km²", asOf: "Dec 10, 2025", dimmed: true,
     });
     // A raster fill value is not a head count.
-    expect(peopleTile(b, "2025-12-12", bare).value).toBe("at least 8,400");
+    expect(peopleTile(b, "2025-12-12", bare).value).toBe("8,400 (estimate)");
   });
 
   test("now: values of the summary for the chosen hazard", () => {
@@ -122,15 +122,16 @@ describe("live summary v3 (lead-analysis 022dbd6: strict critical, alert_km2)", 
 });
 
 describe("Priority areas people: replay lower bound (conductor)", () => {
-  test("'≥ 7,700' with the GPW tooltip in replay; exact in Now", async () => {
+  test("replay: exact count with the GPW tooltip; no '≥'", async () => {
     const { renderToStaticMarkup } = await import("react-dom/server");
     const { createElement } = await import("react");
     const PriorityAreas = (await import("../PriorityAreas")).default;
     const areas = [{ rank: 1, label: "Caxias do Sul #1", cls: 3, tpi: 1, people: 7700.6, areaKm2: 1 }] as never;
     const props = { areas, missingText: "", expanded: true, selected: null, dimmed: false, onToggleAll: () => {}, onSelect: () => {} };
     const replay = renderToStaticMarkup(createElement(PriorityAreas, { ...props, lowerBound: true }));
-    expect(replay).toMatch(/≥ (<!-- -->)?7,700/);
-    expect(replay).toContain('title="GPW ~1 km resample, ~12% low"');
+    expect(replay).toContain(">7,701<");
+    expect(replay).not.toContain("≥");
+    expect(replay).toContain('title="GPW v4.11 population count, native 30″ grid, exact cell fractions"');
     const live = renderToStaticMarkup(createElement(PriorityAreas, props));
     expect(live).not.toContain("≥");
   });
@@ -160,7 +161,7 @@ describe("people audit (conductor): at-risk part label + impossible values", () 
 });
 
 describe("Jhonatan: people read against their area", () => {
-  test("replay zone: '≥ 7,700 people in 12.0 km²'; density > 60,000/km² renders '—'", async () => {
+  test("replay zone: '7,700 people in 12.0 km² (estimate)'; density > 60,000/km² renders '—'", async () => {
     const { renderToStaticMarkup } = await import("react-dom/server");
     const { createElement } = await import("react");
     const PriorityAreas = (await import("../PriorityAreas")).default;
@@ -172,7 +173,8 @@ describe("Jhonatan: people read against their area", () => {
     expect(areas[1].peopleInvalid).toBe(true);
     const html = renderToStaticMarkup(createElement(PriorityAreas, { areas, missingText: "", expanded: true, selected: null, dimmed: false,
       onToggleAll: () => {}, onSelect: () => {}, lowerBound: true }));
-    expect(html).toMatch(/≥ (<!-- -->)?7,700(<!-- -->)? people in (<!-- -->)?12\.0 km²/);
+    expect(html).toMatch(/7,700(<!-- -->)? people in (<!-- -->)?12\.0 km²(<!-- -->)? \(estimate\)/);
+    expect(html).not.toContain("≥");
     expect(html).not.toContain("900,000");
   });
 });

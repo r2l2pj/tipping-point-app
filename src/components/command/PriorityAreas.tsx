@@ -2,7 +2,7 @@
 
 import { LIST_COLLAPSED, type PriorityArea } from "./model/areas";
 import { fmtKm2, fmtPeople } from "./model/format";
-import { PEOPLE_LOWER_BOUND_TITLE } from "./model/tiles";
+import { PEOPLE_TITLE } from "./model/tiles";
 import { NOT_PUBLISHED } from "./model/types";
 import { ClassChip, Icon, ICON } from "./ui";
 
@@ -29,7 +29,7 @@ export default function PriorityAreas({
   dimmed: boolean;
   onToggleAll: () => void;
   onSelect: (rank: number) => void;
-  // Replay (conductor): GPW ~1 km counts are ~12% low -> "≥ 7,700".
+  // Replay: exact native-grid counts, tooltip names the method.
   lowerBound?: boolean;
   // Now: zones are whole municipalities; people/area cover the at-risk part.
   partsNote?: boolean;
@@ -80,7 +80,7 @@ export default function PriorityAreas({
                   <span className="block truncate text-[11px] font-normal text-cc-muted" data-zone-part>
                     {partsNote
                       ? <>{Math.round(a.people).toLocaleString("en-US")} people in the at-risk part ({fmtKm2(a.areaKm2)}) of {a.name}</>
-                      : <>{lowerBound ? "≥ " : ""}{Math.floor(a.people).toLocaleString("en-US")} people in {fmtKm2(a.areaKm2)}</>}
+                      : <>{Math.round(a.people).toLocaleString("en-US")} people in {fmtKm2(a.areaKm2)}{lowerBound ? " (estimate)" : ""}</>}
                   </span>
                 )}
                 {a.nextLook && <span className="block truncate text-[11px] font-normal text-cc-muted" data-zone-next>{a.nextLook}</span>}
@@ -94,7 +94,7 @@ export default function PriorityAreas({
                   : a.people === null
                   ? <span className="text-xs italic text-cc-faint">{NOT_PUBLISHED}</span>
                   : lowerBound
-                    ? <span title={PEOPLE_LOWER_BOUND_TITLE}>≥ {Math.floor(a.people).toLocaleString("en-US")}</span>
+                    ? <span title={PEOPLE_TITLE}>{Math.round(a.people).toLocaleString("en-US")}</span>
                     : fmtPeople(a.people)}
               </span>
             </button>

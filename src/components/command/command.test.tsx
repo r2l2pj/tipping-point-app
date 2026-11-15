@@ -670,7 +670,7 @@ describe("forecast issued this day: one source of truth (recording fixes)", () =
     (withFigures.series!.days as { date: string }[])[0].date = "2025-12-03";
     const html2 = render(withFigures, { dayIndex: 0, issueLead: 3, layers: ["tpi"], hazard: "slide" });
     expect(html2).toContain("812.4 km²");
-    expect(html2).toContain("at least 4,321");
+    expect(html2).toContain("4,321 (estimate)");
     expect(html2).toContain("forecast for Dec 6, 2025 (issued Dec 3, 2025)");
   });
 
