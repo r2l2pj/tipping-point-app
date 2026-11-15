@@ -493,6 +493,9 @@ describe("pending states carried over from main (L14)", () => {
 
   test("the boundary credit follows the case", () => {
     expect(render(bundle())).toContain("US Census · Landslide points: Washington Geological Survey · Population");
+    // lead-analysis date convention: replay observed band X = rain X-3..X-1
+    const r = render(bundle());
+    if (r.includes("Rain 3-day (IMERG)")) expect(r).toContain("Rain 3-day (IMERG) - observed, the 3 days before each date");
     expect(render(bundle({ id: "rs_2024" }))).toContain("IBGE");
   });
 });
