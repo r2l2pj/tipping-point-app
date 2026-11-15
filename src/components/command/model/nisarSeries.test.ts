@@ -199,7 +199,7 @@ describe("Uruguay: NISAR multi-date stack (kind 'nisar_frame')", () => {
         { id: "nisar_pre", date: "2026-09-30", png: "rs_uruguai_2026/png/nisar_pre_20260930.png", bounds: [-57.079983, -29.757373, -57.008572, -29.700131], kind: "observed" },
       ] } } as never);
     const card = radarCard(uy);
-    expect(card.headline).toBe("NISAR pair available");
+    expect(card.headline).toBe("NISAR radar images available");
     expect(card.dates).toBe("Sep 30, 2026 → Oct 12, 2026");
     expect(card.compare.pair!.stack).toBeUndefined();
     expect(card.compare.pair!.before.label).toBe("NISAR radar before — Sep 30, 2026");
@@ -228,7 +228,7 @@ describe("conductor blocker: 'NISAR' only for NISAR data (layer sensor field)", 
   });
   test("sensor 'NISAR' or no field (WA) keeps NISAR wording; mixed stack -> 'Radar dates'", () => {
     const n = bundle({ id: "rs_uruguai_2026", data_dates: {}, manifest: { event: "rs_uruguai_2026", layers: pairLayers("NISAR") } } as never);
-    expect(radarCard(n).headline).toBe("NISAR pair available");
+    expect(radarCard(n).headline).toBe("NISAR radar images available");
     expect(radarCard(n).compare.pair!.before.label).toBe("NISAR radar before — Sep 30, 2026");
     const f = (date: string, sensor: string) => ({ id: `f_${date}`, kind: "nisar_frame", date, polarization: "HH", png: `x/${date}.png`, sensor, bounds: [0, 0, 1, 1] });
     const mixed = bundle({ manifest: { event: "x", layers: [f("2026-10-12", "unconfirmed (likely Sentinel-1)"), f("2026-10-24", "NISAR"), f("2026-11-05", "NISAR")] } } as never);
@@ -270,7 +270,7 @@ test("lead-analysis 1665f79: 'NISAR (GCOV provisional)' -> NISAR wording, headli
   const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, metricsView: { flooded_km2: 1.817, people_flooded: 28, flood_source: "nisar" } as never,
     manifest: { event: "rs_uruguai_2026", layers: [L("radar_post", "2026-10-12"), L("radar_pre", "2026-09-30")] } } as never);
   const card = radarCard(uy);
-  expect(card.headline).toBe("NISAR pair available (provisional GCOV)");
+  expect(card.headline).toBe("NISAR radar images available");
   expect(card.compare.pair!.before.label).toBe("NISAR radar before — Sep 30, 2026");
   expect(card.flooded!.label).toBe("Flooded area (NISAR)");
 });
@@ -279,7 +279,7 @@ test("Uruguay: tpi_replay_note replaces 'No frames published yet' (timeline, cap
   const { noStepsText, mapCaption } = await import("./steps");
   const note = "Local rain index not replayed for this case; local rain at Uruguaiana never reached its own P99 — the flood was driven by upstream-basin rain (see forecast_proof).";
   const uy = bundle({ id: "rs_uruguai_2026", series: undefined, metricsView: { tpi_replay_note: note } as never } as never);
-  expect(noStepsText(uy)).toBe(note);
+  expect(noStepsText(uy)).toBe(note.replace("its own P99", "its extreme level").replace("(see forecast_proof)", "(see the upstream-rain test)")); // L42a: no file keys on screen
   expect(mapCaption(uy, [], 0, "flood", ["flood"]).text).toBe("No rain-index replay for this case");
   expect(noStepsText(bundle({ series: undefined } as never))).toBe("No frames published yet");
 });

@@ -6,6 +6,7 @@
 import { assetUrl, fmtDate } from "@/lib/layers";
 import { canonicalCaseId } from "@/lib/contract";
 import type { CcBundle } from "./types";
+import { plainText } from "./plain";
 
 type M = Record<string, unknown>;
 const isRecord = (v: unknown): v is M => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -87,7 +88,7 @@ export function nisarSeriesView(bundle: CcBundle): NisarSeriesView | undefined {
   if (!s) return undefined;
   const lines: SeriesLine[] = Object.entries(s.areas).map(([id, a]) => ({
     id,
-    label: a.label ?? id,
+    label: plainText(a.label ?? id),
     hh: a.hh_db ?? [],
     hv: a.hv_db,
     flood: id === "flood_candidates",
@@ -99,7 +100,7 @@ export function nisarSeriesView(bundle: CcBundle): NisarSeriesView | undefined {
   const frames = (s.frames ?? []).flatMap((f) => {
     const layer = f.layer_id ? layers.find((l) => l.id === f.layer_id) : undefined;
     const url = assetUrl(caseDir, layer?.png ?? f.png);
-    return url ? [{ label: fmtDate(f.date), role: s.roles?.[f.date], url }] : [];
+    return url ? [{ label: fmtDate(f.date), role: s.roles?.[f.date] && plainText(s.roles[f.date]), url }] : [];
   });
   const lo = Math.min(...all), hi = Math.max(...all);
   const pad = Math.max(0.5, (hi - lo) * 0.1);
@@ -111,8 +112,8 @@ export function nisarSeriesView(bundle: CcBundle): NisarSeriesView | undefined {
     min: lo - pad,
     max: hi + pad,
     frames,
-    reading: s.readingLine ?? s.reading?.flood_candidates,
-    geometryNote: s.geometryNote,
+    reading: (s.readingLine ?? s.reading?.flood_candidates) && plainText(s.readingLine ?? s.reading?.flood_candidates ?? ""),
+    geometryNote: s.geometryNote && plainText(s.geometryNote),
     otherGeometry: s.dates.map((d) => (s.otherGeometry ?? []).includes(d)),
     status: s.status,
   };

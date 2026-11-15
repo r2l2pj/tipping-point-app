@@ -1,5 +1,6 @@
 import { manifestRaster } from "@/lib/layers";
 import { liveClasses } from "@/lib/contract";
+import { plainText } from "./plain";
 // Timeline steps: from the daily series, or from the dates of the manifest
 // TPI frames when the case has no series (the live case has none).
 import { forecastSourceLabel } from "@/lib/contract";
@@ -97,7 +98,7 @@ export const NO_STEPS_TEXT = "No frames published yet";
 // replayed says why (metrics tpi_replay_note) instead of "not published yet".
 export const tpiReplayNote = (bundle: CcBundle | undefined): string | undefined => {
   const n = (bundle?.metricsView as Record<string, unknown> | undefined)?.tpi_replay_note;
-  return typeof n === "string" && n.trim() ? n.trim() : undefined;
+  return typeof n === "string" && n.trim() ? plainText(n.trim()) : undefined;
 };
 export const noStepsText = (bundle: CcBundle | undefined): string => tpiReplayNote(bundle) ?? NO_STEPS_TEXT;
 

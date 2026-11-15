@@ -360,7 +360,7 @@ describe("radar card", () => {
     });
     const card = radarCard(live);
     expect(card.pair).toBe(true);
-    expect(card.headline).toBe("NISAR pair available");
+    expect(card.headline).toBe("NISAR radar images available");
     expect(card.dates).toBe("Oct 25, 2026 → Nov 6, 2026");
     expect(card.flooded).toEqual({ label: "Flooded area (NISAR radar, candidates)", value: "12.1 km²" });
     expect(card.people).toEqual({ label: "People in the flooded area (estimate)", value: "384" });

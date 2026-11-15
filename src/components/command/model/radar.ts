@@ -105,9 +105,9 @@ export function radarSensor(bundle: CcBundle): RadarSensor {
   const sensors = radarLayers.map(sensorOf);
   const other = sensors.find((s) => s && !/^nisar\b/i.test(s));
   if (other) return { nisar: false, name: "Radar", note: other };
-  // "NISAR (GCOV provisional)": say provisional on the card.
+  // "NISAR (GCOV provisional)": say provisional on the card (L42a: no product code).
   const prov = sensors.find((s) => s && /provisional/i.test(s));
-  return { nisar: true, name: "NISAR radar", ...(prov ? { note: "provisional GCOV" } : {}) };
+  return { nisar: true, name: "NISAR radar", ...(prov ? { note: "provisional" } : {}) };
 }
 
 export interface NisarStack { dates: string[]; frames: Record<string, { HH?: CompareSide; HV?: CompareSide }>; title: string }
@@ -420,7 +420,7 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
     nisar: radarSensor(bundle).nisar,
     headline: pair
       ? (radarSensor(bundle).nisar
-          ? `NISAR pair available${radarSensor(bundle).note ? ` (${radarSensor(bundle).note})` : ""}`
+          ? "NISAR radar images available" // conductor (v6): plain headline, no product code
           : `Radar pair available — sensor ${radarSensor(bundle).note}`)
       : bundle.mode === "live" ? AWAITING_PAIR_TEXT : `${NO_RADAR_TEXT}.`,
     dates: pre && post ? `${fmtDate(pre)} → ${fmtDate(post)}` : undefined,
