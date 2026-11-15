@@ -309,6 +309,8 @@ export interface NowSummary {
 export interface NowAlertCandidate {
   class?: number;
   label?: string;
+  // "flood" | "landslide" (lead-live). Absent in runs before 2026-11-15.
+  hazard?: string;
   centroid?: [number, number];
   pixels?: number;
   hold?: boolean;

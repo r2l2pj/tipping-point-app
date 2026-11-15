@@ -70,10 +70,16 @@ export function heldLabel(a: {
   return a.hold === true || a.held === true ? "held" : undefined;
 }
 
-const hazardFor = (label?: string): string => {
-  const t = label?.toLowerCase() ?? "";
-  if (/flood|enchente|inunda/.test(t)) return "flood";
-  return "landslide"; // deslizamento/slide keywords and the default
+// Hazard of a candidate: its `hazard` field, else a hazard word in its label.
+// A candidate that names neither is never guessed as one hazard (the class
+// label "Crítico" says nothing about it): it reads "flood or landslide".
+export const EITHER_HAZARD = "flood or landslide";
+const hazardFor = (c: NowAlertCandidate): string => {
+  for (const t of [c.hazard, c.label].map((v) => v?.toLowerCase() ?? "")) {
+    if (/flood|enchente|inunda/.test(t)) return "flood";
+    if (/slide|desliza|landslide/.test(t)) return "landslide";
+  }
+  return EITHER_HAZARD;
 };
 
 const certaintyFor = (pixels?: number): Alert["certainty"] =>
@@ -85,10 +91,21 @@ export function alertDataDates(
   dd: Record<string, unknown> | undefined
 ): Record<string, string> | undefined {
   if (!dd) return undefined;
-  const out = Object.fromEntries(
-    Object.entries(dd).filter(([, v]) => typeof v === "string")
-  ) as Record<string, string>;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(dd)) {
+    if (typeof v !== "string") continue;
+    // The live run stamps some sources with a run id or a granule name
+    // ("2026-11-14T00Z", "SMAP_L4_SM_gph_20261110T223000_...h5"): the card
+    // shows the calendar date in it, never the raw stamp.
+    out[k] = stampDate(v) ?? v;
+  }
   return Object.keys(out).length ? out : undefined;
+}
+
+export function stampDate(v: string): string | undefined {
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) return v; // a real ISO time stays
+  const m = /(\d{4})-?(\d{2})-?(\d{2})/.exec(v);
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : undefined;
 }
 
 // NowAlertCandidate[] -> Alert[]. Candidates below Alto are skipped. `hold`
@@ -107,7 +124,7 @@ export function candidatesToAlerts(
     const level = levelForClass(c.class);
     if (!level) return;
 
-    const hazard = hazardFor(c.label);
+    const hazard = hazardFor(c);
     const held = c.hold === true || (quiet && level === "warning");
     const quietFlag = quiet && level === "emergency";
     const region =
@@ -117,7 +134,9 @@ export function candidatesToAlerts(
     const advice =
       hazard === "flood"
         ? "Stay away from riverbanks and flooded streets"
-        : "Stay away from steep slopes and riverbanks";
+        : hazard === "landslide"
+          ? "Stay away from steep slopes and riverbanks"
+          : "Stay away from steep slopes, riverbanks and flooded streets";
     const urgency =
       level === "emergency"
         ? "; be ready to leave if Civil Defense orders it"
@@ -129,7 +148,7 @@ export function candidatesToAlerts(
         : "";
 
     out.push({
-      id: `now-${i}-${hazard}-${level}`,
+      id: `now-${i}-${hazard.replace(/ /g, "-")}-${level}`,
       title: `Tipping Point: ${ALERT_LEVEL_WORDS[level]} ${hazard} risk`,
       area: region,
       region,
