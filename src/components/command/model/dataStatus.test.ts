@@ -1,6 +1,6 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
-import { dataStatus, staleLimitMs } from "./dataStatus";
+import { dataStatus, freshnessText, staleLimitMs } from "./dataStatus";
 import { bundle, liveBundle } from "./fixtures";
 
 // The L27 banner rule: "last saved data" only when the root manifest came
@@ -27,5 +27,18 @@ describe("dataStatus, banner rule (L27)", () => {
 
   test("the default stale limit is 2 x 3 h", () => {
     expect(staleLimitMs()).toBe(6 * 3600 * 1000);
+  });
+});
+
+describe("freshness text: 'Updated HH:MM BRT (X ago)'", () => {
+  const run = "2026-11-15T05:56:26Z"; // 02:56 BRT
+  test("live, same BRT day: clock time and age", () => {
+    const now = Date.parse("2026-11-15T06:02:26Z");
+    expect(freshnessText({ kind: "live", date: run }, now)).toBe("Updated 02:56 BRT (6 min ago)");
+  });
+  test("stale after two refresh periods, with the date when the run is from another BRT day", () => {
+    const now = Date.parse("2026-11-16T05:56:26Z");
+    expect(dataStatus(liveBundle({ updated_at: run }), now).kind).toBe("stale");
+    expect(freshnessText({ kind: "stale", date: run }, now)).toBe("Stale · updated Nov 15, 02:56 BRT (24 h ago)");
   });
 });
