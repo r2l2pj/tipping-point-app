@@ -171,11 +171,11 @@ replays; the index adds where and who, not an earlier warning.
 - IMERG and SMAP inputs are ~10 km; the detail comes from terrain. The HAND
   proxy is a simplified NASADEM product validated against MERIT Hydro
   (validation reference only).
-- NISAR revisits every ~12 days, so radar confirmation can arrive days after
+- NISAR revisits every ~12 days, so the radar check can arrive days after
   the event. L-band coherence loss also occurs with vegetation and rain —
   landslide marks are always candidates, never field confirmation.
 - The video demo is a replay of past events; the live view (`now/`) covers Southern Brazil only and refreshes every 3 h.
-- The rs_2024 case has no radar confirmation — the event predates NISAR.
+- The rs_2024 case has no radar check — the event predates NISAR.
 - The wa_2025 radar maps flood candidates only (NISAR). Landslide marks are
   candidates from post-event HLS optical, and no GUNW pair spans the event
   (declared limitation).

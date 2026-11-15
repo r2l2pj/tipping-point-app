@@ -10,14 +10,14 @@
 
 ## High-Level Project Summary (form field 2, ≤200 words)
 
-NISAR's L-band radar maps new flooding through cloud and darkness. Tipping Point turns each 12-day NISAR pass into a priority list for municipal Civil Defense: where the ground newly flooded, as candidates to check first, and how many people live there. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them, and more than 229,000 people were in critical areas. NISAR also passes over Southern Brazil, our home region, and the live view shows the latest pass pair. Between passes, a Tipping Point Index built from NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) shows where to look next. The live view refreshes every 3 hours with experimental (not official) area alerts, and two past disasters replay day by day with the forecast as it was issued. We tested why radar misses flooded towns and forests (double bounce; supported) and list what future NISAR products would add.
+NISAR's L-band radar maps new flooding through cloud and darkness. Tipping Point turns each 12-day NISAR pass into a priority list for municipal Civil Defense: where the ground newly flooded, as candidates to check first, and how many people live there. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them, home to about 1,150 people; our rain–soil–terrain index rated areas with more than 229,000 people critical at the peak. NISAR images Brazil every 12 days; the live view checks each new pass pair over our domain (latest: Oct 25 → Nov 6, 2026). Between passes, a Tipping Point Index built from NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) shows where to look next. The live view refreshes every 3 hours with experimental (not official) area alerts, and two past disasters replay day by day with the forecast as it was issued. We tested why radar misses flooded towns and forests (double bounce; supported) and list what future NISAR products would add.
 
 ## Detailed Project Description (form field 5)
 
 ### What it does
 Tipping Point is one operations screen for municipal Civil Defense. It answers three questions in order:
 1. Where is the ground about to fail?
-2. Did it?
+2. Where has radar seen new water (candidates)?
 3. Who is affected?
 
 - **Live** (`/`): refreshes every 3 hours over Southern Brazil. It shows today's risk plus three forecast days, the latest NISAR and OPERA flood candidates, and a ranked list of priority areas with the people exposed.
@@ -33,20 +33,23 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
   A geometric mean only reaches Critical (> 0.6) when all three agree.
 - **Forecast.** The next three days extend observed rain with the NOAA GFS 0.25° forecast. This is our only non-NASA input, and every map label says so. In replay we use the run actually issued that day.
 - **Radar response.** For each pair of NISAR radar passes (before and after), we:
-  - detect new open water as a drop in co-polarized backscatter (per-scene threshold);
-  - gate it with height above drainage;
+  - detect new open water from the HH backscatter change between the passes: a drop of more than 3 dB to below a per-scene threshold (Otsu on bimodal tiles; a fixed −15 dB fallback for these BETA data);
+  - keep only low ground near rivers (height above drainage < 15 m);
   - remove permanent water;
   - keep patches ≥ 3 ha.
 
   OPERA DSWx-S1 adds Sentinel-1 water candidates. OPERA DIST-ALERT-HLS adds landslide **scar candidates** from vegetation loss once the cloud clears.
-- **Impact.** GPW v4 population inside critical areas, and VIIRS Black Marble night-light loss.
+- **Impact.** GPW v4 population inside the NISAR flood candidates and inside the index's critical areas, and VIIRS Black Marble night-light loss.
 
 ### What NISAR shows, and why
 *Figure (upload as an image here): `.crew/deck/explainer/what-nisar-sees.png` — calm water reads dark, a flooded town or forest stays bright (double bounce), HH and HV.*
 - Calm floodwater acts like a mirror to radar. It reflects the L-band pulse away from the satellite, so new flooding appears as new dark patches between the before and after passes.
-- L-band (24 cm) also passes through cloud and rain, which is why it works when optical cannot.
-- Flooded towns and forests behave differently. Water under walls or trunks bounces the pulse back to the satellite (double bounce), which cancels the darkening. Our current detector reads only the darkening in co-polarization, so it misses that flooding; we tested this and it holds (see the hypothesis below). This is the main reason recall is low.
-- Landslide scars need a coherence (InSAR) pair spanning the event. No public NISAR pair spans the Washington storm, so scars stay optical candidates.
+- Radar passes through cloud, which is why it works when optical cannot; L-band (24 cm) also passes through leaves and is barely affected by rain. Wind-roughened water can look bright (less so at L-band), and wet snow can look dark like water; keeping only low ground near rivers limits that.
+- Flooded towns and forests behave differently. Water under walls or trunks bounces the pulse back to the satellite (double bounce), which cancels the darkening. Our current detector reads only the darkening in co-polarization, so it misses that flooding; we tested this and it holds (see the hypothesis below). It is one main reason recall is low, alongside our threshold choice, the 3 ha minimum patch size and the 1-day timing difference with the reference.
+- Radar can find landslide scars through coherence loss or an HV backscatter drop where vegetation is stripped. Our Dec 4 → Dec 16 pass pair does span the storm, but no public NISAR interferogram (GUNW) does, and we have not yet tested amplitude change for scars, so scars stay optical candidates.
+
+### Why L-band (NISAR), not just any radar
+Sentinel-1 (C-band, 5.6 cm) also sees open floodwater through cloud; we use its OPERA water maps as our reference, not as a competitor. NISAR's longer L-band wavelength (24 cm) adds three things this problem needs: it reaches water **under vegetation canopy**, where C-band mostly sees the leaves; it keeps **interferometric coherence over vegetated slopes**, which landslide work needs; and it gives **regular 12-day, dual-polarization (HH and HV) coverage** of Brazil.
 
 ### Hypothesis: why radar misses flooded towns and forests — tested, supported
 - **What we saw.** Our NISAR flood candidates catch only 13% of the new water in OPERA's Sentinel-1 water map for the same days (recall 0.13; see Validation).
@@ -57,10 +60,10 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 
 ### The future of NISAR for this problem
 *Figure (upload as an image here): `.crew/deck/explainer/future-of-nisar.png`.*
-- **Ground motion before failure.** Repeat-pass radar interferometry (InSAR) can measure slopes creeping by centimetres before they collapse. Today our landslide marks are only optical candidates after the fact.
-- **Soil moisture at high resolution.** NISAR's planned soil-moisture product (about 200 m) is far finer than SMAP's ~9 km, which would sharpen the "soil" part of the index.
+- **Slow slope motion.** Repeat-pass radar interferometry (InSAR) can measure slow slope motion (millimetres to centimetres per pass) and flag some slopes that creep before they fail; fast, rain-triggered shallow slides such as Rio Grande do Sul 2024 often give no warning. Today our landslide marks are only optical candidates after the fact.
+- **Soil moisture at high resolution.** NISAR's planned high-resolution soil-moisture product (~200 m; NISAR Science Users' Handbook) could sharpen the "soil" part of the index (SMAP is ~9 km), except under dense forest.
 - **Flooding under forest canopy.** L-band passes through leaves; the double-bounce signal in the hypothesis above is also how flooded forest becomes visible.
-- **Regular coverage of Brazil.** NISAR images Brazil on a 12-day repeat, ascending and descending, so every municipality can get a radar check after each storm without waiting for clear skies.
+- **Regular coverage of Brazil.** NISAR images Brazil on a 12-day repeat, ascending and descending, so every municipality gets a radar check within days of a storm (each spot is imaged at least every 12 days), whatever the weather.
 
 ### What's new compared with existing NASA tools
 - **vs LHASA v2 and LHASA-F (NASA's landslide nowcast and forecast):** NASA already does the core of the landslide side. LHASA v2 uses XGBoost with IMERG rain and SMAP soil moisture (Stanley et al. 2021, doi:10.3389/feart.2021.640043). LHASA-F forecasts about 3 days ahead from GEOS-FP rain (Khan et al. 2022, doi:10.3389/feart.2022.878996). So a machine-learning, soil-moisture or forecast-driven landslide model is **not** new here. What we add:
@@ -78,15 +81,16 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 | Check | Result | n / caveat |
 |---|---|---|
 | Washington: NISAR flood candidates | 27.99 km² within the NISAR swath | post pass covers 74% of the area of interest; NISAR products are BETA |
-| Washington: NISAR vs OPERA DSWx-S1 (Sentinel-1 radar water maps), new flood | F1 0.15 · precision 0.19 · recall 0.13 · IoU 0.08 | like-for-like new flood (water on Dec 15/17, not water Dec 1–7); co-pol darkening only |
+| Washington: NISAR vs OPERA DSWx-S1 (Sentinel-1 radar water maps), new flood | F1 0.15 · precision 0.19 · recall 0.13 · IoU 0.08 | like-for-like new flood (water on Dec 15/17, not water Dec 1–7); co-pol darkening only; reference = OPERA's Sentinel-1 water model, not ground truth |
 | Washington: NISAR 3-pass time series (HH) | flood candidates −9.7 dB (Nov 10) → −9.7 dB (Dec 4) → −16.2 dB (Dec 16): stable for a month, then dropped ~6.5 dB when the river flooded; control areas stayed within 2.9 dB | the candidates were picked by the Dec 4 → Dec 16 drop, so Nov 10 = Dec 4 is the independent check |
-| Washington: NISAR vs optical HLS water | F1 0.026 | clouds covered most of the optical scenes |
+| Washington: NISAR vs optical HLS water | not meaningful | optical saw only 7% of the area |
 | Rio Grande do Sul: flood index vs Copernicus EMS flood maps (EMSR720) | IoU 0.19 · F1 0.31 · precision 0.46 · recall 0.24 (High or above, observed rain, May 6, 2024). Before the onset, only 0.21% (observed rain) / 6.6% (NOAA GFS forecast) of that flooded area was flagged | Taquari valley only (5 EMS map areas, 32 km² of mapped flood); Porto Alegre was not mapped by EMS. This is agreement during the flood, not a warning |
 | Optical cloud cover | Washington 92.9% (OPERA DSWx-HLS, Dec 15/17, after the storm) · Rio Grande do Sul 100% (20 HLS scenes during the event) | why radar |
 | Rio Grande do Sul: landslide scar candidates | 2,849 candidates, 20.0 km² | 46% of the 16,027 inventoried landslides lie within 500 m of a candidate; 55% of candidates lie within 500 m of one |
 | Washington: landslide inventory hits (Washington Geological Survey landslide inventory (licence to confirm)) | 66.7% of 15 points | the points are undated; scored on the peak day (Dec 12, 2025), after the Dec 9 damage, so this is not a forecast |
+| Washington: people inside the NISAR flood candidates | about 1,150 | GPW v4 inside the 27.99 km² of radar flood candidates (lower bound, see Limitations) |
 | People in critical areas (peak day) | Washington more than 229,000 (229,782; Dec 12, 2025) · Rio Grande do Sul at least 1.49 million (1,488,833; May 3, 2024) | GPW v4 counted in Critical cells (TPI > 0.6); lower bounds — the ~1 km resample reads about 12% low (see Limitations) |
-| Night-light drop | Washington 44% · Rio Grande do Sul 33% | VIIRS Black Marble, before vs after |
+| Night-light drop | Washington 44% · Rio Grande do Sul 33% | VIIRS Black Marble, before vs after; not corrected for residual cloud or snow, indicative only |
 | Rio Grande do Sul: mapped landslides in High or Critical areas, forecast as issued | Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%). Earlier runs (issued 51 and 75 hours before) showed 0%. (NOAA GFS run issued Apr 28, 2024: 36.45%, Critical 1.87%; runs issued Apr 27 and Apr 26: 0%; observed rain: 0.25%) | n = 16,027 UFRGS/Cemaden inventory points (validation only, never an input); onset = first deaths, Apr 29, 2024 00:00 BRT (MetSul report; Jornal do Comércio). Fragile: with onset Apr 30 (first landslide deaths) the 24 h run shows 0% and the 48 h run 36.45%; the old May 1 anchor gave 88.13%. One forecast run carries the result |
 | Washington: NISAR-flooded area in High or Critical areas, forecast as issued | 0% (runs issued 24 h and 48 h before onset) · 0.14% High, 0% Critical (run issued 72 h before) | onset Dec 8, 2025 00:00 PST (WA EMD situation report 25-4783); the index uses local rain only; rivers flooded from rain upstream (see Limitations) |
 | ML landslide trigger model (experimental) | median per-event ROC 0.93 across 9 held-out disasters · about as good as a forecast-rain-vs-local-extreme rule · ~4–5 alarm-days per site per year | independent audit ([overfit audit](https://github.com/r2l2pj/tipping-point-data/blob/main/docs/science-review/07-overfit-audit.md)); 24 h horizon, NOAA GFS as issued |
@@ -101,7 +105,7 @@ Other limits:
 - Thresholds are not yet calibrated for Brazil; validated on 2 replay events + 11 disaster events for the ML.
 - IMERG and SMAP are about 10 km; the detail comes from terrain.
 - People counts in the replays are lower bounds: they use a ~1 km resample of the GPW population grid that reads about 12% low (Rio Grande do Sul peak 1.49 million vs about 1.68 million on the native grid).
-- NISAR revisits every 12 days, so confirmation can arrive a week after the damage.
+- NISAR revisits every 12 days, so the radar check can arrive a week after the damage.
 - Landslides are always candidates, never confirmed.
 - The live view covers Southern Brazil only.
 

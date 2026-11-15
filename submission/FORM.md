@@ -16,7 +16,7 @@ Tipping Point
 
 ## 2. High-Level Project Summary
 
-Paste from `project-page.md` → "High-Level Project Summary". That is the NISAR-led version with the NISAR response line as the headline (decided by conductor (delegated), L38). The older 240-word version in `summary.md` is kept as an alternative (awaiting Lucas).
+Paste from `project-page.md` → "High-Level Project Summary". That is the NISAR-led version with the NISAR response line as the headline (decided by conductor (delegated), L38). (`summary.md` is retired; do not paste it.)
 
 ## 3. Link to Project Demo
 
@@ -53,14 +53,14 @@ Paste from `project-page.md` → "Detailed Project Description". Its sections ar
 
 This field is for data collection only and is not shown to judges. Source: `ai-declaration.md` (awaiting Lucas).
 
-> Yes. We used AI coding assistants (Anthropic Claude via Claude Code, Cognition Devin, OpenAI Codex/GPT) under human direction. They helped write and review code for the data pipeline and the web app, and drafted documentation and submission text. The team wrote the idea and the method — the Tipping Point Index, the choice of NASA datasets, and the replay and radar-confirmation design — in our own project document before any AI-assisted build, and every data source, threshold and reported number was reviewed by the team. The AI use is acknowledged in descriptive text in both repository READMEs ("Use of AI") and in commit metadata (Co-Authored-By trailers). No AI-generated images, video or audio appear in the project or the demo; the demo is a screen recording of the real app with a human voiceover `[if a synthetic voice is used instead: "The demo voiceover is AI-generated text-to-speech" + note in the video description and file metadata]`.
+> Yes. We used AI coding assistants (Anthropic Claude via Claude Code, Cognition Devin, OpenAI Codex/GPT) under human direction. They helped write and review code for the data pipeline and the web app, and drafted documentation and submission text. The team wrote the idea and the method — the Tipping Point Index, the choice of NASA datasets, and the replay and radar flood-candidate design — in our own project document before any AI-assisted build, and every data source, threshold and reported number was reviewed by the team. The AI use is acknowledged in descriptive text in both repository READMEs ("Use of AI") and in commit metadata (Co-Authored-By trailers). No AI-generated images, video or audio appear in the project or the demo; the demo is a screen recording of the real app with a human voiceover `[if a synthetic voice is used instead: "The demo voiceover is AI-generated text-to-speech" + note in the video description and file metadata]`.
 
 ## 7. NASA Data
 
 Source: `nasa-data.md` (awaiting Lucas):
 
 > - **Index:** GPM IMERG V07 (Final; Early in the live view), SMAP L4 (SPL4SMGP v008, root-zone wetness), NASADEM.
-> - **Confirmation:** NISAR L2 GCOV (track 172D frame 064, BETA); HLS.
+> - **Radar response (flood candidates):** NISAR L2 GCOV, HH (HV published for comparison), track 172D frame 064, BETA; post-event optical: HLS.
 > - **Live flood and scar candidates:** OPERA DSWx-S1 and OPERA DIST-ALERT-HLS V1 (vegetation-loss alerts used to flag landslide scar candidates).
 > - **Land cover:** MODIS MCD12Q1.
 > - **Impact:** VIIRS Black Marble VNP46A2; GPW v4 (SEDAC).

@@ -42,14 +42,14 @@ Paste every field from `submission/FORM.md`, tick "Terms and Conditions" and "Co
 
 Open [APP URL] on a real phone: the headless capture rendered the mobile Now map mostly black (likely a headless GPU artefact). Prod tour with screenshots: `.crew/review/morning/index.md`.
 
-## Awaiting you (20) — reply "approve all", or edit by number
+## Awaiting you (20) — note: `summary.md` is RETIRED (items quoting it no longer ship) — reply "approve all", or edit by number
 
 1. "Tipping Point turns NASA rainfall and soil moisture data into a near real-time landslide and flood warning, then uses NISAR radar to confirm where the ground actually moved or flooded, so civil defense teams know where to act first." — *summary.md: Theme sentence (verbatim from docs/PLAN.md)* — doc-verbatim (L18); note: the UI swept "confirm" to "candidates", only this sentence and the tagline keep "confirm"
-2. "Rain warns. Radar confirms." — *summary.md: tagline; demo-script.md: close VO + on-screen; slides-outline.md: slide 1*
-3. "Three NASA missions, three layers, one tipping point." — *summary.md: one-liner; slides-outline.md: slide 1*
+2. "Rain warns. Radar sees through." (L42) — *tagline; demo-script.md: close VO + on-screen; slides-outline.md: slide 1*
+3. "NISAR radar sees new flooding through cloud; we turn each pass into a priority list." — *slides-outline.md: slide 1 one-liner* (win-odds-v2)
 4. "In May 2024, floods hit Rio Grande do Sul: 478 municipalities affected, 185 deaths and 581,638 people displaced at the peak (Government of Rio Grande do Sul, SOS Rio Grande do Sul, updated Aug 19, 2025)." — *summary.md: Summary ¶* (L36d)
 5. "Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%). Earlier runs (issued 51 and 75 hours before) showed 0%." — *project-page.md validation table, README #validation, slide 5 footnote* (decided, L38; never headline)
-6. Video VO (L38): "Team [TEAM NAME], Brazil. / In Washington, clouds hid 93% of the area from optical satellites; NISAR radar mapped flood candidates through them. / Civil Defense sees who is affected, ranked, live across southern Brazil every 3 hours. / Tipping Point maps where NASA rain, soil and slope data tip toward failure. / Rain warns. Radar confirms." — *captions.srt*
+6. Video VO (L38): "Team [TEAM NAME], Brazil. / In Washington, clouds hid 93% of the area from optical satellites; NISAR radar mapped flood candidates through them. / Civil Defense could see who is affected, ranked, refreshed every 3 hours across southern Brazil. / Tipping Point maps where NASA rain, soil and slope data tip toward failure. / Rain warns. Radar confirms." — *captions.srt*
 7. (retired: "230,000 people…" is no longer spoken; 229,782 stays on screen in beat D)
 8. "May 2024, Rio Grande do Sul floods: 478 municipalities affected, 185 deaths, 581,638 people displaced at the peak" + source footnote — *slides-outline.md: slide 2* (L36d)
 9. "Built for municipal Civil Defense in Southern Brazil (RS/SC/PR), the demo replays both events end-to-end, and a live Southern Brazil view refreshes every 3 hours." — *summary.md: Summary ¶* — was "the live operational pipeline is on our roadmap", no longer true (Now job runs every 3 h)

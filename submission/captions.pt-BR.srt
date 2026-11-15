@@ -8,7 +8,7 @@ Em Washington, nuvens esconderam 93% da área dos satélites ópticos; o radar N
 
 3
 00:00:12,000 --> 00:00:19,000
-A Defesa Civil vê quem é afetado, em ordem de prioridade, ao vivo no sul do Brasil a cada 3 horas.
+A Defesa Civil poderia ver quem é afetado, em ordem de prioridade, atualizado a cada 3 horas no sul do Brasil.
 
 4
 00:00:19,000 --> 00:00:25,500

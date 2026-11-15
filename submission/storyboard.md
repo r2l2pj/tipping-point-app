@@ -1,6 +1,6 @@
 # Tipping Point — video storyboard + recording plan (≤30 s)
 
-> **DRAFT — decided by conductor (delegated), L38 (2026-11-15).** Built from `demo-script.md` (response-first VO, 53 words with the team placeholder). The final cut is recorded from a **local build of `freeze-1300`** (no prod dependency; Vercel is capped).
+> **DRAFT — decided by conductor (delegated), L38 (2026-11-15).** Built from `demo-script.md` (response-first VO, 54 words with the team placeholder). The final cut is recorded from a **local build of `freeze-1300`** (no prod dependency; Vercel is capped).
 
 **Rules (official 2026 Project Submission Guide):**
 - Video 30 seconds or less; over the limit means ineligible for Global Judging. The target is **29.5 s**.
@@ -18,7 +18,7 @@ Frame: 1920×1080 at 30 fps, desktop layout, browser chrome hidden. Each shot is
 |---|---|---|---|---|
 | A Title | 0.0–3.0 | `/?case=wa_2025`, map only, dark 40% scrim, slow push-in | — | top-left "TIPPING POINT · Rain warns. Radar sees through."; bottom-left "Team [TEAM NAME] · NASA Space Apps 2026 · Challenge: Dancing with the SARs" |
 | B NISAR radar (WA) | 3.0–12.0 | Right panel **NISAR radar** card → **Check with NISAR radar →**, then **Before / after**, drag the divider left to right | "NISAR radar before — Dec 4, 2025", "NISAR radar after — Dec 16, 2025", "within the NISAR swath" | corner "Washington · Dec 2025"; "Flood candidates · 27.99 km² within the NISAR swath"; lower third "Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them." |
-| C Live NISAR + who | 12.0–19.0 | `/` (Now). **NISAR radar** card → **Check with NISAR radar** (zoom to live flood-candidate polygons, 3 s) → **Who is affected** / **Priority areas** (2 s) → top bar **Public Alerts** (2 s) | "Passes: Oct 25, 2026 → Nov 6, 2026"; "Updated" in the header; "Experimental" on the alert card or the overlay | "NISAR over Southern Brazil · our home region · Oct 25 → Nov 6, 2026" (0–5 s); "Experimental — not an official warning" (5–7 s, only if the card lacks it) |
+| C Live NISAR pass + who | 12.0–19.0 | `/` (Now). **NISAR radar** card with the pass list (3 s; no **Check with NISAR radar** click, no zoom, unless the cleaned live layer survives) → **Who is affected** / **Priority areas** (2 s) → top bar **Public Alerts** (2 s) | "Passes: Oct 25, 2026 → Nov 6, 2026"; "Updated" in the header | "NISAR passes over Brazil every 12 days · latest pass Oct 25 → Nov 6, 2026" (0–5 s); "No new flooding detected this pass" only if the cleaning removes every polygon; "Experimental — not an official warning" (5–7 s, only if the card lacks it) |
 | D Prediction (RS replay) | 19.0–25.5 | `/?case=rs_2024&day=-10` (Apr 22). Press **Play**; the TPI heats up over the Taquari valley. If 6 s of play does not reach Apr 28+, start at `&day=-6` | "Tipping point reached" (Situation overview chip) by the end | corner "Rio Grande do Sul · May 2024 · replay" (no forecast number) |
 | E Close | 25.5–28.5 | Static wordmark card over the darkened shot-D frame | — | "TIPPING POINT · Rain warns. Radar sees through."; "Data: NASA GPM IMERG · SMAP · NASADEM · NISAR · HLS · VIIRS Black Marble · GPW · forecast: NOAA GFS" (text, no logos); "[APP URL]" |
 

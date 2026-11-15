@@ -1,3 +1,5 @@
+# RETIRED (win-odds-v2 #26, 2026-11-15) — do not paste. The High-Level Project Summary is in `project-page.md`.
+
 # Tipping Point
 
 > **DRAFT — pending approval.**

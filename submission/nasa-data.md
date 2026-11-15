@@ -10,9 +10,9 @@ Forecast rain = NOAA GFS 0.25°, our only non-NASA input; every observation is N
 - **SMAP L4 SPL4SMGP/008** — root-zone soil moisture (`sm_rootzone_wetness`, Soil score)
 - **NASADEM** — slope + HAND proxy (Terrain score)
 
-## Confirmation (radar + optical)
+## Radar response (flood candidates) + optical
 
-- **NISAR GCOV** — flood confirmation, before/after backscatter (track 172D frame 064, BETA products)
+- **NISAR L2 GCOV** — flood candidates from the HH before/after backscatter change; HV published for comparison (track 172D frame 064, BETA products)
 - **HLS (Harmonized Landsat Sentinel-2)** — post-event landslide *candidates* when clouds clear
 
 ## Live response (every 3 h, Southern Brazil)
