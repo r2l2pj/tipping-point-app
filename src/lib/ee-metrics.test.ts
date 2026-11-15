@@ -293,6 +293,34 @@ describe("GET /api/metrics", () => {
     );
     expect(response.status).toBe(200);
   });
+
+  test("replay case -> 7d edge cache; now -> 5m; errors -> no-store", async () => {
+    const response = await routeWithFake({ props: { iou: 0.5 } });
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe(
+      "public, s-maxage=604800, stale-while-revalidate=86400"
+    );
+
+    setMetricsServiceForTest(
+      createMetricsService(undefined, {
+        readManifest: manifestOf({ iou: 0.5 }),
+      })
+    );
+    const now = await GET(req("case=now"));
+    expect(now.status).toBe(200);
+    expect(now.headers.get("cache-control")).toBe(
+      "public, s-maxage=300, stale-while-revalidate=60"
+    );
+
+    const badReq = await GET(req(""));
+    expect(badReq.status).toBe(400);
+    expect(badReq.headers.get("cache-control")).toBe("no-store");
+
+    clearMetricsCache(); // same case key — don't serve the earlier 200
+    const notFound = await routeWithFake({ error: "Image asset does not exist" });
+    expect(notFound.status).toBe(404);
+    expect(notFound.headers.get("cache-control")).toBe("no-store");
+  });
 });
 
 describe("createMetricsService", () => {

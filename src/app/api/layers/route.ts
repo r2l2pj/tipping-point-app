@@ -4,6 +4,7 @@
 // 502 on unexpected ee init/compute failures. `canonical` echoes the resolved
 // case id so hyphen aliases are visible; `layer=` probes a single layer.
 import { credentialEnv } from "@/lib/ee";
+import { cachedJson, noStoreJson } from "@/lib/http-cache";
 import {
   getLayerMeta,
   LayersCredsError,
@@ -18,13 +19,13 @@ export async function GET(request: Request) {
   const layer = params.get("layer");
 
   if (!caseId) {
-    return Response.json(
+    return noStoreJson(
       { error: "missing required param: case" },
       { status: 400 }
     );
   }
   if (!credentialEnv()) {
-    return Response.json(
+    return noStoreJson(
       {
         error: "gee unavailable",
         reason: "no service-account key (set GCP_SA_KEY)",
@@ -35,22 +36,25 @@ export async function GET(request: Request) {
 
   try {
     const result = await getLayerMeta(caseId, { layer: layer ?? undefined });
-    return Response.json({
-      case: caseId,
-      canonical: result.case,
-      layers: result.layers,
-    });
+    return cachedJson(
+      {
+        case: caseId,
+        canonical: result.case,
+        layers: result.layers,
+      },
+      caseId
+    );
   } catch (err) {
     if (
       err instanceof LayersCredsError ||
       err instanceof LayersUnavailableError
     ) {
-      return Response.json(
+      return noStoreJson(
         { error: "gee unavailable", reason: err.message },
         { status: 503 }
       );
     }
-    return Response.json(
+    return noStoreJson(
       {
         error: "gee layers failed",
         reason: err instanceof Error ? err.message : String(err),

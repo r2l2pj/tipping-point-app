@@ -502,4 +502,41 @@ describe("GET /api/numbers", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual(body);
   });
+
+  test("replay case -> 7d edge cache; now -> 5m; errors -> no-store", async () => {
+    const body: NumbersResult = {
+      case: "now",
+      date: "2026-11-14",
+      km2_critical: 1,
+      people_exposed: 10,
+      source: "computed",
+    };
+    const replay = await withService(
+      () => Promise.resolve({ ...body, case: "rs_2024" }),
+      () => GET(req("case=rs-2024-05&date=2024-05-01"))
+    );
+    expect(replay.headers.get("cache-control")).toBe(
+      "public, s-maxage=604800, stale-while-revalidate=86400"
+    );
+
+    const now = await withService(
+      () => Promise.resolve(body),
+      () => GET(req("case=now&date=2026-11-14"))
+    );
+    expect(now.status).toBe(200);
+    expect(now.headers.get("cache-control")).toBe(
+      "public, s-maxage=300, stale-while-revalidate=60"
+    );
+
+    const badReq = await GET(req("case=rs_2024&date=2024/05/01"));
+    expect(badReq.status).toBe(400);
+    expect(badReq.headers.get("cache-control")).toBe("no-store");
+
+    const notFound = await withService(
+      () => Promise.reject(new NumbersNotFoundError("no band 20240501")),
+      () => GET(req("case=rs_2024&date=2024-05-01"))
+    );
+    expect(notFound.status).toBe(404);
+    expect(notFound.headers.get("cache-control")).toBe("no-store");
+  });
 });

@@ -4,7 +4,7 @@
 // single-band images (`now/<layer>_dN`, masks). A manifest layer entry may
 // pin an explicit `asset`, which always wins — it is the only way `now`
 // resolves (its date→_dN mapping lives in the manifest). Styled server-side
-// per LAYER_VIS and returned as a getMapId tile-URL template cached ~2 h.
+// per LAYER_VIS and returned as a getMapId tile-URL template cached ~1 h.
 // Requires service-account creds (see lib/ee); tests inject a fake ee via
 // createTileService.
 import { credentialEnv, earthEngine } from "./ee";
@@ -95,7 +95,11 @@ export type EeClient = Awaited<ReturnType<typeof earthEngine>>;
 type EeImage = ReturnType<EeClient["Image"]>;
 type EeMapId = { urlFormat?: string; url_format?: string };
 
-const TTL_MS = 2 * 60 * 60 * 1000; // 2 h
+// In-memory TTL must satisfy: TTL_MS + edge s-maxage (CACHE_TILES_REPLAY,
+// 1 h) <= ~2 h EE urlFormat token life. Otherwise a cached urlFormat can be
+// handed out near the end of its in-mem life, then kept by the edge for
+// another s-maxage, and served after the token dies. 1 h + 1 h <= 2 h.
+export const TTL_MS = 60 * 60 * 1000; // 1 h
 const REFRESH_SKEW_MS = 5 * 60 * 1000; // refetch slightly early, never serve stale
 const DEFAULT_TIMEOUT_MS = 8000; // GEE_TIMEOUT_MS env override
 // Class cuts and palette come from TPI_CLASSES: classes 1..3 (moderate,

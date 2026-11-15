@@ -12,8 +12,10 @@ import {
   TILE_LAYERS,
   TileNotFoundError,
   type TileServiceOptions,
+  TTL_MS,
 } from "./ee-tiles";
 import { TileServiceError } from "./ee-shared";
+import { CACHE_TILES_REPLAY } from "./http-cache";
 
 // Stub the credential/init module so the credentialed path (route → getTiles)
 // runs against a fake ee. credentialEnv mirrors the real env check;
@@ -374,7 +376,7 @@ describe("createTileService", () => {
     const res = await svc(ee, { now: () => 1000 }).getTiles(QUERY);
     expect(res).toEqual({
       tiles: ["https://earthengine.example/{z}/{x}/{y}"],
-      expires_at: new Date(1000 + 2 * 3600e3).toISOString(),
+      expires_at: new Date(1000 + 3600e3).toISOString(),
       data_date: "2024-04-30",
       layer: "tpi_slide",
       case: "rs-2024-05",
@@ -420,10 +422,19 @@ describe("createTileService", () => {
     const service = svc(ee, { now: () => now });
     await service.getTiles(QUERY);
     const n = calls.length;
-    now += 2 * 3600e3; // past TTL minus refresh skew
+    now += 3600e3; // past TTL minus refresh skew
     await service.getTiles(QUERY);
     expect(calls.length).toBeGreaterThan(n);
     expect(calls.filter((c) => c[0] === "Image")).toHaveLength(2);
+  });
+
+  // A urlFormat cached at the end of its in-mem life can sit at the edge for
+  // another s-maxage — the sum must stay under the ~2 h EE token life so a
+  // cached tile URL can never be served after its token dies.
+  test("in-mem TTL + edge s-maxage <= 2 h EE token life", () => {
+    const m = CACHE_TILES_REPLAY.match(/s-maxage=(\d+)/);
+    expect(m).not.toBeNull();
+    expect(TTL_MS + Number(m![1]) * 1000).toBeLessThanOrEqual(2 * 3600e3);
   });
 
   test("ee 'not found' info error -> TileNotFoundError; other -> TileServiceError", async () => {
@@ -598,6 +609,65 @@ describe("GET /api/tiles", () => {
     } finally {
       if (saved === undefined) delete process.env.GEE_TIMEOUT_MS;
       else process.env.GEE_TIMEOUT_MS = saved;
+    }
+  });
+
+  // The embedded getMapId token expires ~2 h, so the edge cache must stay
+  // under it — and never serve stale tile URLs.
+  const TOKEN_LIFE_MS = 2 * 60 * 60 * 1000;
+  const sMaxAge = (res: Response) => {
+    const cc = res.headers.get("cache-control") ?? "";
+    const m = cc.match(/s-maxage=(\d+)/);
+    expect(cc).not.toContain("stale-while-revalidate");
+    return m ? Number(m[1]) : null;
+  };
+
+  test("replay -> s-maxage < tile TTL, no SWR; errors -> no-store", async () => {
+    const { ee } = makeFakeEe();
+    installFakeEe(ee);
+    const replay = await withCreds(() =>
+      GET(req("layer=tpi_slide&case=rs-2024-05&date=2024-05-01"))
+    );
+    expect(replay.status).toBe(200);
+    const replayAge = sMaxAge(replay);
+    expect(replayAge).not.toBeNull();
+    expect(replayAge!).toBeLessThanOrEqual(3600);
+    expect(replayAge! * 1000).toBeLessThan(TOKEN_LIFE_MS);
+
+    const badReq = await GET(req("layer=nope&case=rs_2024&date=2024-05-01"));
+    expect(badReq.headers.get("cache-control")).toBe("no-store");
+
+    const unavail = await withoutCreds(() =>
+      GET(req("layer=tpi_slide&case=rs_2024&date=2024-05-01"))
+    );
+    expect(unavail.status).toBe(503);
+    expect(unavail.headers.get("cache-control")).toBe("no-store");
+
+    // `now` success needs a manifest asset the fixtures lack, so stub
+    // getTiles at the module seam (same pattern as the layers suite).
+    const real = await import("./ee-tiles");
+    mock.module("@/lib/ee-tiles", () => ({
+      ...real,
+      getTiles: async () => ({
+        tiles: ["https://earthengine.example/{z}/{x}/{y}"],
+        expires_at: new Date(0).toISOString(),
+        data_date: "2026-11-14",
+        layer: "tpi_slide",
+        case: "now",
+        date: "2026-11-14",
+      }),
+    }));
+    try {
+      const now = await withCreds(() =>
+        GET(req("layer=tpi_slide&case=now&date=2026-11-14"))
+      );
+      expect(now.status).toBe(200);
+      const nowAge = sMaxAge(now);
+      expect(nowAge).not.toBeNull();
+      expect(nowAge!).toBeLessThanOrEqual(3600);
+      expect(nowAge! * 1000).toBeLessThan(TOKEN_LIFE_MS);
+    } finally {
+      mock.restore();
     }
   });
 });
