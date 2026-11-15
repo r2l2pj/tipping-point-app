@@ -10,7 +10,7 @@
 
 ## High-Level Project Summary (form field 2, ≤200 words)
 
-NISAR's L-band radar maps new flooding through cloud and darkness. Tipping Point turns each 12-day NISAR pass into a priority list for municipal Civil Defense: where the ground newly flooded, as candidates to check first, and how many people live there. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them, home to about 1,150 people; our rain–soil–terrain index rated areas with more than 229,000 people critical at the peak. NISAR images Brazil every 12 days; the live view checks each new pass pair over our domain (latest: Oct 25 → Nov 6, 2026). Between passes, a Tipping Point Index built from NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) shows where to look next. The live view refreshes every 3 hours with experimental (not official) area alerts, and two past disasters replay day by day with the forecast as it was issued. We tested why radar misses flooded towns and forests (double bounce; supported) and list what future NISAR products would add.
+NISAR's L-band radar maps new flooding through cloud and darkness. Tipping Point turns each 12-day NISAR pass into a priority list for municipal Civil Defense: where the ground newly flooded, as candidates to check first, and how many people live there. In Washington State (December 2025), clouds hid 93% of the area from optical satellites; the NISAR Dec 4 → Dec 16 pass pair mapped 27.99 km² of flood candidates through them, home to about 1,150 people; our rain–soil–terrain index rated areas with more than 229,000 people critical at the peak. NISAR images Brazil every 12 days; the live view checks each new pass pair automatically and rejects pairs that are not comparable, as it did for the latest one (Oct 25 → Nov 6, 2026). Between passes, a Tipping Point Index built from NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) shows where to look next. The live view refreshes every 3 hours with experimental (not official) area alerts, and two past disasters replay day by day with the forecast as it was issued. We tested why radar misses flooded towns and forests (double bounce; supported) and list what future NISAR products would add.
 
 ## Detailed Project Description (form field 5)
 
@@ -20,7 +20,7 @@ Tipping Point is one operations screen for municipal Civil Defense. It answers t
 2. Where has radar seen new water (candidates)?
 3. Who is affected?
 
-- **Live** (`/`): refreshes every 3 hours over Southern Brazil. It shows today's risk plus three forecast days, the latest NISAR and OPERA flood candidates, and a ranked list of priority areas with the people exposed.
+- **Live** (`/`): refreshes every 3 hours over Southern Brazil. It shows today's risk plus three forecast days, OPERA flood candidates, the NISAR pass status (flood candidates only when a comparable pass pair exists; none so far over Southern Brazil), and a ranked list of priority areas with the people exposed.
 - **Public Alerts** (`/alerts`): area alerts in plain language. They are an **experimental research product, not official warnings**; official alerts in Brazil come from Defesa Civil (SMS 40199).
 - **Replay:** two past disasters, day by day, with no look-ahead. Each day uses only the data and the forecast available that day.
 
