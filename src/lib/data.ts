@@ -468,7 +468,7 @@ export async function getCaseBundle(
       import("./ee-numbers"),
       import("./ee-layers"),
     ]);
-    if (eeMod.credentialEnv()) {
+    if (eeMod.geeEnabled() && eeMod.credentialEnv()) {
       gee = {
         numbers: (q) => numbersMod.getNumbers(q),
         layers: (c) => layersMod.getLayerMeta(c),

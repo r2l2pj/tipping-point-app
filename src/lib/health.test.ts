@@ -192,7 +192,7 @@ describe("runtime GEE disabled", () => {
     delete process.env.GEE_ENABLED;
     let calls = 0;
     setHealthDepsForTest(deps({
-      env: envFrom({ DATA_BASE_URL: "configured" }),
+      env: envFrom({}),
       hasCreds: () => false,
       ee: async () => { calls++; throw new Error("must not initialize"); },
       readManifest: async () => ({ updated_at: new Date().toISOString(), cases: {} }),
@@ -203,6 +203,22 @@ describe("runtime GEE disabled", () => {
       expect(body.ok).toBe(true);
       expect(body.gee).toMatchObject({ enabled: false, creds: false, probe: "skipped" });
       expect(calls).toBe(0);
+    } finally {
+      setHealthDepsForTest(undefined);
+    }
+  });
+
+  test("GEE off: not ok when the data manifest can't be read", async () => {
+    delete process.env.GEE_ENABLED;
+    setHealthDepsForTest(deps({
+      env: envFrom({}),
+      hasCreds: () => false,
+      readManifest: async () => { throw new Error("all remotes down"); },
+    }));
+    try {
+      const body = await (await GET()).json();
+      expect(body.ok).toBe(false);
+      expect(body.data.manifest).toBe(false);
     } finally {
       setHealthDepsForTest(undefined);
     }

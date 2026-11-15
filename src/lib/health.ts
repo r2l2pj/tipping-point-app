@@ -109,8 +109,12 @@ export async function collectHealth(deps: HealthDeps = {}): Promise<HealthReport
     // manifest read failure reports manifest=false, cases={}
   }
 
+  // GEE off (L25 default): healthy = the data store answers (root manifest
+  // read through the loader's GitHub -> Neon -> bundled chain) with a
+  // parseable now/ stamp. DATA_BASE_URL is NOT required — prod leaves it
+  // unset on purpose (setting it makes it the sole remote, L26).
   const ok = gee.enabled
     ? envBools.GCP_SA_KEY && gee.ready
-    : envBools.DATA_BASE_URL && data.manifest && Number.isFinite(Date.parse(data.now.updated_at ?? ""));
+    : data.manifest && Number.isFinite(Date.parse(data.now.updated_at ?? ""));
   return { ok, env: envBools, gee, data };
 }
