@@ -16,7 +16,7 @@ import { declared } from "./lazy";
 import { fmtDataStamp, fmtDate } from "./format";
 import type { MapOverlays } from "./overlays";
 import { CANDIDATES_LABEL, floodLabels } from "./radar";
-import { frameBasis, partlyForecastText } from "./steps";
+import { floodPostDate, frameBasis, partlyForecastText } from "./steps";
 import { HAZARD_LABEL, RISK_PAUSED_SHORT, type CcBundle, type Hazard } from "./types";
 
 export type LayerId =
@@ -49,6 +49,11 @@ export function mlHorizonTip(h: string, obsThrough?: string, gfsIssued?: string)
 }
 export function defaultLayersFor(bundle: CcBundle, hazard: Hazard): LayerId[] {
   if (bundle.mode === "live" && hazard === "slide" && layerAvailable(bundle, "ptrigger", hazard)) return ["ptrigger"];
+  // L52 (Lucas: "mix Washington: forecast + NISAR"): a replay that ships
+  // the NISAR flood outlines — a flood product with a published pass date
+  // (nisar_post/radar_post) — opens merged: the day's TPI frame (or its
+  // GFS forecast via the issue chips) under the flood outlines.
+  if (bundle.mode === "replay" && floodPostDate(bundle) && layerAvailable(bundle, "tpi", hazard) && layerAvailable(bundle, "flood", hazard)) return ["tpi", "flood"];
   return [...DEFAULT_LAYERS];
 }
 // Hazard switch in Now: the ML layer is landslide-only — flood gets the TPI,

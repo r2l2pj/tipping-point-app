@@ -410,3 +410,41 @@ export function stepLabel(bundle: CcBundle, step: Step): string {
 // frame's own data_basis wins over the case-level field.
 export const frameBasis = (bundle: CcBundle, date: string | undefined, hazard: Hazard): string | undefined =>
   frameFor(bundle, date, hazard)?.layer.data_basis ?? bundle.manifest?.data_basis;
+
+// L52 (Lucas: "mix Washington: forecast + NISAR"): in a replay that ships
+// the NISAR flood outlines, each timeline day paints that day's TPI frame
+// (observed, or the GFS forecast via the issue-lead chips) under the
+// outlines — but the outlines show only on/after the NISAR pass that
+// mapped them (post date: the nisar_post/radar_post layer date, or
+// data_dates).
+export function floodPostDate(bundle: CcBundle): string | undefined {
+  const l = (bundle.manifest?.layers ?? []).find(
+    (x) => /^(nisar|radar)_post$/.test(x.id) && typeof x.date === "string"
+  );
+  const dd = bundle.data_dates;
+  const d =
+    l?.date ??
+    (typeof dd?.nisar_post === "string" ? dd.nisar_post : undefined) ??
+    (typeof dd?.radar_post === "string" ? dd.radar_post : undefined);
+  return d ? d.slice(0, 10) : undefined;
+}
+
+// Outlines on/after the pass day only (replay). A live case, or a replay
+// without a post date, keeps the flood layer on every day.
+export function floodShownOn(bundle: CcBundle, date?: string): boolean {
+  if (bundle.mode !== "replay") return true;
+  const post = floodPostDate(bundle);
+  return !post || !date || date.slice(0, 10) >= post;
+}
+
+// " · NISAR flood outlines (pass Dec 16, 2025)" while the flood layer is on
+// and the shown day is on/after the pass.
+export function floodCaptionNote(
+  bundle: CcBundle,
+  date: string | undefined,
+  on: readonly LayerId[]
+): string {
+  const post = floodPostDate(bundle);
+  if (!post || !on.includes("flood") || !floodShownOn(bundle, date)) return "";
+  return ` · NISAR flood outlines (pass ${fmtDate(post)})`;
+}

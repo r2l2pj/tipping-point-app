@@ -21,7 +21,7 @@ import type { ComparePair } from "./model/radar";
 import { assetUrl } from "@/lib/layers";
 import { caseDirOf } from "./model/lazy";
 import { preloadFrames } from "./model/preload";
-import { frameFor, issuedFrame, issueLeadsFor, mapCaption, type IssueLead, type Step } from "./model/steps";
+import { floodCaptionNote, frameFor, issuedFrame, issueLeadsFor, mapCaption, type IssueLead, type Step } from "./model/steps";
 import type { CcBundle } from "./model/types";
 import type { Action, ScreenState } from "./state";
 import type { Insets } from "./useInsets";
@@ -219,6 +219,8 @@ export default function MapStage({
   }, [map, bundle.id, insets.left, insets.right, insets.bottom]);
   const comparing = !!comparePair;
   const caption = mapCaption(bundle, steps, state.dayIndex, state.hazard, state.layers, state.issueLead);
+  // L52 merged view: name the NISAR pass while the outlines are on screen.
+  const captionNote = floodCaptionNote(bundle, step?.date, state.layers);
   const showLeads = bundle.mode === "replay" && (leads.length > 0 || state.issueLead > 0);
   // Prod regression: the ML forecast horizon must be on the map, not only in
   // the Layers panel (closed on phones).
@@ -326,7 +328,7 @@ export default function MapStage({
 
       {!comparing && (
         <span data-caption className={`absolute z-10 max-w-[46%] ${chip} ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`} style={{ left: L(14), bottom: B(36) }}>
-          {caption.text}
+          {caption.text}{captionNote}
         </span>
       )}
 

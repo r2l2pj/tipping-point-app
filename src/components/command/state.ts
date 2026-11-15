@@ -18,7 +18,7 @@ import {
 } from "./model/layerRegistry";
 import type { ComparePair } from "./model/radar";
 import { viewLayers, type ViewId } from "./model/views";
-import { caseHasHazard, defaultStepIndex, stepsFor, type IssueLead } from "./model/steps";
+import { caseHasHazard, defaultStepIndex, floodPostDate, stepsFor, type IssueLead } from "./model/steps";
 import type { CcBundle, Hazard } from "./model/types";
 
 export interface ScreenState {
@@ -216,6 +216,10 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
   if (!bundle || id === state.activeId) return state;
   const hazard = hazardFor(bundle, state.hazard);
   const kept = keepAvailable(bundle, state.layers, hazard);
+  // L52: a replay that ships the NISAR flood outlines (a flood product
+  // with a published pass date) opens merged — the day's TPI frame (or
+  // its GFS forecast) under the flood outlines.
+  const replayMix = bundle.mode === "replay" && !!floodPostDate(bundle) && layerAvailable(bundle, "tpi", hazard) && layerAvailable(bundle, "flood", hazard);
   return {
     ...state,
     activeId: id,
@@ -231,7 +235,8 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
     // with only the flood candidates on must not open a replay without it).
     layers: withRadarDefault(
       bundle,
-      !layerAvailable(bundle, "tpi", hazard) || kept.includes("tpi") ? kept : toggleLayer(kept, "tpi").layers,
+      replayMix ? ["tpi", "flood"]
+        : !layerAvailable(bundle, "tpi", hazard) || kept.includes("tpi") ? kept : toggleLayer(kept, "tpi").layers,
       hazard
     ),
     layerNotice: null,

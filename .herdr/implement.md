@@ -1,55 +1,69 @@
-# implement — cc-l27-panel (L27: response first, prediction second)
+# L52 WA — merged "forecast + NISAR" replay view (re-scoped)
 
-Reordered the Situation overview panel (command view) and pinned the
-last-saved/stale banner rule in a dedicated model test.
+Re-scope per lead-app 15:1x: NOT a separate one-tap view — merge forecast +
+NISAR into the normal case view for replays that ship the NISAR flood
+outlines (WA 2025; Uruguaiana when its flood carries a pass date). The
+'forecast-nisar' view/deep link was dropped (all that code reverted;
+`?view=` stays unparsed). Radar swipe ('Before / after') untouched.
 
-## Files changed
+## What changed
 
-- `src/components/command/PanelSection.tsx` (new) — labelled `<section>`
-  wrapper for the two panel groups ("Now on the ground", "Prediction"),
-  `aria-label` + visible `h2`, top divider suppressed on the first group.
-- `src/components/command/CommandCenter.tsx` — command-view panel reordered:
-  1. **Now on the ground**: RadarCard (NISAR flooded area, passes,
-     confirm/compare), "Who is affected" group (Tiles people + critical-area
-     tiles, then the area-by-class list), then PriorityAreas (where to act).
-  2. **Prediction**: StatusBlock (TPI chip stays the prediction headline,
-     step line, sentence, last-saved/stale notice, replay-offer children
-     unchanged), RainSoilChart, one-line pointer "Model probabilities
-     (24 h–14 d) are in the Layers column."
-  3. ReplayCheck/EvidenceDetails (replay only) and GetAlertsCard after;
-     SourceAges stays last. Public view untouched; `<LayersColumn .../>`
-     element untouched. All props preserved.
-- `src/components/command/model/dataStatus.test.ts` (new) — banner rule:
-  `fallback: true` → `last-saved` (replay and live), non-fallback replay →
-  `archive`, live 7 h old → `stale`, 5 h old → `live`, `staleLimitMs()`
-  default = 6 h.
-- `src/components/command/command.test.tsx` — new describe "response-first
-  section order (L27)": Now on the ground before Prediction; Radar/flooded,
-  Who-is-affected/people and Priority areas before the TPI chip; chip →
-  chart → Layers pointer inside Prediction; Replay check and Data sources
-  after; sections absent from the public view. No existing assertions or
-  banned-string rules changed.
+- `src/components/command/model/steps.ts` — three new helpers:
+  - `floodPostDate(bundle)` — the post-pass day: the `nisar_post` /
+    `radar_post` manifest layer `date`, else `data_dates.nisar_post` /
+    `radar_post` (string values only).
+  - `floodShownOn(bundle, date)` — replay with a post date: outlines only
+    on/after it. Live cases, missing dates, or missing post → unchanged.
+  - `floodCaptionNote(bundle, date, on)` — ` · NISAR flood outlines (pass
+    <Mon D>)` while the flood layer is on and the shown day is ≥ the pass.
+- `src/components/command/model/layerRegistry.ts` — `defaultLayersFor`: a
+  replay that ships the NISAR flood outlines (flood product + published
+  pass date) opens `['tpi','flood']`; live/ptrigger logic unchanged; other
+  replays keep `['tpi']`.
+- `src/components/command/state.ts` — `selectCase`: same merged default on
+  a case change into such a replay (`replayMix`). `initialState` and `goTo`
+  already go through `defaultLayersFor`; `?layers=`/`?lead=`/`?compare=` /
+  `?case=`/`?day=`/`?fit=`/`?basemap=`/`?city=` deep links unchanged
+  (`?layers=` still wins over the default).
+- `src/components/MapLayers.tsx` — `wantFlood = overlay.flood &&
+  floodShownOn(bundle, frameDate)`: before the pass the geojson isn't
+  fetched and `floodFill/floodLine/floodDot` stay hidden; from the pass day
+  on the outlines draw on top (layer order already had flood above
+  `tpiRaster` — inserted before `waterFill`, flood below nothing extra).
+- `src/components/command/MapStage.tsx` — the map caption appends
+  `captionNote` (` · NISAR flood outlines (pass Dec 16, 2025)` on WA) only
+  while the outlines are actually on screen. No numbers, no hit/miss claim.
+- `src/components/command/model/floodPost.test.ts` (new, 15 tests):
+  floodPostDate (layer date / data_dates / absent), floodShownOn
+  (before/on/after, no-post, live, no date), floodCaptionNote (on/quiet
+  cases), defaultLayersFor (merged / no-flood / no-pass-date / live ML),
+  state (initial `['tpi','flood']`, `?layers=` wins, selectCase & goTo).
 
-## Verification of model/dataStatus.ts (no change needed)
+## Commands run (memory-capped)
 
-`dataStatus()` already matches the ruling: `bundle.fallback === true` →
-`last-saved` (loader sets `fallback` only for the bundled copy /
-degraded-credentialed run, src/lib/data.ts:721), replay without fallback →
-`archive`, live → `stale` past `2 × NEXT_PUBLIC_REFRESH_HOURS` (default
-6 h) else `live`. StatusBlock renders the notice only for `last-saved` and
-`stale`.
+```
+B=$HOME/.local/share/mise/installs/bun/1.4.4/bin/bun
+systemd-run --user --scope -q -p MemoryMax=3G -p MemorySwapMax=1G \
+  --working-directory=$PWD -E PATH=$PATH -E TMPDIR=$HOME/.cache/lead-app/tmp
+```
 
-## Commands run
+- `$B test` (full suite): **821 pass / 0 fail / 17 skip** (was 791 on my
+  previous run; +13 new tests here, +others from the rebase).
+- `$B x tsc --noEmit -p .`: clean except 2 pre-existing errors in untouched
+  files: `src/app/api/events/[id]/manifest/route.ts` (RouteContext),
+  `src/app/layout.tsx` (LayoutProps).
+- `$B x eslint src/components`: 0 errors, 4 warnings — all pre-existing
+  (unused ProbHorizon/tag/DEFAULT_LAYERS, loading.current cleanup).
 
-- `bun test` — 550 pass, 7 skip, 0 fail (557 tests, 33 files; skips are the
-  live GEE/Neon smoke specs).
-- `bunx tsc --noEmit` — two pre-existing errors in `src/app/**`
-  (`RouteContext`, `LayoutProps` — Next typegen, also present on the clean
-  tree, verified via `git stash`), outside my scope; none from my files.
-- `bunx eslint` on the four touched files — clean, no output.
+## Notes for the browser check
 
-## Unresolved
-
-- Nothing. `Situation overview` h1 lives inside StatusBlock (not editable),
-  so the panel's h1 sits at the top of the Prediction section — per the
-  ruling (keep every component and its props).
+- `wa_2025` qualifies: `nisar_post` layer date `2025-12-16` +
+  `flood_confirmed` product → opens `['tpi','flood']`; days before Dec 16
+  show no outlines, Dec 16+ shows them over the day's TPI/GFS frame;
+  caption gets ` · NISAR flood outlines (pass Dec 16, 2025)`.
+- `rs_2024` has no flood product → unchanged. `now` is live → unchanged.
+- Uruguaiana (`rs_uruguai_2026`) isn't in the local manifest; if its flood
+  product publishes `nisar_post`/`radar_post` (layer date or data_dates)
+  it gets the same behavior automatically.
+- The 'Forecast issued this day' +1 d chips still switch the TPI frame to
+  the issued GFS run; the outlines gate on the step date, not the frame.

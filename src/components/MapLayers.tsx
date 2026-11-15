@@ -49,6 +49,7 @@ import {
   type MapLayerOptions,
 } from "./command/model/overlays";
 import { basemapPlan, BM_PREFIX, type Basemap } from "./command/model/basemap";
+import { floodShownOn } from "./command/model/steps";
 import {
   bboxPolygon,
   boundsToImageCoordinates,
@@ -796,7 +797,9 @@ export function useMapLayers(
     // With no tab context the caller drives flood/scars via showFlood (and
     // the nisar toggle); with a tab the overlayPlan decides; explicit
     // options.overlays replace both (see resolveOverlays).
-    const wantFlood = overlay.flood;
+    // L52 merged view: the NISAR outlines paint only on/after the pass that
+    // mapped them (floodShownOn); earlier replay days hide them.
+    const wantFlood = overlay.flood && floodShownOn(bundle, frameDate);
     const wantScars = overlay.scars;
     const wantCatalog = overlay.catalog;
     const wantEms = overlay.ems;
