@@ -20,7 +20,7 @@ Same cut as v5 except beat C. Captions: `captions-v6-draft.srt` (52 words, team 
 
 | Beat | Time | On screen | Voiceover | Words |
 | --- | --- | --- | --- | --- |
-| C | 11–17.5 s | Uruguaiana on the Uruguay River: the NISAR pass pair **Oct 24 → Nov 5, 2026** (HH + HV) with its flood candidates ([TBD] km²) and the people inside ([TBD]); then **Public Alerts** (experimental). Overlay "Uruguay River · Uruguaiana, Rio Grande do Sul · NISAR Oct 24 → Nov 5, 2026". Never call the Sep 30 → Oct 12 pair NISAR (likely Sentinel-1, unconfirmed). Use "every 12 days" only if lead-analysis lands ≥ 3 NISAR dates. | "At Uruguaiana, NISAR saw the Uruguay River through cloud in late October." | 12 |
+| C | 11–17.5 s | Uruguaiana on the Uruguay River: the NISAR pass pair **Oct 24 → Nov 5, 2026** (HH + HV) with its flood candidates ([TBD] km²) and the people inside ([TBD]); then **Public Alerts** (experimental). Overlay "Uruguay River · Uruguaiana, Rio Grande do Sul · NISAR Oct 24 → Nov 5, 2026". The Sep 30 → Oct 12 pair IS NISAR (provisional GCOV, conductor correction); the 010D stack Sep 18 / Sep 30 / Oct 12 / Oct 24 / Nov 5 is a 12-day series — use version C in NUMBERS.md ("…NISAR tracked it through cloud every 12 days") when lead-analysis's series lands. | "At Uruguaiana, NISAR saw the Uruguay River through cloud in late October." | 12 |
 
 Must-read for C: "Oct 24" and "Nov 5, 2026" and "flood candidates" in the NISAR card. Fallback if the series is late or empty: ship v5 as recorded at 13:00.
 

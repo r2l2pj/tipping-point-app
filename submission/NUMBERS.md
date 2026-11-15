@@ -39,7 +39,7 @@ grep -rn -E "36%|36\.45|8\.8×|4%|4\.16|57%|2\.1×|81%|3\.0×|0\.18|0\.31|6\.6%|
 
 ## Uruguaiana (main case) — pick A or B at the 14:45 sync from lead-analysis's numbers
 
-Current text in the files = version A with [TBD]. Keys (fallback ~14:00): `cases.rs_uruguai_2026.radar_darkening_corridor_km2`, `radar_darkening_fields_km2`, `radar_darkening_pair`; A only if `nisar_flooded_km2` + `nisar_people_flooded` are non-null (else `_null_reasons.nisar_flooded_km2` → B). Teammate v0 keys `flooded_km2` 1.817 / `people_flooded` 28 are NOT NISAR. NISAR pair Oct 24 → Nov 5, 2026 (HH + HV); Itaqui outside the swath. Never call the Sep 30 → Oct 12 pair NISAR.
+Current text in the files = version A with [TBD]. Keys (fallback ~14:00): `cases.rs_uruguai_2026.radar_darkening_corridor_km2`, `radar_darkening_fields_km2`, `radar_darkening_pair`; A only if `nisar_flooded_km2` + `nisar_people_flooded` are non-null (else `_null_reasons.nisar_flooded_km2` → B). Teammate v0 keys `flooded_km2` 1.817 / `people_flooded` 28 come from the Sep 30 → Oct 12 NISAR pair (provisional GCOV) — confirm with lead-analysis before quoting. NISAR pair Oct 24 → Nov 5, 2026 (HH + HV); Itaqui outside the swath. (Sep 30 → Oct 12 IS NISAR — see the correction below.)
 
 **A — the guard fix yields gated flood candidates** (fill km² and people from the published keys):
 - Page lead: "A NISAR pass pair (Oct 24 → Nov 5, 2026) mapped [km²] km² of flood candidates at Uruguaiana through cloud, home to about [people] people (Itaqui is outside that swath)."
@@ -54,4 +54,10 @@ Current text in the files = version A with [TBD]. Keys (fallback ~14:00): `cases
 
 Both: VO beat C = "At Uruguaiana, NISAR saw the Uruguay River through cloud in late October." ("every 12 days" only with ≥ 3 NISAR dates). Re-check the summary stays ≤ 200 words.
 
-Teammate pair (Sep 30 → Oct 12, 2026, "track 010 frame 103"): NOT NISAR (no NISAR GCOV in CMR for those dates; likely Sentinel-1, unconfirmed). If it is mentioned at all: "a teammate's radar pair (sensor unconfirmed, likely Sentinel-1): 1.82 km² of candidates, about 28 people, possibly rice irrigation" — never in the headline or VO. lead-analysis fallback 8315d80 carries this label.
+CORRECTION (conductor, 12:5x): the Sep 30 → Oct 12 pair IS NISAR (provisional GCOV; the first worker searched the wrong collection). Uruguaiana has NISAR every 1–5 days Aug → Nov across 4 tracks; main stack = track 010D: Sep 18 / Sep 30 / Oct 12 / Oct 24 / Nov 5, 2026 (12-day series through the mid-October crest).
+
+**C — the 12-day NISAR series lands (≥ 3 dates on track 010D):**
+- Page lead: "Five NISAR passes, 12 days apart (Sep 18 → Nov 5, 2026, provisional products), tracked the Uruguay River at Uruguaiana through cloud and through its mid-October crest: [km²] km² of flood candidates at the crest, home to about [people] people."
+- Slide 4: "NISAR every 12 days over Uruguaiana (track 010D: Sep 18, Sep 30, Oct 12, Oct 24, Nov 5, 2026): flood candidates [km²] km² at the crest, about [people] people"
+- Video C VO: "In October the Uruguay River flooded Uruguaiana; NISAR tracked it through cloud every 12 days." (15 words; VO total 55). Overlay "Uruguay River · Uruguaiana · NISAR every 12 days · Sep 18 → Nov 5, 2026".
+Pick C over A/B when the series keys land; A/B remain for the single Oct 24 → Nov 5 pair.
