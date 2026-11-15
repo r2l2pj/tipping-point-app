@@ -304,7 +304,7 @@ describe("radar card (S13, L6, L7, L11)", () => {
       data_dates: { nisar_pre: null, nisar_post: null },
     }));
     expect(html).toContain("Flooded area (optical/OPERA reference)");
-    expect(html).toContain("Flood reference (optical/OPERA)");
+    expect(html).toContain("Flooded area (OPERA reference)");
     expect(html).not.toContain("Flooded area (NISAR)");
   });
 
@@ -469,7 +469,7 @@ describe("pending states carried over from main (L14)", () => {
   test("radar: a NISAR pair without a flooded area shows the label and 'not published yet'", () => {
     const html = render(bundle({ metricsView: mv({}), data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" } }));
     expect(html).toMatch(/Flooded area \(NISAR\)<\/dt><dd[^>]*>not published yet/);
-    expect(render(bundle({ metricsView: mv({}) }))).not.toContain("Flooded area");
+    expect(render(bundle({ metricsView: mv({}) }))).not.toMatch(/Flooded area[^<]*<\/dt>/);
   });
 
   test("radar: scars absent is 'not published yet', empty scars is a real zero, the token wins", () => {

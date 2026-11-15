@@ -126,7 +126,12 @@ export const nightLightsCompare = (bundle: CcBundle): CompareOption =>
 // Label of the flood polygons and of the flooded area: follows the pair and
 // `flood_source`, never a fixed "NISAR".
 export const RESPONSE_AREA_LABEL = "Flooded area (NISAR radar, candidates)";
-export const RESPONSE_LAYER_LABEL = "Flood candidates from radar (NISAR)";
+export const RESPONSE_LAYER_LABEL = "Flooded area (NISAR radar, candidates)";
+// Jhonatan (team science): observed water has its own colour — saturated
+// cyan fill + white outline above the radar/TPI images; "Flood risk" stays
+// the TPI (prediction) only.
+export const FLOODED_FILL = "#00d5ff";
+export const FLOODED_OUTLINE = "#ffffff";
 export const RESPONSE_NOTE =
   "Radar flood candidates from two NISAR passes — not yet checked on the ground.";
 
@@ -138,18 +143,18 @@ export function floodLabels(bundle: CcBundle): { area: string; layer: string } {
   if (bundle.mode === "live" && (bundle.response || hasDswx(bundle))) {
     return {
       area: RESPONSE_AREA_LABEL,
-      layer: hasDswx(bundle) ? "Flood candidates from radar (NISAR, OPERA DSWx-S1)" : RESPONSE_LAYER_LABEL,
+      layer: hasDswx(bundle) ? "Flooded area (NISAR + OPERA Sentinel-1 radar, candidates)" : RESPONSE_LAYER_LABEL,
     };
   }
   const source = bundle.metricsView?.flood_source;
   if (hasNisarPair(bundle) || source === "nisar") {
     // Radar flood polygons are candidates (never "confirmed"), replay too.
-    return { area: "Flooded area (NISAR)", layer: "Flood candidates from radar (NISAR)" };
+    return { area: "Flooded area (NISAR)", layer: "Flooded area (NISAR radar, candidates)" };
   }
   if (source === "opera") {
-    return { area: "Flooded area (optical/OPERA reference)", layer: "Flood reference (optical/OPERA)" };
+    return { area: "Flooded area (optical/OPERA reference)", layer: "Flooded area (OPERA reference)" };
   }
-  return { area: "Flooded area (observed reference)", layer: "Flood reference (observed)" };
+  return { area: "Flooded area (observed reference)", layer: "Flooded area (observed reference)" };
 }
 
 export function swathLine(bundle: CcBundle): string | undefined {

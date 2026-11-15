@@ -118,6 +118,7 @@ const LYR = {
   muni: "tp-muni-line",
   catalog: "tp-catalog-circle",
   ems: "tp-ems-line",
+  emsFill: "tp-ems-fill",
   zoneDot: "tp-zone-dot",
   zoneNum: "tp-zone-num",
   cityLabel: "tp-city-label",
@@ -252,15 +253,16 @@ export function useMapLayers(
         layout: {},
         filter: ["==", ["geometry-type"], "LineString"] },
       { id: LYR.floodFill, type: "fill", source: SRC.flood,
-        paint: { "fill-color": "#2166AC", "fill-opacity": 0.75 },
+        // Observed flooded area: its own colour (cyan 50% + white outline).
+        paint: { "fill-color": "#00d5ff", "fill-opacity": 0.5 },
         layout: { visibility: "none" } },
       { id: LYR.floodLine, type: "line", source: SRC.flood,
-        paint: { "line-color": "#08306B", "line-width": 1 },
+        paint: { "line-color": "#ffffff", "line-width": 1.2 },
         layout: { visibility: "none" } },
       // Flood polygons of ~1 km² are sub-pixel at the regional zoom: a dot
       // per polygon keeps them findable until the shapes themselves show.
       { id: LYR.floodDot, type: "circle", source: SRC.floodPts, maxzoom: 10,
-        paint: { "circle-radius": 5, "circle-color": "#2166AC",
+        paint: { "circle-radius": 5, "circle-color": "#00d5ff",
           "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.5 },
         layout: { visibility: "none" } },
       { id: LYR.scarsFill, type: "fill", source: SRC.scars,
@@ -298,8 +300,10 @@ export function useMapLayers(
         paint: { "line-color": "#FFFFFF", "line-width": 0.5, "line-opacity": 0.4 },
         layout: {} },
       // Copernicus EMS EMSR720 flood polygons (RS, Taquari valley): outline.
+      { id: LYR.emsFill, type: "fill", source: SRC.ems,
+        paint: { "fill-color": "#00d5ff", "fill-opacity": 0.5 }, layout: {} },
       { id: LYR.ems, type: "line", source: SRC.ems,
-        paint: { "line-color": "#00e5ff", "line-width": 1.6 }, layout: {} },
+        paint: { "line-color": "#ffffff", "line-width": 1.2 }, layout: {} },
       // Landslide catalog: 6 px white dots with a black edge (validation tab).
       { id: LYR.catalog, type: "circle", source: SRC.catalog,
         paint: {
@@ -686,6 +690,7 @@ export function useMapLayers(
     vis(LYR.scarsLine, wantScars);
     vis(LYR.catalog, wantCatalog);
     vis(LYR.ems, wantEms);
+    vis(LYR.emsFill, wantEms);
 
     // Forecast label — pinned to the top edge of the frame on any forecast
     // day (v4: previsão sempre rotulada). The text names the

@@ -45,7 +45,7 @@ describe("layer rows", () => {
 
   test("the flood row carries the real pass dates and a label that follows the source", () => {
     expect(row("flood")).toMatchObject({
-      label: "Flood candidates from radar (NISAR)",
+      label: "Flooded area (NISAR radar, candidates)",
       sub: "NISAR passes: Dec 4, 2025, Dec 16, 2025",
     });
     const rs = layerRows(bundle({ metricsView: { flood_source: "opera" } }), [], "slide");
@@ -278,6 +278,6 @@ describe("Copernicus EMS flood layer (RS)", () => {
     expect(layerAvailable(rs, "ems", "flood")).toBe(true);
     expect(layerAvailable(bundle({ id: "wa_2025" }), "ems", "flood")).toBe(false);
     expect(overlaysFor(["ems"]).emsFlood).toBe(true);
-    expect(layerLegendRows(rs, ["ems"])[0].label).toBe("Copernicus EMS flood map (© European Union, Copernicus EMS)");
+    expect(layerLegendRows(rs, ["ems"])[0].label).toBe("Flooded area (Copernicus EMS; © European Union, Copernicus EMS)");
   });
 });
