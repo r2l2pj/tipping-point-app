@@ -14,6 +14,7 @@ import {
   BUDGET_RULE_TEXT, REFERENCE_TEXT, type LayerGroup, type LayerId, type LayerRow,
 } from "./model/layerRegistry";
 import { classRows, HATCH_SWATCH, layerLegendRows } from "./model/legend";
+import { fmtDataDate } from "./model/format";
 import { caseHasHazard } from "./model/steps";
 import { HAZARD_LABEL, type CcBundle, type Hazard } from "./model/types";
 import { Icon, ICON } from "./ui";
@@ -170,7 +171,7 @@ export default function LayersColumn({
         </div>
       )}
 
-      <Legend bundle={bundle} layers={layers} hazard={hazard} className="mt-2 shrink-0 border-t border-cc-rule pt-2.5" />
+      <Legend bundle={bundle} layers={layers} hazard={hazard} stepDate={stepDate} className="mt-2 shrink-0 border-t border-cc-rule pt-2.5" />
     </aside>
   );
 }
@@ -180,12 +181,14 @@ export function Legend({
   bundle,
   layers,
   hazard,
+  stepDate,
   compact = false,
   className = "",
 }: {
   bundle: CcBundle;
   layers: readonly LayerId[];
   hazard: Hazard; // named in the title: the raster is one hazard at a time
+  stepDate?: string; // the frame on the map: the legend names its date (rule 3)
   compact?: boolean;
   className?: string;
 }) {
@@ -211,6 +214,13 @@ export function Legend({
           </span>
         ))}
       </div>
+      {/* Rule 3: units, NASA source and date with the legend. */}
+      <p className="mt-1.5 text-xs text-cc-muted" data-legend-source>
+        {legendSource(stepDate)}
+      </p>
     </div>
   );
 }
+
+export const legendSource = (stepDate?: string) =>
+  `TPI 0–1 from NASA GPM IMERG rain, SMAP soil moisture and NASADEM terrain${stepDate ? ` · ${fmtDataDate(stepDate)}` : ""}`;
