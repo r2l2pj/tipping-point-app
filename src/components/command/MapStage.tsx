@@ -24,6 +24,7 @@ import { preloadFrames } from "./model/preload";
 import { floodCaptionNote, frameFor, issuedFrame, issueLeadsFor, mapCaption, type IssueLead, type Step } from "./model/steps";
 import type { CcBundle } from "./model/types";
 import { hourLabel } from "./model/hours";
+import { shortCaption } from "./model/caption";
 import type { ManifestLayer } from "@/lib/types";
 import type { Action, ScreenState } from "./state";
 import type { Insets } from "./useInsets";
@@ -88,6 +89,7 @@ export default function MapStage({
 }) {
   const [map, setMap] = useState<MapInstance | null>(null);
   const [bearing, setBearing] = useState(0);
+  const [capOpen, setCapOpen] = useState(false);
   const compare = useRef<CompareControls | null>(null);
   const step = steps[state.dayIndex];
 
@@ -365,11 +367,23 @@ export default function MapStage({
         </button>
       )}
 
-      {!comparing && (
-        <span data-caption className={`absolute z-10 max-w-[46%] ${chip} ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`} style={{ left: L(14), bottom: B(36) }}>
-          {caption.text}{hourFrame && !issued ? ` · 72 h rain until ${hourLabel(hourFrame)}` : ""}{captionNote}
-        </span>
-      )}
+      {!comparing && (() => {
+        // Lucas: the full sentence covered the map — a one-line chip, the
+        // full sentence behind ⓘ (tap) and in the tooltip / screen readers.
+        const full = `${caption.text}${hourFrame && !issued ? ` · 72 h rain until ${hourLabel(hourFrame)}` : ""}${captionNote}`;
+        return (
+          <div className="absolute z-10 flex max-w-[60%] flex-col items-start gap-1 max-[639px]:max-w-[calc(100%-120px)]" style={{ left: L(14), bottom: B(36) }}>
+            {capOpen && (
+              <p className={`m-0 ${chip} !font-medium`} data-caption-full>{full}</p>
+            )}
+            <button type="button" data-caption title={full} aria-expanded={capOpen} onClick={() => setCapOpen((o) => !o)}
+              className={`${chip} max-w-full truncate !py-0.5 text-left ${caption.forecast ? "border-2 border-dashed border-cc-forecast-ink" : ""}`}>
+              <span className="sr-only">{full} </span>
+              <span aria-hidden="true">{shortCaption(caption.text, caption.forecast)} ⓘ</span>
+            </button>
+          </div>
+        );
+      })()}
 
       {!comparing && (
         <div className="absolute z-10 flex flex-col items-end gap-1.5" style={{ right: R(14), bottom: B(12) }}>
