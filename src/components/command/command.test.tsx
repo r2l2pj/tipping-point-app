@@ -527,6 +527,15 @@ describe("public view (P1 to P5) and routes", () => {
     expect(html).not.toContain("Call 199");
   });
 
+  test("paused alerts: a neutral notice, no card, no EMERGENCY", () => {
+    const html = render(liveBundle(), {}, "public", { state: "paused", alerts: [], dataTime: "2026-11-15T04:15:23Z" });
+    expect(html).toContain("Alerts paused while we verify today&#x27;s data");
+    expect(html).toContain('data-alerts="paused"');
+    expect(html).toContain("This does not mean there is no risk");
+    expect(html).not.toContain("EMERGENCY");
+    expect(html).not.toContain("No active alerts");
+  });
+
   test("the public view changes the right panel only", () => {
     const html = render(liveBundle(), {}, "public", alerts);
     expect(html).toContain('aria-label="Map layers"');

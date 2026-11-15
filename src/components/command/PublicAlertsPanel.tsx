@@ -3,7 +3,7 @@
 import { ALERT_FOOTER, ALERT_LEVEL_WORDS, type AlertCardData } from "@/lib/alerts";
 import AlertCard, { LEVEL_STYLE } from "./AlertCard";
 import {
-  ALERTS_UNAVAILABLE_TEXT, alertsByRegion, moreAlertsText, NO_ALERTS_TEXT, NO_RUN_TEXT,
+  ALERTS_PAUSED_TEXT, ALERTS_UNAVAILABLE_TEXT, alertsByRegion, moreAlertsText, NO_ALERTS_TEXT, NO_RUN_TEXT,
   REPLAY_NO_FEED_TEXT, type AlertList,
 } from "./model/alerts";
 import { fmtBrt } from "./model/format";
@@ -42,6 +42,14 @@ export default function PublicAlertsPanel({
           <button type="button" onClick={onGoToNow} className="mt-2 rounded-lg bg-cc-accent px-3 py-1.5 text-[13px] font-semibold text-white">
             Go to Now
           </button>
+        </div>
+      ) : alertList.state === "paused" ? (
+        <div data-alerts="paused" role="status" className="rounded-[10px] border border-cc-line bg-cc-well px-3.5 py-3">
+          <p className="text-[15px] font-semibold">{ALERTS_PAUSED_TEXT}</p>
+          <p className="mt-0.5 text-[13px] text-cc-muted">
+            No alert is shown until the latest run is checked. This does not mean there is no risk:
+            follow Civil Defense guidance (SMS 40199). Latest run: {time ?? NO_RUN_TEXT}.
+          </p>
         </div>
       ) : alertList.state === "unavailable" ? (
         <div data-alerts="unavailable" role="status" className="rounded-[10px] border border-[#e2c48a] bg-cc-warn-soft px-3.5 py-3">

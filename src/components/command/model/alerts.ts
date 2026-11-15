@@ -5,7 +5,7 @@ import { alertDataDates, candidatesToAlerts, type AlertCardData } from "@/lib/al
 import type { AlertsFile } from "@/lib/types";
 import type { CcBundle } from "./types";
 
-export type AlertListState = "alerts" | "none" | "unavailable";
+export type AlertListState = "alerts" | "none" | "unavailable" | "paused";
 
 export interface AlertList {
   state: AlertListState;
@@ -71,6 +71,21 @@ export function buildAlertList(input: {
 }
 
 export const NO_ALERTS_TEXT = "No active alerts";
+export const ALERTS_PAUSED_TEXT = "Alerts paused while we verify today's data";
+
+// Public alerts go out only from a run the live pipeline marked verified
+// (now node `verified: true`) and did not pause (`alerts_paused: true`).
+// A run without the flag is paused: no card is shown from unverified data.
+// ALERTS_PAUSED=1 (server env) pauses regardless of the data.
+export function alertsPaused(node: Record<string, unknown> | undefined, env = process.env.ALERTS_PAUSED): boolean {
+  if (env === "1" || env === "true") return true;
+  if (!node) return true;
+  return node.alerts_paused === true || node.verified !== true;
+}
+
+export function pausedAlertList(list: AlertList): AlertList {
+  return { state: "paused", alerts: [], dataTime: list.dataTime };
+}
 export const ALERTS_UNAVAILABLE_TEXT = "Alert data unavailable";
 export const NO_RUN_TEXT = "no run recorded";
 export const REPLAY_NO_FEED_TEXT = "There is no public alert feed in replay.";

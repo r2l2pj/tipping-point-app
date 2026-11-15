@@ -1,6 +1,6 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
-import { alertsByRegion, buildAlertList, capAlertList, moreAlertsText } from "./alerts";
+import { alertsByRegion, alertsPaused, buildAlertList, capAlertList, moreAlertsText, pausedAlertList } from "./alerts";
 import { bundle, liveBundle } from "./fixtures";
 import { ageText, classLabel, fmtBrt, fmtDate, fmtHours, sourceTime } from "./format";
 import { sourceRows } from "./sources";
@@ -166,5 +166,21 @@ describe("capAlertList (A10 page budget)", () => {
     const few = { ...many, alerts: many.alerts.slice(0, 3) };
     expect(capAlertList(few, 20)).toBe(few);
     expect(moreAlertsText(few)).toBeUndefined();
+  });
+});
+
+describe("alerts paused until the live run is verified", () => {
+  test("paused unless verified: true and not alerts_paused; env forces a pause", () => {
+    expect(alertsPaused(undefined, undefined)).toBe(true);
+    expect(alertsPaused({ mode: "live" }, undefined)).toBe(true); // no flag = paused
+    expect(alertsPaused({ verified: false }, undefined)).toBe(true);
+    expect(alertsPaused({ verified: true, alerts_paused: true }, undefined)).toBe(true);
+    expect(alertsPaused({ verified: true }, undefined)).toBe(false);
+    expect(alertsPaused({ verified: true }, "1")).toBe(true);
+  });
+
+  test("a paused list carries no card, keeps the run time", () => {
+    const p = pausedAlertList({ state: "alerts", alerts: [{ id: "x" } as never], dataTime: "2026-11-15T04:15:23Z" });
+    expect(p).toEqual({ state: "paused", alerts: [], dataTime: "2026-11-15T04:15:23Z" });
   });
 });
