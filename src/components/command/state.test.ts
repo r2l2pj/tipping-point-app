@@ -195,6 +195,42 @@ describe("layers", () => {
   });
 });
 
+describe("probability horizon", () => {
+  // Ships 48h/72h frames only: the first published horizon is 48h.
+  const probCase = bundle({
+    id: "prob_1",
+    series: series([0.5]),
+    manifest: manifest([
+      frame("tpi_slide", "2025-12-10"),
+      frame("p_trigger_48h", "2025-12-10"),
+      frame("p_trigger_72h", "2025-12-10"),
+    ]),
+  });
+  const probCases = [wa, probCase, now];
+
+  test("the default is the first horizon the case ships, else 24h", () => {
+    expect(initialState([probCase]).probHorizon).toBe("48h");
+    expect(initialState(cases).probHorizon).toBe("24h");
+  });
+
+  test("setProbHorizon sets the horizon", () => {
+    const s = reduce(initialState(probCases), { type: "setProbHorizon", horizon: "14d" }, probCases);
+    expect(s.probHorizon).toBe("14d");
+  });
+
+  test("a case change resets the horizon to the first one the new case ships", () => {
+    const on72 = reduce(
+      reduce(initialState(probCases), { type: "selectCase", id: "prob_1" }, probCases),
+      { type: "setProbHorizon", horizon: "72h" },
+      probCases
+    );
+    expect(on72.probHorizon).toBe("72h");
+    const onWa = reduce(on72, { type: "selectCase", id: "wa_2025" }, probCases);
+    expect(onWa.probHorizon).toBe("24h");
+    expect(reduce(onWa, { type: "selectCase", id: "prob_1" }, probCases).probHorizon).toBe("48h");
+  });
+});
+
 describe("area selection and comparison", () => {
   const start = run(initialState(cases), { type: "selectCase", id: "wa_2025" });
 

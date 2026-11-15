@@ -247,8 +247,11 @@ export function CommandCenterView({
           hazard={state.hazard}
           layers={state.layers}
           notice={state.layerNotice}
+          probHorizon={state.probHorizon}
+          stepDate={step?.date}
           onHazard={(hazard) => dispatch({ type: "setHazard", hazard })}
           onToggle={(id) => dispatch({ type: "toggleLayer", id })}
+          onProbHorizon={(horizon) => dispatch({ type: "setProbHorizon", horizon })}
           onClose={() => setDrawer(false)}
           className={`${drawer ? "max-[899px]:flex" : "max-[899px]:hidden"} ${state.layersOpen ? "min-[900px]:flex" : "min-[900px]:hidden"}`}
         />

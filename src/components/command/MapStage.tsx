@@ -64,8 +64,9 @@ export default function MapStage({
       zoneMarkers: false,
       frameDate: step?.date,
       overlays: overlaysFor(state.layers),
+      probHorizon: state.probHorizon,
     }),
-    [step?.date, state.layers]
+    [step?.date, state.layers, state.probHorizon]
   );
   useMapLayers(map, bundle, state.dayIndex, layerState, false, undefined, options);
 

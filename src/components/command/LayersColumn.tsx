@@ -2,6 +2,15 @@
 
 import { useState } from "react";
 import {
+  LONG_RANGE_HORIZONS,
+  LONG_RANGE_NOTE,
+  probFrame,
+  PROB_HORIZON_LABEL,
+  probHorizonsAvailable,
+  probLayerNote,
+  type ProbHorizon,
+} from "@/lib/layers";
+import {
   BUDGET_RULE_TEXT, REFERENCE_TEXT, type LayerGroup, type LayerId, type LayerRow,
 } from "./model/layerRegistry";
 import { classRows, HATCH_SWATCH, layerLegendRows } from "./model/legend";
@@ -17,8 +26,11 @@ export default function LayersColumn({
   hazard,
   layers,
   notice,
+  probHorizon,
+  stepDate,
   onHazard,
   onToggle,
+  onProbHorizon,
   onClose,
   className = "",
 }: {
@@ -27,13 +39,17 @@ export default function LayersColumn({
   hazard: Hazard;
   layers: readonly LayerId[];
   notice: string | null;
+  probHorizon: ProbHorizon;
+  stepDate?: string; // date of the selected step, for the probability frame note
   onHazard: (h: Hazard) => void;
   onToggle: (id: LayerId) => void;
+  onProbHorizon: (h: ProbHorizon) => void;
   onClose: () => void;
   className?: string;
 }) {
   // Collapsing hides the rows only; the legend stays visible (rule 3).
   const [open, setOpen] = useState(true);
+  const probHorizons = probHorizonsAvailable(bundle.manifest?.layers);
   return (
     <aside
       aria-label="Map layers"
@@ -89,11 +105,41 @@ export default function LayersColumn({
             return (
               <div key={group}>
                 <div className="mt-1 border-t border-cc-rule pb-1.5 pt-3 text-sm font-semibold">{group}</div>
-                {groupRows.map((r) => (
+                {groupRows.map((r) => {
+                  const prob = r.id === "ptrigger" && r.available;
+                  // The probability note follows the selected horizon; the
+                  // row's own sub carries the default one.
+                  const sub = prob
+                    ? probLayerNote(probFrame(bundle.manifest?.layers, probHorizon, stepDate)) ?? r.sub
+                    : r.sub;
+                  return (
                   <div key={r.id} className={`flex min-h-10 items-center gap-2.5 py-0.5 ${r.available ? "" : "opacity-60"}`}>
                     <span className="min-w-0 flex-1 text-[13px] leading-tight">
                       {r.label}
-                      {r.sub && <span className="block text-xs text-cc-faint">{r.sub}</span>}
+                      {sub && <span className="block text-xs text-cc-faint">{sub}</span>}
+                      {prob && probHorizons.length > 0 && (
+                        <span role="radiogroup" aria-label="Probability horizon" className="mt-1 flex flex-wrap gap-1">
+                          {probHorizons.map((h) => (
+                            <button
+                              key={h}
+                              type="button"
+                              role="radio"
+                              aria-checked={h === probHorizon}
+                              onClick={() => onProbHorizon(h)}
+                              className={`rounded border px-1.5 py-0.5 text-xs ${
+                                h === probHorizon
+                                  ? "border-cc-accent text-cc-accent"
+                                  : "border-cc-line-strong text-cc-muted hover:text-cc-ink"
+                              }`}
+                            >
+                              {PROB_HORIZON_LABEL[h]}
+                            </button>
+                          ))}
+                        </span>
+                      )}
+                      {prob && LONG_RANGE_HORIZONS.has(probHorizon) && (
+                        <span className="mt-1 block text-xs font-medium text-cc-warn">{LONG_RANGE_NOTE}</span>
+                      )}
                     </span>
                     <button
                       type="button"
@@ -110,7 +156,8 @@ export default function LayersColumn({
                       <span aria-hidden="true" className={`absolute top-[2px] h-[15px] w-[15px] rounded-full bg-white shadow-[0_0_0_1px_rgba(22,36,43,0.25)] transition-[left] ${r.on ? "left-[19px]" : "left-[2px]"}`} />
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             );
           })}
