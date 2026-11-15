@@ -79,3 +79,6 @@ Pick F1 (current page lead, slide 3, `captions-v6-draft.srt`) only if lead-ml's 
 Never "prevented"; never present a forecast miss as a hit.
 
 lead-analysis RETRACTION (13:0x): the Sep 30 → Oct 12 Uruguaiana pair IS NISAR (provisional GCOV collection; the first search only covered V1, which starts Oct 24). It may be cited as NISAR.
+
+## SYNCED to served replay v2 (data main 1a0ff98+, 13:1x)
+RS landslides 5.8% (5.77) High+ in the run 27 h before onset, area 2.1% (2.13), lift 2.7× (2.71); Critical 0.18% in 0.11%, 1.6×; 51/75 h runs 0%. EMS landslides 0% (honest miss). EMS flood IoU 0.20 (0.1967) · F1 0.33 · P 0.75 · R 0.21; pre-onset 0%. Alarms RS 34.8% (330/948) vs 24.9% → 1.4×; WA 20.3% (14/69) vs 10.0% → 2.0×. People in Critical RS 1,627,862 · WA 225,583; inside NISAR candidates WA 949 (~950). WA flood 0/0/0% at 24/48/72 h. WA GFS issued Dec 3 still flagged Critical (forecast_lead_time_onset). Retired: 36% (as-available sensitivity only), 8.8×, 81%/57% EMS slides, 6.6%/2.2× EMS flood pre-onset, 0.14% WA 72 h, 1,681,783 / 254,263, the "Apr 30 → 0% / May 1 → 88%" sensitivity sentence. Synced in page, README, slides 5/6, deck.
