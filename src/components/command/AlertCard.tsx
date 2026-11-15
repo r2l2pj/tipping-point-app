@@ -37,6 +37,9 @@ export default function AlertCard({
         <span className={`shrink-0 rounded-[5px] px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${style.chip}`}>{a.level}</span>
       </div>
       <p className="mt-1.5 text-[13px]"><span className="text-cc-muted">Region:</span> {a.region ?? a.area}</p>
+      {a.basis && (
+        <p className="mt-1 text-[13px] font-semibold text-cc-forecast-ink">{a.basis.charAt(0).toUpperCase() + a.basis.slice(1)}</p>
+      )}
       {(a.area_km2 !== undefined || a.when) && (
         <p className="mt-1 text-[13px]">
           {a.area_km2 !== undefined && <><span className="text-cc-muted">Area:</span> {fmtKm2(a.area_km2)}</>}

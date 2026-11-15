@@ -11,6 +11,9 @@ import type { Alert, AlertLevel } from "./types";
 // the rendered message title and the quiet-hours flags.
 export interface AlertCardData extends Alert {
   title?: string;
+  // Rain behind the alert when it is (partly) forecast: "based on forecast
+  // rain (NOAA GFS, issued Nov 15, 00:00 UTC)".
+  basis?: string;
   area_km2?: number;
   when?: string; // "today" | "d1"
   held?: boolean; // held by the quiet-hours rule (23:00–06:00 BRT)
@@ -21,6 +24,9 @@ export interface AlertsContext {
   places?: GeoJSON.FeatureCollection;
   issuedAt?: Date | string; // issue time; defaults to now
   dataDates?: Record<string, string>; // passthrough onto Alert.data_dates
+  // L28b: the frames behind "today" and "d1" alerts use NOAA GFS forecast
+  // rain; this text ("NOAA GFS, issued Nov 15, 00:00 UTC") goes on the card.
+  forecastBasis?: string;
 }
 
 // Badge word per level — shared by the generated message title and the card
@@ -96,6 +102,12 @@ export function alertDataDates(
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(dd)) {
     if (typeof v !== "string") continue;
+    // L28b: the IMERG stamp is the end of the window; observed rain runs
+    // through imerg_obs_through (the day before).
+    if (k === "imerg" && typeof dd.imerg_obs_through === "string") {
+      out[k] = dd.imerg_obs_through.slice(0, 10);
+      continue;
+    }
     // The live run stamps some sources with a run id or a granule name
     // ("2026-11-14T00Z", "SMAP_L4_SM_gph_20261110T223000_...h5"): the card
     // shows the calendar date in it, never the raw stamp.
@@ -171,6 +183,11 @@ export function candidatesToAlerts(
       data_dates: ctx.dataDates,
       ...(typeof c.area_km2 === "number" && Number.isFinite(c.area_km2) ? { area_km2: c.area_km2 } : {}),
       ...(c.when === "today" || c.when === "d1" ? { when: c.when } : {}),
+      // lead-live's basis_note wins; else the run's GFS issue (L28b frames).
+      ...(typeof (c as { basis_note?: unknown }).basis_note === "string"
+        ? { basis: (c as { basis_note: string }).basis_note }
+        : ctx.forecastBasis && (c.when === "today" || c.when === "d1" || c.when === undefined)
+          ? { basis: `based on forecast rain (${ctx.forecastBasis})` } : {}),
     });
   });
   return out;

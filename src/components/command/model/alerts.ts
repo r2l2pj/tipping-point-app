@@ -4,6 +4,7 @@
 import { alertDataDates, candidatesToAlerts, type AlertCardData } from "@/lib/alerts";
 import type { AlertsFile } from "@/lib/types";
 import { finite, fmtBrt, fmtKm2 } from "./format";
+import { gfsIssuedText } from "./steps";
 import type { CcBundle } from "./types";
 
 export type AlertListState = "alerts" | "none" | "unavailable" | "paused";
@@ -60,6 +61,8 @@ export function buildAlertList(input: {
       places: now.places ?? now.municipalities,
       issuedAt: dataTime,
       dataDates: alertDataDates(now.data_dates),
+      // The today/d1 frames carry NOAA GFS forecast rain (L28b).
+      forecastBasis: typeof now.data_dates?.forecast_from === "string" ? gfsIssuedText(now) : undefined,
     });
     return alerts.length
       ? { state: "alerts", alerts: sortAlerts(alerts), dataTime }
@@ -142,7 +145,10 @@ export function observedRows(bundle: CcBundle | undefined): ObservedRow[] {
   if (bundle.observedSummary) return bundle.observedSummary;
   const named = bundle.observedPlaces ?? {};
   const observed = (bundle.nowAlerts?.observed ?? [])
-    .filter((o) => (o.kind === undefined || o.kind === "observed") && finite(o.area_km2));
+    .filter((o) => (o.kind === undefined || o.kind === "observed") && finite(o.area_km2))
+    // Lower-confidence candidates (cropland, seasonal water) are not in the
+    // headline numbers or on the map: not counted here either.
+    .filter((o) => o.confidence !== "lower");
   const fromObserved = (items: typeof observed, hazard: ObservedRow["hazard"]): ObservedRow[] => {
     const groups = new Map<string, typeof observed>();
     for (const o of items) groups.set(o.source ?? "", [...(groups.get(o.source ?? "") ?? []), o]);

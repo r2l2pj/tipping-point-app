@@ -65,6 +65,18 @@ describe("live summary v2 in the tile and status", () => {
   });
 });
 
+describe("Now today frame: partly forecast caption", () => {
+  test("caption and layer row say observed to yesterday + NOAA GFS for today", () => {
+    const live = liveBundle({ manifest: manifest([frame("tpi_flood", "2026-11-15")]),
+      data_dates: { imerg_obs_through: "2026-11-14", forecast_from: "2026-11-15", gfs_issued: "2026-11-15T00:00:00Z" } });
+    const steps = stepsFor(live);
+    const cap = mapCaption(live, steps, 0, "flood", ["tpi"]);
+    expect(cap).toEqual({ text: "Flood TPI · Today · observed to Nov 14 + NOAA GFS forecast for Nov 15 (partly forecast)", forecast: true });
+    expect(layerRows(live, ["tpi"], "flood", "2026-11-15").find((r) => r.id === "tpi")?.sub)
+      .toBe("Today · observed to Nov 14 + NOAA GFS forecast for Nov 15 (partly forecast)");
+  });
+});
+
 describe("replay: forecast issued this day (beat 2)", () => {
   const gfs = (hz: string, k: number, issued: string, date: string) => ({
     id: `tpi_${hz}_gfs_d${k}`, date, issued, png: `wa_2025/png/tpi_${hz}_gfs_d${k}_${date.replace(/-/g, "")}.png`,

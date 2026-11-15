@@ -265,6 +265,12 @@ export function mapCaption(
       : { text: `No NOAA GFS forecast issued ${fmtDate(step.date)} for ${ahead}`, forecast: false };
   }
   if (bundle.riskPaused) return { text: `${RISK_PAUSED_TEXT} · ${when}`, forecast: false };
+  const partly = partlyForecastText(bundle, step.date);
+  if (partly && on.includes("tpi")) {
+    const f = frameFor(bundle, step.date, hazard);
+    // Dashed caption = forecast content on the map (here, part of it).
+    return { text: `${HAZARD_LABEL[f?.hazard ?? hazard]} TPI · ${partly} (partly forecast)`, forecast: true };
+  }
   if (!on.includes("tpi")) return { text: `TPI index off · ${when}`, forecast: false };
   const frame = frameFor(bundle, step.date, hazard);
   // The map hook shows its own note for a missing frame; the caption stays short.
@@ -291,7 +297,44 @@ export const gfsChipSource = (l: ManifestLayer): string =>
 // Step line of the panel. Rule 2: observed and forecast are never confused.
 // The forecast source is named on forecast days only; an observed day
 // (the event day included) reads "observed", never "perfect forecast".
+// L28b (lead-live): the live "today" frame = observed IMERG through
+// yesterday + NOAA GFS forecast rain for today (data_dates.imerg_obs_through,
+// forecast_from, gfs_issued). It is labelled partly forecast everywhere
+// (honesty rule 2); undefined for any other frame or case.
+const dayMonth = (iso: string) =>
+  new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+
+export function partlyForecastText(bundle: CcBundle, date: string | undefined): string | undefined {
+  if (bundle.mode !== "live" || !date) return undefined;
+  const dd = bundle.data_dates ?? {};
+  // lead-live 82b4037: each layer carries partly_forecast + basis_label
+  // ("observed to Nov 14 + NOAA GFS forecast for Nov 15 (issued …)"); the
+  // published label wins (it also covers D+1).
+  const layer = (bundle.manifest?.layers ?? []).find((l) => l.id.startsWith("tpi_") && l.date?.slice(0, 10) === date.slice(0, 10)) as
+    (ManifestLayer & { partly_forecast?: boolean; basis_label?: string }) | undefined;
+  if (layer?.partly_forecast === true && typeof layer.basis_label === "string" && layer.basis_label) {
+    const today = typeof dd.forecast_from === "string" && dd.forecast_from.slice(0, 10) === date.slice(0, 10);
+    return `${today ? "Today · " : ""}${layer.basis_label}`;
+  }
+  const obs = typeof dd.imerg_obs_through === "string" ? dd.imerg_obs_through : undefined;
+  const from = typeof dd.forecast_from === "string" ? dd.forecast_from : undefined;
+  if (!obs || !from || date.slice(0, 10) !== from.slice(0, 10)) return undefined;
+  return `Today · observed to ${dayMonth(obs)} + NOAA GFS forecast for ${dayMonth(from)}`;
+}
+
+// "NOAA GFS, issued Nov 15, 00:00 UTC" from data_dates.gfs_issued.
+export function gfsIssuedText(bundle: CcBundle): string | undefined {
+  const v = bundle.data_dates?.gfs_issued;
+  if (typeof v !== "string") return undefined;
+  const t = new Date(v);
+  if (Number.isNaN(t.getTime())) return undefined;
+  const hh = String(t.getUTCHours()).padStart(2, "0");
+  return `NOAA GFS, issued ${dayMonth(v)}, ${hh}:00 UTC`;
+}
+
 export function stepLabel(bundle: CcBundle, step: Step): string {
+  const partly = partlyForecastText(bundle, step.date);
+  if (partly) return `${step.top} · ${partly} (partly forecast)`;
   const gfs = step.forecast && step.layer && isGfsFrame(step.layer)
     ? step.layer
     : undefined;
