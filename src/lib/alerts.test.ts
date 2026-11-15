@@ -202,3 +202,16 @@ describe("alertDataDates (G4: SMAP ISO + age)", () => {
     })).toMatchObject({ smap: "2026-11-10T22:30:00Z", smap_age_days: "5" });
   });
 });
+
+describe("candidatesToAlerts: geometry for 'View on the map' (gap 2)", () => {
+  test("valid centroid and bbox pass through; malformed ones are dropped", () => {
+    const [a, b] = candidatesToAlerts([
+      { class: 3, label: "Crítico", centroid: [-48.48, -27.76], bbox: [-48.56, -27.89, -48.36, -27.61] } as never,
+      { class: 3, label: "Crítico", centroid: [999, 0], bbox: [1, 2, 0, 3] } as never,
+    ], { issuedAt: "2026-11-15T12:00:00Z" });
+    expect(a.centroid).toEqual([-48.48, -27.76]);
+    expect(a.bbox).toEqual([-48.56, -27.89, -48.36, -27.61]);
+    expect(b.centroid).toBeUndefined();
+    expect(b.bbox).toBeUndefined();
+  });
+});

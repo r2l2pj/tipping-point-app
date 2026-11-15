@@ -21,6 +21,10 @@ export interface AlertCardData extends Alert {
   today_level?: AlertLevel | "below";
   area_km2?: number;
   when?: string; // "today" | "d1"
+  // Where the alert is (lead-live candidates: lon/lat and [w, s, e, n]):
+  // "View on the map" frames it.
+  centroid?: [number, number];
+  bbox?: [number, number, number, number];
   held?: boolean; // held by the quiet-hours rule (23:00–06:00 BRT)
   quiet?: boolean; // issued during quiet hours — Critical still goes out
 }
@@ -135,6 +139,13 @@ export function stampDate(v: string): string | undefined {
   return m ? `${m[1]}-${m[2]}-${m[3]}` : undefined;
 }
 
+const allFinite = (v: unknown, n: number): v is number[] =>
+  Array.isArray(v) && v.length === n && v.every((x) => typeof x === "number" && Number.isFinite(x));
+const lonLatOf = (v: unknown): { centroid?: [number, number] } =>
+  allFinite(v, 2) && Math.abs(v[0]) <= 180 && Math.abs(v[1]) <= 90 ? { centroid: [v[0], v[1]] } : {};
+const bboxOf = (v: unknown): { bbox?: [number, number, number, number] } =>
+  allFinite(v, 4) && v[0] <= v[2] && v[1] <= v[3] ? { bbox: [v[0], v[1], v[2], v[3]] } : {};
+
 // NowAlertCandidate[] -> Alert[]. Candidates below Alto are skipped. `hold`
 // candidates and anything raised during quiet hours carry the held flag;
 // Crítico raised during quiet hours is still emitted, flagged `quiet`.
@@ -202,6 +213,8 @@ export function candidatesToAlerts(
         `${ALERT_LEVEL_WORDS[level]} ${hazard} risk in your region. ` +
         `${advice}${urgency}.${notes} ${ALERT_FOOTER}`,
       data_dates: ctx.dataDates,
+      ...lonLatOf((c as { centroid?: unknown }).centroid),
+      ...bboxOf((c as { bbox?: unknown }).bbox),
       ...(typeof c.area_km2 === "number" && Number.isFinite(c.area_km2) ? { area_km2: c.area_km2 } : {}),
       ...(c.when === "today" || c.when === "d1" ? { when: c.when } : {}),
       // lead-live's basis_note wins; else the run's GFS issue (L28b frames).

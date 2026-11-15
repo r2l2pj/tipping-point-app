@@ -27,6 +27,14 @@ const L = (px: number) => `calc(var(--cc-il, 0px) + ${px}px)`;
 const R = (px: number) => `calc(var(--cc-ir, 0px) + ${px}px)`;
 const B = (px: number) => `calc(var(--cc-ib, 0px) + ${px}px)`;
 
+// A place to frame on request ("View on the map"); `key` makes a repeat
+// click on the same alert move the map again.
+export interface MapFocus {
+  bbox?: [number, number, number, number];
+  center?: [number, number];
+  key: number;
+}
+
 export default function MapStage({
   bundle,
   steps,
@@ -38,6 +46,7 @@ export default function MapStage({
   onToggleLayers,
   insets,
   stageRef,
+  focus,
 }: {
   bundle: CcBundle;
   steps: Step[];
@@ -49,6 +58,7 @@ export default function MapStage({
   onToggleLayers: () => void;
   insets: Insets; // space covered by the floating cards
   stageRef: React.RefObject<HTMLDivElement | null>;
+  focus?: MapFocus;
 }) {
   const [map, setMap] = useState<MapInstance | null>(null);
   const [bearing, setBearing] = useState(0);
@@ -101,6 +111,22 @@ export default function MapStage({
     // Only a new selection moves the map.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, state.selectedArea, bundle.id]);
+
+  // Frame a requested place. Opening the map view changes the card insets,
+  // and the padding ease that follows would cancel a camera move started now:
+  // wait for it (300 ms) first.
+  useEffect(() => {
+    if (!map || !focus) return;
+    const t = setTimeout(() => {
+      const b = focus.bbox;
+      if (b) {
+        map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, maxZoom: 12, duration: 1000 });
+      } else if (focus.center) {
+        map.flyTo({ center: focus.center, zoom: Math.max(map.getZoom(), 11), duration: 1000 });
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [map, focus]);
 
   useEffect(() => {
     if (!map) return;

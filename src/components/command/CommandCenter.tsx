@@ -8,7 +8,7 @@ import type { AlertCardData } from "@/lib/alerts";
 import EvidenceDetails from "./EvidenceDetails";
 import GetAlertsCard from "./GetAlertsCard";
 import LayersColumn from "./LayersColumn";
-import MapStage from "./MapStage";
+import MapStage, { type MapFocus } from "./MapStage";
 import PanelSection from "./PanelSection";
 import { observedRows, type AlertList } from "./model/alerts";
 import { expandLayerUrls } from "./model/layerUrls";
@@ -105,6 +105,7 @@ export function CommandCenterView({
     ...initial,
   }));
   const [drawer, setDrawer] = useState(false); // Layers drawer, narrow screens
+  const [focus, setFocus] = useState<MapFocus>(); // "View on the map" target
 
   useEffect(() => {
     if (!state.playing) return;
@@ -213,8 +214,14 @@ export function CommandCenterView({
   // Area by class of the selected hazard (summary v2), or the v1 union.
   const classesKm2 = bundle.riskPaused ? [] : Object.entries(liveClasses(bundle.summary, state.hazard) ?? {});
 
+  // Gap 2: the card's own geometry frames the map; a card without one falls
+  // back to the priority area of the same name.
   const viewOnMap = (alert: AlertCardData) => {
     onView("command");
+    if (alert.bbox || alert.centroid) {
+      setFocus({ bbox: alert.bbox, center: alert.centroid, key: Date.now() });
+      return;
+    }
     const name = alert.region ?? alert.area;
     const match = areas.find((a) => a.name === name);
     if (match && state.selectedArea !== match.rank) dispatch({ type: "selectArea", rank: match.rank });
@@ -246,6 +253,7 @@ export function CommandCenterView({
           dispatch={dispatch}
           insets={insets}
           stageRef={stageRef}
+          focus={focus}
           onToggleLayers={() => {
             dispatch({ type: "toggleLayersOpen" });
             setDrawer((d) => !d);
