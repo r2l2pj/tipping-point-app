@@ -34,7 +34,7 @@
 
 ## Slide 5 — Did it work?
 - Headline (decided by conductor (delegated), L38): **"Clouds hid 93% of the area from optical satellites; NISAR radar mapped 28 km² of flood candidates through them."** — WA Dec 2025, 27.99 km² within the NISAR swath; landslides remain candidates only
-- Who is affected: 229,782 people in critical areas (WA, Dec 12, 2025), ranked by priority area for Civil Defense; live view every 3 h over Southern Brazil
+- Who is affected: more than 229,000 people in critical areas (WA, Dec 12, 2025), ranked by priority area for Civil Defense; live view every 3 h over Southern Brazil
 - Prediction (supporting): "Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%)."
   - footnote (required): "Earlier runs (issued 51 and 75 hours before) showed 0%. Onset = first deaths, Apr 29, 2024 00:00 BRT. Anchor-sensitive: with onset Apr 30 the 24 h run shows 0%; the earlier May 1 anchor gave 88%. n = 16,027 UFRGS/Cemaden inventory points."
 - WA flood, honestly: none of the NISAR-flooded area was High in the forecasts issued 24 h or 48 h before onset (Dec 8, 2025); 0.14% in the run issued 72 h before — the index uses local rain only; rivers flood from rain upstream
@@ -44,7 +44,7 @@
 - *Visual:* NISAR **Before / after** swipe still + **Replay check** panel (with **Show details: validation and impact** open) next to a small metrics table for both cases
 
 ## Slide 6 — Impact + honest limitations
-- Impact numbers the demo reports: 229,782 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); 1,488,833 + 33% (RS, peak day May 3, 2024)
+- Impact numbers the demo reports: more than 229,000 people in critical areas + night-light drop 44% (WA, Dec 12, 2025); at least 1.49 million + 33% (RS, peak day May 3, 2024) — lower bounds (population resample reads ~12% low)
 - Limitations: Thresholds are not yet calibrated for Brazil; validated on 2 replay events + 11 disaster events for the ML; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days; GFS under-forecast the RS peak by about half; official warnings still came before the index
 - The video demo is a replay; the live view covers Southern Brazil every 3 h. The replay forecast is NOAA GFS as issued at the time (our only non-NASA input) — perfect-forecast frames appear only as a labelled upper bound
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event
