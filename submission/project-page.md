@@ -114,9 +114,9 @@ Other limits:
 - The live view covers Southern Brazil only.
 
 ### Try it (no login)
-- Live view: [APP URL] · public alerts: [APP URL]/alerts
-- Rio Grande do Sul replay: [APP URL]/?case=rs_2024 (press Play)
-- Washington forecast as issued: [APP URL]/?case=wa_2025&day=-7, then **Forecast issued this day: +3 d**
+- Live view: https://tippingpoint.l17s.dev · public alerts: https://tippingpoint.l17s.dev/alerts
+- Rio Grande do Sul replay: https://tippingpoint.l17s.dev/?case=rs_2024 (press Play)
+- Washington forecast as issued: https://tippingpoint.l17s.dev/?case=wa_2025&day=-7, then **Forecast issued this day: +3 d**
 - NISAR before/after: in the Washington replay, open the **NISAR radar** card and click **Before / after**
 - Code (open source): https://github.com/r2l2pj/tipping-point-app · https://github.com/r2l2pj/tipping-point-data
 

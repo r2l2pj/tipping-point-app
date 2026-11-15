@@ -7,7 +7,7 @@ One page. Full detail, sources and history: `submission/REVIEW.md`. Every number
 Fill these before you click (search the files for the brackets):
 1. `[TEAM NAME]`: `captions.srt` + `captions.pt-BR.srt` cue 1, video title card (`.crew/video/build-v5.sh` t0_team), `project-page.md` Tools/Team line, slide 1.
 2. Member names (`[member names]` on the page, `[names]` on slide 1). Every member must be registered at **Florianópolis** (not waitlisted) and on the **Members** tab; 1–6 people; nobody can be added after submission closes.
-3. `[APP URL]` (VPS, L39): FORM §4, project-page "Try it" (4 links), video close card (`APP_URL=… ./build-v5.sh`).
+3. App URL: done — https://tippingpoint.l17s.dev (VPS, L39) is in FORM §4, the project-page "Try it" links, the READMEs, the deck and the video close card.
 4. `[VIDEO LINK]` in FORM §3, after upload (≤30 s, test it in a private window).
 5. Voice: if the VO is text-to-speech, replace `[if the VO is TTS, say so here]` on the page (Use of AI) and in `ai-declaration.md`; if it is a human voice, delete the bracket.
 6. Local Event is filled: Florianópolis (Founder Haus, Jurerê).
@@ -32,7 +32,7 @@ Paste every field from `submission/FORM.md`, tick "Terms and Conditions" and "Co
    - Tagline: keep "Radar confirms", or "Radar sees through."
    - Calling public alerts "experimental, not official".
    - Rule-by-rule status: `COMPLIANCE.md`.
-7. Backup demo: `.crew/deck/slides.pdf` (7 slides), used only if the video slips. Optional: check the [APP URL] host is not blocked by school or office filters.
+7. Backup demo: `.crew/deck/slides.pdf` (7 slides), used only if the video slips. Optional: check the https://tippingpoint.l17s.dev host is not blocked by school or office filters.
 
 ## Only you can do (2)
 
@@ -41,7 +41,7 @@ Paste every field from `submission/FORM.md`, tick "Terms and Conditions" and "Co
 
 ## Check on your phone
 
-Open [APP URL] on a real phone: the headless capture rendered the mobile Now map mostly black (likely a headless GPU artefact). Prod tour with screenshots: `.crew/review/morning/index.md`.
+Open https://tippingpoint.l17s.dev on a real phone: the headless capture rendered the mobile Now map mostly black (likely a headless GPU artefact). Prod tour with screenshots: `.crew/review/morning/index.md`.
 
 ## Awaiting you (20) — note: `summary.md` is RETIRED (items quoting it no longer ship) — reply "approve all", or edit by number
 
