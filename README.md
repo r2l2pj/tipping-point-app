@@ -39,20 +39,22 @@ The app shows no AI-generated images, video or audio.
 | `src/app/alerts` | public alerts: the same Command Center screen with the public alert view in the right panel — same message format as the Telegram bot |
 | `src/app/api/events` | events index + per-event manifest |
 | `src/app/api/ee/status` | live-GEE health check (service account; opt-in — needs `GEE_ENABLED` = `1`/`true`, else 503) |
-| `src/app/api/telegram` + `src/lib/telegram/` | Telegram bot webhook + Neon (free) subscriber store via HTTPS SQL endpoint (plain fetch, no dep) — 503 until `TELEGRAM_TOKEN` + `TELEGRAM_SECRET` are set (cred-blocked) |
+| `src/app/api/telegram` + `src/lib/telegram/` | Telegram bot webhook + subscriber store (Neon legacy; SQLite on the VPS after cutover) — 503 until `TELEGRAM_TOKEN` + `TELEGRAM_SECRET` are set (cred-blocked) |
 | `src/lib/ee.ts` | server-only Earth Engine client (`GEE_PROJECT` + `GCP_SA_KEY` in `.env`; `GEE_SERVICE_ACCOUNT_KEY` (fallback) also accepted) — opt-in via `GEE_ENABLED`; EE API routes return 503 while disabled |
 | `public/data/<event>/`, `public/data/now/`, `public/data/alerts.json` | committed artifacts per SCHEMA.md — synced by `sync:data`; last-resort copy when every remote read misses |
 | `docs/`, `submission/` | `docs/{PLAN,app-contract,DEPLOY}.md` project doc + contract/deploy notes; `submission/{summary,nasa-data,ai-declaration,demo-script,slides-outline}.md` (incl. ≤30s demo script) |
 
 ## Deploy
 
-Vercel (repo is public — Hobby plan can deploy public org repos). `prebuild`
-runs the data sync, so committed `public/data` is the last-resort deploy
-fallback. Read order: the `fallback` branch of `r2l2pj/tipping-point-data`
+The VPS is the production deployment target (`docs/DEPLOY-VPS.md`); Vercel is
+the legacy deployment until cutover. `prebuild` syncs data when the sibling
+repo is present; committed `public/data` remains the last-resort fallback.
+Read order: the `fallback` branch of `r2l2pj/tipping-point-data`
 (`raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`) is the
 primary source, Neon Object Storage is the fallback, and an explicit
-`DATA_BASE_URL` overrides both — runbook in `docs/DEPLOY.md`. Neon Postgres
-serves only the Telegram subscriber store.
+`DATA_BASE_URL` overrides both — runbook in `docs/DEPLOY.md`. The Telegram
+subscriber store is moving from Neon Postgres to the VPS SQLite volume; Neon
+remains a separate object-storage fallback for published files.
 The `now.yml` live job refreshes data every 3 h: it computes TPI locally
 from IMERG Early / SMAP / NOAA GFS forecast rain and publishes the result as one
 force-pushed orphan commit per run (`manifest.json` last). The stale-data
@@ -67,8 +69,9 @@ Earthdata auth uses a bearer token: env var and GitHub secret
 (`now.yml`) fails loudly when the token dies. `EDL_USER`/`EDL_PASS`
 remain a local-only fallback, never in secrets.
 
-The Telegram subscriber store uses `DATABASE_URL` (Neon connection string,
-server-only) — set in Vercel env + GitHub secrets, never in repos.
+The VPS Telegram subscriber store uses `DATABASE_URL=sqlite:/app/.data/tipping-point.sqlite`
+and the persistent `tipping-point-data` volume. Keep the Neon connection secret
+only through the reviewed migration/rollback window; never commit it.
 
 Full env list (`GCP_SA_KEY` canonical; `GEE_SERVICE_ACCOUNT_KEY` fallback;
 `DATABASE_URL` for the subscriber store): `docs/DEPLOY.md`.

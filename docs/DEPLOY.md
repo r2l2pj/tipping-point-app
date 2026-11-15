@@ -1,6 +1,7 @@
 # Deploy
 
-Operator runbook for deploying `tipping-point-app` to Vercel. The app reads
+Vercel compatibility runbook for `tipping-point-app`; the canonical production
+deployment target is the VPS (`docs/DEPLOY-VPS.md`). The app reads
 static data files (L26): the public GitHub data branch first, the Neon bucket
 as fallback, the bundled copy last. Earth Engine is not on any runtime path by
 default (L25) — it is opt-in with `GEE_ENABLED`.
@@ -26,7 +27,7 @@ is ever committed; `.gitignore` already blocks the usual key file patterns.
 | `GEE_ENABLED` | Optional, default **off** (L25). `1`/`true` turns on the Earth Engine routes (`/api/tiles`, `/api/layers`, `/api/numbers`, `/api/point`), the GEE overlay of the case loader and the health probe. Off: those routes answer 503 `runtime GEE disabled`, `/api/metrics` serves the manifest copy, and `/api/health` is ok when the data manifest is readable with a parseable `now` stamp. |
 | `GEE_PROJECT` | Only with `GEE_ENABLED`: Google Cloud project registered for the Earth Engine API. |
 | `GCP_SA_KEY` | Only with `GEE_ENABLED`: service-account JSON key (single line). Server-side only — never `NEXT_PUBLIC_`-prefixed. |
-| `DATABASE_URL` | Subscriber backend selector, not required locally: unset or `sqlite:<path>` uses local SQLite (default `.data/tipping-point.sqlite`). Infra sets a secret `postgres://` or `postgresql://` Neon connection string in production for server-only HTTPS SQL access. Never expose or commit the production value. |
+| `DATABASE_URL` | Vercel legacy webhook: Neon URL until cutover. VPS after cutover: `sqlite:/app/.data/tipping-point.sqlite`, backed by the persistent `tipping-point-data` volume shared with the notifier worker. Do not point a Vercel runtime at the VPS SQLite path. Keep Neon only through the reviewed migration/recovery window; never expose or commit it. |
 | `TELEGRAM_TOKEN` | Bot token from BotFather, used to call the Telegram Bot API. |
 | `TELEGRAM_SECRET` | Shared secret Telegram sends as `X-Telegram-Bot-Api-Secret-Token`; the webhook route verifies it. |
 | `APP_URL` | Canonical public URL of the deployment (e.g. `https://<project>.vercel.app`), used to register the webhook. |
@@ -56,14 +57,10 @@ single optional file is missing. `DATA_BASE_URL` stays an explicit override
 (sole remote source), read at request time; updating data never needs a
 redeploy.
 
-## Neon setup (one project, two services)
+## Neon Object Storage
 
-Project `muddy-rice-39176958` hosts both app Neon services:
+Project `muddy-rice-39176958` hosts the app's fallback object bucket:
 
-- **Postgres** — the Telegram subscriber table. `DATABASE_URL` is the
-  `postgres://`/`postgresql://` connection string; secret, server-only, lives
-  in Vercel env + GitHub Actions secrets on the data repo. Never print or
-  commit it. Applied schema is `db/schema.sql` (`subscribers` + RLS).
 - **Object Storage** — bucket `tipping-point-data`, declared `public_read` in
   the repo-root `neon.ts` (applied via `@neon/config`; `neon env pull` /
   `neon-env run` manage local env). Anonymous `GET` returns objects; writes
@@ -72,48 +69,25 @@ Project `muddy-rice-39176958` hosts both app Neon services:
   Actions secrets (uploads), **not** app runtime vars. The app only needs
   `NEON_S3_ENDPOINT` to build the anonymous read URL.
 
-## Telegram subscriber store (local SQLite, production Neon)
+## Telegram subscriber store (SQLite)
 
 Only the Telegram subscriber store needs a database. Local development and
-tests use SQLite automatically; no Neon project or `DATABASE_URL` is required
-locally. Unset `DATABASE_URL` uses the automatic, gitignored file
-`.data/tipping-point.sqlite`; `sqlite:<path>` selects an explicit local file.
-The app uses `bun:sqlite` under Bun and `node:sqlite` under Node 22 (which
-emits an experimental warning); the data pipeline uses Python's stdlib
-`sqlite3`. No new dependency is needed.
+tests use SQLite automatically. The legacy Vercel webhook uses Neon until it
+is moved to the VPS. After the reviewed cutover, the VPS uses
+`sqlite:/app/.data/tipping-point.sqlite` inside the persistent
+`tipping-point-data` Docker volume. The notifier worker mounts that same volume
+and uses Python's stdlib `sqlite3`; the app uses `node:sqlite`. Both enable WAL
+and a 5-second busy timeout for concurrent access. No public database port is
+opened.
 
-Both backends share the same store interface and one portable `db/schema.sql`.
-Store tests use in-memory SQLite, and the Neon HTTP path is tested against a
-fake HTTP server rather than requiring live infrastructure.
-
-For production, the infra person creates a free Neon Postgres project, runs
-`db/schema.sql` in its SQL editor, and sets `DATABASE_URL` to its `postgres://`
-or `postgresql://` connection string. This switches the backend to Neon.
-The Neon `subscribers` table has this schema:
-
-```sql
-create table subscribers (
-  chat_id text primary key,
-  lat numeric(5,2),
-  lon numeric(6,2),
-  consent bool,
-  last_class int,
-  last_alert_ts timestamptz,
-  current_label text,
-  data_date text,
-  created_at timestamptz default now()
-);
-```
-
-Access is server-only using the connection string, with no RLS requirement.
-Use Neon's HTTPS SQL endpoint with plain `fetch` in the app and `requests`
-in the data pipeline, with no new dependency: `POST https://<host>/sql`,
-header `Neon-Connection-String: <DATABASE_URL>`, `Content-Type: application/json`,
-and JSON body `{ "query": "<parameterized SQL>", "params": [] }`. Use bound
-parameters for subscriber values. Copy the secret `DATABASE_URL` into both
-the Vercel environment and the data repo's GitHub Actions secrets; never
-expose it to browser code or commit it. If this endpoint proves unreliable,
-ask the conductor before adding a driver dependency.
+The app and worker use the same `subscribers` schema. The data repository's
+`scripts/migrate_neon_to_sqlite.py` copies every Neon row, including
+non-consenting rows and alert state, into an **empty** SQLite target in one
+transaction; it refuses an empty source or a non-empty target. Run it only
+during the reviewed VPS cutover, after taking an off-host backup. Keep the
+Neon source unchanged until row counts and a real Telegram `/status` check are
+verified. Full ordered cutover/rollback steps are in
+`tipping-point-data/docs/VPS-SQLITE.md`.
 
 LGPD rules are unchanged: round coordinates to two decimal places, record
 the consent flag, and delete the subscriber row on `/parar`.
@@ -129,7 +103,7 @@ All runtime services must stay on free tiers; no paid plan is required.
   `GET` only from the app (no credentials in browser or server reads).
 - Vercel Hobby: set API routes' `maxDuration` within the plan's function
   duration limit.
-- Neon free: scales to zero and wakes on query; no keep-alive is needed.
+
 - Earthdata and Telegram Bot API: use their free access.
 
 ## Telegram webhook
@@ -204,10 +178,9 @@ until they exist.
 - Optional: `GEE_PROJECT` registered for the Earth Engine API with a service
   account, only if `GEE_ENABLED` is turned on.
 - Telegram bot token from BotFather.
-- Production only: infra creates a free Neon Postgres project with
-  `db/schema.sql` applied and server-only `DATABASE_URL` configured in Vercel
-  and GitHub Actions secrets. Local development uses automatic SQLite and
-  does not wait for Neon infrastructure.
+- Legacy Vercel webhook only: keep Neon Postgres and its server-only
+  `DATABASE_URL` until the reviewed VPS SQLite cutover finishes. Local
+  development uses automatic SQLite and does not wait for Neon infrastructure.
 - Neon Object Storage bucket `tipping-point-data` provisioned `public_read`
   (`neon.ts` is the declaration; `neon deploy`/`checkout` applies it) as the
   fallback remote; `NEON_S3_ENDPOINT` optional (built-in public URL otherwise).

@@ -54,13 +54,21 @@ export function depsFromEnv(): BotDeps {
         const sqlite = new SqliteStore(url ? url.slice(7) : ".data/tipping-point.sqlite");
         let selected: Promise<BotDeps["store"]> | undefined;
         const select = () => selected ??= sqlite.open().then(() => sqlite).catch(() => {
+          if (url) throw new Error("telegram store: configured SQLite unavailable");
           console.warn("telegram store: SQLite open failed; using process-local memory");
           return memoryStore;
         });
+        const withStore = async <T>(run: (db: BotDeps["store"]) => Promise<T>) => {
+          try {
+            return await run(await select());
+          } catch {
+            throw new Error("telegram store: configured SQLite unavailable");
+          }
+        };
         store = {
-          get: async (chatId) => (await select()).get(chatId),
-          set: async (chatId, sub) => (await select()).set(chatId, sub),
-          delete: async (chatId) => (await select()).delete(chatId),
+          get: (chatId) => withStore((db) => db.get(chatId)),
+          set: (chatId, sub) => withStore((db) => db.set(chatId, sub)),
+          delete: (chatId) => withStore((db) => db.delete(chatId)),
         };
       } else {
         store = new NeonStore(url);
