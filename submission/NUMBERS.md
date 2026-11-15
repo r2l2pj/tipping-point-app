@@ -36,3 +36,20 @@ cd ~/code/r2l2pj/tipping-point-app-wt/submission
 grep -rn -E "36%|36\.45|8\.8×|4%|4\.16|57%|2\.1×|81%|3\.0×|0\.18|0\.31|6\.6%|2\.2×|229,|1\.49|1,488|1,150|66\.7|44%|33%" \
   README.md submission/{project-page,slides-outline}.md ../../.crew/gallery/blurb.md
 ```
+
+## Uruguaiana (main case) — pick A or B at the 14:45 sync from lead-analysis's numbers
+
+Current text in the files = version A with [TBD]. NISAR pair Oct 24 → Nov 5, 2026 (HH + HV); Itaqui outside the swath. Never call the Sep 30 → Oct 12 pair NISAR.
+
+**A — the guard fix yields gated flood candidates** (fill km² and people from the published keys):
+- Page lead: "A NISAR pass pair (Oct 24 → Nov 5, 2026) mapped [km²] km² of flood candidates at Uruguaiana through cloud, home to about [people] people (Itaqui is outside that swath)."
+- Slide 4: "NISAR pass pair Oct 24 → Nov 5, 2026 (HH + HV) over the Uruguay River — flood candidates [km²] km², about [people] people inside; Itaqui is outside the swath"
+- Video C overlay: "Uruguay River · Uruguaiana · NISAR Oct 24 → Nov 5, 2026 · flood candidates"
+
+**B — no gated candidates** (only ungated darkening: 5.6 km² river corridor; 11.9 km² fields, possibly irrigation):
+- Page lead: "A NISAR pass pair (Oct 24 → Nov 5, 2026) shows radar darkening along the Uruguay River corridor at Uruguaiana through cloud (5.6 km², not yet a flood map); Itaqui is outside that swath."
+- Slide 4: "NISAR pass pair Oct 24 → Nov 5, 2026 (HH + HV): radar darkening along the Uruguay River corridor at Uruguaiana (5.6 km², not yet a flood map; another 11.9 km² of darkening over fields is possibly irrigation)"
+- Video C overlay: "Uruguay River · Uruguaiana · NISAR Oct 24 → Nov 5, 2026 · radar darkening, not yet a flood map"
+- Validation table: add a row "Uruguaiana NISAR pair (Oct 24 → Nov 5, 2026) | 5.6 km² darkening along the river corridor; 11.9 km² over fields | no gated flood candidates (the per-scene threshold did not fire); not yet a flood map"
+
+Both: VO beat C = "At Uruguaiana, NISAR saw the Uruguay River through cloud in late October." ("every 12 days" only with ≥ 3 NISAR dates). Re-check the summary stays ≤ 200 words.
