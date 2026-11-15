@@ -20,6 +20,18 @@ type M = Record<string, unknown>;
 
 const round = (v: unknown): string => (finite(v) ? String(Math.round(v)) : "not reported");
 
+// Share of the scene the optical sensor saw (100 - cloud %), as an integer
+// percent. metricsView already normalizes cloud_pct to 0-1, so 1 means 100%
+// cloud here; only a value > 1 can be a raw 0-100 metrics.json number (e.g.
+// 92.9) that skipped normalization — rescale it so it can never render as
+// -9189%. Out of range -> null: no "the optical saw" sentence.
+export function opticalSeenPct(cloudPct: unknown): number | null {
+  if (!finite(cloudPct)) return null;
+  const frac = cloudPct > 1 ? cloudPct / 100 : cloudPct;
+  if (frac < 0 || frac > 1) return null;
+  return Math.round((1 - frac) * 100);
+}
+
 // Lead time is never shown alone: median with IQR and n in one value.
 export function leadTimeText(m: M): string {
   const iqr = Array.isArray(m.lead_time_iqr_h) ? m.lead_time_iqr_h : [];
@@ -65,13 +77,18 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
     finite(m.warned_before_pct)
       ? { id: "warned", name: "Zones warned before the event", value: fmtPct(m.warned_before_pct), missing: false }
       : undefined);
-  optional("flood-agreement", "Flood agreement with the reference", "iou", () =>
-    finite(m.iou) || finite(m.f1)
-      ? {
-          id: "flood-agreement", name: "Flood agreement with the reference",
-          value: `IoU ${fmtScore(m.iou)} · F1 ${fmtScore(m.f1)}`, missing: false,
-        }
-      : undefined);
+  optional("flood-agreement", "Flood agreement with the reference", "iou", () => {
+    if (![m.iou, m.f1, m.precision, m.recall].some(finite)) return undefined;
+    const pr = [
+      finite(m.precision) ? `P ${fmtScore(m.precision)}` : undefined,
+      finite(m.recall) ? `R ${fmtScore(m.recall)}` : undefined,
+    ].filter(Boolean).join(" · ");
+    return {
+      id: "flood-agreement", name: "Flood agreement with the reference",
+      value: `IoU ${fmtScore(m.iou)} · F1 ${fmtScore(m.f1)}${pr ? ` · ${pr}` : ""}`,
+      missing: false,
+    };
+  });
   optional("catalog-hits", "Landslide catalog hits", "landslide_hit_pct", () =>
     finite(m.landslide_hit_pct)
       ? { id: "catalog-hits", name: "Landslide catalog hits", value: fmtPct(m.landslide_hit_pct), missing: false }
@@ -119,6 +136,10 @@ export interface Evidence {
   hasMetrics: boolean;
   floodStats: Stat[];
   floodNote: string;
+  // Secondary check: every OPERA water pixel incl. permanent water
+  // (iou_raw/f1_raw/precision_raw/recall_raw). Set only when a *_raw key
+  // exists; `diagnosis` is the pipeline's opera_fn_diagnosis text.
+  floodSecondary?: { line: string; diagnosis?: string };
   modelTitle: string;
   modelStats: Stat[];
   leadTime?: LeadTimeBlock; // hidden when the case has no metrics at all
@@ -182,25 +203,39 @@ function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
 export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
   const m = (bundle.metricsView ?? {}) as M;
   const peopleOfDay = bundle.metricsView ? count(day?.people_critical) : undefined;
-  const cloud = m.cloud_pct;
+  const optical = opticalSeenPct(m.cloud_pct);
+  const hasRaw = [m.iou_raw, m.f1_raw, m.precision_raw, m.recall_raw].some((v) => v != null);
   return {
     hasMetrics: !!bundle.metricsView,
+    // Headline: like-for-like NISAR new flood vs OPERA DSWx-S1 new flood.
     floodStats: [
       stat(bundle, "IoU", "iou", fmtScore),
       stat(bundle, "F1", "f1", fmtScore),
+      stat(bundle, "Precision", "precision", fmtScore),
+      stat(bundle, "Recall", "recall", fmtScore),
       stat(bundle, "Landslide catalog hits", "landslide_hit_pct", fmtPct),
       stat(bundle, "Hand validation", "hand_validation", fmtPct),
     ],
     floodNote:
-      "Scores are computed on clear-sky reference cells only — no cloud pixels are counted.",
+      typeof m.validation_method === "string" && m.validation_method
+        ? m.validation_method
+        : "Scores are computed on clear-sky reference cells only — no cloud pixels are counted.",
+    floodSecondary: hasRaw
+      ? {
+          line: `IoU ${fmtScore(m.iou_raw)} · F1 ${fmtScore(m.f1_raw)} · P ${fmtScore(m.precision_raw)} · R ${fmtScore(m.recall_raw)}`,
+          diagnosis:
+            typeof m.opera_fn_diagnosis === "string" && m.opera_fn_diagnosis
+              ? m.opera_fn_diagnosis : undefined,
+        }
+      : undefined,
     modelTitle: "Landslide model — learned vs manual slope rule",
     modelStats: [
       stat(bundle, "ML model AUC (XGBoost)", "rf_auc", fmtScore),
       stat(bundle, "Manual slope-rule AUC", "rule_auc", fmtScore),
     ],
     leadTime: leadTimeBlock(bundle, m),
-    whyRadar: finite(cloud)
-      ? `During the event the optical saw only ${Math.round((1 - cloud) * 100)}% of the scene — the rest was cloud. SAR sees through.`
+    whyRadar: optical != null
+      ? `During the event the optical saw only ${optical}% of the scene — the rest was cloud. SAR sees through.`
       : "Cloud cover during the event is not reported for this case — SAR sees through either way.",
     featureImportance:
       m.feature_importance && typeof m.feature_importance === "object"

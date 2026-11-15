@@ -31,9 +31,18 @@ export default function EvidenceDetails({
   return (
     <div className="mt-2 flex flex-col gap-3 border-t border-cc-line pt-2">
       <div>
-        <h3 className={h3}>Flood detection vs reference (NISAR/OPERA)</h3>
+        <h3 className={h3}>Flood detection vs reference (NISAR vs OPERA, new flood)</h3>
         <div className="mt-1"><StatGrid stats={e.floodStats} /></div>
         <p className="mt-1 text-xs text-cc-faint">{e.floodNote}</p>
+        {e.floodSecondary && (
+          <div className="mt-1 rounded-lg border border-cc-line p-2.5">
+            <p className="text-xs text-cc-muted">All water incl. permanent (secondary)</p>
+            <p className="mt-1 text-xs tabular-nums">{e.floodSecondary.line}</p>
+            {e.floodSecondary.diagnosis && (
+              <p className="mt-1 text-xs leading-snug text-cc-faint">{e.floodSecondary.diagnosis}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div>
