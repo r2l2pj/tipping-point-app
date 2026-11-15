@@ -1,6 +1,6 @@
 // Maps now/alerts.json candidates (NowAlertCandidate: class/label/centroid/
 // pixels/hold) onto the Alert card shape the /alerts page renders — the same
-// "Mensagem de alerta" format the Telegram bot sends (project doc v4). Pure
+// "Mensagem de alerta" format (project doc v4). Pure
 // helpers, no next/maplibre imports, so they run under `bun test`.
 
 import type { NowAlertCandidate } from "./contract";

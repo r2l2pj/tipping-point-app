@@ -22,9 +22,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # NEXT_PUBLIC_* are inlined into the browser bundle at build time.
 ARG NEXT_PUBLIC_REFRESH_HOURS=
-ARG NEXT_PUBLIC_TELEGRAM_BOT_URL=
 ENV NEXT_PUBLIC_REFRESH_HOURS=${NEXT_PUBLIC_REFRESH_HOURS} \
-    NEXT_PUBLIC_TELEGRAM_BOT_URL=${NEXT_PUBLIC_TELEGRAM_BOT_URL} \
     NEXT_TELEMETRY_DISABLED=1 \
     DATA_REPO=/nonexistent
 # prebuild (sync-data) finds no sibling data repo and keeps the committed

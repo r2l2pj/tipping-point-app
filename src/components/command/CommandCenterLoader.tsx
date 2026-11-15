@@ -300,7 +300,6 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
     <CommandCenter
       cases={featuredFirst(slim)}
       alertList={alertList}
-      botUrl={process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || undefined}
       fontClass={fontClass}
       initialCase={initialCase}
       initialDay={initialDay}

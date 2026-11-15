@@ -7,7 +7,6 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncE
 import { usePathname } from "next/navigation";
 import type { AlertCardData } from "@/lib/alerts";
 import EvidenceDetails from "./EvidenceDetails";
-import GetAlertsCard from "./GetAlertsCard";
 import LayersColumn from "./LayersColumn";
 import MapStage, { type CityPin, type MapFocus } from "./MapStage";
 import CityCard from "./CityCard";
@@ -57,7 +56,6 @@ import { useInsets } from "./useInsets";
 export interface CommandCenterProps {
   cases: CcBundle[];
   alertList: AlertList;
-  botUrl?: string;
   fontClass?: string;
   // `?case=<id|alias>` deep link: the case the screen opens on.
   initialCase?: string;
@@ -97,7 +95,6 @@ export default function CommandCenter(props: CommandCenterProps) {
 export function CommandCenterView({
   cases: rawCases,
   alertList,
-  botUrl,
   fontClass = "",
   initialCase,
   initialDay,
@@ -461,7 +458,6 @@ export function CommandCenterView({
               bundle={bundle}
               stepDate={step?.date}
             >
-              <GetAlertsCard botUrl={botUrl} />
             </PublicAlertsPanel>
           ) : (
             <>
@@ -488,7 +484,6 @@ export function CommandCenterView({
                     </dl>
                   )}
                 </div>}
-                  <GetAlertsCard botUrl={botUrl} />
                 </>
               )}
               {show("radar") && (

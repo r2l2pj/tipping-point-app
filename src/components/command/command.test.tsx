@@ -27,14 +27,12 @@ const render = (
   b: CcBundle | CcBundle[],
   initial: Partial<ScreenState> = {},
   view: "command" | "public" = "command",
-  alertList: AlertList = UNAVAILABLE,
-  botUrl?: string
+  alertList: AlertList = UNAVAILABLE
 ) =>
   renderToStaticMarkup(
     <CommandCenterView
       cases={Array.isArray(b) ? b : [b]}
       alertList={alertList}
-      botUrl={botUrl}
       view={view}
       onView={noop}
       initial={initial}
@@ -634,11 +632,9 @@ describe("public view (P1 to P5) and routes", () => {
     expect(later).not.toContain("more later in the replay");
   });
 
-  test("the Telegram card is hidden without a bot address and reads no location", () => {
-    expect(render(liveBundle(), {}, "public")).not.toContain("Telegram");
-    const html = render(liveBundle(), {}, "public", UNAVAILABLE, "https://t.me/example_bot");
-    expect(html).toContain('href="https://t.me/example_bot"');
-    expect(html).toContain("This page reads no location and stores nothing.");
+  test("no Telegram card or bot link on any view (L55: Telegram removed)", () => {
+    expect(render(liveBundle(), {}, "public")).not.toMatch(/Telegram|t\.me\//);
+    expect(render(liveBundle(), {}, "command")).not.toMatch(/Telegram|t\.me\//);
   });
 
   test("no case loaded: the screen says data is unavailable", () => {
