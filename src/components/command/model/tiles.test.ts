@@ -56,12 +56,13 @@ describe("tiles", () => {
     });
     const withMetrics = bundle({ ...withZones, metricsView: { critical_area_km2: 40, people_critical: 8400 } });
     expect(criticalAreaTile(withMetrics, "slide")).toMatchObject({ value: "40.0 km²", note: undefined });
-    expect(peopleTile(withMetrics).value).toBe("8,400");
+    expect(peopleTile(withMetrics).value).toBe("at least 8,400");
+    expect(peopleTile(withMetrics).title).toBe("GPW ~1 km resample, ~12% low");
   });
 
   test("people sum only when no Critical zone is null", () => {
     const all = bundle({ zones: zones([zone(1, { people: 300 }), zone(2, { people: 450 })]) });
-    expect(peopleTile(all)).toMatchObject({ value: "800", note: "in priority zones" });
+    expect(peopleTile(all)).toMatchObject({ value: "at least 750", note: "in priority zones" });
   });
 
   test("the tiles are dimmed, not recomputed, off the snapshot day", () => {
@@ -78,13 +79,13 @@ describe("tiles", () => {
     expect(criticalAreaTile(b, "flood", "2025-12-12", day)).toMatchObject({
       value: "120.0 km²", note: "flood <0.1 km² · landslide 100.0 km²", asOf: "Dec 12, 2025", dimmed: false,
     });
-    expect(peopleTile(b, "2025-12-12", day)).toMatchObject({ value: "5,300", asOf: "Dec 12, 2025" });
+    expect(peopleTile(b, "2025-12-12", day)).toMatchObject({ value: "at least 5,300", asOf: "Dec 12, 2025" });
     const bare = { ...day, critical_km2: undefined, people_critical: -2.3e38 };
     expect(criticalAreaTile(b, "slide", "2025-12-12", bare)).toMatchObject({
       value: "900.0 km²", asOf: "Dec 10, 2025", dimmed: true,
     });
     // A raster fill value is not a head count.
-    expect(peopleTile(b, "2025-12-12", bare).value).toBe("8,400");
+    expect(peopleTile(b, "2025-12-12", bare).value).toBe("at least 8,400");
   });
 
   test("now: values of the summary for the chosen hazard", () => {

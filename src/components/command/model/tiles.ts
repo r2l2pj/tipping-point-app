@@ -17,6 +17,7 @@ export interface Tile {
   note?: string; // for example "in priority zones"
   asOf?: string; // "as of <date>"
   dimmed: boolean; // the selected step is not the day of the snapshot
+  title?: string; // tooltip on the value
 }
 
 const snapshot = (bundle: CcBundle): { iso?: string; text?: string } => {
@@ -136,12 +137,23 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
     bundle.zones ? "critical_area_km2" : "priority_zones", zoneNote(bundle, critical.length));
 }
 
+// Conductor: replay counts come from GPW resampled to ~1 km, ~12% low —
+// shown as lower bounds ("at least 1,488,833"); Now counts stay exact.
+export const PEOPLE_LOWER_BOUND_TITLE = "GPW ~1 km resample, ~12% low";
+export const atLeast = (v: unknown): string => `at least ${Math.floor(Number(v)).toLocaleString("en-US")}`;
+
 export function peopleTile(bundle: CcBundle, stepDate?: string, day?: DayPoint, frame?: ManifestLayer): Tile {
   const label = "People potentially exposed";
+  const replay = bundle.mode === "replay";
+  const t = peopleTileRaw(bundle, stepDate, day, frame, label, replay ? atLeast : fmtPeople);
+  return replay && !t.missing ? { ...t, title: PEOPLE_LOWER_BOUND_TITLE } : t;
+}
+
+function peopleTileRaw(bundle: CcBundle, stepDate: string | undefined, day: DayPoint | undefined, frame: ManifestLayer | undefined, label: string,
+  fmtPeople: (v: unknown) => string): Tile {
   if (frame && bundle.mode === "replay") {
-    // Exact count, labelled an estimate (no silent rounding to hundreds).
-    const exact = (n: number) => `${Math.round(n).toLocaleString("en-US")} (estimate)`;
-    return frameTile(label, frame, count(frameField(frame, "people_critical")), exact);
+    // Exact count as a lower bound (no silent rounding to hundreds).
+    return frameTile(label, frame, count(frameField(frame, "people_critical")), (n) => fmtPeople(n));
   }
   if (bundle.mode === "live" && bundle.riskPaused) return pausedTile(label);
   // count() drops raster fill values and negatives: not data.
