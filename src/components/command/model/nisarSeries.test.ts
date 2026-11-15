@@ -264,3 +264,13 @@ test("replay radar card shows people in the flooded area when published (Uruguay
   expect(radarCard(uy).people).toEqual({ label: "People in the flooded area (estimate)", value: "28" });
   expect(radarCard(bundle({ metricsView: { flooded_km2: 28 } as never } as never)).people).toBeUndefined();
 });
+
+test("lead-analysis 1665f79: 'NISAR (GCOV provisional)' -> NISAR wording, headline says provisional", () => {
+  const L = (id: string, date: string) => ({ id, date, png: `rs_uruguai_2026/png/${id}.png`, bounds: [-57.08, -29.76, -57.0, -29.7], sensor: "NISAR (GCOV provisional)", source: "teammate" });
+  const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, metricsView: { flooded_km2: 1.817, people_flooded: 28, flood_source: "nisar" } as never,
+    manifest: { event: "rs_uruguai_2026", layers: [L("radar_post", "2026-10-12"), L("radar_pre", "2026-09-30")] } } as never);
+  const card = radarCard(uy);
+  expect(card.headline).toBe("NISAR pair available (provisional GCOV)");
+  expect(card.compare.pair!.before.label).toBe("NISAR radar before — Sep 30, 2026");
+  expect(card.flooded!.label).toBe("Flooded area (NISAR)");
+});
