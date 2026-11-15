@@ -91,3 +91,11 @@ describe("served T_ML model first (lead-analysis review)", () => {
     expect(v.where!.baseLine).toBe("Base rate 2.2% (45 of 2,039 test samples)");
   });
 });
+
+describe("lead-ml ea5b2cd: served label and calibration note", () => {
+  test("label reads the served model once; the calibration note is plain", () => {
+    const v = buildMlView(read("ml_card.json"), "rs_2024", "xgb_terrain_landcover")!;
+    expect(v.where!.rows[0].label).toBe("XGBoost terrain + land cover — the model on the map");
+    expect(v.calibrationNote).toContain("Before calibration the models rank in a different order");
+  });
+});

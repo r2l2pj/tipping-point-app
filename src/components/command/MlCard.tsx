@@ -112,6 +112,7 @@ export default function MlCard({ ml }: { ml: MlView }) {
         <div className="mt-2 border-t border-cc-rule pt-1.5">
           <p className="font-semibold">Where: landslide-prone ground (T_ML susceptibility)</p>
           <div className="mt-1"><Table t={ml.where} caption="TEST blocks" /></div>
+          {ml.calibrationNote && <p className="mt-1 text-cc-muted">{ml.calibrationNote}</p>}
           {ml.split3a && <p className="mt-1 text-cc-faint">TEST: {ml.split3a}</p>}
         </div>
       )}

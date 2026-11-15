@@ -62,6 +62,9 @@ export interface MlView {
   eventId?: string;
   // TEST events present in by_event (e.g. rs_2024, wa_2025).
   testEvents: string[];
+  // lead-ml's t_ml_ranking_note is present: the 'where' scores are the
+  // calibrated (served) ones; before calibration the models rank differently.
+  calibrationNote?: string;
 }
 
 // lead-ml's caveats, in plain words (conductor). The event list and the
@@ -132,7 +135,9 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
   const tml = isRecord(card.t_ml) ? card.t_ml : undefined;
   const served = servedModel && tml && isRecord(tml[servedModel]) ? servedModel : undefined;
   if (served) {
-    labels[served] = `${labels[served] ?? served.replace(/_/g, " ")} — the model on the map`;
+    const base = labels[served] ?? served.replace(/_/g, " ");
+    // lead-ml's own label may already say "(served T_ML)".
+    labels[served] = /served/i.test(base) ? base.replace(/\(served T_ML\)/i, "— the model on the map") : `${base} — the model on the map`;
   }
   // The served model replaces xgb_all (not served); random forest and the
   // slope rule stay as comparisons on the same TEST blocks (conductor).
@@ -172,6 +177,9 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
     when,
     event,
     eventId: caseId && Object.keys(event).length ? caseId : undefined,
+    calibrationNote: typeof card.t_ml_ranking_note === "string"
+      ? "Scores of the calibrated models, as served on the map. Before calibration the models rank in a different order (calibration ties lower PR-AUC)."
+      : undefined,
     testEvents: [...new Set(horizons.flatMap((h) => sources.flatMap((s) => {
       const b = (trig[h] as M)[s];
       const x = isRecord(b) && isRecord(b.xgb_all) && isRecord((b.xgb_all as M).by_event) ? (b.xgb_all as M).by_event as M : {};
