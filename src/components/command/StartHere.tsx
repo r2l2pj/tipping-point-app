@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { canonicalCaseId } from "@/lib/contract";
 import type { Action } from "./state";
 import type { CcBundle } from "./model/types";
+import { nisarNoFlood } from "./model/radar";
 
 // "Start here" (judge report #6, conductor): four stops that show the
 // project in under a minute. Each one sets case, day, hazard and layers in
@@ -37,7 +38,9 @@ export function tourStops(cases: readonly CcBundle[]): TourStop[] {
   });
   if (live) stops.push({
     key: "now",
-    what: "Today's NISAR radar flood candidates, risk and public alerts (every 3 h)",
+    what: nisarNoFlood(live)
+      ? "Latest NISAR pass: no new flooding detected — plus today's risk and public alerts (every 3 h)"
+      : "Today's NISAR radar flood candidates, risk and public alerts (every 3 h)",
     action: { type: "goTo", id: live.id },
   });
   if (rs) stops.push({

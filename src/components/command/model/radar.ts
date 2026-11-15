@@ -211,6 +211,16 @@ export interface RadarCard {
   hypothesisLine?: string; // L42: lead-analysis double-bounce test, when supported
 }
 
+// Conductor: the live NISAR pass may find nothing (lead-analysis R2 fix can
+// publish 0 candidates with a reason) — then the card says so, with the
+// dates and the pass list, and never offers an empty map zoom for NISAR.
+export function nisarNoFlood(bundle: CcBundle): boolean {
+  if (bundle.mode !== "live" || !bundle.response) return false;
+  const r3 = bundle.responseSources?.find((x) => /nisar/i.test(x.source));
+  const zero = (v: unknown) => finite(v) && v === 0;
+  return r3 ? zero(r3.flooded_km2) || zero(r3.features) : zero(bundle.response.flooded_km2) || zero(bundle.response.polygons);
+}
+
 // Live case with a published radar response (lead-live R2).
 function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
   const r = bundle.response!;
@@ -227,6 +237,21 @@ function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
   const age = finite(r.latency_h)
     ? ` Newest pair published ${Math.round(r.latency_h)} h after the radar pass.`
     : "";
+  if (nisarNoFlood(bundle)) {
+    const pre = r.pre_acquired ?? (bundle.data_dates?.nisar_pre as string | undefined);
+    const post = r.post_acquired ?? (bundle.data_dates?.nisar_post as string | undefined);
+    const dates = pre && post ? ` (${fmtDate(pre)} → ${fmtDate(post)})` : post ? ` (${fmtDate(post)})` : "";
+    const reason = reasonOf("flooded_km2") ?? reasonOf("polygons");
+    return {
+      ...base,
+      headline: `No new flooding detected in the latest NISAR pass${dates}`,
+      flooded: { label: RESPONSE_AREA_LABEL, value: "none detected" },
+      people: undefined,
+      note: reason ? `${reason}.${age}` : `${RESPONSE_NOTE}${age}`,
+      limitation: undefined,
+      canShowOnMap: false,
+    };
+  }
   return {
     ...base,
     flooded: { label: RESPONSE_AREA_LABEL, value: value("flooded_km2", fmtKm2) },

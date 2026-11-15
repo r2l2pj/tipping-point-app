@@ -99,3 +99,24 @@ test("L42 hypothesis line from lead-analysis nisar_hypothesis.json (supported on
   expect(hypothesisLine(bundle({ nisarHypothesis: slimHypothesis({ ...raw, verdict: "not supported" }) } as never))).toBeUndefined();
   expect(hypothesisLine(bundle())).toBeUndefined();
 });
+
+describe("live NISAR finds nothing (conductor: R2 may publish 0 candidates)", () => {
+  test("card says so with the pair dates, no NISAR zoom; tour stop 2 says so too", async () => {
+    const { nisarNoFlood } = await import("./radar");
+    const { tourStops } = await import("../StartHere");
+    const live = liveBundle({
+      response: { source: "nisar-gcov", flooded_km2: 0, polygons: 0, pre_acquired: "2026-10-25", post_acquired: "2026-11-06",
+        null_reasons: { flooded_km2: "no new low-backscatter water on low ground in the latest pair" } },
+      responseSources: [{ source: "nisar-gcov", flooded_km2: 0, features: 0 }],
+    } as never);
+    expect(nisarNoFlood(live)).toBe(true);
+    const card = radarCard(live);
+    expect(card.headline).toBe("No new flooding detected in the latest NISAR pass (Oct 25, 2026 → Nov 6, 2026)");
+    expect(card.flooded!.value).toBe("none detected");
+    expect(card.canShowOnMap).toBe(false);
+    expect(card.note).toContain("no new low-backscatter water");
+    expect(tourStops([live])[0].what).toContain("Latest NISAR pass: no new flooding detected");
+    const some = liveBundle({ response: { source: "nisar-gcov", flooded_km2: 2.3 }, responseSources: [{ source: "nisar-gcov", flooded_km2: 2.3, features: 4 }] } as never);
+    expect(nisarNoFlood(some)).toBe(false);
+  });
+});
