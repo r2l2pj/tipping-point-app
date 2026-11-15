@@ -39,7 +39,7 @@
 - *Visual:* NISAR before/after swipe still + a 4-row metrics table
 
 ## Slide 6 — Impact + honest limitations
-- Impact: WA about 1,150 people inside the NISAR flood candidates; more than 229,000 in index-critical areas and night-light drop 44% (Dec 12, 2025); RS at least 1.49 million in index-critical areas + 33% (peak day May 3, 2024) — people are lower bounds (population resample reads ~12% low), night lights indicative only (cloud/snow)
+- Impact: WA about 1,150 people inside the NISAR flood candidates; 254,263 in index-critical areas and night-light drop 44% (Dec 12, 2025); RS 1,681,783 in index-critical areas + 33% (peak day May 3, 2024) — night lights indicative only (cloud/snow)
 - Limitations: Thresholds are not yet calibrated for Brazil; validated on 2 replay events + 11 disaster events for the ML; IMERG/SMAP inputs ~10 km; NISAR revisits every 12 days; GFS under-forecast the RS peak by about half; official warnings still came before the index
 - The video demo is a replay; the live view covers Southern Brazil every 3 h. The replay forecast is NOAA GFS as issued at the time (our only non-NASA input) — perfect-forecast frames appear only as a labelled upper bound
 - Landslides are **candidates only**, never confirmed — no GUNW pair spans the WA event

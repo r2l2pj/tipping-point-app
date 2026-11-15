@@ -16,10 +16,11 @@ Legend for "where": P = `project-page.md` (summary / validation table / text), R
 | EMS flood IoU 0.18 (0.185) · F1 0.31 · P 0.46 · R 0.24 (May 6, observed) | `rs_2024.flood_ems_iou`, `_f1`, `_precision`, `_recall` | P, R, S5, D |
 | EMS flood pre-onset 0.21% observed / 6.6% GFS (6.56) in 2.9% area (2.94) → 2.2× (2.23) | `rs_2024.flood_ems_flagged_before_onset_pct`, `…_area_share_pct`, `…_lift` (observed: see `flood_ems` object) | P, R, S5 |
 | WA flood 0 / 0 / 0.14% (24 / 48 / 72 h) | `wa_2025.flood_warned_gfs_{24,48,72}h_pct` | P table + Limitations, R, S5 |
-| WA people in index-critical areas more than 229,000 (229,782, Dec 12) | `wa_2025.people_critical` (+ series peak day) | P summary + table, S5/S6, D |
-| RS people in index-critical areas at least 1.49 million (1,488,833, May 3) — becomes ~1.68 M exact on the native grid; then drop "at least" and the ~12% caveat | series peak row / `rs_2024` people key (ask lead-analysis) | P table + Limitations, S6, D |
+| WA people in index-critical areas 254,263 (Dec 12; native grid, data 3f7a5ab) | `wa_2025.people_critical` | P summary + table, S6, D |
+| RS people in index-critical areas 1,681,783 (May 3; native grid, data 3f7a5ab) | `rs_2024.people_critical` | P table, S6, D |
 | WA people inside NISAR flood candidates about 1,150 (1150.9) | `wa_2025.people_flooded` | P summary + table, S5/S6, B, D |
 | WA landslide inventory 66.7% of 15 (WGS, peak day) | `wa_2025.landslide_hit_pct` | P table, R |
+| Alarm precision RS 33.7% (327/971) vs 24.9% (1.35×) · WA 19.7% (13/66) vs 10.0% (1.97×) | `<case>.alarm_precision_critical_pct`, `_n_hits`, `_n_alarms`, `alarm_baseline_pct`, `alarm_lift` | P table |
 | Night-light drop WA 44% · RS 33% | `night_lights` keys | P table, S6, D |
 | ML: ROC 0.93 median / 9 events / ~4–5 alarm-days | `docs/science-review/07-overfit-audit.md` | P, R, S3 |
 | WA forecast proof: GFS issued Dec 3 → Critical landslide risk Dec 6 | replay frame `tpi_slide_gfs_d3_20251206` (check it is still Critical) | P Forecast line, S5, V beat D, D |
