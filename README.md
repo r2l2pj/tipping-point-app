@@ -1,3 +1,5 @@
+> **Moved to https://github.com/r2l2pj/tipping-point (`app/`).** This repository is frozen; the app and its history now live in the `app/` folder there.
+
 # tipping-point-app
 
 Fullstack app for **Tipping Point** — NASA Space Apps Challenge 2026,
