@@ -113,7 +113,8 @@ Taquari valley only, 5 map areas, 32 km²; Porto Alegre was not mapped by EMS),
 the flood index at High or above with observed rain on May 6, 2024 scores
 IoU 0.18, F1 0.31, precision 0.46, recall 0.24. That is agreement during the
 flood, not a warning: before the onset only 0.21% (observed rain) / 6.6% (NOAA
-GFS forecast) of that flooded area was flagged.
+GFS forecast) of that flooded area was flagged, while that
+forecast flagged 2.9% of the EMS areas (2.2× chance).
 
 **NISAR time series (Washington, HH).** Over three passes the flood candidates
 read −9.7 dB (Nov 10) → −9.7 dB (Dec 4) → −16.2 dB (Dec 16): stable for a
@@ -133,7 +134,7 @@ land-cover-aware detection. Data: `data/wa_2025/nisar_hypothesis.json`
 
 **Landslides: inventories.**
 - Rio Grande do Sul 2024: UFRGS/Cemaden inventory, 16,027 mapped landslide
-  points. Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%). Earlier runs (issued 51 and 75 hours before) showed 0%.
+  points. Using only the forecast available at the time, 36% of the 16,027 mapped landslides were already in High or Critical areas 27 hours before the first deaths (Critical: 2%), while that forecast flagged only 4.2% of the 31,972 km² case area (8.8× better than chance; Critical 6.4×). Earlier runs (issued 51 and 75 hours before) showed 0%.
   The run issued Apr 28, 2024 put 36.45% of points in High or Critical
   cells (Critical 1.87%); the runs issued Apr 27 and Apr 26 put 0%; observed
   rain on Apr 28 put 0.25%. Onset = the first deaths, Apr 29, 2024 00:00 BRT
@@ -143,10 +144,10 @@ land-cover-aware detection. Data: `data/wa_2025/nisar_hypothesis.json`
   candidates: 2,849 (20.0 km²); 46% of inventory points lie within 500 m of
   one.
 - Rio Grande do Sul 2024, Copernicus EMS EMSR720 landslide polygons (497,
-  Taquari valley only, undated): 81% touched a High-or-above cell in the GFS run
-  issued 27 h before the first deaths (Critical 20.7%); runs issued 51 and 75 h
-  before: 0%. A polygon counts when any ~90 m cell it touches is High+ (centroid
-  cell only: 56.9%). Scar candidates vs these polygons: 3.3× a random
+  Taquari valley only, 258 km², undated): scored at each slide's centre cell,
+  57% fell in High-or-above cells of the GFS run issued 27 h before the first
+  deaths, which flagged 27% of that area (2.1× chance); counting any ~90 m cell
+  a slide touches, 81% (3.0×). Runs issued 51 and 75 h before: 0%. Scar candidates vs these polygons: 3.3× a random
   steep-terrain baseline at 100 m, only 1.1× at 500 m.
 - Washington 2025: Washington Geological Survey landslide inventory (licence to confirm), 15 points; 66.7%
   fall in Critical cells on the peak day (Dec 12, 2025). The points are
