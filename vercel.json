@@ -3,7 +3,8 @@
   "git": {
     "deploymentEnabled": {
       "**": false,
-      "main": true
+      "main": true,
+      "feat/uruguai-case": true
     }
   },
   "ignoreCommand": "BASE=${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}; git diff --quiet $BASE HEAD -- . ':(exclude)submission' ':(exclude)docs' ':(exclude)*.md' ':(exclude).crew' ':(exclude).herdr'"
