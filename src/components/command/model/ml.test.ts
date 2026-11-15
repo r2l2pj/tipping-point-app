@@ -109,3 +109,11 @@ describe("ML v2: horizons from the export", () => {
     expect(v.lowSkill).toEqual(["7d"]);
   });
 });
+
+describe("ML v2 caveat wording", () => {
+  test("more TEST events than RS + WA: no 'ONE event' claim, the count instead", () => {
+    const c = mlCaveats({ testEvents: ["ev_a", "rs_2024", "wa_2025"], lowSkill: [] } as never);
+    expect(c[0]).toBe("The TEST covers 3 events the models never saw; with this few events the scores can still move.");
+    expect(c.join(" ")).not.toContain("ONE event");
+  });
+});

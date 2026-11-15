@@ -85,9 +85,13 @@ export function mlCaveats(v: MlView): string[] {
   const ev = v.testEvents;
   const rs = ev.includes("rs_2024");
   const wa = ev.includes("wa_2025");
-  const tested = rs && wa
+  // ML v2 re-scores on more events: the "one event" wording only fits the
+  // v1 TEST set (exactly RS 2024 + WA 2025).
+  const tested = rs && wa && ev.length === 2
     ? "The TEST is essentially ONE event — Rio Grande do Sul, May 2024 — plus 8 dated landslide reports from Washington 2025: few events, so these scores can move a lot."
-    : ev.length
+    : ev.length > 2
+      ? `The TEST covers ${ev.length} events the models never saw; with this few events the scores can still move.`
+      : ev.length
       ? `The TEST covers only ${ev.length} event${ev.length === 1 ? "" : "s"}: few events, so these scores can move a lot.`
       : "The TEST covers few events: these scores can move a lot.";
   const out = [
