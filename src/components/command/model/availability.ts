@@ -48,9 +48,13 @@ export function hasNisarPair(bundle: CcBundle): boolean {
   const dd = bundle.data_dates ?? {};
   if (typeof dd.nisar_pre === "string" && typeof dd.nisar_post === "string") return true;
   const layers = bundle.manifest?.layers ?? [];
-  const pre = layers.find((l) => l.id === "nisar_pre");
-  const post = layers.find((l) => l.id === "nisar_post");
-  return Boolean(pre && post && (pre.png || pre.cog) && (post.png || post.cog));
+  // lead-analysis: a non-NISAR radar pair is published as radar_pre/radar_post.
+  const ok = (a: string, b: string) => {
+    const pre = layers.find((l) => l.id === a);
+    const post = layers.find((l) => l.id === b);
+    return Boolean(pre && post && (pre.png || pre.cog) && (post.png || post.cog));
+  };
+  return ok("nisar_pre", "nisar_post") || ok("radar_pre", "radar_post");
 }
 
 export function availability(bundle: CcBundle, key: string): Availability {

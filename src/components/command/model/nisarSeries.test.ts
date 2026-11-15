@@ -238,3 +238,14 @@ describe("conductor blocker: 'NISAR' only for NISAR data (layer sensor field)", 
     expect(st.frames["2026-11-05"].HH!.label).toBe("NISAR radar HH — Nov 5, 2026");
   });
 });
+
+test("lead-analysis 8212136: v0 renamed radar_pre/radar_post + sensor -> 'Radar' pair works", () => {
+  const L = (id: string, date: string) => ({ id, date, png: `rs_uruguai_2026/png/${id}.png`, bounds: [-57.08, -29.76, -57.0, -29.7], sensor: "unconfirmed (likely Sentinel-1)", source: "teammate" });
+  const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, metricsView: { flooded_km2: 1.817, flood_source: "radar" } as never,
+    manifest: { event: "rs_uruguai_2026", layers: [L("radar_post", "2026-10-12"), L("radar_pre", "2026-09-30")] } } as never);
+  const card = radarCard(uy);
+  expect(card.pair).toBe(true);
+  expect(card.headline).toBe("Radar pair available — sensor unconfirmed (likely Sentinel-1)");
+  expect(card.dates).toBe("Sep 30, 2026 → Oct 12, 2026");
+  expect(card.compare.pair!.before).toMatchObject({ url: "/data/rs_uruguai_2026/png/radar_pre.png", label: "Radar before — Sep 30, 2026" });
+});

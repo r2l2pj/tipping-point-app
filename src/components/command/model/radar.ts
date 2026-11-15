@@ -100,7 +100,7 @@ const sensorOf = (l: unknown): string | undefined => {
 export const sensorName = (s?: string): string => (!s || /^nisar\b/i.test(s) ? "NISAR radar" : "Radar");
 export function radarSensor(bundle: CcBundle): RadarSensor {
   const layers = bundle.manifest?.layers ?? [];
-  const radarLayers = layers.filter((l) => /^nisar_(pre|post|hv_pre|hv_post)$/.test(l.id) ||
+  const radarLayers = layers.filter((l) => /^(nisar|radar)_(pre|post|hv_pre|hv_post)$/.test(l.id) ||
     (l as unknown as Record<string, unknown>).kind === "nisar_frame");
   const other = radarLayers.map(sensorOf).find((s) => s && !/^nisar\b/i.test(s));
   return other ? { nisar: false, name: "Radar", note: other } : { nisar: true, name: "NISAR radar" };
@@ -176,9 +176,13 @@ export function radarCompare(bundle: CcBundle): CompareOption {
   const n = radarSensor(bundle).name;
   const hv = pairFor(bundle, "radar", "nisar_hv_pre", "nisar_hv_post", n,
     { before: `${n} before (HV)`, after: `${n} after (HV)` }).pair;
-  const hh = pairFor(bundle, "radar", "nisar_pre", "nisar_post", n,
-    hv ? { before: `${n} before (HH)`, after: `${n} after (HH)` }
-      : { before: `${n} before`, after: `${n} after` });
+  const labels = hv ? { before: `${n} before (HH)`, after: `${n} after (HH)` } : { before: `${n} before`, after: `${n} after` };
+  const nisarHh = pairFor(bundle, "radar", "nisar_pre", "nisar_post", n, labels);
+  // A non-NISAR pair (lead-analysis radar_pre/radar_post) when no NISAR pair.
+  const hh = nisarHh.pair ? nisarHh : (() => {
+    const r = pairFor(bundle, "radar", "radar_pre", "radar_post", n, labels);
+    return r.pair ? r : nisarHh;
+  })();
   let withHv: CompareOption = hh.pair && hv ? { ...hh, pair: { ...hh.pair, hv: { before: hv.before, after: hv.after } } } : hh;
   if (stack) {
     // Frames only (no fixed pair): the swipe starts on the first and last date.
@@ -399,7 +403,7 @@ export function radarCard(bundle: CcBundle): RadarCard {
 function baseRadarCard(bundle: CcBundle): RadarCard {
   const dd = bundle.data_dates ?? {};
   // data_dates first; else the NISAR layers' own dates (Uruguay v0 has none).
-  const layerDate = (id: string) => bundle.manifest?.layers?.find((l) => l.id === id)?.date ?? null;
+  const layerDate = (id: string) => bundle.manifest?.layers?.find((l) => l.id === id || l.id === id.replace(/^nisar_/, "radar_"))?.date ?? null;
   const stack = nisarStack(bundle);
   const pre = typeof dd.nisar_pre === "string" ? dd.nisar_pre : layerDate("nisar_pre") ?? stack?.dates[0] ?? null;
   const post = typeof dd.nisar_post === "string" ? dd.nisar_post : layerDate("nisar_post") ?? stack?.dates[stack.dates.length - 1] ?? null;
