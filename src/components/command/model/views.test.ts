@@ -25,3 +25,16 @@ test("headline: total people in High/Critical cells and the top municipality", (
   expect(h.text).toMatch(/^Today & tomorrow: [\d,]+ people in High or Critical risk areas · most in .+ \([A-Z]{2}\)$/);
   expect(headlineFor({ dates: [], places: [] })).toBeUndefined();
 });
+
+test("timeline_marks from the metrics become timeline marks (event red, nisar blue, signal amber)", async () => {
+  const { stepMarks } = await import("./steps");
+  const steps = ["2026-09-30", "2026-10-05", "2026-10-12"].map((date, index) => ({ index, date, forecast: false, top: date, sub: "" }));
+  const b = { id: "rs_uruguai_2026", mode: "replay", bbox: [0, 0, 1, 1], metricsView: { timeline_marks: [
+    { date: "2026-09-30", label: "local flood index Critical over the river corridor", kind: "signal" },
+    { date: "2026-10-05", label: "Uruguaiana above flood stage 8.50 m", kind: "event" },
+    { date: "2026-10-12", label: "NISAR pass", kind: "nisar" },
+    { date: "2026-11-05", label: "outside the steps", kind: "nisar" },
+  ] } } as never;
+  const m = stepMarks(b, steps as never);
+  expect(m.map((x) => [x.index, x.color])).toEqual([[0, "amber"], [1, "red"], [2, "blue"]]);
+});

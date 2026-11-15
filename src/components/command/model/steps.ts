@@ -164,8 +164,8 @@ export function timelineForecastTag(bundle: CcBundle): string {
 
 export interface StepMark {
   index: number;
-  label: "first Critical" | "first damage";
-  color: "amber" | "red";
+  label: string; // "first Critical", "first damage", or a data timeline mark
+  color: "amber" | "red" | "blue";
 }
 
 // Marks of the old timeline: first day at or above the threshold, and the
@@ -184,6 +184,19 @@ export function stepMarks(bundle: CcBundle, steps: Step[]): StepMark[] {
   if (typeof at === "string") {
     const i = steps.findIndex((s) => s.date.slice(0, 10) === at.slice(0, 10));
     if (i >= 0) marks.push({ index: i, label: "first damage", color: "red" });
+  }
+  // lead-analysis timeline_marks [{date, label, kind: event|nisar|signal}]
+  // (Uruguaiana: flood stage, crest, displaced, NISAR passes, index signal).
+  const tm = m?.timeline_marks;
+  if (Array.isArray(tm)) {
+    for (const x of tm) {
+      if (!x || typeof x !== "object") continue;
+      const { date, label, kind } = x as Record<string, unknown>;
+      if (typeof date !== "string" || typeof label !== "string" || !label.trim()) continue;
+      const i = steps.findIndex((s) => s.date.slice(0, 10) === date.slice(0, 10));
+      if (i < 0) continue;
+      marks.push({ index: i, label: plainText(label.trim()), color: kind === "nisar" ? "blue" : kind === "event" ? "red" : "amber" });
+    }
   }
   return marks;
 }
