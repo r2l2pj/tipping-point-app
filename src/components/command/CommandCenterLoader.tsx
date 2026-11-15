@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { canonicalCaseId } from "@/lib/contract";
-import { getAlerts, getCaseBundle, getEventsIndex, getRootManifest } from "@/lib/data";
+import { getAlerts, getCaseBundle, getEventsIndex, getMlArtifacts, getRootManifest } from "@/lib/data";
+import { resolveAsset } from "@/lib/contract";
+import type { ManifestLayer } from "@/lib/types";
+import { buildMlView, groupImportance } from "./model/ml";
 import CommandCenter from "./CommandCenter";
 import { alertsPaused, buildAlertList, capAlertList, observedRows, pausedAlertList, runVerified } from "./model/alerts";
 import { nisarPasses, PASSES_SHOWN } from "./model/radar";
@@ -59,18 +62,65 @@ const slimZones = (fc: CcBundle["zones"]): CcBundle["zones"] =>
     })),
   };
 
+// Layer fields the screen never reads: the per-layer legend, `kind`, and
+// `forecast_source` on GFS frames (isGfsFrame knows them by id).
+const GFS_ID = /_gfs_d[1-3]$/;
+function slimLayer(layer: NonNullable<CcBundle["manifest"]>["layers"][number]) {
+  const { legend: _legend, ...rest } = layer as typeof layer & { kind?: unknown };
+  const out = { ...rest } as Record<string, unknown>;
+  delete out.kind;
+  if (GFS_ID.test(layer.id)) delete out.forecast_source;
+  return out as unknown as typeof layer;
+}
+
+// T_ML (lead-ml ml/t_ml.json): one static layer, added as manifest layer
+// `t_ml` to every case its bounds overlap (RS Serra region). The PNG path is
+// relative to the data root, so it is resolved here to an absolute URL.
+function tmlLayer(desc: unknown, base: string | undefined): ManifestLayer | undefined {
+  if (!isRecord(desc) || typeof desc.png !== "string" || !Array.isArray(desc.bounds_lonlat)) return undefined;
+  const b = desc.bounds_lonlat as number[];
+  if (b.length !== 4 || !b.every((v) => typeof v === "number" && Number.isFinite(v))) return undefined;
+  const png = base ? resolveAsset(base, "", desc.png) ?? desc.png : desc.png;
+  return { id: "t_ml", png, bounds: [b[0], b[1], b[2], b[3]] } as ManifestLayer;
+}
+
+const overlaps = (a: number[], b: number[]) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
+
+function withMl(bundle: CcBundle, ml: Awaited<ReturnType<typeof getMlArtifacts>> | null): CcBundle {
+  if (!ml) return bundle;
+  let out = bundle;
+  const tml = tmlLayer(ml.tml, ml.base);
+  if (tml && bundle.manifest && overlaps(bundle.bbox, tml.bounds as number[]) &&
+      !bundle.manifest.layers.some((l) => l.id === "t_ml")) {
+    out = { ...out, manifest: { ...bundle.manifest, layers: [...bundle.manifest.layers, tml] } };
+  }
+  if (bundle.mode === "replay") {
+    const view = buildMlView(ml.card, canonicalCaseId(bundle.id));
+    const imp = groupImportance(ml.importance);
+    out = { ...out, ...(view ? { ml: view } : {}), ...(imp ? { mlImportance: imp } : {}) };
+  }
+  return out;
+}
+
 // The bundle as the browser needs it (A10 page budget).
 function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
   const manifest = bundle.manifest
-    ? { ...bundle.manifest, layers: bundle.manifest.layers.map(({ legend: _legend, ...l }) => l) }
+    ? { ...bundle.manifest, layers: bundle.manifest.layers.map(slimLayer) }
     : undefined;
   const zones = slimZones(bundle.zones);
-  if (!isLive) return { ...bundle, manifest, zones };
+  // The raw metrics blob duplicates metricsView; the screen reads only its
+  // `_null_reasons` (availability.nullReason).
+  const rawMetrics = bundle.metrics as unknown as Record<string, unknown> | undefined;
+  const metrics = rawMetrics && typeof rawMetrics === "object"
+    ? ({ _null_reasons: rawMetrics._null_reasons } as unknown as CcBundle["metrics"])
+    : bundle.metrics;
+  if (!isLive) return { ...bundle, manifest, zones, metrics };
   const passes = nisarPasses(bundle);
   return {
     ...bundle,
     manifest,
     zones,
+    metrics,
     // The observed list (97 entries on 2026-11-15) is reduced here to the
     // per-source cards the public view shows; the raw list stays server-side.
     observedSummary: observedRows(bundle),
@@ -89,9 +139,10 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
   const search = await searchParams;
   const initialCase = search?.case;
   const initialDay = search?.day || undefined;
-  const [index, root] = await Promise.all([
+  const [index, root, mlArtifacts] = await Promise.all([
     getEventsIndex().catch(() => null),
     getRootManifest().catch(() => undefined),
+    getMlArtifacts().catch(() => null),
   ]);
   // All bundles load in parallel: a slow case must not serialize the page
   // stream. A single bad case must not blank the whole screen: skip it.
@@ -126,7 +177,7 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
   // map, no risk numbers; radar observations stay.
   const riskPaused = !runVerified(liveNode(root, now?.manifest));
   const slim = cases.map((c) => {
-    const b = toClientBundle(c, c === live);
+    const b = toClientBundle(withMl(c, mlArtifacts), c === live);
     return c === live && riskPaused ? { ...b, riskPaused: true } : b;
   });
 

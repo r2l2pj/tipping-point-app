@@ -4,6 +4,7 @@
 import { alertDataDates, candidatesToAlerts, type AlertCardData } from "@/lib/alerts";
 import type { AlertsFile } from "@/lib/types";
 import { finite, fmtBrt, fmtKm2 } from "./format";
+import { gfsIssuedText } from "./steps";
 import type { CcBundle } from "./types";
 
 export type AlertListState = "alerts" | "none" | "unavailable" | "paused";
@@ -60,6 +61,8 @@ export function buildAlertList(input: {
       places: now.places ?? now.municipalities,
       issuedAt: dataTime,
       dataDates: alertDataDates(now.data_dates),
+      // The today/d1 frames carry NOAA GFS forecast rain (L28b).
+      forecastBasis: typeof now.data_dates?.forecast_from === "string" ? gfsIssuedText(now) : undefined,
     });
     return alerts.length
       ? { state: "alerts", alerts: sortAlerts(alerts), dataTime }
@@ -91,6 +94,7 @@ export function alertsPaused(node: Record<string, unknown> | undefined, env = pr
 // else the NISAR response summary. Observations, never alerts: no level.
 export interface ObservedRow {
   key: string;
+  hazard?: "flood" | "landslide"; // section: radar flood, or optical scar candidates
   source: string; // "NISAR radar"
   places: string; // "Cananéia, SP · Iguape, SP · Registro, SP and 4 more"
   acquired?: string; // formatted newest pass
@@ -102,6 +106,9 @@ export interface ObservedRow {
 export const OBSERVED_TITLE = "Observed by radar (candidates)";
 export const OBSERVED_NOTE =
   "Flood seen by satellite between two passes — candidates, not yet checked on the ground. Not an alert.";
+export const LANDSLIDE_OBSERVED_TITLE = "Landslide scar candidates (OPERA DIST-ALERT-HLS)";
+export const LANDSLIDE_OBSERVED_NOTE =
+  "Vegetation loss on steep slopes seen by optical satellite — candidates, never confirmed. Outside a rain event it is mostly forestry harvest or fire; the product is published 1–2 weeks after the pass. Not an alert.";
 export const PLACES_SHOWN = 3;
 export const PLACES_UNNAMED = "municipalities not named yet";
 
@@ -109,6 +116,7 @@ const SOURCE_LABEL: Array<[RegExp, string]> = [
   [/nisar/i, "NISAR radar"],
   [/dswx[-_]?s1/i, "OPERA DSWx-S1 radar"],
   [/dswx/i, "OPERA DSWx"],
+  [/dist/i, "OPERA DIST-ALERT-HLS (optical, vegetation loss)"],
 ];
 const sourceLabel = (s?: string): string =>
   (s && SOURCE_LABEL.find(([re]) => re.test(s))?.[1]) ?? s ?? "satellite";
@@ -137,30 +145,42 @@ export function observedRows(bundle: CcBundle | undefined): ObservedRow[] {
   if (bundle.observedSummary) return bundle.observedSummary;
   const named = bundle.observedPlaces ?? {};
   const observed = (bundle.nowAlerts?.observed ?? [])
-    .filter((o) => (o.kind === undefined || o.kind === "observed") && finite(o.area_km2));
-  if (observed.length) {
+    .filter((o) => (o.kind === undefined || o.kind === "observed") && finite(o.area_km2))
+    // Lower-confidence candidates (cropland, seasonal water) are not in the
+    // headline numbers or on the map: not counted here either.
+    .filter((o) => o.confidence !== "lower");
+  const fromObserved = (items: typeof observed, hazard: ObservedRow["hazard"]): ObservedRow[] => {
     const groups = new Map<string, typeof observed>();
-    for (const o of observed) groups.set(o.source ?? "", [...(groups.get(o.source ?? "") ?? []), o]);
-    return [...groups.entries()].map(([source, items]) => {
-      const sorted = [...items].sort((a, b) => (b.area_km2 as number) - (a.area_km2 as number));
-      const newest = items.map((o) => o.acquired).filter(Boolean).sort().pop();
+    for (const o of items) groups.set(o.source ?? "", [...(groups.get(o.source ?? "") ?? []), o]);
+    return [...groups.entries()].map(([source, group]) => {
+      const sorted = [...group].sort((a, b) => (b.area_km2 as number) - (a.area_km2 as number));
+      const newest = group.map((o) => o.acquired).filter(Boolean).sort().pop();
       return {
         key: `observed-${source}`,
+        hazard,
         source: sourceLabel(source || undefined),
         places: placesText(sorted.filter((o) => o.municipality)
           .map((o) => `${o.municipality}${o.uf ? `, ${o.uf}` : ""}`)),
         acquired: newest ? fmtBrt(newest) : undefined,
-        area: fmtKm2(sumOf(items.map((o) => o.area_km2))),
-        people: people(sumOf(items.map((o) => o.people))),
-        polygons: sumOf(items.map((o) => o.polygons)),
+        area: fmtKm2(sumOf(group.map((o) => o.area_km2))),
+        people: people(sumOf(group.map((o) => o.people))),
+        polygons: sumOf(group.map((o) => o.polygons)),
       };
     }).sort((a, b) => a.source.localeCompare(b.source));
-  }
+  };
+  const isLandslide = (o: { hazard?: string; source?: string }) =>
+    /landslide/i.test(o.hazard ?? "") || /dist/i.test(o.source ?? "");
+
+  // Flood: the R3 per-source totals first — standard confidence, the same
+  // numbers as the map and the Now card (alerts.json observed[] also sums
+  // the lower-confidence polygons); else observed[]; else the NISAR meta.
+  let flood: ObservedRow[] = [];
   if (bundle.responseSources?.length) {
-    return [...bundle.responseSources]
+    flood = [...bundle.responseSources]
       .sort((a, b) => b.flooded_km2 - a.flooded_km2)
       .map((r) => ({
         key: `r3-${r.source}`,
+        hazard: "flood" as const,
         source: sourceLabel(r.source),
         places: placesText(named[r.source] ?? []),
         acquired: r.latest_acquired ? fmtBrt(r.latest_acquired) : undefined,
@@ -168,11 +188,13 @@ export function observedRows(bundle: CcBundle | undefined): ObservedRow[] {
         people: people(r.people_flooded),
         polygons: r.features,
       }));
-  }
-  const r = bundle.response;
-  if (r && finite(r.flooded_km2)) {
-    return [{
+  } else if (observed.some((o) => !isLandslide(o))) {
+    flood = fromObserved(observed.filter((o) => !isLandslide(o)), "flood");
+  } else if (bundle.response && finite(bundle.response.flooded_km2)) {
+    const r = bundle.response;
+    flood = [{
       key: "response",
+      hazard: "flood",
       source: sourceLabel(r.source),
       places: placesText(named[r.source] ?? named["nisar-gcov"] ?? []),
       acquired: r.post_acquired ? fmtBrt(r.post_acquired) : undefined,
@@ -181,7 +203,9 @@ export function observedRows(bundle: CcBundle | undefined): ObservedRow[] {
       polygons: r.polygons,
     }];
   }
-  return [];
+  // Landslide scar candidates (OPERA DIST-ALERT-HLS): their own section.
+  const landslide = fromObserved(observed.filter(isLandslide), "landslide");
+  return [...flood, ...landslide];
 }
 
 // The live run was checked and marked verified by lead-live.

@@ -1,0 +1,126 @@
+{
+  "model": "xgb_all (3b trigger, daily)",
+  "group_labels": {
+    "rain": "Rain (IMERG)",
+    "soil": "Soil (SMAP L4)",
+    "terrain": "Terrain (NASADEM)",
+    "landcover": "Surface (MCD12Q1 + VIIRS NDVI)",
+    "climate": "Climate (IMERG/SMAP means)",
+    "soil_texture": "Soil texture (SMAP L4 constants)"
+  },
+  "importance_type": "gain_share = XGBoost total_gain share (TRAIN fit); group_permutation_pr_auc_drop = TEST PR-AUC drop when the group is shuffled",
+  "rows": [
+    {
+      "feature": "rain_24h",
+      "group": "rain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "rain_72h",
+      "group": "rain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "rain_7d",
+      "group": "rain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "rain_24h_rel",
+      "group": "rain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "rain_72h_rel",
+      "group": "rain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "sm_surface",
+      "group": "soil",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "sm_rootzone",
+      "group": "soil",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "sm_profile_wetness",
+      "group": "soil",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "elevation",
+      "group": "terrain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "slope",
+      "group": "terrain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "aspect_sin",
+      "group": "terrain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "aspect_cos",
+      "group": "terrain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "curvature",
+      "group": "terrain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "relief",
+      "group": "terrain",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "landcover",
+      "group": "landcover",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    },
+    {
+      "feature": "ndvi",
+      "group": "landcover",
+      "gain_share": 0.0,
+      "group_gain_share": 0.0,
+      "group_permutation_pr_auc_drop": 0.0
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import { ALERT_FOOTER, ALERT_LEVEL_WORDS, type AlertCardData } from "@/lib/alert
 import AlertCard, { LEVEL_STYLE } from "./AlertCard";
 import {
   ALERTS_PAUSED_TEXT, ALERTS_UNAVAILABLE_TEXT, alertsByRegion, moreAlertsText, NO_ALERTS_TEXT, NO_RUN_TEXT,
-  OBSERVED_NOTE, OBSERVED_TITLE,
+  LANDSLIDE_OBSERVED_NOTE, LANDSLIDE_OBSERVED_TITLE, OBSERVED_NOTE, OBSERVED_TITLE,
   type AlertList, type ObservedRow,
 } from "./model/alerts";
 import {
@@ -100,33 +100,14 @@ export default function PublicAlertsPanel({
         </>
       )}
 
-      {live && observed.length > 0 && (
-        <section aria-label={OBSERVED_TITLE} data-observed className="rounded-[10px] border border-cc-line bg-cc-well px-3.5 py-3">
-          <h2 className="m-0 text-base font-semibold">{OBSERVED_TITLE}</h2>
-          <p className="mt-0.5 text-[13px] text-cc-muted">{OBSERVED_NOTE}</p>
-          <ul className="m-0 mt-1.5 list-none p-0">
-            {observed.map((o) => (
-              <li key={o.key} className="border-t border-cc-rule py-1.5 text-[13px]">
-                <div className="flex justify-between gap-2">
-                  <span className="font-semibold">{o.source}</span>
-                  <span>{o.area}</span>
-                </div>
-                <div>{o.places}</div>
-                <div className="text-xs text-cc-muted">
-                  {o.acquired ? `newest pass ${o.acquired}` : ""}
-                  {o.people ? `${o.acquired ? " · " : ""}${o.people} people (estimate)` : ""}
-                  {o.polygons !== undefined ? ` · ${o.polygons} ${o.polygons === 1 ? "area" : "areas"}` : ""}
-                </div>
-              </li>
-            ))}
-          </ul>
-          {onShowObserved && (
-            <button type="button" onClick={onShowObserved} aria-pressed={observedOn}
-              className="mt-1.5 rounded-lg border border-cc-line-strong bg-cc-surface px-2.5 py-1.5 text-xs font-semibold">
-              {observedOn ? "Hide on map" : "Show on map"}
-            </button>
-          )}
-        </section>
+      {live && (
+        <ObservedSection title={OBSERVED_TITLE} note={OBSERVED_NOTE}
+          rows={observed.filter((o) => o.hazard !== "landslide")}
+          showOn={observedOn} onShow={onShowObserved} />
+      )}
+      {live && (
+        <ObservedSection title={LANDSLIDE_OBSERVED_TITLE} note={LANDSLIDE_OBSERVED_NOTE}
+          rows={observed.filter((o) => o.hazard === "landslide")} />
       )}
 
       {/* Brazilian Civil Defense contact line: the live (Southern Brazil) view only. */}
@@ -172,6 +153,46 @@ function ReplayAlerts({
           Go to Now
         </button>
       </div>
+    </section>
+  );
+}
+
+// Satellite observations of one kind (radar flood, or optical landslide scar
+// candidates): neutral styling, never an alert level.
+function ObservedSection({ title, note, rows, showOn = false, onShow }: {
+  title: string;
+  note: string;
+  rows: ObservedRow[];
+  showOn?: boolean;
+  onShow?: () => void;
+}) {
+  if (!rows.length) return null;
+  return (
+    <section aria-label={title} data-observed className="rounded-[10px] border border-cc-line bg-cc-well px-3.5 py-3">
+      <h2 className="m-0 text-base font-semibold">{title}</h2>
+      <p className="mt-0.5 text-[13px] text-cc-muted">{note}</p>
+      <ul className="m-0 mt-1.5 list-none p-0">
+        {rows.map((o) => (
+          <li key={o.key} className="border-t border-cc-rule py-1.5 text-[13px]">
+            <div className="flex justify-between gap-2">
+              <span className="font-semibold">{o.source}</span>
+              <span>{o.area}</span>
+            </div>
+            <div>{o.places}</div>
+            <div className="text-xs text-cc-muted">
+              {o.acquired ? `newest pass ${o.acquired}` : ""}
+              {o.people ? `${o.acquired ? " · " : ""}${o.people} people (estimate)` : ""}
+              {o.polygons !== undefined ? ` · ${o.polygons} ${o.polygons === 1 ? "area" : "areas"}` : ""}
+            </div>
+          </li>
+        ))}
+      </ul>
+      {onShow && (
+        <button type="button" onClick={onShow} aria-pressed={showOn}
+          className="mt-1.5 rounded-lg border border-cc-line-strong bg-cc-surface px-2.5 py-1.5 text-xs font-semibold">
+          {showOn ? "Hide on map" : "Show on map"}
+        </button>
+      )}
     </section>
   );
 }

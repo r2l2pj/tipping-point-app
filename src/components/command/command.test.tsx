@@ -13,6 +13,7 @@ import { normalizeLeadTimeHist } from "./charts/LeadTimeHistogram";
 import { CommandCenterView } from "./CommandCenter";
 import type { AlertList } from "./model/alerts";
 import { buildAlertList } from "./model/alerts";
+import { buildMlView } from "./model/ml";
 import { priorityAreas } from "./model/areas";
 import { bundle, liveBundle, manifest, point, series, zone, zones } from "./model/fixtures";
 import type { CcBundle } from "./model/types";
@@ -96,7 +97,7 @@ describe("status chip and contract values (S1, L9)", () => {
       series: series([0.2, 0.9], ["observed", "forecast"]),
       manifest: manifest([], { forecast_source: "perfect-forecast" }),
     }));
-    expect(replayHtml).toContain("Forecast (perfect forecast)");
+    expect(replayHtml).toContain("Forecast (perfect forecast · upper bound)"); // never the bare source (L22)
     expect(replayHtml).not.toContain("GEOS-FP)");
     // Rule 2: an observed day (the event day too) reads "observed"; the
     // forecast source is named on forecast days only.
@@ -120,10 +121,20 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
     expect(details(bundle({ metricsView: mv({ cloud_pct: 0.95 }) }))).toContain("the optical saw only 5%");
   });
 
-  test("learned vs manual slope rule and integer lead hours", () => {
+  test("without the ML card no model score is shown (never a metric without n); lead hours integer", () => {
     const html = details(bundle({ metricsView: FULL_METRICS, forecastLeadTime: WA_LEAD }));
-    for (const text of ["learned vs manual slope rule", "ML model AUC (XGBoost)", "Manual slope-rule AUC",
-      "0.91", "0.74", "IQR 55–115 h", "85 h", "no cloud pixels"]) {
+    for (const text of ["Model scores pending", "IQR 55–115 h", "85 h", "no cloud pixels"]) {
+      expect(html).toContain(text);
+    }
+    expect(html).not.toContain("ML model AUC (XGBoost)");
+    expect(html).not.toContain("0.91");
+  });
+
+  test("the ML card renders TEST rows with n, base rate and the GFS headline (lead-ml sample shape)", () => {
+    const card = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/ml/ml_card.json"), "utf8"));
+    const html = details(bundle({ id: "wa_2025", metricsView: mv({}), ml: buildMlView(card, "wa_2025") }));
+    for (const text of ["Did we get it right?", "All TEST events · 72h · NOAA GFS forecast rain", "XGBoost (all features)",
+      "TPI &gt; 0.6 rule", "positive", "Base rate", "This event only (WA 2025)", "these scores are fragile"]) {
       expect(html).toContain(text);
     }
   });
@@ -211,7 +222,7 @@ describe("radar card (S13, L6, L7, L11)", () => {
 
   test("scar count labeled as candidates, never confirmed", () => {
     const html = render(b);
-    expect(html).toContain("Landslide scar candidates (HLS optical)");
+    expect(html).toContain("Landslide scar candidates (OPERA DIST-ALERT-HLS, vegetation loss)");
     expect(html).toContain("candidates, never confirmed");
     expect(html).toContain(">3<");
   });
@@ -439,7 +450,7 @@ describe("pending states carried over from main (L14)", () => {
   });
 
   test("radar: scars absent is 'not published yet', empty scars is a real zero, the token wins", () => {
-    const label = /Landslide scar candidates \(HLS optical\)<\/dt><dd[^>]*>([^<]*)</;
+    const label = /Landslide scar candidates \(OPERA DIST-ALERT-HLS, vegetation loss\)<\/dt><dd[^>]*>([^<]*)</;
     expect(render(bundle({ metricsView: mv({}) })).match(label)![1]).toBe("not published yet");
     expect(render(bundle({ metricsView: mv({}), scars: { type: "FeatureCollection", features: [] } })).match(label)![1]).toBe("0");
     const tok = render(withPending(bundle({
@@ -640,5 +651,20 @@ describe("no 'confirm' on screen except the tagline (candidates rule)", () => {
     expect(html.match(/.{60}confirm.{40}/gi) ?? []).toEqual([]);
     expect(html).toContain("Check with NISAR radar");
     expect(html).toContain("NISAR radar maps flood candidates only in this case");
+  });
+});
+
+
+describe("timeline chip never shows a bare 'perfect forecast'", () => {
+  test("a case with GFS frames names NOAA GFS; a perfect-forecast-only case says upper bound", () => {
+    const withGfs = bundle({ series: series([0.2, 0.9], ["observed", "forecast"]),
+      manifest: { ...manifest([], { forecast_source: "perfect-forecast" }),
+        layers: [{ id: "tpi_flood_gfs_d1", date: "2025-12-11", issued: "2025-12-10", png: "x.png", forecast_source: "noaa-gfs" }] } as never });
+    expect(render(withGfs, { dayIndex: 0, layers: [] })).toContain(">Forecast (NOAA GFS)<");
+    const pfOnly = bundle({ series: series([0.2, 0.9], ["observed", "forecast"]),
+      manifest: manifest([], { forecast_source: "perfect-forecast" }) });
+    const html = render(pfOnly, { dayIndex: 0, layers: [] });
+    expect(html).toContain(">Forecast (perfect forecast · upper bound)<");
+    expect(html).not.toContain(">Forecast (perfect forecast)<");
   });
 });

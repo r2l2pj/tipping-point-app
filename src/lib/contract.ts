@@ -339,6 +339,7 @@ export interface NowObserved {
   area_km2?: number;
   people?: number;
   polygons?: number;
+  confidence?: string; // "standard" | "lower" (lead-live, 2026-11-15)
 }
 
 export interface NowAlertsFile {

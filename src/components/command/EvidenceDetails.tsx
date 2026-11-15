@@ -1,6 +1,9 @@
 "use client";
 
 import FeatureImportanceChart from "./charts/FeatureImportanceChart";
+import GroupImportanceChart from "./charts/GroupImportanceChart";
+import MlCard from "./MlCard";
+import type { ImportanceView, MlView } from "./model/ml";
 import LeadTimeHistogram from "./charts/LeadTimeHistogram";
 import SwotChart from "./charts/SwotChart";
 import type { LayerId, LayerRow } from "./model/layerRegistry";
@@ -15,6 +18,8 @@ const h3 = "m-0 text-[13px] font-semibold";
 export default function EvidenceDetails({
   evidence: e,
   swot,
+  ml,
+  mlImportance,
   evidenceRows,
   nightLights,
   onToggleLayer,
@@ -22,6 +27,8 @@ export default function EvidenceDetails({
 }: {
   evidence: Evidence;
   swot: unknown;
+  ml?: MlView;
+  mlImportance?: ImportanceView;
   evidenceRows: LayerRow[]; // catalog and OPERA rows of the layer registry
   nightLights: CompareOption;
   onToggleLayer: (id: LayerId) => void;
@@ -45,10 +52,15 @@ export default function EvidenceDetails({
         )}
       </div>
 
-      <div>
-        <h3 className={h3}>{e.modelTitle}</h3>
-        <div className="mt-1"><StatGrid stats={e.modelStats} /></div>
-      </div>
+      {/* Model scores only with their n (TEST split, lead-ml ml_card.json). */}
+      {ml ? (
+        <MlCard ml={ml} />
+      ) : (
+        <div>
+          <h3 className={h3}>Did we get it right? (TEST data)</h3>
+          <p className="mt-0.5 text-xs italic text-cc-faint">Model scores pending: the TEST evaluation with its sample sizes is not published yet.</p>
+        </div>
+      )}
 
       {e.leadTime?.missing && (
         <div className="rounded-lg border border-dashed border-cc-line-strong p-2.5 text-xs">
@@ -80,7 +92,8 @@ export default function EvidenceDetails({
         <p className="mt-0.5 text-xs text-cc-muted">{e.whyRadar}</p>
       </div>
 
-      {e.featureImportance && <FeatureImportanceChart importance={e.featureImportance} />}
+      {mlImportance ? <GroupImportanceChart importance={mlImportance} />
+        : e.featureImportance && <FeatureImportanceChart importance={e.featureImportance} />}
       <SwotChart swot={swot} />
 
       <div>

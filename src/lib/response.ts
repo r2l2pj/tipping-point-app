@@ -6,7 +6,7 @@
 // and drops a key whose file is absent. A later optical source (R1) adds
 // flood_dswx + dswx_meta the same way. Polygons are radar flood candidates,
 // never "confirmed".
-import type { NowResponse, ResponseSource } from "./types";
+import type { NowDist, NowResponse, ResponseSource } from "./types";
 
 export const NISAR_META = "response/nisar_meta.json";
 export const NISAR_GEOJSON = "response/flood_nisar.geojson";
@@ -110,4 +110,25 @@ export function placesBySource(
     Object.entries(by).map(([s, list]) => [s, list.sort((a, b) => b.km2 - a.km2).map((x) => x.name)])
   );
   return Object.keys(out).length ? out : undefined;
+}
+
+// Landslide scar candidates of the Now case (lead-analysis): OPERA
+// DIST-ALERT-HLS vegetation loss on steep slopes, now/response/
+// landslide_dist.geojson + dist_meta.json. Candidates, never confirmed; the
+// product lags 1-2 weeks and outside a rain event is mostly harvest/fire.
+export const DIST_META = "response/dist_meta.json";
+export const DIST_GEOJSON = "response/landslide_dist.geojson";
+
+export function toNowDist(raw: unknown): NowDist | undefined {
+  if (!isRecord(raw)) return undefined;
+  const features = num(raw.features);
+  if (features === undefined) return undefined;
+  return {
+    features,
+    km2: num(raw.candidates_km2),
+    people: num(raw.people),
+    latest_acquired: str(raw.latest_acquired),
+    caveat: str(raw.caveat),
+    latency_note: str(raw.latency_note),
+  };
 }

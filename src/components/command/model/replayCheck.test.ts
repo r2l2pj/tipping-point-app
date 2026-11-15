@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { toMetricsView } from "../../../lib/contract";
 import { bundle, liveBundle, manifest, point } from "./fixtures";
+import { toNowDist } from "../../../lib/response";
 import { nightLightsCompare, radarCard, radarCompare } from "./radar";
 import { sourceRows } from "./sources";
 import { evidence, opticalSeenPct, replayCheckRows } from "./replayCheck";
@@ -72,9 +73,9 @@ describe("replay check rows", () => {
     expect(row(rs, "catalog-hits")!.value).toBe("86%");
   });
 
-  test("the two AUC values are labelled", () => {
+  test("no bare AUC row: model scores only appear with their n (ML card)", () => {
     const b = bundle({ metricsView: mv({ rf_auc: 0.91, rule_auc: 0.74 }) });
-    expect(row(b, "model")!.value).toBe("ML model AUC (XGBoost) 0.91 · Manual slope-rule AUC 0.74");
+    expect(row(b, "model")).toBeUndefined();
   });
 
   test("a null metric shows its reason", () => {
@@ -212,7 +213,7 @@ describe("evidence", () => {
 describe("radar card", () => {
   test("scar count is labelled as candidates, never confirmed", () => {
     const card = radarCard(bundle({ scars: { type: "FeatureCollection", features: [point(), point(), point()] } }));
-    expect(card.candidates).toMatchObject({ label: "Landslide scar candidates (HLS optical)", value: "3" });
+    expect(card.candidates).toMatchObject({ label: "Landslide scar candidates (OPERA DIST-ALERT-HLS, vegetation loss)", value: "3" });
     expect(JSON.stringify(card)).not.toMatch(/confirmed (scar|landslide)/i);
   });
 
@@ -255,6 +256,30 @@ describe("radar card", () => {
     expect(card.compare).toEqual({ kind: "radar", reason: "images not published yet" });
   });
 
+  test("RS scar candidates: count, area, people and the inventory check from metrics scar_*", () => {
+    const card = radarCard(bundle({ id: "rs_2024", metricsView: mv({ scar_candidates_n: 2849, scar_candidates_km2: 20.02,
+      scar_people: 522.3, scar_hit_500m_pct: 46.13, scar_precision_500m_pct: 55.07, scar_inventory_n: 16027 }) }));
+    expect(card.candidates.value).toBe("2,849");
+    expect(card.candidates.lines).toEqual([
+      "20.0 km² · 522 people (estimate)",
+      "46% of the 16,027 inventoried landslides lie within 500 m of a candidate; 55% of candidates within 500 m of one.",
+    ]);
+    expect(JSON.stringify(card.candidates)).not.toMatch(/(?<!never )confirmed/);
+  });
+
+  test("Now scar candidates: meta figures, publication lag and the harvest/fire caveat", () => {
+    const dist = toNowDist({ features: 685, candidates_km2: 3.295, people: 89.2, latest_acquired: "2026-11-05T13:52:01.437Z",
+      caveat: "vegetation loss on steep slopes outside a rain event is mostly forestry harvest / fire" })!;
+    const card = radarCard(liveBundle({ dist }));
+    expect(card.candidates.value).toBe("685");
+    expect(card.candidates.lines).toEqual([
+      "3.3 km² · 89 people (estimate)",
+      "Newest image Nov 5, 2026 — the product is published 1–2 weeks after the pass.",
+      "Caveat: Vegetation loss on steep slopes outside a rain event is mostly forestry harvest / fire.",
+    ]);
+    expect(toNowDist({})).toBeUndefined();
+  });
+
   test("live case without a pair keeps the awaiting copy", () => {
     expect(radarCard(liveBundle()).headline).toBe("Awaiting a NISAR pair over the AOI.");
   });
@@ -277,6 +302,15 @@ describe("radar card", () => {
     expect(card.limitation).toBeUndefined();
     expect(card.canShowOnMap).toBe(true);
     expect(JSON.stringify([card.flooded, card.note, card.headline])).not.toMatch(/confirmed/i);
+  });
+
+  test("the R3 NISAR figures win over the meta (same numbers as the public view)", () => {
+    const card = radarCard(liveBundle({
+      response: { source: "nisar-gcov", flooded_km2: 2.3, people_flooded: 82 },
+      responseSources: [{ source: "nisar-gcov", flooded_km2: 2.31, people_flooded: 43 }],
+      data_dates: { nisar_pre: "2026-10-25", nisar_post: "2026-11-06" },
+    }));
+    expect(card.people?.value).toBe("43");
   });
 
   test("live response with a null area shows the short reason, never the raw note", () => {

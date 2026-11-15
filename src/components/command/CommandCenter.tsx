@@ -21,7 +21,7 @@ import { nightLightsCompare, radarCard } from "./model/radar";
 import { evidence, replayCheckRows } from "./model/replayCheck";
 import { sourceRows } from "./model/sources";
 import { statusChip } from "./model/status";
-import { chartForecastLabel, forecastTag, frameFor, issuedFrame, stepLabel, stepMarks, stepsFor } from "./model/steps";
+import { chartForecastLabel, forecastTag, frameFor, issuedFrame, stepLabel, stepMarks, stepsFor, timelineForecastTag } from "./model/steps";
 import { criticalAreaTile, peopleTile, zoneSnapshot } from "./model/tiles";
 import type { CcBundle } from "./model/types";
 import PriorityAreas from "./PriorityAreas";
@@ -369,6 +369,8 @@ export function CommandCenterView({
                   <EvidenceDetails
                     evidence={evidence(bundle, step?.day)}
                     swot={bundle.swot}
+                    ml={bundle.ml}
+                    mlImportance={bundle.mlImportance}
                     evidenceRows={rows.filter((r) => r.group === "Replay evidence")}
                     nightLights={nightLights}
                     onToggleLayer={(id) => dispatch({ type: "toggleLayer", id })}
@@ -391,7 +393,7 @@ export function CommandCenterView({
         marks={marks}
         dayIndex={state.dayIndex}
         playing={state.playing}
-        forecastTag={tag}
+        forecastTag={timelineForecastTag(bundle)}
         mapFrame={mapFrame}
         onSeek={(index) => dispatch({ type: "seek", index })}
         onPrev={() => dispatch({ type: "prev" })}

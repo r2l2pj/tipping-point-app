@@ -50,15 +50,31 @@ export function dataStatus(
 }
 
 
-// Freshness text of the header. "live" is only said for a checked age.
+// "02:56 BRT" for a run of the same BRT day as `nowMs`, else
+// "Nov 14, 21:00 BRT" (24-hour clock).
+const BRT = "America/Sao_Paulo";
+export function brtClock(iso: string, nowMs?: number): string {
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return iso;
+  const time = t.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: BRT });
+  const day = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: BRT });
+  const sameDay = nowMs !== undefined && day(t) === day(new Date(nowMs));
+  const date = t.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: BRT });
+  return `${sameDay ? "" : `${date}, `}${time} BRT`;
+}
+
+// Freshness text of the header: "Updated 02:56 BRT (6 min ago)" from the
+// run's updated_at; past the stale limit (two refresh periods, 6 h) the
+// stale style. "Updated" with an age is only said for a checked age.
 export function freshnessText(status: DataStatus, nowMs?: number): string {
   const when = status.date ? fmtBrt(status.date) : undefined;
   const age = status.date && nowMs !== undefined ? ageText(status.date, nowMs) : undefined;
+  const clock = status.date ? brtClock(status.date, nowMs) : undefined;
   switch (status.kind) {
     case "live":
-      return `Live · updated ${age ?? when}`;
+      return `Updated ${clock}${age ? ` (${age})` : ""}`;
     case "stale":
-      return `Stale · last run ${when}${age ? ` (${age})` : ""}`;
+      return `Stale · updated ${clock}${age ? ` (${age})` : ""}`;
     case "unknown-age":
       return when ? `Unknown age · run ${when}` : "Unknown age · run time not published yet";
     case "last-saved":

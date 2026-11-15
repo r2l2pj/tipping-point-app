@@ -1,13 +1,13 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
 import { alertsByRegion, alertsPaused, buildAlertList, capAlertList, moreAlertsText, observedRows, pausedAlertList } from "./alerts";
-import { bundle, liveBundle } from "./fixtures";
+import { bundle, liveBundle, manifest } from "./fixtures";
 import { ageText, classLabel, fmtBrt, fmtDate, fmtHours, sourceTime } from "./format";
 import { sourceRows } from "./sources";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { placesBySource, toResponseSources } from "../../../lib/response";
-import { chartForecastLabel, issuedForecastLabel } from "./steps";
+import { chartForecastLabel, gfsIssuedText, issuedForecastLabel, partlyForecastText } from "./steps";
 
 describe("alert list", () => {
   const now = (candidates?: unknown[]) => liveBundle({
@@ -267,5 +267,76 @@ describe("observed cards precomputed on the server", () => {
   test("a bundle carrying observedSummary uses it as-is (the raw list is not sent)", () => {
     const rows = [{ key: "k", source: "NISAR radar", places: "Iguape, SP", area: "1.0 km²" }];
     expect(observedRows(liveBundle({ observedSummary: rows }))).toBe(rows);
+  });
+});
+
+describe("observed: flood from R3 (standard confidence), DIST landslide in its own section", () => {
+  test("R3 totals win over observed[] for flood; DIST entries become landslide rows", () => {
+    const b = liveBundle({
+      responseSources: [{ source: "opera-dswx-s1", flooded_km2: 129.5, people_flooded: 494 }],
+      observedPlaces: { "opera-dswx-s1": ["Iguatemi, MS"] },
+      nowAlerts: { observed: [
+        { kind: "observed", hazard: "flood", source: "opera-dswx-s1", municipality: "Avaré", uf: "SP", area_km2: 288.1 },
+        { kind: "observed", hazard: "landslide", source: "opera-dist-alert-hls", municipality: "Saudades", uf: "SC", area_km2: 3.3, people: 70, polygons: 685 },
+      ] } as never,
+    });
+    const rows = observedRows(b);
+    expect(rows.map((r) => [r.hazard, r.source, r.area])).toEqual([
+      ["flood", "OPERA DSWx-S1 radar", "129.5 km²"],
+      ["landslide", "OPERA DIST-ALERT-HLS (optical, vegetation loss)", "3.3 km²"],
+    ]);
+  });
+});
+
+describe("observed[] confidence", () => {
+  test("lower-confidence entries are not counted", () => {
+    const rows = observedRows(liveBundle({ nowAlerts: { observed: [
+      { kind: "observed", hazard: "flood", source: "opera-dswx-s1", municipality: "A", uf: "RS", area_km2: 10, confidence: "standard" },
+      { kind: "observed", hazard: "flood", source: "opera-dswx-s1", municipality: "B", uf: "RS", area_km2: 90, confidence: "lower" },
+    ] } as never }));
+    expect(rows[0].area).toBe("10.0 km²");
+    expect(rows[0].places).toBe("A, RS");
+  });
+});
+
+describe("L28b: Now 'today' is partly forecast (honesty rule 2)", () => {
+  const dd = { imerg_obs_through: "2026-11-14", forecast_from: "2026-11-15", gfs_issued: "2026-11-15T00:00:00Z" };
+  test("today reads observed to yesterday + NOAA GFS for today; other days and replays do not", () => {
+    const live = liveBundle({ data_dates: dd });
+    expect(partlyForecastText(live, "2026-11-15")).toBe("Today · observed to Nov 14 + NOAA GFS forecast for Nov 15");
+    expect(partlyForecastText(live, "2026-11-16")).toBeUndefined();
+    expect(partlyForecastText(bundle({ data_dates: dd }), "2026-11-15")).toBeUndefined();
+    expect(gfsIssuedText(live)).toBe("NOAA GFS, issued Nov 15, 00:00 UTC");
+  });
+  test("every alert on the today/d1 frames says it is based on forecast rain", () => {
+    const list = buildAlertList({ now: liveBundle({ updated_at: "2026-11-15T05:56:26Z", data_dates: dd,
+      nowAlerts: { candidates: [
+        { kind: "tpi", hazard: "flood", class: 3, label: "Crítico", municipality: "Florianópolis", uf: "SC", area_km2: 230.86, when: "today" },
+        { kind: "tpi", hazard: "landslide", class: 3, label: "Crítico", municipality: "Santo Amaro da Imperatriz", uf: "SC", area_km2: 39.39, when: "today" },
+      ] } as never }) });
+    expect(list.alerts.map((a) => a.basis)).toEqual([
+      "based on forecast rain (NOAA GFS, issued Nov 15, 00:00 UTC)",
+      "based on forecast rain (NOAA GFS, issued Nov 15, 00:00 UTC)",
+    ]);
+    expect(list.alerts[0].region).toBe("Florianópolis, SC");
+  });
+});
+
+describe("lead-live basis fields win", () => {
+  test("layer basis_label (also D+1) and alert basis_note; IMERG 'through' = imerg_obs_through", () => {
+    const live = liveBundle({
+      data_dates: { imerg: "2026-11-15T00Z", imerg_obs_through: "2026-11-14", forecast_from: "2026-11-15", gfs_issued: "2026-11-15T00:00:00Z" },
+      manifest: { ...manifest([]), layers: [
+        { id: "tpi_flood_d1", date: "2026-11-16", png: "x.png", forecast: true, partly_forecast: true,
+          basis_label: "observed to Nov 14 + NOAA GFS forecast for Nov 15–16 (issued 2026-11-15 00:00 UTC)" },
+      ] } as never,
+      nowAlerts: { candidates: [{ kind: "tpi", hazard: "flood", class: 3, label: "Crítico", municipality: "Florianópolis", uf: "SC",
+        when: "today", basis_note: "based on forecast rain (NOAA GFS, issued 2026-11-15 00:00 UTC)" }] } as never,
+      updated_at: "2026-11-15T06:17:00Z",
+    });
+    expect(partlyForecastText(live, "2026-11-16")).toBe("observed to Nov 14 + NOAA GFS forecast for Nov 15–16 (issued 2026-11-15 00:00 UTC)");
+    const a = buildAlertList({ now: live }).alerts[0];
+    expect(a.basis).toBe("based on forecast rain (NOAA GFS, issued 2026-11-15 00:00 UTC)");
+    expect(a.data_dates?.imerg).toBe("2026-11-14");
   });
 });

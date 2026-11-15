@@ -16,7 +16,7 @@ import { declared } from "./lazy";
 import { fmtDataDate, fmtDate } from "./format";
 import type { MapOverlays } from "./overlays";
 import { CANDIDATES_LABEL, floodLabels } from "./radar";
-import { frameBasis } from "./steps";
+import { frameBasis, partlyForecastText } from "./steps";
 import { HAZARD_LABEL, RISK_PAUSED_SHORT, type CcBundle, type Hazard } from "./types";
 
 export type LayerId =
@@ -143,7 +143,8 @@ export function layerRows(
     opera: "OPERA water map",
   };
   const okSub: Partial<Record<LayerId, string | undefined>> = {
-    tpi: [stepDate ? `data ${fmtDataDate(stepDate)}` : undefined, frameBasis(bundle, stepDate, hazard)]
+    tpi: partlyForecastText(bundle, stepDate) ? `${partlyForecastText(bundle, stepDate)} (partly forecast)`
+      : [stepDate ? `data ${fmtDataDate(stepDate)}` : undefined, frameBasis(bundle, stepDate, hazard)]
       .filter(Boolean).join(" · ") || undefined,
     imerg: dateOf(bundle, "imerg") ? `data ${fmtDataDate(dateOf(bundle, "imerg"))}` : undefined,
     smap: dateOf(bundle, "smap") ? `data ${fmtDataDate(dateOf(bundle, "smap"))}` : undefined,
