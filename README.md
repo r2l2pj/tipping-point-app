@@ -3,6 +3,58 @@
 Fullstack app for **Tipping Point** — NASA Space Apps Challenge 2026,
 "Dancing with the SARs". Rain warns. Radar sees through.
 
+**Live demo:** [APP URL] · **Data pipeline:** [r2l2pj/tipping-point-data](https://github.com/r2l2pj/tipping-point-data) · **License:** Apache-2.0 · **Team:** [TEAM NAME] — NASA Space Apps 2026, challenge #5 "Dancing with the SARs"
+
+## What it is
+
+Tipping Point helps responders know **when, where and who** in floods and landslides: NASA rain (GPM IMERG), soil moisture (SMAP) and terrain (NASADEM) show where risk is rising, and NISAR's L-band radar sees through cloud to where the ground newly flooded. Our main case is at home: the **Uruguay River at Uruguaiana** (Rio Grande do Sul, Brazil), which stayed above its 8.50 m flood stage on Oct 5–21, 2026 (ANA gauge). In a **post-event test** (not the live index), NASA satellite rain over the upstream basin was already extreme five days before flood stage, pointing to a river corridor where about 20,900 people live; NISAR passes every 12 days saw the river through cloud. Two past disasters back it up: Washington State, December 2025 (NISAR flood candidates under 92.9% cloud) and Rio Grande do Sul, May 2024 (a replay with each forecast as it was issued). The river will still flood; what we aim to prevent is the disaster. **Rain warns. Radar sees through.**
+
+| Uruguaiana, Oct 2026 — NISAR before / during the flood | Washington, Dec 2025 — NISAR before / after | Live public alerts (experimental) |
+|---|---|---|
+| ![Uruguaiana NISAR swipe](docs/img/1-uy-nisar.png) | ![Washington NISAR swipe](docs/img/2-wa-nisar-swipe.png) | ![Public alerts](docs/img/3-alerts.png) |
+
+## How it works
+
+- **Radar response (NISAR, L-band):** new open water = HH backscatter drop of more than 3 dB to below a per-scene threshold, on low ground near rivers (height above drainage < 15 m), patches ≥ 3 ha. Outputs are always **flood candidates**. NASA OPERA surface water (DSWx) adds C-band water candidates; NASA OPERA land disturbance (DIST) adds landslide **scar candidates** (optical).
+- **Where to look between passes:** the Tipping Point Index TPI = (R·S·T)^(1/3) — Rain (GPM IMERG 3-day vs each pixel's own climatology), Soil (SMAP L4 root-zone wetness), Terrain (NASADEM slope; height above drainage for floods). Critical (> 0.6) only when all three agree. The next 1–3 days use the **NOAA GFS** forecast, our only non-NASA input, labelled on every frame.
+- **Who:** GPW v4.11 population count (2020) inside the flood candidates and the Critical areas; VIIRS Black Marble night-light loss.
+- **ML (experimental):** an XGBoost landslide-trigger model sits beside the index. An independent audit found it about as good as a simple forecast-rain-vs-local-extreme rule; see [07-overfit-audit](https://github.com/r2l2pj/tipping-point-data/blob/main/docs/science-review/07-overfit-audit.md).
+- **Live:** the Now view refreshes every 3 hours over Southern Brazil; replays use only the data and forecast available on each day (no look-ahead).
+
+## Honest results
+
+Full table with every n and caveat: [Validation](#validation).
+
+| Check | Result | Caveat |
+|---|---|---|
+| Washington: NISAR flood candidates | 27.99 km² within the swath, about 950 people inside | post pass covers 74% of the area; BETA products |
+| Washington: NISAR vs NASA OPERA surface water (C-band), new flood | F1 0.15 (precision 0.19, recall 0.13) | reference is a model, not ground truth; double bounce explains the misses: 45% of the missed flood is in towns or forest vs 5% of what we caught |
+| Rio Grande do Sul 2024: landslides, forecast as issued | 5.8% of 16,027 mapped landslides were High or Critical in the forecast issued 27 h before the first deaths, while that forecast flagged 2.1% of the area: 2.7× chance | runs issued 51 and 75 h before: 0%; one run carries it |
+| Forecast lead (replays, horizon 0–3 days) | about 1 day in Rio Grande do Sul (the run 27 h before the first deaths); none for Washington's flooded places (0% at 24/48/72 h) | local-rain index; official warnings came first in both replays |
+| Forecast alarms by municipality | Rio Grande do Sul 1.4× chance, Washington 2.0× | landslide maps undated |
+| Uruguaiana 2026 (post-event test, not live) | upstream NASA rain extreme 5 days before flood stage; the low-lying corridor (about 20,900 people) holds 54% of a teammate's NISAR change map in 36% of the land | small sample (7 polygons, ~1.8 km²); our stricter automatic check did not reproduce that map; no claim of being earlier than official warnings |
+| ML trigger model | median per-event ROC 0.93 over 9 held-out disasters | about as good as a simple rule; ~4–5 alarm-days per site per year; experimental |
+
+## Repo map
+
+| Path | What |
+|---|---|
+| `src/app/` | Next.js routes: `/` (Command Center: Now + Replay), `/alerts` (public alerts), `api/` |
+| `src/components/command/` | the Command Center UI (map, right-panel tabs, replay, NISAR swipe) |
+| `src/lib/` | data contract + loaders (reads the data repo's published files) |
+| `scripts/sync-data.mjs` | copies `../tipping-point-data/data` into `public/data` (bundled last-resort fallback) |
+| `docs/` | `PLAN.md` (the team's plan), `app-contract.md`, deploy notes, screenshots |
+| `submission/` | Space Apps submission texts (project page, form, script) |
+
+Data products are produced by [tipping-point-data](https://github.com/r2l2pj/tipping-point-data) (`data/SCHEMA.md` is the contract) and read at runtime from its GitHub `fallback` branch (raw files), with the bundled copy as the last resort.
+
+## Credits and attributions
+
+NASA data: GPM IMERG, SMAP L4, NASADEM, NISAR (GCOV, provisional/BETA), NASA OPERA DSWx and DIST-ALERT, HLS, VIIRS Black Marble, SWOT, GPW v4.11 (SEDAC), Global Landslide Catalog / COOLR. Forecast rain: NOAA GFS 0.25°. Required attributions: NASA OPERA DSWx-S1 contains modified Copernicus Sentinel-1 data (ESA); Copernicus Emergency Management Service EMSR720 © European Union (independent validation maps); Washington Geological Survey landslide inventory; UFRGS/Cemaden landslide inventory; IBGE boundaries; basemap © CARTO, © OpenStreetMap contributors. River levels: ANA (Brazil) telemetry.
+
+## Technical notes
+
+
 Next.js 16 (App Router) + MapLibre + `@google/earthengine`. Serves the artifacts
 published by [`r2l2pj/tipping-point-data`](https://github.com/r2l2pj/tipping-point-data).
 Earth Engine is not on the runtime path — it is used only for one-off compute and
@@ -13,8 +65,12 @@ hosted copies; live EE layers stay off by default, opt-in via `GEE_ENABLED`
 
 ```bash
 bun install
-bun run dev          # predev syncs ../tipping-point-data/data -> public/data
+bun run dev                   # predev syncs ../tipping-point-data/data -> public/data
+bun run build && bun run start  # production build + server (how the demo is served)
 ```
+
+At runtime the server reads live data from the data repo's GitHub `fallback`
+branch first; `public/data` is only the last-resort fallback.
 
 `DATA_REPO=/path/to/tipping-point-data` overrides the sibling-repo default.
 
