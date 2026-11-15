@@ -7,6 +7,7 @@ import EvidenceDetails from "./EvidenceDetails";
 import GetAlertsCard from "./GetAlertsCard";
 import LayersColumn from "./LayersColumn";
 import MapStage from "./MapStage";
+import PanelSection from "./PanelSection";
 import type { AlertList } from "./model/alerts";
 import { priorityAreas } from "./model/areas";
 import { availability, missingText } from "./model/availability";
@@ -267,66 +268,77 @@ export function CommandCenterView({
             </PublicAlertsPanel>
           ) : (
             <>
-              <StatusBlock
-                chip={chip}
-                status={status}
-                stepLabel={step ? stepLabel(bundle, step) : undefined}
-              >
-                {live && chip.kind === "no-data" && cases.some((c) => c.mode === "replay") && (
-                  <p className="mt-1.5 text-[13px]">
-                    Past events with published data are in Replay.{" "}
-                    <button type="button" onClick={() => dispatch({ type: "setMode", mode: "replay" })}
-                      className="font-semibold text-cc-accent underline decoration-dotted underline-offset-2">
-                      Open Replay
-                    </button>
-                  </p>
-                )}
-              </StatusBlock>
+              {/* Response first, prediction second (ruling L27). */}
+              <PanelSection label="Now on the ground">
+                <RadarCard
+                  radar={radar}
+                  floodOn={state.layers.includes("flood")}
+                  compareOpen={state.compareOpen === "radar"}
+                  onConfirm={() => dispatch({ type: "confirmRadar" })}
+                  onShowFlood={() => dispatch({ type: "toggleLayer", id: "flood" })}
+                  onCompare={() =>
+                    dispatch(state.compareOpen === "radar" ? { type: "closeCompare" } : { type: "openCompare", kind: "radar" })}
+                />
 
-              <Tiles
-                area={criticalAreaTile(bundle, state.hazard, step?.date, step?.day)}
-                people={peopleTile(bundle, step?.date, step?.day)}
-              />
-              {classesKm2.length > 0 && (
-                <dl className="grid grid-cols-2 gap-x-4 text-xs text-cc-muted" aria-label="Area by class">
-                  {classesKm2.map(([cls, km2]) => (
-                    <div key={cls} className="flex justify-between border-t border-cc-rule py-0.5">
-                      <dt>class {classLabel(cls)}</dt><dd>{fmtKm2(km2)}</dd>
-                    </div>
-                  ))}
-                </dl>
-              )}
+                <div>
+                  <h3 className="m-0 mb-1 text-[13px] font-semibold text-cc-muted">Who is affected</h3>
+                  <Tiles
+                    area={criticalAreaTile(bundle, state.hazard, step?.date, step?.day)}
+                    people={peopleTile(bundle, step?.date, step?.day)}
+                  />
+                  {classesKm2.length > 0 && (
+                    <dl className="mt-1.5 grid grid-cols-2 gap-x-4 text-xs text-cc-muted" aria-label="Area by class">
+                      {classesKm2.map(([cls, km2]) => (
+                        <div key={cls} className="flex justify-between border-t border-cc-rule py-0.5">
+                          <dt>class {classLabel(cls)}</dt><dd>{fmtKm2(km2)}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+                </div>
 
-              <PriorityAreas
-                areas={areas}
-                missingText={missingText(availability(bundle, "priority_zones"))}
-                expanded={state.listExpanded}
-                selected={state.selectedArea}
-                asOf={snap.asOf}
-                dimmed={snap.dimmed}
-                onToggleAll={() => dispatch({ type: "toggleList" })}
-                onSelect={(rank) => dispatch({ type: "selectArea", rank })}
-              />
+                <PriorityAreas
+                  areas={areas}
+                  missingText={missingText(availability(bundle, "priority_zones"))}
+                  expanded={state.listExpanded}
+                  selected={state.selectedArea}
+                  asOf={snap.asOf}
+                  dimmed={snap.dimmed}
+                  onToggleAll={() => dispatch({ type: "toggleList" })}
+                  onSelect={(rank) => dispatch({ type: "selectArea", rank })}
+                />
+              </PanelSection>
 
-              <RainSoilChart
-                bundle={bundle}
-                steps={steps}
-                dayIndex={state.dayIndex}
-                asTable={state.chartAsTable}
-                forecastLabel={forecastSource(bundle) ?? "source not published"}
-                onSeek={seek}
-                onToggleTable={toggleTable}
-              />
+              <PanelSection label="Prediction">
+                <StatusBlock
+                  chip={chip}
+                  status={status}
+                  stepLabel={step ? stepLabel(bundle, step) : undefined}
+                >
+                  {live && chip.kind === "no-data" && cases.some((c) => c.mode === "replay") && (
+                    <p className="mt-1.5 text-[13px]">
+                      Past events with published data are in Replay.{" "}
+                      <button type="button" onClick={() => dispatch({ type: "setMode", mode: "replay" })}
+                        className="font-semibold text-cc-accent underline decoration-dotted underline-offset-2">
+                        Open Replay
+                      </button>
+                    </p>
+                  )}
+                </StatusBlock>
 
-              <RadarCard
-                radar={radar}
-                floodOn={state.layers.includes("flood")}
-                compareOpen={state.compareOpen === "radar"}
-                onConfirm={() => dispatch({ type: "confirmRadar" })}
-                onShowFlood={() => dispatch({ type: "toggleLayer", id: "flood" })}
-                onCompare={() =>
-                  dispatch(state.compareOpen === "radar" ? { type: "closeCompare" } : { type: "openCompare", kind: "radar" })}
-              />
+                <RainSoilChart
+                  bundle={bundle}
+                  steps={steps}
+                  dayIndex={state.dayIndex}
+                  asTable={state.chartAsTable}
+                  forecastLabel={forecastSource(bundle) ?? "source not published"}
+                  onSeek={seek}
+                  onToggleTable={toggleTable}
+                />
+                <p className="m-0 text-xs text-cc-faint">
+                  Model probabilities (24 h–14 d) are in the Layers column.
+                </p>
+              </PanelSection>
 
               {!live && (
                 <ReplayCheck
