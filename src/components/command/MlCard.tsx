@@ -132,6 +132,7 @@ export default function MlCard({ ml }: { ml: MlView }) {
           {ml.event[key] && (
             <div className="mt-1.5">
               <Table t={ml.event[key]} caption={`This event only (${caseTitle(ml.eventId)})`} />
+              {ml.eventNote && <p data-ml-eventnote className="mt-0.5 text-cc-warn">{ml.eventNote}</p>}
             </div>
           )}
           {ml.valNote && <p data-ml-valnote className="mt-1 text-cc-warn">{ml.valNote}</p>}

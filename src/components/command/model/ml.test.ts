@@ -203,5 +203,8 @@ describe("ML v2 real export (lead-ml fallback f5fbab1, trimmed fixture)", () => 
     expect(v.tmlExcludesRs).toBe(true);
     expect(v.where!.rows[0].label).toContain("the model on the map");
     expect(v.calibrationNote).toBe("Scores of the calibrated models, as served on the map.");
+    // lead-ml: RS baseline inflated by day-of-year (test design), captioned
+    expect(v.eventNote).toBe("RS climatology score is inflated: all RS landslides fall in one season while comparison dates span the year.");
+    expect(buildMlView(card, "wa_2025", "xgb_all")!.eventNote).toBeUndefined();
   });
 });

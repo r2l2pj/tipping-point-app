@@ -39,6 +39,11 @@ export const SOURCE_LABEL: Record<string, string> = {
 // prefers v2 and the view carries `provisional` per card.
 export const ML_PROVISIONAL = true; // v1 card (no version key)
 export const isV2 = (card: unknown) => isRecord(card) && card.version === "v2";
+// lead-ml (model-metrics.md v2): the no-rain/soil baseline carries terrain,
+// land cover, soil texture and day of year; on RS its score is a test-design
+// artefact, not skill.
+export const RS_CLIMATOLOGY_NOTE =
+  "RS climatology score is inflated: all RS landslides fall in one season while comparison dates span the year.";
 export const ML_PROVISIONAL_TEXT = "Provisional — being re-scored on more events (v2 today)";
 
 // L32: shown under the T_ML 'where' table until lead-ml's re-export.
@@ -76,6 +81,9 @@ export interface MlView {
   // v2 served{model, note}: the trigger model the live layer runs.
   servedLine?: string;
   servedNote?: string;
+  // Caption under 'This event only' when its baseline score is a test-design
+  // artefact (lead-ml: RS positives all in late April, negatives span the year).
+  eventNote?: string;
   // v1 card: provisional banner, GFS tables hidden (L33).
   provisional: boolean;
   // v2: T_ML retrained without any RS 2024 point (L32).
@@ -295,6 +303,8 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
     valNote: typeof card.val_vs_test_note === "string" ? card.val_vs_test_note : undefined,
     servedLine: servedTrig ? `The live layer runs ${labels[servedTrig]?.replace(/ — the model live$/, "") ?? servedTrig}.` : undefined,
     servedNote: isRecord(card.served) && typeof card.served.note === "string" ? card.served.note : undefined,
+    eventNote: v2 && caseId === "rs_2024" && Object.values(event).some((t) => t.rows.some((r) => r.model === "climatology" && !r.missing))
+      ? RS_CLIMATOLOGY_NOTE : undefined,
     provisional,
     tmlExcludesRs: card.t_ml_excludes_rs === true,
     testEventList,
