@@ -5,6 +5,9 @@ import type { CaseBundle } from "@/lib/types";
 import {
   fmtDataDate,
   layerAvailable,
+  manifestRaster,
+  probLayerNote,
+  PROB_LAYER_TITLE,
   type ToggleLayerKey,
 } from "@/lib/layers";
 
@@ -20,6 +23,9 @@ const ROWS: Row[] = [
   { key: "imerg", label: "IMERG Rain (GPM)", dateKey: "imerg" },
   { key: "smap", label: "Soil Moisture (SMAP)", dateKey: "smap" },
   { key: "nisar", label: "NISAR Change (SAR)", dateKey: "nisar_post" },
+  // L25: XGBoost probability frames — rows appear only when the manifest
+  // ships real rasters (layerAvailable gate below).
+  { key: "pTrigger", label: PROB_LAYER_TITLE },
 ];
 
 // Slide and flood TPI share the two-layer budget: enabling one clears the
@@ -63,7 +69,8 @@ export default function LayersPanel({
           // TPI frames are per-day products — their chip tracks the
           // selected timeline day, not the case data date.
           const isTpi = r.key === "tpiFlood" || r.key === "tpiSlide";
-          const raw = isTpi ? frameDate : dd[r.dateKey ?? ""];
+          const isProb = r.key === "pTrigger";
+          const raw = isTpi || isProb ? frameDate : dd[r.dateKey ?? ""];
           const date = typeof raw === "string" ? fmtDataDate(raw) : null;
           const capped = budget === 0 && !layers[r.key];
           return (
@@ -99,6 +106,15 @@ export default function LayersPanel({
                       {frameBasis}
                     </span>
                   )}
+                  {isProb &&
+                    (() => {
+                      const note = probLayerNote(
+                        manifestRaster(bundle.manifest?.layers, "pTrigger", frameDate)
+                      );
+                      return note ? (
+                        <span className="block text-xs text-zinc-500">{note}</span>
+                      ) : null;
+                    })()}
                 </span>
               </label>
             </li>

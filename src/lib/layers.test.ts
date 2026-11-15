@@ -11,7 +11,9 @@ import {
   fmtDateTime,
   isForecastLayer,
   layerAvailable,
+  manifestRaster,
   overlayPlan,
+  probLayerNote,
   pointInPolygons,
   resolvePixelValues,
   toggleBudget,
@@ -129,6 +131,31 @@ describe("layerAvailable", () => {
       { id: "nisar_post", png: "b.png" },
     ]);
     expect(layerAvailable(swipe, "nisar")).toBe(false);
+  });
+
+  test("L25 p_trigger frames back the probability toggle", () => {
+    const b = bundle([
+      { id: "p_trigger_24h", png: "p24.png", date: "2025-12-11" },
+      { id: "p_trigger_72h", png: "p72.png", date: "2025-12-13" },
+    ]);
+    expect(layerAvailable(b, "pTrigger")).toBe(true);
+    expect(layerAvailable(bundle([{ id: "p_trigger_24h" }]), "pTrigger")).toBe(false);
+    expect(layerAvailable(bundle([{ id: "tpi_slide", png: "t.png" }]), "pTrigger")).toBe(false);
+    // per-day resolution prefers the frame stamped with the selected date
+    const day = manifestRaster(b.manifest.layers, "pTrigger", "2025-12-13");
+    expect(day?.id).toBe("p_trigger_72h");
+  });
+});
+
+describe("probLayerNote", () => {
+  test("issued time + forecast source label", () => {
+    expect(
+      probLayerNote({ id: "p_trigger_24h", png: "p.png", issued_at: "2025-12-11T06:00:00Z" })
+    ).toContain("forecast: NOAA GFS");
+    expect(
+      probLayerNote({ id: "p_trigger_24h", png: "p.png", issued_at: "2025-12-11T06:00:00Z", forecast_source: "NOAA GFS" })
+    ).toContain("issued Dec 11, 2025");
+    expect(probLayerNote(undefined)).toBeUndefined();
   });
 });
 

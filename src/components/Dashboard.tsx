@@ -75,6 +75,7 @@ export default function Dashboard({ cases, initialCase, initialDay }: { cases: C
     imerg: false,
     smap: false,
     nisar: false,
+    pTrigger: false,
   });
   const enabledQueue = useRef<(keyof LayerState)[]>(["tpiSlide"]);
 
@@ -143,7 +144,7 @@ export default function Dashboard({ cases, initialCase, initialDay }: { cases: C
       setDayIndex(Math.max(0, idx));
       setPlaying(false);
       setTab("alert");
-      setLayers({ tpiFlood: false, tpiSlide: true, imerg: false, smap: false, nisar: false });
+      setLayers({ tpiFlood: false, tpiSlide: true, imerg: false, smap: false, nisar: false, pTrigger: false });
       enabledQueue.current = ["tpiSlide"];
     },
     [cases]

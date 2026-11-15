@@ -32,6 +32,10 @@ export interface ManifestLayer {
   // Pipeline provenance for the frame ("final data, hindcast", …) —
   // shown under the layer's date chip when published.
   data_basis?: string;
+  // L25 probability frames: model run issue time + the forecast input
+  // ("NOAA GFS") the probability was computed against.
+  issued_at?: string;
+  forecast_source?: string;
 }
 
 export interface NisarPass {

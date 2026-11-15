@@ -48,6 +48,7 @@ export interface LayerState {
   imerg: boolean;
   smap: boolean;
   nisar: boolean;
+  pTrigger: boolean;
 }
 
 const SRC = {
@@ -65,6 +66,7 @@ const SRC = {
   opera: "tp-opera-img",
   nl: "tp-nl-img",
   tml: "tp-tml-img",
+  prob: "tp-prob-img",
   muni: "tp-muni",
   catalog: "tp-catalog",
   places: "tp-places",
@@ -93,6 +95,7 @@ const LYR = {
   opera: "tp-opera-lyr",
   nl: "tp-nl-lyr",
   tml: "tp-tml-lyr",
+  prob: "tp-prob-lyr",
   zonesFill: "tp-zones-fill",
   zonesLine: "tp-zones-line",
   muni: "tp-muni-line",
@@ -390,6 +393,10 @@ export function useMapLayers(
     rasterToggle("imerg", SRC.imerg, LYR.imerg);
     rasterToggle("smap", SRC.smap, LYR.smap);
     rasterToggle("nisar", SRC.nisar, LYR.nisar);
+    // L25: XGBoost P(trigger) probability frame — per-day raster under the
+    // muni lines at 0.7, same seam as the other toggle rasters. TPI stays
+    // the headline; this only paints when the manifest ships real frames.
+    rasterToggle("pTrigger", SRC.prob, LYR.prob);
 
     // Pre-rendered EPSG:3857 PNGs become image sources on demand; the raster
     // layer goes in at `before` so the doc order holds. `on` is applied after

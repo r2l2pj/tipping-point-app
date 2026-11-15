@@ -237,7 +237,13 @@ export const assetUrl = (
 // never synthetic data dressed up as a NASA product. Manifest layers match
 // by id prefix (imerg_* / smap_* / nisar_* / tpi_*); nisar excludes the
 // nisar_pre/nisar_post pair, which backs the radar before/after swipe.
-export type ToggleLayerKey = "tpiSlide" | "tpiFlood" | "imerg" | "smap" | "nisar";
+export type ToggleLayerKey =
+  | "tpiSlide"
+  | "tpiFlood"
+  | "imerg"
+  | "smap"
+  | "nisar"
+  | "pTrigger";
 
 const TOGGLE_PREFIX: Record<ToggleLayerKey, string> = {
   tpiSlide: "tpi_slide",
@@ -245,6 +251,10 @@ const TOGGLE_PREFIX: Record<ToggleLayerKey, string> = {
   imerg: "imerg_",
   smap: "smap_",
   nisar: "nisar_",
+  // L25: P(trigger) probability frames — XGBoost lead-time rasters
+  // published by lead-live as manifest layers (id prefix pending; if the
+  // shipped ids differ, only this prefix needs to change).
+  pTrigger: "p_trigger",
 };
 
 const NISAR_SWIPE_IDS = new Set(["nisar_pre", "nisar_post"]);
@@ -272,6 +282,20 @@ export function layerAvailable(
   key: ToggleLayerKey
 ): boolean {
   return manifestRaster(bundle?.manifest?.layers, key) !== undefined;
+}
+
+// L25 probability layer copy: "Model probability (XGBoost) · issued <time>
+// · forecast: NOAA GFS". The issued timestamp prefers the layer's issued_at;
+// the source falls back to the contract default until lead-live publishes a
+// forecast_source on the frame.
+export const PROB_LAYER_TITLE = "Model probability (XGBoost)";
+export const PROB_FORECAST_DEFAULT = "NOAA GFS";
+
+export function probLayerNote(l?: ManifestLayer): string | undefined {
+  if (!l) return undefined;
+  const issued = l.issued_at ?? l.date;
+  const src = l.forecast_source ?? PROB_FORECAST_DEFAULT;
+  return issued ? `issued ${fmtDataDate(issued)} · forecast: ${src}` : `forecast: ${src}`;
 }
 
 // --- BRT date formatting ------------------------------------------------------
