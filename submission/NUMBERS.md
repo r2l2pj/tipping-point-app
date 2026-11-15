@@ -39,7 +39,7 @@ grep -rn -E "36%|36\.45|8\.8×|4%|4\.16|57%|2\.1×|81%|3\.0×|0\.18|0\.31|6\.6%|
 
 ## Uruguaiana (main case) — pick A or B at the 14:45 sync from lead-analysis's numbers
 
-Current text in the files = version A with [TBD]. Keys (fallback ~14:00): `cases.rs_uruguai_2026.radar_darkening_corridor_km2`, `radar_darkening_fields_km2`, `radar_darkening_pair`; A only if `nisar_flooded_km2` + `nisar_people_flooded` are non-null (else `_null_reasons.nisar_flooded_km2` → B). Teammate v0 keys `flooded_km2` 1.817 / `people_flooded` 28 come from the Sep 30 → Oct 12 NISAR pair (provisional GCOV) — confirm with lead-analysis before quoting. NISAR pair Oct 24 → Nov 5, 2026 (HH + HV); Itaqui outside the swath. (Sep 30 → Oct 12 IS NISAR — see the correction below.)
+Current text in the files = version A with [TBD]. Keys (fallback ~14:00): `cases.rs_uruguai_2026.radar_darkening_corridor_km2`, `radar_darkening_fields_km2`, `radar_darkening_pair`; A only if `nisar_flooded_km2` + `nisar_people_flooded` are non-null (else `_null_reasons.nisar_flooded_km2` → B). Teammate v0 keys `flooded_km2` 1.817 / `people_flooded` 28 come from the Sep 30 → Oct 12 NISAR pair (provisional GCOV; lead-analysis confirmed, flood_source 'nisar'). Our own 010D stack keys: `nisar_flooded_km2[_<yyyymmdd>]`, `nisar_people_flooded[_<yyyymmdd>]` — use the date with the largest `nisar_flooded_km2_<date>` for V6_AFTER and the C overlay. NISAR pair Oct 24 → Nov 5, 2026 (HH + HV); Itaqui outside the swath. (Sep 30 → Oct 12 IS NISAR — see the correction below.)
 
 **A — the guard fix yields gated flood candidates** (fill km² and people from the published keys):
 - Page lead: "A NISAR pass pair (Oct 24 → Nov 5, 2026) mapped [km²] km² of flood candidates at Uruguaiana through cloud, home to about [people] people (Itaqui is outside that swath)."
@@ -77,3 +77,5 @@ Pick F1 (current page lead, slide 3, `captions-v6-draft.srt`) only if lead-ml's 
 **F2 video:** `captions-v6-fallback.srt` (48 words): B = Uruguaiana under cloud (NISAR stack first frame + optical cloud if available), C = NISAR flood candidates + Who is affected, D = "Next we test whether the forecast can point there days ahead." over the forecast map with no number. Without gated candidates (NISAR version B), C becomes "NISAR radar saw the river spread through it, every 12 days." and no people number.
 
 Never "prevented"; never present a forecast miss as a hit.
+
+lead-analysis RETRACTION (13:0x): the Sep 30 → Oct 12 Uruguaiana pair IS NISAR (provisional GCOV collection; the first search only covered V1, which starts Oct 24). It may be cited as NISAR.
