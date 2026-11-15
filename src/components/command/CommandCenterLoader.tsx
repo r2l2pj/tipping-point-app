@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import { canonicalCaseId } from "@/lib/contract";
 import { getAlerts, getCaseBundle, getDataJson, getEventsIndex, getMlArtifacts, getRootManifest } from "@/lib/data";
 import { slimHypothesis, slimNisarSeries } from "./model/nisarSeries";
+import { nextPassFrom } from "./model/nextPass";
 import { resolveAsset } from "@/lib/contract";
 import type { ManifestLayer } from "@/lib/types";
 import { buildMlView, groupImportance } from "./model/ml";
@@ -249,8 +250,15 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
     ? await getDataJson(typeof nowSeriesPath === "string" ? nowSeriesPath : "response/nisar_timeseries.json", "now")
         .then(slimNisarSeries).catch(() => undefined)
     : undefined;
+  // L43: next NISAR pass over the live domain (listed product or the agreed path).
+  const nextPath = (now?.products as Record<string, unknown> | undefined)?.nisar_next_passes;
+  const nisarNext = now?.manifest
+    ? await getDataJson(typeof nextPath === "string" ? nextPath : "nisar_next_passes.json", "now")
+        .then((raw) => nextPassFrom(raw)).catch(() => undefined)
+    : undefined;
   const live: CcBundle | null = now?.manifest
-    ? { ...now, updated_at: liveRunTime(root), nullReasons: nullReasons(root, "now"), ...(nowSeries ? { nisarSeries: nowSeries } : {}) }
+    ? { ...now, updated_at: liveRunTime(root), nullReasons: nullReasons(root, "now"),
+        ...(nowSeries ? { nisarSeries: nowSeries } : {}), ...(nisarNext ? { nisarNext } : {}) }
     : null;
   if (live) cases.push(live);
 

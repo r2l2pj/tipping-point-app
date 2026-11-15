@@ -71,6 +71,7 @@ export default function PriorityAreas({
                     {Math.round(a.people).toLocaleString("en-US")} people in the at-risk part ({fmtKm2(a.areaKm2)}) of {a.name}
                   </span>
                 )}
+                {a.nextLook && <span className="block truncate text-[11px] font-normal text-cc-muted" data-zone-next>{a.nextLook}</span>}
               </span>
               <ClassChip cls={a.cls} className="w-[72px] shrink-0" />
               <span className="shrink-0 whitespace-nowrap">TPI {a.tpi === null ? "—" : a.tpi.toFixed(2)}</span>

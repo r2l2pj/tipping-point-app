@@ -3,6 +3,7 @@
 import { ALERT_FOOTER, ALERT_LEVEL_WORDS, EXPERIMENTAL_TEXT, heldLabel, type AlertCardData } from "@/lib/alerts";
 import type { AlertLevel } from "@/lib/types";
 import { fmtBrt, fmtDate, fmtKm2 } from "./model/format";
+import { nextLookText, nextPassOf } from "./model/nextPass";
 
 export const LEVEL_STYLE: Record<AlertLevel, { chip: string; border: string }> = {
   emergency: { chip: "bg-[#bd0026] text-white", border: "border-[#e2a3ad] bg-cc-danger-soft" },
@@ -51,6 +52,9 @@ export default function AlertCard({
             <> · <span className="text-cc-muted">confirmed</span> {fmtBrt(a.last_confirmed_at)}</>
           )}
         </p>
+      )}
+      {nextLookText(nextPassOf(a)) && (
+        <p className="mt-1 text-[13px]" data-alert-next>{nextLookText(nextPassOf(a))}</p>
       )}
       {a.basis && (
         <p className="mt-1 text-[13px] font-semibold text-cc-forecast-ink">{a.basis.charAt(0).toUpperCase() + a.basis.slice(1)}</p>

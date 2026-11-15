@@ -3,6 +3,7 @@
 import { zoneLabelPoint } from "@/lib/layers";
 import { OBSERVED_CLASS, observedOnlyZone, tpiOnlyZone } from "@/lib/zones";
 import { classLabel, finite } from "./format";
+import { nextLookText, nextPassOf } from "./nextPass";
 import type { CcBundle } from "./types";
 
 export interface PriorityArea {
@@ -17,6 +18,7 @@ export interface PriorityArea {
   // Conductor guard: a published but impossible count (negative, raster fill
   // like -1e40, above world population) renders as "—", never as a number.
   peopleInvalid?: boolean;
+  nextLook?: string; // L43: "Next NISAR look: …" (zone next_nisar_pass_utc)
   at: [number, number] | null; // pin position: center of the zone polygon
 }
 
@@ -50,6 +52,7 @@ export function priorityAreas(bundle: CcBundle | undefined): PriorityArea[] {
       areaKm2: finite(p.area_km2) ? p.area_km2 : null,
       people: finite(p.people) && p.people >= 0 && p.people <= 8e9 ? p.people : null,
       ...(p.people != null && !(finite(p.people) && p.people >= 0 && p.people <= 8e9) ? { peopleInvalid: true } : {}),
+      ...(nextLookText(nextPassOf(p)) ? { nextLook: nextLookText(nextPassOf(p)) } : {}),
       at,
     };
   });

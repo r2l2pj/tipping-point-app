@@ -94,6 +94,12 @@ export default function RadarCard({
           {radar.hypothesisLine && <p className="m-0 mt-0.5 font-semibold" data-radar-test>{radar.hypothesisLine}</p>}
         </div>
       )}
+      {radar.nextLook && (
+        <div className="mt-1.5 text-xs" data-next-look>
+          <p className="m-0 font-semibold">{radar.nextLook}</p>
+          {radar.framing && <p className="m-0 text-cc-muted">{radar.framing}</p>}
+        </div>
+      )}
       {radar.series && <NisarSeriesChart s={radar.series} />}
       {radar.pair && (
         <details className="mt-1.5 text-xs" data-nisar-why>

@@ -8,6 +8,7 @@ export type CcBundle = CaseBundle & {
   // L42: NISAR time series product (slimmed on the server), WA only.
   nisarSeries?: import("./nisarSeries").NisarSeriesRaw;
   nisarHypothesis?: import("./nisarSeries").NisarHypothesis;
+  nisarNext?: import("./nextPass").NextPass; // L43, live
   // First remote data base; lazy GeoJSON URLs are built from it.
   assetBase?: string;
   dataDate?: string;

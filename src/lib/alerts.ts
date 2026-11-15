@@ -16,6 +16,8 @@ export interface AlertCardData extends Alert {
   basis?: string;
   first_issued_at?: string;
   last_confirmed_at?: string;
+  next_nisar_pass_utc?: string; // L43
+  next_nisar_track?: string | number;
   // 'when' = d1: today's class of the same area, only when the data gives
   // it (class_today); "below" = under High. Absent = not known: not shown.
   today_level?: AlertLevel | "below";
@@ -210,6 +212,11 @@ export function candidatesToAlerts(
       ...(c.when === "d1" && typeof (c as { class_today?: unknown }).class_today === "number"
         ? { today_level: levelForClass((c as { class_today: number }).class_today) ?? "below" } : {}),
       ...(active && c.last_confirmed_at ? { last_confirmed_at: c.last_confirmed_at } : {}),
+      ...(typeof (c as { next_nisar_pass_utc?: unknown }).next_nisar_pass_utc === "string"
+        ? { next_nisar_pass_utc: (c as { next_nisar_pass_utc: string }).next_nisar_pass_utc,
+            ...((c as { next_nisar_track?: unknown }).next_nisar_track != null
+              ? { next_nisar_track: (c as { next_nisar_track: string | number }).next_nisar_track } : {}) }
+        : {}),
       valid_to: validTo.toISOString(),
       guidance:
         `${ALERT_LEVEL_WORDS[level]} ${hazard} risk in your region. ` +
