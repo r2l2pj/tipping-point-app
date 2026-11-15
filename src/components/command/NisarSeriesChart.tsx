@@ -31,7 +31,8 @@ export default function NisarSeriesChart({ s }: { s: NisarSeriesView }) {
           <g key={l.id}>
             <path d={path(l.hh)} fill="none" stroke={COLORS[k % COLORS.length]} strokeWidth={l.flood ? 2.2 : 1.2} />
             {l.hh.map((v, i) => v === null ? null : (
-              <circle key={i} cx={x(i)} cy={y(v)} r={l.flood ? 2.6 : 1.8} fill={COLORS[k % COLORS.length]} />
+              <circle key={i} cx={x(i)} cy={y(v)} r={l.flood ? 2.6 : 1.8}
+                fill={s.otherGeometry[i] ? "#ffffff" : COLORS[k % COLORS.length]} stroke={COLORS[k % COLORS.length]} strokeWidth={1} />
             ))}
           </g>
         ))}
@@ -45,8 +46,12 @@ export default function NisarSeriesChart({ s }: { s: NisarSeriesView }) {
         ))}
       </ul>
       {s.reading && <p className="m-0 mt-1 text-cc-muted">{s.reading}</p>}
+      {s.otherGeometry.some(Boolean) && (
+        <p className="m-0 mt-0.5 text-cc-faint">Hollow points: passes from another orbit (different viewing angle) — compare their level with care.</p>
+      )}
+      {s.geometryNote && <p className="m-0 mt-0.5 text-cc-faint">{s.geometryNote}</p>}
       {s.frames.length > 0 && (
-        <div className="mt-1.5 grid grid-cols-3 gap-1" data-nisar-frames>
+        <div className="mt-1.5 grid gap-1" data-nisar-frames style={{ gridTemplateColumns: `repeat(${Math.min(s.frames.length, 4)}, minmax(0, 1fr))` }}>
           {s.frames.map((f) => (
             <figure key={f.url} className="m-0">
               {/* eslint-disable-next-line @next/next/no-img-element -- remote data PNG, no image optimizer */}

@@ -70,10 +70,22 @@ describe("NISAR on the live Southern Brazil card (worker nisar-now-ts)", () => {
       ], { event: undefined }), // the real now/manifest.json has no `event`
     } as never);
     const v = nisarSeriesView(live)!;
+    expect(v.otherGeometry).toEqual([false, false, false]);
     expect(v.frames.map((f) => f.url)).toEqual(["/data/now/response/png/nisar_pre.png", "/data/now/response/png/nisar_post.png"]);
     const p = radarCompare(live).pair!;
     expect(p.before.url).toBe("/data/now/response/png/nisar_pre.png");
     expect(p.hv!.after.label).toBe("NISAR radar after (HV) — Nov 6, 2026");
     expect(radarCard(live).series).toBeDefined();
   });
+});
+
+test("t19n contract: reading_line wins, passes from other orbits are flagged", () => {
+  const s = slimNisarSeries({ ...raw, reading_line: "Flood candidates darkened ~6 dB between Oct 25 and Nov 6.",
+    passes: [{ date: "2025-12-04", track: 172, same_geometry: false }], geometry_note: "Oct 29/Nov 1 from other tracks" })!;
+  const v = nisarSeriesView(bundle({ nisarSeries: s } as never))!;
+  expect(v.reading).toBe("Flood candidates darkened ~6 dB between Oct 25 and Nov 6.");
+  expect(v.otherGeometry).toEqual([false, true, false]);
+  const html = renderToStaticMarkup(createElement(NisarSeriesChart, { s: v }));
+  expect(html).toContain("Hollow points: passes from another orbit");
+  expect(html).toContain("Oct 29/Nov 1 from other tracks");
 });

@@ -20,6 +20,10 @@ export interface NisarSeriesRaw {
   areas: Record<string, { label?: string; hh_db?: (number | null)[]; hv_db?: (number | null)[]; km2?: number }>;
   frames?: { date: string; layer_id?: string; png?: string }[];
   reading?: Record<string, string>;
+  readingLine?: string;
+  geometryNote?: string;
+  // dates whose pass has a different orbit/geometry than the change pair
+  otherGeometry?: string[];
   status?: string;
 }
 
@@ -54,6 +58,11 @@ export function slimNisarSeries(raw: unknown): NisarSeriesRaw | undefined {
         }))
       : undefined,
     reading: isRecord(raw.reading) ? (raw.reading as Record<string, string>) : undefined,
+    readingLine: typeof raw.reading_line === "string" ? raw.reading_line : undefined,
+    geometryNote: typeof raw.geometry_note === "string" ? raw.geometry_note : undefined,
+    otherGeometry: Array.isArray(raw.passes)
+      ? raw.passes.filter((p): p is M => isRecord(p) && p.same_geometry === false && typeof p.date === "string").map((p) => p.date as string)
+      : undefined,
     status: typeof raw.status === "string" ? raw.status : undefined,
   };
 }
@@ -68,6 +77,8 @@ export interface NisarSeriesView {
   max: number;
   frames: { label: string; role?: string; url: string }[];
   reading?: string;
+  geometryNote?: string;
+  otherGeometry: boolean[]; // per date: a pass from another orbit (hollow point)
   status?: string;
 }
 
@@ -100,7 +111,9 @@ export function nisarSeriesView(bundle: CcBundle): NisarSeriesView | undefined {
     min: lo - pad,
     max: hi + pad,
     frames,
-    reading: s.reading?.flood_candidates,
+    reading: s.readingLine ?? s.reading?.flood_candidates,
+    geometryNote: s.geometryNote,
+    otherGeometry: s.dates.map((d) => (s.otherGeometry ?? []).includes(d)),
     status: s.status,
   };
 }
