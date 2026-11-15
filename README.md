@@ -134,7 +134,7 @@ including Rio Grande do Sul 2024 and Washington 2025. The susceptibility
 layer is being retrained without Rio Grande do Sul points to remove a
 leak found on Nov 15; scores that used the leaked layer are withdrawn. Scores are compared with a RandomForest and the TPI > 0.6 rule at
 the same base rate. An XGBoost trigger model ranks landslide-prone places well inside extreme storms (median per-event ROC 0.93 across 9 held-out disasters) but an independent audit found it performs about as well as a simple forecast-rain-vs-local-extreme rule, and in everyday use it would raise ~4–5 alarm-days per site per year. We present it as experimental.
-Audit and numbers: [tipping-point-data `docs/science-review/`](https://github.com/r2l2pj/tipping-point-data/tree/main/docs/science-review).
+Audit and numbers: [tipping-point-data `docs/science-review/07-overfit-audit.md`](https://github.com/r2l2pj/tipping-point-data/blob/main/docs/science-review/07-overfit-audit.md).
 
 **Anchor dates (L37).** "Before the damage" is measured from the documented
 start of each event (the first dated reports of landslides or flooding), not
