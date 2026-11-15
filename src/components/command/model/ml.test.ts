@@ -2,7 +2,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildMlView, groupImportance } from "./ml";
+import { buildMlView, groupImportance, mlCaveats } from "./ml";
 
 // lead-ml sample files (main 1fe4aba): the SHAPE of the export; smoke numbers.
 const read = (f: string) => JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/ml", f), "utf8"));
@@ -17,7 +17,7 @@ describe("buildMlView", () => {
     const t = v.when["72h|gfs"];
     expect(t.rows.map((r) => r.model)).toEqual(["xgb_all", "rf_all", "rule_tpi"]);
     expect(t.rows.every((r) => r.n !== undefined && !r.missing)).toBe(true);
-    expect(t.baseLine).toMatch(/^Base rate \d+\.\d% \(\d+ of [\d,]+ test samples\)$/);
+    expect(t.baseLine).toMatch(/^Base rate \d+\.\d% \([\d,]+ of [\d,]+ test samples\)$/);
     expect(v.event["72h|gfs"].fewPositives).toBe(true); // WA: 8 positives
     expect(v.eventId).toBe("wa_2025");
   });
@@ -35,8 +35,10 @@ describe("buildMlView", () => {
 });
 
 describe("groupImportance", () => {
-  test("a smoke export with no gain charts nothing", () => {
-    expect(groupImportance(read("feature_importance_3b.json"))).toBeUndefined();
+  test("an export with no gain charts nothing", () => {
+    const raw = read("feature_importance_3b.json");
+    raw.rows = raw.rows.map((r: Record<string, unknown>) => ({ ...r, gain_share: 0 }));
+    expect(groupImportance(raw)).toBeUndefined();
   });
   test("groups with labels from the export, ordered by gain", () => {
     const raw = read("feature_importance_3b.json");
@@ -45,5 +47,31 @@ describe("groupImportance", () => {
     expect(v.groups.length).toBeGreaterThan(0);
     expect(v.groups.map((g) => g.label)).toContain("Surface (MCD12Q1 + VIIRS NDVI)");
     for (let i = 1; i < v.groups.length; i++) expect(v.groups[i - 1].gain >= v.groups[i].gain).toBe(true);
+  });
+});
+
+describe("real export (lead-ml, data main 1b943b6)", () => {
+  const v = buildMlView(read("ml_card.json"), "rs_2024")!;
+  test("72h · NOAA GFS: XGBoost vs random forest vs TPI rule, with n and base rate", () => {
+    const t = v.when["72h|gfs"];
+    expect(t.rows.map((r) => [r.model, r.n, r.nPos, r.cells.prAuc, r.cells.rocAuc])).toEqual([
+      ["xgb_all", 78208, 18024, "0.67", "0.82"],
+      ["rf_all", 78208, 18024, "0.64", "0.79"],
+      ["rule_tpi", 78208, 18024, "0.49", "0.66"],
+    ]);
+    expect(t.baseLine).toBe("Base rate 23.0% (18,024 of 78,208 test samples)");
+  });
+  test("caveats in plain words: one RS event + 8 WA points, 2015-18 vs 2024-25, rain WHEN / terrain WHERE, 7d/14d low skill", () => {
+    const c = mlCaveats(v).join(" ");
+    expect(c).toContain("ONE event — Rio Grande do Sul, May 2024 — plus 8 dated landslide reports from Washington 2025");
+    expect(c).toContain("Trained on the 2015–2018 landslide catalog; tested on 2024–2025 events");
+    expect(c).toContain("Rain decides WHEN");
+    expect(c).toContain("terrain model decides WHERE");
+    expect(c).toContain("7d and 14d horizons rely on long-range forecast: low skill.");
+  });
+  test("importance groups from the real export", () => {
+    const g = groupImportance(read("feature_importance_3b.json"))!;
+    expect(g.groups.length).toBeGreaterThan(1);
+    expect(Math.round(g.groups.reduce((a, x) => a + x.gain, 0) * 100)).toBe(100);
   });
 });

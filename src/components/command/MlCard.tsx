@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FEW_POSITIVES, SOURCE_LABEL, type MlTable, type MlView } from "./model/ml";
+import { FEW_POSITIVES, mlCaveats, SOURCE_LABEL, type MlTable, type MlView } from "./model/ml";
 
 const caseTitle = (id?: string) => (id === "rs_2024" ? "RS 2024" : id === "wa_2025" ? "WA 2025" : id ?? "this event");
 
@@ -31,7 +31,7 @@ function Table({ t, caption }: { t: MlTable; caption: string }) {
                 {/* The sample size sits with every score (never a metric without n). */}
                 {!r.missing && (
                   <span className="block font-normal text-cc-faint">
-                    n {r.n?.toLocaleString("en-US")}{r.nPos !== undefined ? ` · ${r.nPos} positive` : ""}
+                    n {r.n?.toLocaleString("en-US")}{r.nPos !== undefined ? ` · ${r.nPos.toLocaleString("en-US")} positive` : ""}
                   </span>
                 )}
               </th>
@@ -70,6 +70,10 @@ export default function MlCard({ ml }: { ml: MlView }) {
   return (
     <section aria-label="Did we get it right?" data-ml-card className="rounded-lg border border-cc-line p-2.5 text-xs">
       <h3 className="m-0 text-[13px] font-semibold">Did we get it right? (TEST data the models never saw)</h3>
+      {/* lead-ml's caveats first, in plain words. */}
+      <ul className="m-0 mt-1 list-disc pl-4 text-cc-warn" data-ml-caveats>
+        {mlCaveats(ml).map((c) => <li key={c}>{c}</li>)}
+      </ul>
 
       {ml.horizons.length > 0 && (
         <div className="mt-1.5">

@@ -58,6 +58,30 @@ export interface MlView {
   when: Record<string, MlTable>;
   event: Record<string, MlTable>;
   eventId?: string;
+  // TEST events present in by_event (e.g. rs_2024, wa_2025).
+  testEvents: string[];
+}
+
+// lead-ml's caveats, in plain words (conductor). The event list and the
+// low-skill horizons come from the export; the rest is the setup lead-ml
+// documented (split.3b: trained on the dated 2015-2018 catalog, TEST =
+// unseen 2024-2025 events).
+export function mlCaveats(v: MlView): string[] {
+  const ev = v.testEvents;
+  const rs = ev.includes("rs_2024");
+  const wa = ev.includes("wa_2025");
+  const tested = rs && wa
+    ? "The TEST is essentially ONE event — Rio Grande do Sul, May 2024 — plus 8 dated landslide reports from Washington 2025: few events, so these scores can move a lot."
+    : ev.length
+      ? `The TEST covers only ${ev.length} event${ev.length === 1 ? "" : "s"}: few events, so these scores can move a lot.`
+      : "The TEST covers few events: these scores can move a lot.";
+  const out = [
+    tested,
+    "Trained on the 2015–2018 landslide catalog; tested on 2024–2025 events it never saw.",
+    "Rain decides WHEN a landslide is triggered (the table above); the terrain model decides WHERE (T_ML, below).",
+  ];
+  if (v.lowSkill.length) out.push(`${v.lowSkill.join(" and ")} horizons rely on long-range forecast: low skill.`);
+  return out;
 }
 
 const score = (v: unknown) => (finite(v) ? v.toFixed(2) : "—");
@@ -136,6 +160,11 @@ export function buildMlView(card: unknown, caseId?: string): MlView | undefined 
     when,
     event,
     eventId: caseId && Object.keys(event).length ? caseId : undefined,
+    testEvents: [...new Set(horizons.flatMap((h) => sources.flatMap((s) => {
+      const b = (trig[h] as M)[s];
+      const x = isRecord(b) && isRecord(b.xgb_all) && isRecord((b.xgb_all as M).by_event) ? (b.xgb_all as M).by_event as M : {};
+      return Object.keys(x);
+    })))].sort(),
   };
   return view.where || horizons.length ? view : undefined;
 }

@@ -19,7 +19,11 @@ export default function GroupImportanceChart({ importance }: { importance: Impor
             </div>
             <div className="text-cc-faint">
               {g.top.length ? `top: ${g.top.join(", ")}` : "no gain"}
-              {g.permDrop !== undefined ? ` · shuffling it costs ${g.permDrop.toFixed(3)} TEST PR-AUC` : ""}
+              {g.permDrop !== undefined
+                ? g.permDrop > 0
+                  ? ` · shuffling it costs ${g.permDrop.toFixed(3)} TEST PR-AUC`
+                  : ` · shuffling it does not lower TEST PR-AUC (${g.permDrop.toFixed(3)})`
+                : ""}
             </div>
           </li>
         ))}
