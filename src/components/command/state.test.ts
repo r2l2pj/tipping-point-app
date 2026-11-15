@@ -3,6 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { bundle, frame, liveBundle, manifest, point, series, zones } from "./model/fixtures";
 import { caseHazard, initialState, linkParams, reduce, type Action, type ScreenState } from "./state";
 import { zone } from "./model/fixtures";
+import { layerRows } from "./model/layerRegistry";
+import { statusChip } from "./model/status";
+import { mapCaption, stepsFor } from "./model/steps";
+import { criticalAreaTile, peopleTile } from "./model/tiles";
 
 const fc = (n: number) => zones(Array.from({ length: n }, () => point()));
 const wa = bundle({
@@ -44,6 +48,28 @@ describe("Now radar default (L27)", () => {
     const c = [nowPair];
     const s = reduce(initialState(c), { type: "toggleLayer", id: "flood" }, c);
     expect(s.layers).toEqual(["tpi"]);
+  });
+});
+
+describe("unverified live run: risk paused", () => {
+  const paused = { ...nowPair, riskPaused: true,
+    summary: { critical_km2: { slide: 0, flood: 1024, any: 1054 }, classes_km2: { Baixo: 1 } } } as typeof nowPair;
+
+  test("the TPI layer cannot be on; the radar candidates stay", () => {
+    expect(initialState([wa, rs, paused]).layers).toEqual(["flood"]);
+    const s = reduce(initialState([paused]), { type: "toggleLayer", id: "tpi" }, [paused]);
+    expect(s.layers).toEqual(["flood"]);
+  });
+
+  test("tiles, status and caption say paused; replays are untouched", () => {
+    expect(criticalAreaTile(paused, "flood").value).toBe("paused while we verify today's data");
+    expect(peopleTile(paused).value).toBe("paused while we verify today's data");
+    expect(statusChip(paused, stepsFor(paused), 0, "flood")).toMatchObject({ kind: "no-data", label: "Risk paused" });
+    expect(mapCaption(paused, stepsFor(paused), 0, "slide", ["flood"]).text)
+      .toContain("Risk map paused while we verify today's data");
+    expect(layerRows(paused, ["flood"], "slide").find((r) => r.id === "tpi"))
+      .toMatchObject({ available: false, sub: "paused while we verify today's data" });
+    expect(initialState([{ ...wa, riskPaused: false }]).layers).toEqual(["tpi"]);
   });
 });
 

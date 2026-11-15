@@ -5,7 +5,7 @@ import { forecastChip, isGfsFrame, pickTpiFrame } from "@/lib/layers";
 import { cutsFor } from "@/lib/tpi";
 import { finite, fmtDate } from "./format";
 import type { Step } from "./steps";
-import type { CcBundle, Hazard } from "./types";
+import { RISK_PAUSED_TEXT, type CcBundle, type Hazard } from "./types";
 import type { ManifestLayer } from "@/lib/types";
 
 // Threshold of the tipping point: the series value, else the upper class cut.
@@ -66,6 +66,13 @@ export function statusChip(
   // An output the loader lists as pending is never read as a result.
   const pending = (key: string) => bundle.pending?.includes(key) === true;
 
+  if (bundle.mode === "live" && bundle.riskPaused) {
+    return {
+      kind: "no-data",
+      label: "Risk paused",
+      sentence: `${RISK_PAUSED_TEXT}. Nothing here means the risk is low; radar observations stay on the map.`,
+    };
+  }
   if (bundle.mode === "live") {
     const km2 = bundle.summary?.critical_km2;
     const value = finite(km2?.[hazard]) ? km2?.[hazard] : km2?.any;

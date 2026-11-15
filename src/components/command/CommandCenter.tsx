@@ -195,7 +195,7 @@ export function CommandCenterView({
     : undefined;
   const snap = zoneSnapshot(bundle, step?.date);
   const tag = forecastTag(bundle);
-  const classesKm2 = Object.entries(bundle.summary?.classes_km2 ?? {});
+  const classesKm2 = bundle.riskPaused ? [] : Object.entries(bundle.summary?.classes_km2 ?? {});
 
   const viewOnMap = (alert: AlertCardData) => {
     onView("command");

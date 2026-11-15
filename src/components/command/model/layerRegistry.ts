@@ -17,7 +17,7 @@ import { fmtDataDate, fmtDate } from "./format";
 import type { MapOverlays } from "./overlays";
 import { CANDIDATES_LABEL, floodLabels } from "./radar";
 import { frameBasis } from "./steps";
-import { HAZARD_LABEL, type CcBundle, type Hazard } from "./types";
+import { HAZARD_LABEL, RISK_PAUSED_SHORT, type CcBundle, type Hazard } from "./types";
 
 export type LayerId =
   | "tpi" | "imerg" | "smap" | "tml" | "ptrigger"
@@ -75,7 +75,11 @@ const dateOf = (bundle: CcBundle, key: string): string | undefined => {
 const pngLayer = (bundle: CcBundle, id: string) =>
   (bundle.manifest?.layers ?? []).find((l) => l.id === id && l.png);
 
+// Risk outputs of the live run, held back while the run is unverified.
+const RISK_LAYERS: readonly LayerId[] = ["tpi", "ptrigger"];
+
 export function layerAvailable(bundle: CcBundle, id: LayerId, hazard: Hazard): boolean {
+  if (bundle.riskPaused && RISK_LAYERS.includes(id)) return false;
   switch (id) {
     case "tpi":
       return manifestRaster(bundle.manifest?.layers, hazard === "flood" ? "tpiFlood" : "tpiSlide")?.png !== undefined;
@@ -147,11 +151,11 @@ export function layerRows(
       ? `data ${fmtDataDate(pngLayer(bundle, "opera_validation")?.date)}` : undefined,
   };
   const reason: Record<LayerId, string> = {
-    tpi: NO_MAP_LAYER_TEXT,
+    tpi: bundle.riskPaused ? RISK_PAUSED_SHORT : NO_MAP_LAYER_TEXT,
     imerg: NO_MAP_LAYER_TEXT,
     smap: NO_MAP_LAYER_TEXT,
     tml: NO_MAP_LAYER_TEXT,
-    ptrigger: NO_MAP_LAYER_TEXT,
+    ptrigger: bundle.riskPaused ? RISK_PAUSED_SHORT : NO_MAP_LAYER_TEXT,
     opera: NO_MAP_LAYER_TEXT,
     flood: radar.state === "not-applicable" ? NO_RADAR_TEXT : missingText(availability(bundle, "flood_confirmed")),
     candidates: missingText(availability(bundle, "landslide_candidates")),

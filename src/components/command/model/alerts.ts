@@ -83,6 +83,10 @@ export function alertsPaused(node: Record<string, unknown> | undefined, env = pr
   return node.alerts_paused === true || node.verified !== true;
 }
 
+// The live run was checked and marked verified by lead-live.
+export const runVerified = (node: Record<string, unknown> | undefined): boolean =>
+  node?.verified === true;
+
 export function pausedAlertList(list: AlertList): AlertList {
   return { state: "paused", alerts: [], dataTime: list.dataTime };
 }

@@ -11,7 +11,7 @@ import type { DayPoint, ManifestLayer } from "@/lib/types";
 import { fmtDate, fmtDayShort } from "./format";
 import { reaches, thresholdFor } from "./status";
 import type { LayerId } from "./layerRegistry";
-import { HAZARD_LABEL, type CcBundle, type Hazard } from "./types";
+import { HAZARD_LABEL, RISK_PAUSED_TEXT, type CcBundle, type Hazard } from "./types";
 
 export interface Step {
   index: number;
@@ -217,6 +217,7 @@ export function mapCaption(
   const step = steps[dayIndex];
   if (!step) return { text: NO_STEPS_TEXT, forecast: false };
   const when = `${fmtDate(step.date)}${step.sub ? ` (${step.sub})` : ""}`;
+  if (bundle.riskPaused) return { text: `${RISK_PAUSED_TEXT} · ${when}`, forecast: false };
   if (!on.includes("tpi")) return { text: `TPI index off · ${when}`, forecast: false };
   const frame = frameFor(bundle, step.date, hazard);
   // The map hook shows its own note for a missing frame; the caption stays short.

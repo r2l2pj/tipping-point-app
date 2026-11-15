@@ -5,7 +5,10 @@ import type { DayPoint } from "@/lib/types";
 import { availability, missingText } from "./availability";
 import { priorityAreas } from "./areas";
 import { finite, fmtBrt, fmtDate, fmtKm2, fmtPeople } from "./format";
-import type { CcBundle, Hazard } from "./types";
+import { RISK_PAUSED_SHORT, type CcBundle, type Hazard } from "./types";
+
+const pausedTile = (label: string): Tile =>
+  ({ label, value: RISK_PAUSED_SHORT, missing: true, dimmed: false });
 
 export interface Tile {
   label: string;
@@ -75,6 +78,7 @@ const splitNote = (day: DayPoint, hazard: Hazard): string | undefined => {
 // over the priority zones.
 export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: string, day?: DayPoint): Tile {
   const label = "Critical area";
+  if (bundle.mode === "live" && bundle.riskPaused) return pausedTile(label);
   if (bundle.mode !== "live" && day && finite(day.critical_km2)) {
     return dayTile(label, fmtKm2(day.critical_km2), day.date,
       splitNote(day, hazard) ?? "landslide or flood");
@@ -108,6 +112,7 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
 
 export function peopleTile(bundle: CcBundle, stepDate?: string, day?: DayPoint): Tile {
   const label = "People potentially exposed";
+  if (bundle.mode === "live" && bundle.riskPaused) return pausedTile(label);
   // count() drops raster fill values and negatives: not data.
   const ofDay = bundle.mode !== "live" ? count(day?.people_critical) : undefined;
   if (day && ofDay !== undefined) return dayTile(label, fmtPeople(ofDay), day.date);
