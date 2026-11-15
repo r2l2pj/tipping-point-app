@@ -193,7 +193,7 @@ export default function MapStage({
         "--cc-ib": `${insets.bottom}px`,
       } as React.CSSProperties}
     >
-      <Map bounds={bundle.bbox} onReady={setMap} />
+      <Map bounds={state.fitTo && state.activeId === bundle.id ? state.fitTo : bundle.bbox} onReady={setMap} />
       <AreaPins map={map} areas={pins} selected={state.selectedArea}
         onSelect={(rank) => dispatch({ type: "selectArea", rank })} />
       <AreaCallout
@@ -228,7 +228,7 @@ export default function MapStage({
 
       {!comparing && showHorizons && (
         <div role="radiogroup" aria-label="Forecast horizon" data-horizons
-          className={`absolute z-10 flex flex-wrap items-center gap-1 ${chip} !py-0.5 max-[639px]:!bottom-auto max-[639px]:top-12`} style={{ left: L(14), bottom: B(70) }}>
+          className={`absolute z-10 flex flex-wrap items-center gap-1 ${chip} !py-0.5 max-[639px]:!bottom-auto max-[639px]:top-12 max-[639px]:!left-12`} style={{ left: L(14), bottom: B(70) }}>
           <span className="pr-1 text-xs font-semibold"><span className="max-[639px]:hidden">Landslide likelihood, </span>next:</span>
           {probHorizons.map((h) => (
             <button key={h} type="button" role="radio" aria-checked={state.probHorizon === h}

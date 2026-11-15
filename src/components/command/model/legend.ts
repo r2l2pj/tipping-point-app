@@ -38,11 +38,31 @@ export interface LayerLegendRow {
   round?: boolean;
 }
 
-export function layerLegendRows(bundle: CcBundle, on: readonly LayerId[]): LayerLegendRow[] {
+// lead-ml hand_low legend {stops:[{color,label}]}; default blue.
+function handSwatch(bundle: CcBundle): string {
+  const l = bundle.manifest?.layers?.find((x) => x.id === "hand_low") as unknown as { legend?: { stops?: { color?: string }[] } } | undefined;
+  const c = l?.legend?.stops?.[0]?.color;
+  return typeof c === "string" ? c : "#2c7fb8";
+}
+
+export function mlLowToday(bundle: CcBundle, horizon = "24h"): string | undefined {
+  const l = bundle.manifest?.layers?.find((x) => x.id === `p_trigger_${horizon}`) as unknown as { stats?: { p99?: unknown } } | undefined;
+  const p99 = l?.stats?.p99;
+  return typeof p99 === "number" && Number.isFinite(p99) && p99 < 0.1
+    ? `Low everywhere today (top 1% of land ≤ ${p99.toFixed(2)})` : undefined;
+}
+
+export function layerLegendRows(bundle: CcBundle, on: readonly LayerId[], probHorizon = "24h"): LayerLegendRow[] {
   const rows: LayerLegendRow[] = [];
   if (on.includes("imerg")) rows.push({ id: "imerg", label: "Rain (GPM IMERG)", swatch: "linear-gradient(90deg, #e6f1fb, #2166ac)" });
+  if (on.includes("hand")) rows.push({ id: "hand", label: "Low ground (HAND ≤ 5 m)", swatch: handSwatch(bundle) });
   if (on.includes("smap")) rows.push({ id: "smap", label: "Soil moisture (SMAP), 0 to 1", swatch: "linear-gradient(90deg, #f6e8c3, #8c510a)" });
-  if (on.includes("ptrigger")) rows.push({ id: "ptrigger", label: "Relative likelihood, low → high (not a percentage)", swatch: "linear-gradient(90deg, #f2f0f7, #54278f)" });
+  if (on.includes("ptrigger")) {
+    rows.push({ id: "ptrigger", label: "Relative likelihood, low → high (not a percentage)", swatch: "linear-gradient(90deg, #f2f0f7, #54278f)" });
+    // Conductor: a calm day draws an almost-empty layer — say so (lead-ml stats.p99).
+    const low = mlLowToday(bundle, probHorizon);
+    if (low) rows.push({ id: "ptrigger-low", label: low, swatch: "#f2f0f7" });
+  }
   if (on.includes("tml")) rows.push({ id: "tml", label: "Modeled landslide hazard, 0 to 1", swatch: "linear-gradient(90deg, #ffffb2, #bd0026)" });
   if (on.includes("flood")) rows.push({ id: "flood", label: floodLabels(bundle).layer, swatch: FLOODED_FILL });
   if (on.includes("candidates")) rows.push({ id: "candidates", label: CANDIDATES_LABEL, swatch: "#7b3294" });

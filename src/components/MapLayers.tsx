@@ -63,6 +63,7 @@ export interface LayerState {
   smap: boolean;
   nisar: boolean;
   pTrigger: boolean;
+  hand?: boolean;
 }
 
 const SRC = {
@@ -72,6 +73,7 @@ const SRC = {
   tpiImg: "tp-tpi-img",
   fcast: "tp-fcast",
   imerg: "tp-imerg",
+  hand: "tp-hand",
   smap: "tp-smap",
   nisar: "tp-nisar",
   water: "tp-water",
@@ -85,6 +87,7 @@ const SRC = {
   muni: "tp-muni",
   catalog: "tp-catalog",
   ems: "tp-ems",
+  basin: "tp-basin",
   places: "tp-places",
   zones: "tp-zones",
   zonePins: "tp-zone-pins",
@@ -98,6 +101,7 @@ const LYR = {
   hillshade: "tp-hillshade",
   hillImg: "tp-hill-img-lyr",
   imerg: "tp-imerg-lyr",
+  hand: "tp-hand-lyr",
   smap: "tp-smap-lyr",
   nisar: "tp-nisar-lyr",
   tpiRaster: "tp-tpi-raster",
@@ -118,6 +122,7 @@ const LYR = {
   muni: "tp-muni-line",
   catalog: "tp-catalog-circle",
   ems: "tp-ems-line",
+  basin: "tp-basin-line",
   emsFill: "tp-ems-fill",
   zoneDot: "tp-zone-dot",
   zoneNum: "tp-zone-num",
@@ -131,6 +136,7 @@ const DYNAMIC_IMG: [string, string][] = [
   [LYR.tpiRaster, SRC.tpiImg],
   [LYR.hillImg, SRC.hillImg],
   [LYR.imerg, SRC.imerg],
+  [LYR.hand, SRC.hand],
   [LYR.smap, SRC.smap],
   [LYR.nisar, SRC.nisar],
   [LYR.opera, SRC.opera],
@@ -231,6 +237,7 @@ export function useMapLayers(
     map.addSource(SRC.zones, { type: "geojson", data: EMPTY });
     map.addSource(SRC.muni, { type: "geojson", data: EMPTY });
     map.addSource(SRC.catalog, { type: "geojson", data: EMPTY });
+    map.addSource(SRC.basin, { type: "geojson", data: EMPTY });
     map.addSource(SRC.ems, { type: "geojson", data: EMPTY, attribution: "© European Union, Copernicus Emergency Management Service" });
     map.addSource(SRC.places, { type: "geojson", data: bundle?.places ?? EMPTY });
     map.addSource(SRC.zonePins, { type: "geojson", data: EMPTY });
@@ -307,6 +314,9 @@ export function useMapLayers(
         paint: { "fill-color": "#00d5ff", "fill-opacity": 0.5 }, layout: {} },
       { id: LYR.ems, type: "line", source: SRC.ems,
         paint: { "line-color": "#ffffff", "line-width": 1.2 }, layout: {} },
+      // L50: upstream basin outline with the observed IMERG rain.
+      { id: LYR.basin, type: "line", source: SRC.basin,
+        paint: { "line-color": "#ffffff", "line-width": 1.6, "line-dasharray": [2, 1.5] }, layout: { visibility: "none" } },
       // Landslide catalog: 6 px white dots with a black edge (validation tab).
       { id: LYR.catalog, type: "circle", source: SRC.catalog,
         paint: {
@@ -462,12 +472,13 @@ export function useMapLayers(
           0.7,
           LYR.muni
         );
-        vis(lyr, layers[key]);
+        vis(lyr, !!layers[key]);
       } else {
         vis(lyr, false);
       }
     };
     rasterToggle("imerg", SRC.imerg, LYR.imerg);
+    rasterToggle("hand", SRC.hand, LYR.hand);
     rasterToggle("smap", SRC.smap, LYR.smap);
     rasterToggle("nisar", SRC.nisar, LYR.nisar);
     // L25: XGBoost P(trigger) probability frame — per-day raster under the
@@ -579,7 +590,7 @@ export function useMapLayers(
     // The data rasters follow the opacity control, so the basemap shows
     // through all of them alike.
     if (strength !== undefined) {
-      for (const lyr of [LYR.imerg, LYR.smap, LYR.nisar, LYR.prob, LYR.opera, LYR.nl, LYR.tml]) {
+      for (const lyr of [LYR.imerg, LYR.hand, LYR.smap, LYR.nisar, LYR.prob, LYR.opera, LYR.nl, LYR.tml]) {
         if (map.getLayer(lyr)) map.setPaintProperty(lyr, "raster-opacity", strength);
       }
     }
@@ -697,6 +708,9 @@ export function useMapLayers(
     }
     if (wantScars) loadGeo(SRC.scars, "landslide candidates", url("landslide_candidates", "geojson/landslide_candidates.geojson"));
     if (wantCatalog) loadGeo(SRC.catalog, "landslide catalog", url("landslide_catalog", "geojson/landslide_catalog.geojson"));
+    const wantBasin = !!layers.imerg && products && typeof products.upstream_basin === "string";
+    if (wantBasin) loadGeo(SRC.basin, "upstream basin", url("upstream_basin", products!.upstream_basin as string));
+    vis(LYR.basin, !!wantBasin);
     if (wantEms) loadGeo(SRC.ems, "Copernicus EMS flood map", url("flood_ems", "geojson/flood_ems.geojson"));
     set(SRC.places, bundle.places ?? EMPTY);
 

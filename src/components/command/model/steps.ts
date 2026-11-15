@@ -1,3 +1,4 @@
+import { manifestRaster } from "@/lib/layers";
 import { liveClasses } from "@/lib/contract";
 // Timeline steps: from the daily series, or from the dates of the manifest
 // TPI frames when the case has no series (the live case has none).
@@ -263,6 +264,23 @@ function calmToday(bundle: CcBundle, hazard: Hazard, layerId: string | undefined
   return hi === 0;
 }
 
+// L50 (conductor): observed IMERG rain on the map (TPI off) names its
+// product and window — "Rain (NASA GPM IMERG Early, observed 3-day) ·
+// Sep 28–30, 2026" — from the layer's product/window fields.
+export function imergCaption(l: ManifestLayer): string {
+  const r = l as ManifestLayer & { product?: unknown; window?: unknown };
+  const product = typeof r.product === "string" && r.product.trim() ? r.product.trim() : "IMERG";
+  const w = Array.isArray(r.window) && r.window.length === 2 && r.window.every((x) => typeof x === "string") ? r.window as [string, string] : undefined;
+  let when = l.date ? fmtDate(l.date) : "";
+  if (w) {
+    const [a, z] = w;
+    when = a.slice(0, 7) === z.slice(0, 7)
+      ? `${fmtDate(a).replace(/,\s*\d{4}$/, "")}–${Number(z.slice(8, 10))}, ${z.slice(0, 4)}`
+      : `${fmtDate(a)} – ${fmtDate(z)}`;
+  }
+  return `Rain (NASA GPM ${product}, observed${w ? " 3-day" : ""})${when ? ` · ${when}` : ""}`;
+}
+
 export function mapCaption(
   bundle: CcBundle,
   steps: Step[],
@@ -272,6 +290,10 @@ export function mapCaption(
   issueLead: IssueLead = 0
 ): { text: string; forecast: boolean } {
   const step = steps[dayIndex];
+  if (!on.includes("tpi") && on.includes("imerg")) {
+    const l = manifestRaster(bundle.manifest?.layers, "imerg", step?.date);
+    if (l) return { text: imergCaption(l), forecast: false };
+  }
   if (!step) return { text: NO_STEPS_TEXT, forecast: false };
   const when = `${fmtDate(step.date)}${step.sub ? ` (${step.sub})` : ""}`;
   if (issueLead > 0 && on.includes("tpi")) {

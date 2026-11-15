@@ -22,7 +22,7 @@ import { HAZARD_LABEL, RISK_PAUSED_SHORT, type CcBundle, type Hazard } from "./t
 export type LayerId =
   | "tpi" | "imerg" | "smap" | "tml" | "ptrigger"
   | "flood" | "candidates"
-  | "catalog" | "opera" | "ems";
+  | "catalog" | "opera" | "ems" | "hand";
 
 export type LayerGroup = "Analysis" | "Observations" | "Replay evidence";
 
@@ -78,6 +78,7 @@ interface Def {
 const DEFS: Def[] = [
   { id: "tpi", group: "Analysis", short: "TPI" },
   { id: "imerg", group: "Analysis", short: "Rain" },
+  { id: "hand", group: "Analysis", short: "Low ground (HAND ≤ 5 m)" },
   { id: "smap", group: "Analysis", short: "Soil moisture" },
   { id: "tml", group: "Analysis", short: "Modeled landslide hazard" },
   { id: "ptrigger", group: "Analysis", short: "Rain-triggered landslide likelihood" },
@@ -119,6 +120,8 @@ export function layerAvailable(bundle: CcBundle, id: LayerId, hazard: Hazard): b
       return manifestRaster(bundle.manifest?.layers, hazard === "flood" ? "tpiFlood" : "tpiSlide")?.png !== undefined;
     case "imerg":
       return manifestRaster(bundle.manifest?.layers, "imerg")?.png !== undefined;
+    case "hand":
+      return manifestRaster(bundle.manifest?.layers, "hand")?.png !== undefined;
     case "smap":
       return manifestRaster(bundle.manifest?.layers, "smap")?.png !== undefined;
     case "tml":
@@ -174,6 +177,7 @@ export function layerRows(
     tpi: bundle.mode === "live" && hazard === "slide" && layerAvailable(bundle, "ptrigger", hazard)
       ? "Rain index (TPI, landslide)" : `Tipping Point Index (TPI) · ${HAZARD_LABEL[hazard]}`,
     imerg: "Rain (GPM IMERG)",
+    hand: "Low ground (HAND ≤ 5 m)",
     smap: "Soil moisture (SMAP)",
     tml: "Modeled landslide hazard (XGBoost)",
     ptrigger: probLayerTitle(probHorizon),
@@ -202,6 +206,7 @@ export function layerRows(
     ptrigger: bundle.riskPaused ? RISK_PAUSED_SHORT : NO_MAP_LAYER_TEXT,
     opera: NO_MAP_LAYER_TEXT,
     ems: NO_MAP_LAYER_TEXT,
+    hand: NO_MAP_LAYER_TEXT,
     flood: radar.state === "not-applicable" ? NO_RADAR_TEXT : missingText(availability(bundle, "flood_confirmed")),
     candidates: missingText(availability(bundle, "landslide_candidates")),
     catalog: missingText(availability(bundle, "landslide_catalog")),
@@ -299,4 +304,5 @@ export const layerStateFor = (on: readonly LayerId[], hazard: Hazard) => ({
   smap: on.includes("smap"),
   nisar: false,
   pTrigger: on.includes("ptrigger"),
+  hand: on.includes("hand"),
 });

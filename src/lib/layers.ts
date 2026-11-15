@@ -307,13 +307,15 @@ export type ToggleLayerKey =
   | "imerg"
   | "smap"
   | "nisar"
-  | "pTrigger";
+  | "pTrigger"
+  | "hand"; // L50: low ground (HAND ≤ 5 m), layer id hand_low
 
 const TOGGLE_PREFIX: Record<ToggleLayerKey, string> = {
   tpiSlide: "tpi_slide",
   tpiFlood: "tpi_flood",
   imerg: "imerg_",
   smap: "smap_",
+  hand: "hand_low",
   nisar: "nisar_",
   // L25: P(trigger) probability frames — XGBoost lead-time rasters
   // published by lead-live as manifest layers (id prefix pending; if the

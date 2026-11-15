@@ -1,3 +1,4 @@
+import { manifestRaster } from "@/lib/layers";
 // Screen state of the Command Center: one object, named actions, reset rules
 // on a case change. Now / Replay is derived from the active case and the view
 // (command / public) from the address; neither is stored here.
@@ -40,6 +41,7 @@ export interface ScreenState {
   calloutExpanded: boolean;
   compareOpen: ComparePair["kind"] | null;
   compareInit?: { before?: string; after?: string; pol?: "HH" | "HV" }; // deep link, first open only
+  fitTo?: [number, number, number, number]; // deep link ?fit=<layer>: initial map bounds
   detailsOpen: boolean;
   layersOpen: boolean;
   listExpanded: boolean;
@@ -147,7 +149,23 @@ export function featuredFirst<T extends CcBundle>(cases: readonly T[]): T[] {
 // The screen opens on Now when a live case is loaded, else on the first case.
 // `initialCase` (the `?case=<id|alias>` deep link of the old screen) opens
 // that case when it is loaded.
-export interface DeepLink { lead?: string; compare?: string; before?: string; after?: string; pol?: string }
+export interface DeepLink { lead?: string; compare?: string; before?: string; after?: string; pol?: string; layers?: string; fit?: string }
+
+// ?layers=imerg,hand5 → layer ids ("hand5"/"hand" = low ground); ?fit=<key>
+// → the map opens on that layer's bounds (the upstream basin for imerg).
+const LINK_LAYER: Record<string, LayerId> = { imerg: "imerg", rain: "imerg", hand: "hand", hand5: "hand", tpi: "tpi", flood: "flood", ml: "ptrigger", ptrigger: "ptrigger", smap: "smap" };
+const LINK_FIT: Record<string, "imerg" | "hand"> = { imerg: "imerg", rain: "imerg", hand: "hand", hand5: "hand" };
+function linkLayers(bundle: CcBundle, link: DeepLink, hazard: Hazard): LayerId[] | undefined {
+  if (!link.layers) return undefined;
+  const ids = link.layers.split(",").map((x) => LINK_LAYER[x.trim().toLowerCase()]).filter((x): x is LayerId => !!x);
+  const ok = keepAvailable(bundle, [...new Set(ids)], hazard);
+  return ok.length ? ok : undefined;
+}
+function linkFit(bundle: CcBundle, link: DeepLink): [number, number, number, number] | undefined {
+  const key = link.fit ? LINK_FIT[link.fit.trim().toLowerCase()] : undefined;
+  const b = key ? manifestRaster(bundle.manifest?.layers, key)?.bounds : undefined;
+  return Array.isArray(b) && b.length === 4 ? (b as [number, number, number, number]) : undefined;
+}
 
 export function initialState(
   cases: readonly CcBundle[],
@@ -174,7 +192,10 @@ export function initialState(
     dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first)),
     playing: false,
     hazard,
-    layers: first ? withRadarDefault(first, keepAvailable(first, Number(link.lead) > 0 ? ["tpi"] : defaultLayersFor(first, hazard), hazard), hazard) : [],
+    layers: first
+      ? (linkLayers(first, link, hazard) ?? withRadarDefault(first, keepAvailable(first, Number(link.lead) > 0 ? ["tpi"] : defaultLayersFor(first, hazard), hazard), hazard))
+      : [],
+    fitTo: first ? linkFit(first, link) : undefined,
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
     overlayOpacity: OPACITY_DEFAULT,

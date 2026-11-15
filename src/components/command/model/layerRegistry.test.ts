@@ -205,7 +205,7 @@ describe("layer budget", () => {
       operaValidation: false, mlHazard: false, emsFlood: false,
     });
     expect(layerStateFor(["tpi", "imerg"], "flood")).toEqual({
-      tpiSlide: false, tpiFlood: true, imerg: true, smap: false, nisar: false, pTrigger: false,
+      tpiSlide: false, tpiFlood: true, imerg: true, smap: false, nisar: false, pTrigger: false, hand: false,
     });
     expect(layerStateFor(["imerg"], "slide").tpiSlide).toBe(false);
   });
@@ -308,4 +308,28 @@ test("L48: Now opens on Landslide + ML even when most zones are flood", async ()
   const s = initialState([live]);
   expect(s.hazard).toBe("slide");
   expect(s.layers[0]).toBe("ptrigger");
+});
+
+describe("F1b + calm ML day", () => {
+  test("?layers=imerg,hand5&fit=imerg turns both on and fits the IMERG bounds; caption names IMERG Early + window", async () => {
+    const { initialState } = await import("../state");
+    const { mapCaption } = await import("./steps");
+    const uy = bundle({ id: "rs_uruguai_2026", data_dates: {}, manifest: { event: "rs_uruguai_2026", layers: [
+      { id: "imerg_20260930", date: "2026-09-30", window: ["2026-09-28", "2026-09-30"], product: "IMERG Early", kind: "observed", png: "rs_uruguai_2026/png/imerg_20260930.png", bounds: [-57.7, -31.5076, -49.1988, -26.2] },
+      { id: "hand_low", kind: "static", png: "rs_uruguai_2026/png/hand_low.png", bounds: [-57.25, -29.8501, -56.4496, -29.05], legend: { stops: [{ color: "#1f78b4", label: "HAND ≤ 5 m" }] } },
+    ] } } as never);
+    const s = initialState([uy], "rs_uruguai_2026", "2026-09-30", { layers: "imerg,hand5", fit: "imerg" });
+    expect(s.layers.sort()).toEqual(["hand", "imerg"]);
+    expect(s.fitTo).toEqual([-57.7, -31.5076, -49.1988, -26.2]);
+    const cap = mapCaption(uy, [], 0, "flood", ["imerg", "hand"]).text;
+    expect(cap).toBe("Rain (NASA GPM IMERG Early, observed 3-day) · Sep 28–30, 2026");
+    expect(cap).not.toContain("forecast · NOAA GFS");
+    expect(layerLegendRows(uy, ["hand"])[0]).toEqual({ id: "hand", label: "Low ground (HAND ≤ 5 m)", swatch: "#1f78b4" });
+  });
+  test("ML legend says 'Low everywhere today' when lead-ml's stats.p99 < 0.1", () => {
+    const live = liveBundle({ manifest: { layers: [{ id: "p_trigger_24h", date: "2026-11-15", png: "p.png", stats: { p50: 0.001, p99: 0.03, max: 0.2 } }] } } as never);
+    expect(layerLegendRows(live, ["ptrigger"]).map((r) => r.label)).toContain("Low everywhere today (top 1% of land ≤ 0.03)");
+    const busy = liveBundle({ manifest: { layers: [{ id: "p_trigger_24h", date: "2026-11-15", png: "p.png", stats: { p99: 0.4 } }] } } as never);
+    expect(layerLegendRows(busy, ["ptrigger"]).some((r) => r.label.startsWith("Low everywhere"))).toBe(false);
+  });
 });
