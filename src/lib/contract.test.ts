@@ -358,9 +358,9 @@ describe("resolveAsset", () => {
 describe("forecast_source labels", () => {
   test("map and label helper", () => {
     expect(FORECAST_SOURCE_LABELS["perfect-forecast"]).toBe("perfect forecast");
-    expect(FORECAST_SOURCE_LABELS["geos-fp"]).toBe("GEOS-FP");
+    expect(FORECAST_SOURCE_LABELS["geos-fp"]).toBe("older forecast run");
     expect(forecastSourceLabel("perfect-forecast")).toBe("perfect forecast");
-    expect(forecastSourceLabel("geos-fp")).toBe("GEOS-FP");
+    expect(forecastSourceLabel("geos-fp")).toBe("older forecast run");
   });
 
   test("unknown sources pass through; missing -> undefined", () => {

@@ -3,8 +3,9 @@
 import { ALERT_FOOTER, ALERT_LEVEL_WORDS, type AlertCardData } from "@/lib/alerts";
 import AlertCard, { LEVEL_STYLE } from "./AlertCard";
 import {
-  ALERTS_UNAVAILABLE_TEXT, alertsByRegion, moreAlertsText, NO_ALERTS_TEXT, NO_RUN_TEXT,
-  REPLAY_NO_FEED_TEXT, type AlertList,
+  ALERTS_PAUSED_TEXT, ALERTS_UNAVAILABLE_TEXT, alertsByRegion, moreAlertsText, NO_ALERTS_TEXT, NO_RUN_TEXT,
+  OBSERVED_NOTE, OBSERVED_TITLE, REPLAY_NO_FEED_TEXT,
+  type AlertList, type ObservedRow,
 } from "./model/alerts";
 import { fmtBrt } from "./model/format";
 
@@ -15,8 +16,14 @@ export default function PublicAlertsPanel({
   live,
   onGoToNow,
   onViewOnMap,
+  observed = [],
+  observedOn = false,
+  onShowObserved,
   children,
 }: {
+  observed?: ObservedRow[];
+  observedOn?: boolean;
+  onShowObserved?: () => void;
   alertList: AlertList;
   live: boolean;
   onGoToNow: () => void;
@@ -42,6 +49,14 @@ export default function PublicAlertsPanel({
           <button type="button" onClick={onGoToNow} className="mt-2 rounded-lg bg-cc-accent px-3 py-1.5 text-[13px] font-semibold text-white">
             Go to Now
           </button>
+        </div>
+      ) : alertList.state === "paused" ? (
+        <div data-alerts="paused" role="status" className="rounded-[10px] border border-cc-line bg-cc-well px-3.5 py-3">
+          <p className="text-[15px] font-semibold">{ALERTS_PAUSED_TEXT}</p>
+          <p className="mt-0.5 text-[13px] text-cc-muted">
+            No alert is shown until the latest run is checked. This does not mean there is no risk:
+            follow Civil Defense guidance (SMS 40199). Latest run: {time ?? NO_RUN_TEXT}.
+          </p>
         </div>
       ) : alertList.state === "unavailable" ? (
         <div data-alerts="unavailable" role="status" className="rounded-[10px] border border-[#e2c48a] bg-cc-warn-soft px-3.5 py-3">
@@ -80,6 +95,35 @@ export default function PublicAlertsPanel({
             <p className="border-t border-cc-rule pt-1 text-xs text-cc-faint">Alert data of {time ?? "an unknown time"}.</p>
           </section>
         </>
+      )}
+
+      {live && observed.length > 0 && (
+        <section aria-label={OBSERVED_TITLE} data-observed className="rounded-[10px] border border-cc-line bg-cc-well px-3.5 py-3">
+          <h2 className="m-0 text-base font-semibold">{OBSERVED_TITLE}</h2>
+          <p className="mt-0.5 text-[13px] text-cc-muted">{OBSERVED_NOTE}</p>
+          <ul className="m-0 mt-1.5 list-none p-0">
+            {observed.map((o) => (
+              <li key={o.key} className="border-t border-cc-rule py-1.5 text-[13px]">
+                <div className="flex justify-between gap-2">
+                  <span className="font-semibold">{o.source}</span>
+                  <span>{o.area}</span>
+                </div>
+                <div>{o.places}</div>
+                <div className="text-xs text-cc-muted">
+                  {o.acquired ? `newest pass ${o.acquired}` : ""}
+                  {o.people ? `${o.acquired ? " · " : ""}${o.people} people (estimate)` : ""}
+                  {o.polygons !== undefined ? ` · ${o.polygons} ${o.polygons === 1 ? "area" : "areas"}` : ""}
+                </div>
+              </li>
+            ))}
+          </ul>
+          {onShowObserved && (
+            <button type="button" onClick={onShowObserved} aria-pressed={observedOn}
+              className="mt-1.5 rounded-lg border border-cc-line-strong bg-cc-surface px-2.5 py-1.5 text-xs font-semibold">
+              {observedOn ? "Hide on map" : "Show on map"}
+            </button>
+          )}
+        </section>
       )}
 
       <p className="text-[13px] font-semibold text-cc-muted">{ALERT_FOOTER}</p>

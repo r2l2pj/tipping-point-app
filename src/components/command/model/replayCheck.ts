@@ -3,7 +3,7 @@
 import { count } from "@/lib/contract";
 import type { DayPoint } from "@/lib/types";
 import { availability, missingText, nullReason } from "./availability";
-import { finite, fmtKm2, fmtPct, fmtPeople, fmtScore } from "./format";
+import { finite, fmtDate, fmtKm2, fmtPct, fmtPeople, fmtScore } from "./format";
 import { floodLabels, swathLine } from "./radar";
 import { thresholdFor } from "./status";
 import { NOT_PUBLISHED, type CcBundle } from "./types";
@@ -37,20 +37,73 @@ export function opticalSeenPct(cloudPct: unknown): number | null {
 // only. The legacy `n_points` belongs to the old event-anchor run (RS:
 // median -57 h, IQR -57–-57, n_points 5678) and does not qualify a stat —
 // until the forecast rebuild publishes lead_time_n the stat is pending.
-export const leadTimeN = (m: M): number | undefined =>
-  finite(m.lead_time_n) && m.lead_time_n > 0 ? m.lead_time_n : undefined;
+// Lead time of the NOAA GFS forecast replay (lead-analysis,
+// data/<case>/forecast_lead_time.json, also metrics `forecast_lead_time`):
+// for each forecast issue day D (00Z run), did the replayed index reach
+// Critical for a day up to the damage anchor; lead = anchor minus issue
+// time. Only issue days dated before the anchor day can score (their D+1
+// frame depicts a day up to the anchor), so they are the denominator. This
+// is the only lead-time stat shown: the older event-anchor run
+// (lead_time_median_h, e.g. RS -57 h over 5,678 points) does not qualify.
+export interface ForecastLead {
+  median: number;
+  iqr?: [number, number];
+  warned: number; // issue days that flagged Critical before the anchor
+  scorable: number; // issue days dated before the anchor day
+  leads: number[]; // lead of each flagging issue day, h
+  earliest?: string;
+  anchor?: string;
+}
 
-// A lead-time stat is shown only with its n (conductor ruling): a median
-// without the number of points behind it is not a result.
-export const hasLeadTime = (m: M): boolean =>
-  finite(m.lead_time_median_h) && leadTimeN(m) !== undefined;
+const isObj = (v: unknown): v is M => typeof v === "object" && v !== null && !Array.isArray(v);
+
+export function forecastLead(bundle: CcBundle): ForecastLead | undefined {
+  const m = (bundle.metricsView ?? {}) as M;
+  const r = isObj(bundle.forecastLeadTime) ? bundle.forecastLeadTime as M
+    : isObj(m.forecast_lead_time) ? m.forecast_lead_time as M : undefined;
+  if (!r || !finite(r.lead_h_median) || !finite(r.n_warned) || r.n_warned < 1) return undefined;
+  const anchor = typeof r.anchor_utc === "string" ? r.anchor_utc : undefined;
+  const days = Array.isArray(r.issue_days) ? (r.issue_days as unknown[]).filter(isObj) : [];
+  const anchorDay = anchor?.slice(0, 10);
+  const scorable = anchorDay
+    ? days.filter((d) => typeof d.issue === "string" && d.issue.slice(0, 10) < anchorDay)
+    : [];
+  const leads = days.filter((d) => d.warned === true && finite(d.lead_h)).map((d) => d.lead_h as number);
+  const iqr = Array.isArray(r.lead_h_iqr) && finite(r.lead_h_iqr[0]) && finite(r.lead_h_iqr[1])
+    ? [r.lead_h_iqr[0], r.lead_h_iqr[1]] as [number, number] : undefined;
+  return {
+    median: r.lead_h_median,
+    iqr,
+    warned: r.n_warned,
+    // Without per-day records the denominator is unknown: fall back to the
+    // flagged days only (never the all-days n_issue_days).
+    scorable: scorable.length || r.n_warned,
+    leads: leads.length ? leads : [r.lead_h_median],
+    earliest: typeof r.earliest_critical_issue === "string" ? r.earliest_critical_issue : undefined,
+    anchor,
+  };
+}
+
+export const hasLeadTime = (bundle: CcBundle): boolean => forecastLead(bundle) !== undefined;
 
 export const LEAD_TIME_PENDING = "pending: forecast rebuild";
+export const LEAD_TIME_NAME = "Lead time before the damage (NOAA GFS forecast replay)";
 
-export function leadTimeText(m: M): string {
-  const iqr = Array.isArray(m.lead_time_iqr_h) ? m.lead_time_iqr_h : [];
-  const range = finite(iqr[0]) && finite(iqr[1]) ? ` · IQR ${round(iqr[0])}–${round(iqr[1])} h` : "";
-  return `Median ${round(m.lead_time_median_h)} h${range} · n = ${round(leadTimeN(m))}`;
+const ofDays = (f: ForecastLead) => `${round(f.warned)} of ${round(f.scorable)} forecast days`;
+const hours = (v: number) => `${round(v)} h`;
+
+// Same words as the submission headline. Three or more flagging days:
+// "median 85 h (IQR 55–115 h, 6 of 8 forecast days)". Fewer: no median,
+// the single values — "1 of 4 forecast days flagged it, 111 h ahead".
+export function leadTimeText(bundle: CcBundle): string {
+  const f = forecastLead(bundle);
+  if (!f) return LEAD_TIME_PENDING;
+  if (f.warned < 3) {
+    const vals = [...f.leads].sort((a, b) => b - a).map(hours).join(" and ");
+    return `${ofDays(f)} flagged it, ${vals} ahead`;
+  }
+  const range = f.iqr ? `IQR ${round(f.iqr[0])}–${round(f.iqr[1])} h, ` : "";
+  return `median ${hours(f.median)} (${range}${ofDays(f)})`;
 }
 
 const isPlaceholder = (m: M): boolean => {
@@ -74,18 +127,16 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
     else if (m[key] === null || nullReason(bundle, key)) rows.push(missingRow(id, name, key));
   };
 
-  if (hasLeadTime(m)) {
-    const never = finite(m.never_critical_pct)
-      ? `${fmtPct(m.never_critical_pct)} never crossed Critical` : undefined;
+  if (hasLeadTime(bundle)) {
     rows.push({
       id: "lead-time",
-      name: "Lead time before mapped landslides",
-      value: leadTimeText(m),
-      detail: [never, isPlaceholder(m) ? "Illustrative numbers" : undefined].filter(Boolean).join(" · ") || undefined,
+      name: LEAD_TIME_NAME,
+      value: leadTimeText(bundle),
+      detail: isPlaceholder(m) ? "Illustrative numbers" : undefined,
       missing: false,
     });
   } else {
-    rows.push({ id: "lead-time", name: "Lead time before mapped landslides", value: LEAD_TIME_PENDING, missing: true });
+    rows.push({ id: "lead-time", name: LEAD_TIME_NAME, value: LEAD_TIME_PENDING, missing: true });
   }
   // "% of zones warned first" was dropped (Lucas, 2026-11-15): no row.
   optional("flood-agreement", "Flood agreement with the reference", "iou", () => {
@@ -169,46 +220,40 @@ const stat = (bundle: CcBundle, label: string, key: string, format: (v: unknown)
 
 function leadTimeBlock(bundle: CcBundle, m: M): LeadTimeBlock | undefined {
   if (!bundle.metricsView) return undefined;
-  if (!hasLeadTime(m)) {
+  if (!hasLeadTime(bundle)) {
     return {
       missing: `Lead time: ${LEAD_TIME_PENDING}.`,
       placeholder: false, median: "", iqr: "", shares: [], lines: [], histogram: undefined, note: "",
     };
   }
-  const iqr = Array.isArray(m.lead_time_iqr_h) ? m.lead_time_iqr_h : [];
-  const assumptions = m.lead_time_assumptions;
-  const note = typeof assumptions === "string" ? assumptions
-    : assumptions && typeof assumptions === "object" ? JSON.stringify(assumptions).slice(0, 400)
-    : "IMERG Early ~4 h and SMAP L4 release latency applied; perfect-forecast layers excluded.";
-  const precision = m.anchor_precision === "hour" ? "hour-precision anchors"
-    : m.anchor_precision === "date" ? "date-precision anchors"
-    : m.anchor_precision === "mixed" ? "mixed-precision anchors" : null;
-  // The "% warned first" shares were dropped (Lucas, 2026-11-15).
-  const shares = ([
-    ["never_critical_pct", "Never crossed Critical"],
-  ] as const).flatMap(([key, label]) =>
-    finite(m[key]) ? [{ label, value: fmtPct(m[key]), missing: false }] : []);
+  const f = forecastLead(bundle)!;
+  // The shares, histogram and official-warning delta belong to the older
+  // event-anchor run: not mixed with the forecast-replay stat.
   const lines: string[] = [];
-  if (finite(m.official_warning_delta_h)) {
-    lines.push(`vs first official warning: ${m.official_warning_delta_h >= 0 ? "+" : ""}${round(m.official_warning_delta_h)} h (+ = we flagged earlier)`);
+  if (f.earliest) lines.push(`Earliest forecast run that flagged it: ${fmtDate(f.earliest)} (00Z)`);
+  // The anchor is a UTC time; its calendar day is the UTC one (in BRT the
+  // WA anchor, Dec 9 00:35 UTC, would read Dec 8).
+  if (f.anchor) {
+    const hm = /[T ](\d{2}:\d{2})/.exec(f.anchor)?.[1];
+    lines.push(`Damage anchor: ${fmtDate(f.anchor.slice(0, 10))}${hm ? ` ${hm} UTC` : ""}`);
   }
-  if (finite(m.event_lead_h)) lines.push(`Event-level anchor lead: ${round(m.event_lead_h)} h`);
   if (finite(m.critical_area_with_damage_pct)) {
     lines.push(`Critical area that had damage: ${fmtPct(m.critical_area_with_damage_pct)}` +
       (finite(m.critical_area_km2) ? ` · Critical area: ${round(m.critical_area_km2)} km²` : ""));
   }
+  const after = f.median < 0;
   return {
     placeholder: isPlaceholder(m),
-    // A negative median means the index flagged AFTER the mapped damage —
-    // never phrase it as "warned earlier".
-    median: (m.lead_time_median_h as number) >= 0
-      ? `Tipping Point would have warned ${round(m.lead_time_median_h)} hours earlier`
-      : `Tipping Point flagged ${round(-(m.lead_time_median_h as number))} hours after the mapped damage`,
-    iqr: `${finite(iqr[0]) && finite(iqr[1]) ? `IQR ${round(iqr[0])}–${round(iqr[1])} h · ` : ""}n = ${round(leadTimeN(m))}${precision ? ` · ${precision}` : ""}`,
-    shares,
+    // Measured against the damage anchor, never against official warnings;
+    // a negative lead is "after the damage", never "warned earlier".
+    median: after
+      ? `The NOAA GFS forecast replay reached Critical after the damage`
+      : `Using the forecast available at the time: ${leadTimeText(bundle)}`,
+    iqr: "",
+    shares: [],
     lines,
-    histogram: m.lead_time_hist,
-    note: `In replay: ${note}`,
+    histogram: undefined,
+    note: "In replay: forecast issued at 00Z on each issue day; only IMERG days before the issue day are used, soil moisture held at the day before.",
   };
 }
 

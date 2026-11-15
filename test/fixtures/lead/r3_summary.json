@@ -1,0 +1,93 @@
+{
+  "schema": "tipping-point/response@1",
+  "generated_at": "2026-11-15T04:19:10Z",
+  "bbox": [
+    -58.0,
+    -34.0,
+    -48.0,
+    -22.5
+  ],
+  "people_flooded": 983,
+  "people_flooded_lower": 394,
+  "people_critical": 192,
+  "people_exposed": 1175,
+  "flooded_km2": 141.538,
+  "flooded_km2_lower": 158.161,
+  "critical_km2": 98.645,
+  "exposed_km2": 240.182,
+  "overlap_km2": 0.0,
+  "sources": {
+    "opera-dswx-s1": {
+      "geojson": "response/flood_dswx.geojson",
+      "meta": "response/dswx_meta.json",
+      "features": 382,
+      "features_lower": 200,
+      "flooded_km2": 129.497,
+      "flooded_km2_lower": 158.161,
+      "people_flooded": 494,
+      "people_flooded_lower": 394,
+      "meta_flooded_km2": 129.695,
+      "latest_acquired": "2026-11-14T09:06:12Z",
+      "latency_h": null,
+      "n_granules": 0,
+      "new_km2": 0.0,
+      "receded_km2": 0.0,
+      "status": "ok"
+    },
+    "nisar-gcov": {
+      "geojson": "response/flood_nisar.geojson",
+      "meta": "response/nisar_meta.json",
+      "features": 16,
+      "features_lower": 0,
+      "flooded_km2": 12.041,
+      "flooded_km2_lower": 0.0,
+      "people_flooded": 489,
+      "people_flooded_lower": 0,
+      "meta_flooded_km2": 12.06,
+      "latest_acquired": "2026-11-06T21:16:03Z",
+      "latency_h": 99.7,
+      "n_granules": 95,
+      "new_km2": 12.06,
+      "receded_km2": 0.0,
+      "status": "ok"
+    },
+    "tpi-critical": {
+      "geojson": "geojson/critical_areas.geojson",
+      "features": 4,
+      "days": [
+        "2026-11-15",
+        "2026-11-16"
+      ],
+      "classes": {
+        "Alto": 1,
+        "Cr\u00edtico": 3
+      },
+      "critical_km2": 98.645,
+      "people_critical": 192,
+      "status": "ok"
+    }
+  },
+  "nisar": {
+    "pre_granule": "NISAR_L2_PR_GCOV_034_024_D_101_2005_DHDH_M_20261025T211603_20261025T211633_P05036_N_F_J_001",
+    "post_granule": "NISAR_L2_PR_GCOV_035_024_D_101_4005_DHDH_A_20261106T211603_20261106T211610_P05036_N_P_J_001",
+    "pre_acquired": "2026-10-25T21:16:03Z",
+    "post_acquired": "2026-11-06T21:16:03Z",
+    "track": 24,
+    "look": "D",
+    "frame": 101
+  },
+  "priority_zones": {
+    "geojson": "geojson/priority_zones.geojson",
+    "municipalities": 73
+  },
+  "people_source": "GPW v4.11 UN-adjusted 2020 30 arc-sec count (data/now/static/gpw/gpw_popcount_2020_30sec.tif)",
+  "method": {
+    "area": "geodesic polygon area (shapely union, pyproj.Geod WGS84)",
+    "people": "GPW summed on a 0.0025 deg EPSG:4326 grid, centre-sampled masks (all_touched=False)",
+    "confidence": "headline = standard confidence (absent = standard); *_lower = lower-confidence not covered by standard"
+  },
+  "res_deg": 0.0025,
+  "_null_reasons": {
+    "opera-dswx-s1.latency_h": "no granules ingested this run"
+  }
+}

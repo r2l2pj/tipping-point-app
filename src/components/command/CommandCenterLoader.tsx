@@ -3,7 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import { canonicalCaseId } from "@/lib/contract";
 import { getAlerts, getCaseBundle, getEventsIndex, getRootManifest } from "@/lib/data";
 import CommandCenter from "./CommandCenter";
-import { buildAlertList, capAlertList } from "./model/alerts";
+import { alertsPaused, buildAlertList, capAlertList, pausedAlertList, runVerified } from "./model/alerts";
 import { nisarPasses, PASSES_SHOWN } from "./model/radar";
 import type { CcBundle } from "./model/types";
 
@@ -27,6 +27,16 @@ function nullReasons(root: unknown, id: string): Record<string, string> | undefi
     Object.entries(reasons).filter(([, v]) => typeof v === "string")
   ) as Record<string, string>;
   return Object.keys(out).length ? out : undefined;
+}
+
+// The live node's flags: the root manifest's `now` node, else the per-case
+// now/manifest.json (lead-live writes `verified` / `alerts_paused`).
+function liveNode(root: unknown, manifest: unknown): Record<string, unknown> | undefined {
+  const cases = isRecord(root) && isRecord(root.cases) ? root.cases : undefined;
+  const node = isRecord(cases?.now) ? cases.now : undefined;
+  const own = isRecord(manifest) ? manifest : undefined;
+  if (!node && !own) return undefined;
+  return { ...own, ...node };
 }
 
 function liveRunTime(root: unknown): string | undefined {
@@ -87,12 +97,19 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
   if (live) cases.push(live);
 
   const legacy = await getAlerts().catch(() => null);
-  const alertList = capAlertList(buildAlertList({ now: live, legacy }));
+  const built = capAlertList(buildAlertList({ now: live, legacy }));
+  const alertList = alertsPaused(liveNode(root, now?.manifest)) ? pausedAlertList(built) : built;
 
   // Page budget (A10): every byte of `cases` rides in the HTML. The alert
   // candidates were turned into alertList above; the pass list is cut to
   // the cards shown plus its count; per-layer legends are not read.
-  const slim = cases.map((c) => toClientBundle(c, c === live));
+  // Same verified gate as the alerts: an unverified live run shows no risk
+  // map, no risk numbers; radar observations stay.
+  const riskPaused = !runVerified(liveNode(root, now?.manifest));
+  const slim = cases.map((c) => {
+    const b = toClientBundle(c, c === live);
+    return c === live && riskPaused ? { ...b, riskPaused: true } : b;
+  });
 
   return (
     <CommandCenter

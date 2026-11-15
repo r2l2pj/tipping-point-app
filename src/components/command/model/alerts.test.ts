@@ -1,9 +1,12 @@
 // @ts-expect-error -- bun:test resolves under `bun test`
 import { describe, expect, test } from "bun:test";
-import { alertsByRegion, buildAlertList, capAlertList, moreAlertsText } from "./alerts";
+import { alertsByRegion, alertsPaused, buildAlertList, capAlertList, moreAlertsText, observedRows, pausedAlertList } from "./alerts";
 import { bundle, liveBundle } from "./fixtures";
 import { ageText, classLabel, fmtBrt, fmtDate, fmtHours, sourceTime } from "./format";
 import { sourceRows } from "./sources";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { placesBySource, toResponseSources } from "../../../lib/response";
 import { chartForecastLabel, issuedForecastLabel } from "./steps";
 
 describe("alert list", () => {
@@ -81,7 +84,7 @@ describe("live run text", () => {
       data_dates: {
         imerg: "2026-11-14T00Z",
         smap: "SMAP_L4_SM_gph_20261110T223000_Vv8013_001.h5_u9loH5HD",
-        geos_fp_issued: "2026-11-14T12:00:00Z",
+        gfs_issued: "2026-11-14T12:00:00Z",
       },
     });
     const rows = sourceRows(live, new Date("2026-11-14T23:00:00Z").getTime());
@@ -166,5 +169,96 @@ describe("capAlertList (A10 page budget)", () => {
     const few = { ...many, alerts: many.alerts.slice(0, 3) };
     expect(capAlertList(few, 20)).toBe(few);
     expect(moreAlertsText(few)).toBeUndefined();
+  });
+});
+
+describe("alerts paused until the live run is verified", () => {
+  test("paused unless verified: true and not alerts_paused; env forces a pause", () => {
+    expect(alertsPaused(undefined, undefined)).toBe(true);
+    expect(alertsPaused({ mode: "live" }, undefined)).toBe(true); // no flag = paused
+    expect(alertsPaused({ verified: false }, undefined)).toBe(true);
+    expect(alertsPaused({ verified: true, alerts_paused: true }, undefined)).toBe(true);
+    expect(alertsPaused({ verified: true }, undefined)).toBe(false);
+    expect(alertsPaused({ verified: true }, "1")).toBe(true);
+  });
+
+  test("a paused list carries no card, keeps the run time", () => {
+    const p = pausedAlertList({ state: "alerts", alerts: [{ id: "x" } as never], dataTime: "2026-11-15T04:15:23Z" });
+    expect(p).toEqual({ state: "paused", alerts: [], dataTime: "2026-11-15T04:15:23Z" });
+  });
+});
+
+describe("lead-live alerts.json (2026-11-15): tpi candidates, observed[], paused", () => {
+  const file = {
+    candidates: [
+      { kind: "tpi", hazard: "flood", class: 3, label: "Crítico", municipality: "Canoas", uf: "RS", area_km2: 4.2, when: "d1" },
+      { kind: "observed", hazard: "flood", class: 3, label: "observed flood candidate" },
+    ],
+    observed: [
+      { kind: "observed", hazard: "flood", label: "observed flood candidate", source: "nisar-gcov",
+        acquired: "2026-11-06T21:16:03Z", municipality: "Iguape", uf: "SP", area_km2: 3.54, people: 41, polygons: 2 },
+      { kind: "observed", hazard: "flood", source: "nisar-gcov", acquired: "2026-11-06T21:16:03Z",
+        municipality: "Cananéia", uf: "SP", area_km2: 8.5, people: 343, polygons: 14 },
+    ],
+  };
+  const live = (over: Record<string, unknown> = {}) =>
+    liveBundle({ updated_at: "2026-11-15T12:00:00Z", nowAlerts: { ...file, ...over } as never });
+
+  test("only TPI candidates become cards, with place, area and day", () => {
+    const list = buildAlertList({ now: live() });
+    expect(list.alerts).toHaveLength(1);
+    expect(list.alerts[0]).toMatchObject({ region: "Canoas, RS", hazard: "flood", level: "emergency", area_km2: 4.2, when: "d1" });
+    expect(list.alerts[0].title).toBe("Tipping Point: CRITICAL flood risk");
+  });
+
+  test("paused: true in the file pauses the list", () => {
+    expect(buildAlertList({ now: live({ paused: true, paused_reason: "checks failed", candidates: [] }) }).state).toBe("paused");
+  });
+
+  test("observed[]: one card per source, top 3 places by area + 'and N more', sums", () => {
+    const more = [...file.observed,
+      { kind: "observed", source: "nisar-gcov", municipality: "Registro", uf: "SP", area_km2: 2, people: 10, polygons: 1 },
+      { kind: "observed", source: "nisar-gcov", municipality: "Pariquera-Açu", uf: "SP", area_km2: 1, people: 5, polygons: 1 },
+      { kind: "observed", source: "opera-dswx-s1", municipality: "Viamão", uf: "RS", area_km2: 7.28, people: 49, polygons: 3 }];
+    const rows = observedRows(live({ observed: more }));
+    expect(rows.map((r) => r.source)).toEqual(["NISAR radar", "OPERA DSWx-S1 radar"]);
+    expect(rows[0]).toMatchObject({
+      places: "Cananéia, SP · Iguape, SP · Registro, SP and 1 more",
+      area: "15.0 km²", people: "399", polygons: 18,
+    });
+    expect(rows[1].places).toBe("Viamão, RS");
+    expect(JSON.stringify(rows)).not.toMatch(/emergency|critical|monitored region/i);
+  });
+
+  test("R3 summary: per source, names from the R3 zones (real file of 8fba5e5)", () => {
+    const zones = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/lead/r3_priority_zones.geojson"), "utf8"));
+    const summary = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/lead/r3_summary.json"), "utf8"));
+    const b = liveBundle({ responseSources: toResponseSources(summary), observedPlaces: placesBySource(zones) });
+    const rows = observedRows(b);
+    expect(rows.map((r) => [r.source, r.area, r.people])).toEqual([
+      ["OPERA DSWx-S1 radar", "129.5 km²", "494"],
+      ["NISAR radar", "12.0 km²", "489"],
+    ]);
+    expect(rows[1].places).toMatch(/^São Miguel Arcanjo, SP · .+ and \d+ more$|^São Miguel Arcanjo, SP( · [^·]+){0,2}$/);
+    for (const r of rows) expect(r.places).not.toBe("municipalities not named yet");
+  });
+
+  test("NISAR meta fallback names its places; no names reads plainly; replay has none", () => {
+    const meta = { source: "nisar-gcov", flooded_km2: 12.06, people_flooded: 384, post_acquired: "2026-11-06T21:16:03Z", polygons: 16 };
+    expect(observedRows(liveBundle({ response: meta, observedPlaces: { "nisar-gcov": ["São Miguel Arcanjo, SP"] } }))[0])
+      .toMatchObject({ source: "NISAR radar", places: "São Miguel Arcanjo, SP", area: "12.1 km²", people: "384",
+        acquired: "Nov 6, 06:16 PM BRT", polygons: 16 });
+    expect(observedRows(liveBundle({ response: meta }))[0].places).toBe("municipalities not named yet");
+    expect(observedRows(bundle({ response: meta }))).toEqual([]);
+  });
+});
+
+describe("live forecast source row (L30)", () => {
+  test("NOAA GFS from gfs_issued; an old run never names GEOS-FP", () => {
+    const gfs = sourceRows(liveBundle({ data_dates: { gfs_issued: "2026-11-15T00:00:00Z" } }));
+    expect(gfs.find((r) => r.id === "gfs")).toMatchObject({ name: "NOAA GFS forecast", missing: false });
+    const old = sourceRows(liveBundle({ data_dates: { geos_fp_issued: "2026-11-14T12:00:00Z" } }));
+    expect(old.find((r) => r.id === "gfs")).toMatchObject({ name: "NOAA GFS forecast", missing: true });
+    expect(JSON.stringify(old)).not.toContain("GEOS");
   });
 });

@@ -2,7 +2,7 @@
 
 import { ALERT_FOOTER, ALERT_LEVEL_WORDS, heldLabel, type AlertCardData } from "@/lib/alerts";
 import type { AlertLevel } from "@/lib/types";
-import { fmtDate } from "./model/format";
+import { fmtDate, fmtKm2 } from "./model/format";
 
 export const LEVEL_STYLE: Record<AlertLevel, { chip: string; border: string }> = {
   emergency: { chip: "bg-[#bd0026] text-white", border: "border-[#e2a3ad] bg-cc-danger-soft" },
@@ -21,7 +21,7 @@ export default function AlertCard({
 }) {
   const style = LEVEL_STYLE[a.level] ?? LEVEL_STYLE.watch;
   const word = ALERT_LEVEL_WORDS[a.level] ?? ALERT_LEVEL_WORDS.watch;
-  const hazardWord = a.hazard === "flood" ? "flood" : "landslide";
+  const hazardWord = a.hazard || "flood or landslide";
   const held = heldLabel(a);
   const imerg = a.data_dates?.imerg;
   const smap = a.data_dates?.smap;
@@ -33,6 +33,13 @@ export default function AlertCard({
         <span className={`shrink-0 rounded-[5px] px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${style.chip}`}>{a.level}</span>
       </div>
       <p className="mt-1.5 text-[13px]"><span className="text-cc-muted">Region:</span> {a.region ?? a.area}</p>
+      {(a.area_km2 !== undefined || a.when) && (
+        <p className="mt-1 text-[13px]">
+          {a.area_km2 !== undefined && <><span className="text-cc-muted">Area:</span> {fmtKm2(a.area_km2)}</>}
+          {a.area_km2 !== undefined && a.when ? " · " : ""}
+          {a.when && <><span className="text-cc-muted">When:</span> {a.when === "today" ? "today" : "tomorrow (forecast)"}</>}
+        </p>
+      )}
       {a.rain && <p className="mt-1 text-[13px]">{a.rain} {a.soil}</p>}
       {a.forecast && <p className="mt-1 text-[13px]">Forecast: {a.forecast}</p>}
       {(imerg || smap) && (

@@ -12,6 +12,12 @@ export type CcBundle = CaseBundle & {
   nisarPasses?: NisarPass[];
   // Number of passes before the list was cut to the cards shown (A10).
   nisarPassCount?: number;
+  // Live case: the run is not marked verified (now node `verified: true`),
+  // so its risk outputs (TPI, probability, summary numbers) are not shown.
+  // Radar observations stay. Set by CommandCenterLoader.
+  riskPaused?: boolean;
+  // Replay: data/<case>/forecast_lead_time.json (NOAA GFS forecast replay).
+  forecastLeadTime?: unknown;
   // `_null_reasons` of the case node in the root manifest. The loader in
   // src/lib does not carry it, so CommandCenterLoader attaches it.
   nullReasons?: Record<string, string>;
@@ -30,3 +36,5 @@ export const HAZARD_LABEL: Record<Hazard, string> = {
 };
 
 export const NOT_PUBLISHED = "not published yet";
+export const RISK_PAUSED_TEXT = "Risk map paused while we verify today's data";
+export const RISK_PAUSED_SHORT = "paused while we verify today's data";

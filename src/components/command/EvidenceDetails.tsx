@@ -61,7 +61,7 @@ export default function EvidenceDetails({
           <h3 className={h3}>How early? (in replay)</h3>
           {e.leadTime.placeholder && <p className="font-semibold text-cc-warn">Illustrative numbers</p>}
           <p className="mt-1 font-semibold">{e.leadTime.median}</p>
-          <p>{e.leadTime.iqr}</p>
+          {e.leadTime.iqr && <p>{e.leadTime.iqr}</p>}
           {e.leadTime.shares.length > 0 && (
             <dl className="mt-1 grid grid-cols-2 gap-2">
               {e.leadTime.shares.map((s) => (

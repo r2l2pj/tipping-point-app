@@ -155,7 +155,7 @@ describe("steps", () => {
   test("the forecast tag names the source of the data, never a fixed one", () => {
     expect(forecastTag(bundle({ manifest: manifest([], { forecast_source: "perfect-forecast" }) })))
       .toBe("Forecast (perfect forecast)");
-    expect(forecastTag(liveBundle({ summary: { forecast_source: "geos-fp" } }))).toBe("Forecast (GEOS-FP)");
+    expect(forecastTag(liveBundle({ summary: { forecast_source: "geos-fp" } }))).toBe("Forecast (older forecast run)");
     expect(forecastTag(bundle())).toBe("Forecast");
   });
 

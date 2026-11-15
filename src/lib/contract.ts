@@ -314,11 +314,39 @@ export interface NowAlertCandidate {
   centroid?: [number, number];
   pixels?: number;
   hold?: boolean;
+  // lead-live 2026-11-15: TPI alerts carry kind "tpi", the place, the area
+  // and the day ("today" | "d1").
+  kind?: string;
+  municipality?: string;
+  uf?: string;
+  area_km2?: number;
+  bbox?: [number, number, number, number];
+  when?: string;
+}
+
+// Satellite flood candidates grouped per source and municipality: shown as
+// observations, never as alerts.
+export interface NowObserved {
+  kind?: string; // "observed"
+  hazard?: string; // "flood"
+  label?: string;
+  source?: string; // "nisar-gcov", "opera-dswx", ...
+  acquired?: string;
+  municipality?: string;
+  uf?: string;
+  area_km2?: number;
+  people?: number;
+  polygons?: number;
 }
 
 export interface NowAlertsFile {
   schema?: string;
+  generated_at?: string;
   candidates?: NowAlertCandidate[];
+  observed?: NowObserved[];
+  // true: the run did not pass its checks; candidates is empty.
+  paused?: boolean;
+  paused_reason?: string;
 }
 
 // --- case ids --------------------------------------------------------------
@@ -366,7 +394,9 @@ export function resolveAsset(
 
 export const FORECAST_SOURCE_LABELS: Record<string, string> = {
   "perfect-forecast": "perfect forecast", // replay cases
-  "geos-fp": "GEOS-FP", // live now/ runs
+  // Live runs before L30 (2026-11-15). The only forecast input now is NOAA
+  // GFS; the old source is not named on screen.
+  "geos-fp": "older forecast run",
   "noaa-gfs": "NOAA GFS", // L22 issued-forecast replay frames
 };
 

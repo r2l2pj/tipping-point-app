@@ -22,7 +22,14 @@ import {
   type NowSummary,
 } from "./contract";
 import type { LayerMeta } from "./ee-layers";
-import { NISAR_META, responseGeojsonPath, toNowResponse } from "./response";
+import {
+  NISAR_META,
+  placesBySource,
+  RESPONSE_SUMMARY,
+  responseGeojsonPath,
+  toNowResponse,
+  toResponseSources,
+} from "./response";
 import type {
   AlertsFile,
   CaseBundle,
@@ -59,6 +66,8 @@ export interface LoadedCaseBundle extends CaseBundle {
   criticalAreas?: GeoJSON.FeatureCollection;
   // Upcoming NISAR passes for the live bundle (hoisted by toNowView).
   nisarPasses?: NisarPass[];
+  // Replay: data/<case>/forecast_lead_time.json, raw (read by the model).
+  forecastLeadTime?: unknown;
   // Live GEE layer metadata (L8); present when the probe answered, even
   // when the layers array is empty (GEE up, nothing published).
   liveLayers?: LayerMeta[];
@@ -508,6 +517,8 @@ export async function getCaseBundle(
     summary,
     nowAlerts,
     responseRaw,
+    forecastLeadTime,
+    responseSummaryRaw,
   ] = await Promise.all([
     loadMetrics(ctx, entry?.metrics ?? `metrics.json#${canonical}`, dirs),
     loadProduct<SeriesDaily>(
@@ -530,6 +541,13 @@ export async function getCaseBundle(
     // name until the products map declares it; absent -> no radar numbers.
     now
       ? loadProduct<unknown>(ctx, canonical, rawProducts, "nisar_meta", NISAR_META)
+      : undefined,
+    // Replay lead time of the NOAA GFS forecast replay (lead-analysis).
+    now
+      ? undefined
+      : loadProduct<unknown>(ctx, canonical, rawProducts, "forecast_lead_time", "forecast_lead_time.json"),
+    now
+      ? loadProduct<unknown>(ctx, canonical, rawProducts, "response_summary", RESPONSE_SUMMARY)
       : undefined,
   ]);
 
@@ -664,6 +682,10 @@ export async function getCaseBundle(
     summary,
     nowAlerts,
     response,
+    ...(now
+      ? { responseSources: toResponseSources(responseSummaryRaw), observedPlaces: placesBySource(zonesRaw) }
+      : {}),
+    forecastLeadTime,
     nisarPasses: now?.nisar_passes,
     swot,
     products: bundleProducts,

@@ -11,7 +11,7 @@ import type { DayPoint, ManifestLayer } from "@/lib/types";
 import { fmtDate, fmtDayShort } from "./format";
 import { reaches, thresholdFor } from "./status";
 import type { LayerId } from "./layerRegistry";
-import { HAZARD_LABEL, type CcBundle, type Hazard } from "./types";
+import { HAZARD_LABEL, RISK_PAUSED_TEXT, type CcBundle, type Hazard } from "./types";
 
 export interface Step {
   index: number;
@@ -93,7 +93,7 @@ export function defaultStepIndex(steps: Step[]): number {
 export const NO_STEPS_TEXT = "No frames published yet";
 
 // Forecast source named by the data ("perfect forecast" in Replay,
-// "GEOS-FP" in Now). Never a fixed name.
+// "NOAA GFS" in Now). Never a fixed name.
 export const forecastSource = (bundle: CcBundle): string | undefined =>
   forecastSourceLabel(
     bundle.manifest?.forecast_source ?? bundle.summary?.forecast_source ??
@@ -113,6 +113,20 @@ export function issuedForecastLabel(bundle: CcBundle): string | undefined {
 }
 
 export const UPPER_BOUND_TEXT = "perfect forecast · upper bound";
+
+// Legend of the GFS 3-day forecast bars: "Forecast rain 3-day (NOAA GFS,
+// issued May 1, 2024)", or the range of issue dates when the forecast days
+// come from several runs. Undefined when no forecast day has a value.
+export function gfsRain3Label(days: readonly { gfs_rain3_mm?: number | null; gfs_rain3_issued?: string | null }[]): string | undefined {
+  const issued = days
+    .filter((d) => typeof d.gfs_rain3_mm === "number" && typeof d.gfs_rain3_issued === "string")
+    .map((d) => d.gfs_rain3_issued as string)
+    .sort();
+  if (!issued.length) return undefined;
+  const first = fmtDate(issued[0]);
+  const last = fmtDate(issued[issued.length - 1]);
+  return `Forecast rain 3-day (NOAA GFS, issued ${first === last ? first : `${first} – ${last}`})`;
+}
 
 // Source of the forecast-day values in the chart (series). Perfect forecast
 // is copied observation: it is only ever labelled as the upper bound.
@@ -203,6 +217,7 @@ export function mapCaption(
   const step = steps[dayIndex];
   if (!step) return { text: NO_STEPS_TEXT, forecast: false };
   const when = `${fmtDate(step.date)}${step.sub ? ` (${step.sub})` : ""}`;
+  if (bundle.riskPaused) return { text: `${RISK_PAUSED_TEXT} · ${when}`, forecast: false };
   if (!on.includes("tpi")) return { text: `TPI index off · ${when}`, forecast: false };
   const frame = frameFor(bundle, step.date, hazard);
   // The map hook shows its own note for a missing frame; the caption stays short.
