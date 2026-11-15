@@ -4,16 +4,16 @@ Team [TEAM NAME], Brazil.
 
 2
 00:00:02,500 --> 00:00:11,000
-In October, NOAA's forecast flagged extreme rain upstream [N] days before the Uruguay River reached flood stage at Uruguaiana.
+[N] days before the Uruguay River reached flood stage, the NOAA forecast map pointed to the neighbourhoods at risk.
 
 3
-00:00:11,000 --> 00:00:19,000
-NISAR radar then saw the flooded streets through cloud, every 12 days; about [X] people lived inside.
+00:00:11,000 --> 00:00:17,500
+NISAR radar then mapped the flooded areas through cloud; about [X] people live there.
 
 4
-00:00:19,000 --> 00:00:25,500
-In Washington, NISAR mapped flood candidates under 93% cloud.
+00:00:17,500 --> 00:00:25,000
+The river still floods; we help prevent the disaster: when, where and who.
 
 5
-00:00:25,500 --> 00:00:28,500
+00:00:25,000 --> 00:00:28,000
 Rain warns. Radar sees through.

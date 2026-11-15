@@ -16,15 +16,17 @@ Honesty rules for this VO: NISAR is spoken only over the Washington case (the RS
 
 ## v6 — Uruguaiana main case (conductor 2026-11-15: v5 skipped; render once ~14:45–15:30 from main with the Uruguay data)
 
-Story: forecast → radar → people. Numbers [N] / [X] from lead-ml's `uruguai-forecast-proof.md` and lead-analysis's `rs_uruguai_2026` keys (~14:30); pick wording from NUMBERS.md (A/B/C). Captions: `captions-v6-draft.srt` (53 words, team name as one word) + `captions-v6-draft.pt-BR.srt`. Never "prevented"; on the page and slide: "could have given about [N] days' notice".
+Story: forecast → radar → people. Numbers [N] / [X] from lead-ml's `uruguai-forecast-proof.md` and lead-analysis's `rs_uruguai_2026` keys (~14:30); pick wording from NUMBERS.md (A/B/C). Captions: `captions-v6-draft.srt` (53 words, team name as one word; when / where / who framing) + `captions-v6-draft.pt-BR.srt`. Never "prevented"; on the page and slide: "could have given about [N] days' notice".
 
 | Beat | Time | On screen | Voiceover | Words |
 | --- | --- | --- | --- | --- |
 | A | 0–2.5 s | Title card (team, challenge) over the Uruguaiana map | "Team [TEAM NAME], Brazil." | 3 |
-| B | 2.5–11 s | Forecast proof: the NOAA GFS run issued [date] with extreme rain over the upstream Uruguay basin (rain/TPI layer, forecast label visible), then the river-gauge date it reached flood stage at Uruguaiana ([date]). Overlay "NOAA GFS forecast, issued [date] → flood stage at Uruguaiana [date]: [N] days". | "In October, NOAA's forecast flagged extreme rain upstream [N] days before the Uruguay River reached flood stage at Uruguaiana." | 19 |
-| C | 11–19 s | NISAR at Uruguaiana: the 12-day passes (Sep 18 → Nov 5, 2026, provisional products) through the mid-October crest; flood candidates over the streets; **Who is affected** ([X] people). Overlay "NISAR every 12 days · Sep 18 → Nov 5, 2026 · flood candidates · about [X] people". If only version B holds (darkening, no gated candidates), the VO becomes "NISAR radar then saw the river spread through cloud, every 12 days." and no people number. | "NISAR radar then saw the flooded streets through cloud, every 12 days; about [X] people lived inside." | 17 |
-| D | 19–25.5 s | Supporting case: WA NISAR before/after swipe (Dec 4 → Dec 16, 2025), overlay "Washington · Dec 2025 · 27.99 km² of flood candidates within the swath". | "In Washington, NISAR mapped flood candidates under 93% cloud." | 9 |
-| E | 25.5–28.5 s | Wordmark card + data credits (+ app URL when known) | "Rain warns. Radar sees through." | 4 |
+| B | 2.5–11 s | WHEN + WHERE: lead-app deep-link to the forecast-issue day — the NOAA GFS forecast map over Uruguaiana with its High/Critical neighbourhoods (forecast label "issued [date]" visible). Overlay "NOAA GFS forecast issued [date] · [N] days before flood stage · [P]% of the area that flooded was flagged". | "[N] days before the Uruguay River reached flood stage, the NOAA forecast map pointed to the neighbourhoods at risk." | 19 |
+| C | 11–17.5 s | Radar + WHO: deep-link to the NISAR stack (Sep 18 → Nov 5, 2026, provisional products) — flood candidates over town, then **Who is affected** ([X] people). Overlay "NISAR every 12 days · [km²] km² of flood candidates · about [X] people". Say "flooded streets" instead of "flooded areas" only if the gated candidates are in town; with version B (darkening only): "NISAR radar then saw the river spread through cloud." and no people number. | "NISAR radar then mapped the flooded areas through cloud; about [X] people live there." | 14 |
+| D | 17.5–25 s | WHEN / WHERE / WHO card: [N] days · [P]% of the flooded area · about [X] people; small line "Also tested: Washington Dec 2025 (NISAR) · Rio Grande do Sul May 2024 (forecast replay)". | "The river still floods; we help prevent the disaster: when, where and who." | 13 |
+| E | 25–28 s | Wordmark card + data credits (+ app URL when known) | "Rain warns. Radar sees through." | 4 |
+
+Build: lead-app serves a local prod build of main with the Uruguay data on :3100 at ~14:45 and sends the deep-links (forecast-issue day, NISAR stack, people). Cut 28.0 s (≤ 29.5 s gate). Never "prevented the flood"; "could have given about [N] days' notice" on page/slides only.
 
 ## Production notes
 
