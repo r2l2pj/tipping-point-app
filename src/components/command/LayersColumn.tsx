@@ -114,8 +114,8 @@ export default function LayersColumn({
                     ? probLayerNote(probFrame(bundle.manifest?.layers, probHorizon, stepDate)) ?? r.sub
                     : r.sub;
                   return (
-                  <div key={r.id} className={`flex min-h-10 items-center gap-2.5 py-0.5 ${r.available ? "" : "opacity-60"}`}>
-                    <span className="min-w-0 flex-1 text-[13px] leading-tight">
+                  <div key={r.id} className="flex min-h-10 items-center gap-2.5 py-0.5">
+                    <span className={`min-w-0 flex-1 text-[13px] leading-tight ${r.available ? "" : "text-cc-muted"}`}>
                       {r.label}
                       {sub && <span className="block text-xs text-cc-faint">{sub}</span>}
                       {prob && probHorizons.length > 0 && (
@@ -152,7 +152,7 @@ export default function LayersColumn({
                       onClick={() => onToggle(r.id)}
                       className={`relative h-[22px] w-[38px] shrink-0 rounded-full border-[1.5px] ${
                         r.on ? "border-cc-accent bg-cc-accent" : "border-[#9aa7a0] bg-[#c9d1cb]"
-                      } ${r.available ? "cursor-pointer" : "cursor-not-allowed"}`}
+                      } ${r.available ? "cursor-pointer" : "cursor-not-allowed opacity-60"}`}
                     >
                       <span aria-hidden="true" className={`absolute top-[2px] h-[15px] w-[15px] rounded-full bg-white shadow-[0_0_0_1px_rgba(22,36,43,0.25)] transition-[left] ${r.on ? "left-[19px]" : "left-[2px]"}`} />
                     </button>

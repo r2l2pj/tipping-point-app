@@ -210,6 +210,11 @@ body {
   color: #16242b;
   font-weight: 600;
 }
+/* Viz rule 9 (over-map text >= 12px): MapLibre draws the scale label at
+   10px. */
+.cc-root .maplibregl-ctrl-scale {
+  font-size: 12px;
+}
 /* MapLibre controls stay inside the part of the map that no card covers. */
 .cc-root .maplibregl-ctrl-bottom-left {
   left: calc(var(--cc-il, 0px) + 6px);

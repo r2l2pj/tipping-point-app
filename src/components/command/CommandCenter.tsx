@@ -183,9 +183,11 @@ export function CommandCenterView({
         <TopBar cases={cases} bundle={undefined} view={view} onView={onView}
           onMode={() => {}} onSelectCase={() => {}}
           freshness="Unknown age · no data loaded" freshnessKind="unknown-age" />
-        <p role="status" className="m-auto max-w-md p-6 text-center text-[15px]">
-          Data unavailable: no case could be loaded. This does not mean there is no risk.
-        </p>
+        <main className="m-auto max-w-md">
+          <p role="status" className="p-6 text-center text-[15px]">
+            Data unavailable: no case could be loaded. This does not mean there is no risk.
+          </p>
+        </main>
       </div>
     );
   }
@@ -242,7 +244,7 @@ export function CommandCenterView({
 
       {/* Wide: the map fills the whole area and the cards float over it.
           Narrow: one column (map, panel, timeline); Layers is a drawer. */}
-      <div className="relative min-h-0 flex-1">
+      <main className="relative min-h-0 flex-1">
         <MapStage
           bundle={bundle}
           steps={steps}
@@ -416,7 +418,7 @@ export function CommandCenterView({
       />
         </div>
         </div>
-      </div>
+      </main>
 
       <footer className="shrink-0 px-5 pb-2 pt-1.5 text-xs text-cc-faint">
         Data: NASA GPM · SMAP · NASADEM · NISAR · Basemap © CARTO © OpenStreetMap · Boundaries ©{" "}

@@ -224,9 +224,9 @@ export default function CommandCenterLoader({ searchParams }: { searchParams?: S
   return (
     <Suspense
       fallback={
-        <div className={`cc-root flex h-screen items-center justify-center text-sm ${fontClass}`}>
+        <main className={`cc-root flex h-screen items-center justify-center text-sm ${fontClass}`}>
           Loading data…
-        </div>
+        </main>
       }
     >
       <Loaded searchParams={searchParams} />
