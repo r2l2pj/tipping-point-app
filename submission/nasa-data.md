@@ -23,7 +23,7 @@ Every model input is a NASA mission dataset, with one declared exception: NOAA G
 ## Forecast
 
 - **GEOS-FP (GMAO)** — forecast rain for live mode
-- **NOAA GFS 0.25 (non-NASA, declared)** — historical forecasts issued on each replay day, used ONLY as the replay D+1..D+3 forecast and labelled "forecast: NOAA GFS (issued <date>)". No NASA archived forecast was reachable for Apr–May 2024 / Dec 2025 (L22). Perfect-forecast frames (observed IMERG as D+1..D+3) are kept only as a labelled upper bound.
+- **NOAA GFS 0.25 (non-NASA, declared)** — historical forecasts issued on each replay day, used ONLY as the replay D+1..D+3 forecast and labelled "forecast: NOAA GFS (issued <date>)". No NASA-archived precipitation forecast covers both replay windows (Apr–May 2024, Dec 2025), so L22 falls back to GFS. Perfect-forecast frames (observed IMERG as D+1..D+3) are kept only as a labelled upper bound.
 
 ## Validation references
 
