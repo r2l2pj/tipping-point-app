@@ -670,9 +670,15 @@ export function useMapLayers(
       // seasonal water) are left out, as in the headline numbers.
       const dswx = products && typeof products.flood_dswx === "string"
         ? url("flood_dswx", products.flood_dswx as string) : undefined;
-      const nisar = url("flood_confirmed", "geojson/flood_confirmed.geojson");
+      // Live: NISAR polygons only when the manifest declares them (lead-
+      // analysis R2 prunes the file when no usable pair) — never a 404.
+      const liveNisar = products && (typeof products.flood_nisar === "string" ? products.flood_nisar
+        : typeof products.flood_confirmed === "string" ? products.flood_confirmed : undefined);
+      const nisar = bundle.mode === "live"
+        ? (liveNisar ? url("flood_confirmed", liveNisar as string) : undefined)
+        : url("flood_confirmed", "geojson/flood_confirmed.geojson");
       if (dswx) loadMergedFlood([nisar, dswx]);
-      else loadGeo(SRC.flood, "flood extent", nisar);
+      else if (nisar) loadGeo(SRC.flood, "flood extent", nisar);
     }
     if (wantScars) loadGeo(SRC.scars, "landslide candidates", url("landslide_candidates", "geojson/landslide_candidates.geojson"));
     if (wantCatalog) loadGeo(SRC.catalog, "landslide catalog", url("landslide_catalog", "geojson/landslide_catalog.geojson"));
