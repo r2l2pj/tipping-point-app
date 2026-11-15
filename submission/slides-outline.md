@@ -10,7 +10,7 @@
 - *Visual:* our wordmark + tagline over a dark map (no NASA logos or insignia anywhere in the deck: guide rule); the header's "TIPPING POINT | Rain warns. Radar sees through." wordmark
 
 ## Slide 2 — The problem (main case: Uruguay River, Uruguaiana and Itaqui)
-- The Uruguay River floods our home state's western border towns again and again: red alerts for Itaqui and Uruguaiana on Jul 26–29, 2026 (Defesa Civil RS) and a new flood in October–November 2026 ([TBD: river level vs flood level + official source; press reported 9.89 m vs the 8.5 m flood level at Uruguaiana on Oct 13])
+- The Uruguay River floods our home state's western border towns again and again: red alerts for Itaqui and Uruguaiana on Jul 26–29, 2026 (Defesa Civil RS) and new floods in October–November 2026 (press, citing the river gauges: 9.89 m vs the 8.5 m flood level at Uruguaiana on Oct 13; 8.54 m vs 8.50 m on Oct 29)
 - Clouds hide the river from optical satellites during the flood; alerts cover whole municipalities, not which streets are under water
 - Context: May 2024, Rio Grande do Sul floods — 478 municipalities affected, 185 deaths, 581,638 people displaced at the peak (Government of Rio Grande do Sul, SOS Rio Grande do Sul, updated Aug 19, 2025)
 - *Visual:* the Uruguaiana NISAR map from the app ([TBD] screenshot once the series is published)
