@@ -23,6 +23,16 @@ export interface PriorityArea {
 }
 
 export const LIST_COLLAPSED = 5;
+
+// Jhonatan: a count is read against its area. Impossible counts (negative,
+// fill, above world population, or denser than any real place) are not shown.
+export const MAX_DENSITY_PER_KM2 = 60_000;
+function peopleOk(p: Record<string, unknown>): boolean {
+  const n = p.people;
+  if (!finite(n) || n < 0 || n > 8e9) return false;
+  const a = p.area_km2;
+  return !(finite(a) && a > 0 && n / a > MAX_DENSITY_PER_KM2);
+}
 export const MAX_PINS = 10;
 
 export function priorityAreas(bundle: CcBundle | undefined): PriorityArea[] {
@@ -50,8 +60,8 @@ export function priorityAreas(bundle: CcBundle | undefined): PriorityArea[] {
       tpi: observedOnlyZone(p) ? null : finite(p.tpi) ? p.tpi : null,
       hazard: typeof p.hazard === "string" ? p.hazard : "",
       areaKm2: finite(p.area_km2) ? p.area_km2 : null,
-      people: finite(p.people) && p.people >= 0 && p.people <= 8e9 ? p.people : null,
-      ...(p.people != null && !(finite(p.people) && p.people >= 0 && p.people <= 8e9) ? { peopleInvalid: true } : {}),
+      people: peopleOk(p) ? (p.people as number) : null,
+      ...(p.people != null && !peopleOk(p) ? { peopleInvalid: true } : {}),
       ...(nextLookText(nextPassOf(p)) ? { nextLook: nextLookText(nextPassOf(p)) } : {}),
       at,
     };

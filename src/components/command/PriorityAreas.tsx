@@ -66,9 +66,11 @@ export default function PriorityAreas({
                 <span className="block truncate font-semibold">{a.label}</span>
                 {/* Conductor: the zone is drawn as the whole municipality while the
                     count covers only its at-risk part — say so. */}
-                {partsNote && a.people !== null && a.areaKm2 !== null && (
+                {a.people !== null && a.areaKm2 !== null && (
                   <span className="block truncate text-[11px] font-normal text-cc-muted" data-zone-part>
-                    {Math.round(a.people).toLocaleString("en-US")} people in the at-risk part ({fmtKm2(a.areaKm2)}) of {a.name}
+                    {partsNote
+                      ? <>{Math.round(a.people).toLocaleString("en-US")} people in the at-risk part ({fmtKm2(a.areaKm2)}) of {a.name}</>
+                      : <>{lowerBound ? "≥ " : ""}{Math.floor(a.people).toLocaleString("en-US")} people in {fmtKm2(a.areaKm2)}</>}
                   </span>
                 )}
                 {a.nextLook && <span className="block truncate text-[11px] font-normal text-cc-muted" data-zone-next>{a.nextLook}</span>}

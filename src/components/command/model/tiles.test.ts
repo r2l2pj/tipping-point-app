@@ -157,3 +157,21 @@ describe("people audit (conductor): at-risk part label + impossible values", () 
     expect(card).toContain("People: —");
   });
 });
+
+describe("Jhonatan: people read against their area", () => {
+  test("replay zone: '≥ 7,700 people in 12.0 km²'; density > 60,000/km² renders '—'", async () => {
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { createElement } = await import("react");
+    const PriorityAreas = (await import("../PriorityAreas")).default;
+    const { priorityAreas } = await import("./areas");
+    const areas = priorityAreas(bundle({ zones: zones([
+      zone(1, { name: "Caxias do Sul", people: 7700, area_km2: 12 }),
+      zone(2, { name: "Dense", people: 900000, area_km2: 2 }),
+    ]) }));
+    expect(areas[1].peopleInvalid).toBe(true);
+    const html = renderToStaticMarkup(createElement(PriorityAreas, { areas, missingText: "", expanded: true, selected: null, dimmed: false,
+      onToggleAll: () => {}, onSelect: () => {}, lowerBound: true }));
+    expect(html).toMatch(/≥ (<!-- -->)?7,700(<!-- -->)? people in (<!-- -->)?12\.0 km²/);
+    expect(html).not.toContain("900,000");
+  });
+});
