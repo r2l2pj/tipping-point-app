@@ -95,11 +95,46 @@ curl -s "https://api.telegram.org/bot$TELEGRAM_TOKEN/getWebhookInfo"   # url = n
 
 ## 3. Reverse proxy and TLS
 
-Bind the container to `127.0.0.1` and put a proxy with TLS in front. The
+Keep the app private (`127.0.0.1` for a host proxy, or a private Docker
+network for a containerized proxy) and put a proxy with TLS in front. The
 pages **stream** (Partial Prerendering + Suspense): the proxy must not buffer
 responses, or the page waits for the slowest data read.
 
 ### Caddy (automatic Let's Encrypt)
+
+The current VPS runs `lucaslorentz/caddy-docker-proxy`, not a host Caddyfile.
+`tipping-point-app` is healthy on the private `caddy_proxy` network at port
+3000, with its SQLite volume mounted at `/app/.data`. DNS for
+`tippingpoint.l17s.dev` points to this VPS. To restore the live route without
+restarting the app or touching its volume, use the existing `node:24-slim`
+image for a small, portless label carrier:
+
+```bash
+docker run -d --name tipping-point-route --restart unless-stopped \
+  --network caddy_proxy --user node --read-only --cap-drop ALL \
+  --security-opt no-new-privileges --memory 64m --pids-limit 32 \
+  --label caddy=tippingpoint.l17s.dev \
+  --label caddy.reverse_proxy=tipping-point-app:3000 \
+  --label caddy.reverse_proxy.flush_interval=-1 \
+  --label caddy_ingress_network=caddy_proxy \
+  node:24-slim node -e 'setInterval(() => {}, 1073741824)'
+docker inspect tipping-point-route --format '{{.State.Status}} {{json .Config.Labels}}'
+docker inspect tipping-point-app --format '{{.State.Health.Status}}'
+curl -fsS -o /dev/null https://tippingpoint.l17s.dev/api/health
+curl -fsS -o /dev/null https://tippingpoint.l17s.dev/
+```
+
+The route container survives Docker restarts, but its creation is still a
+manual VPS step; merging this documentation does not create it. Keep the
+container name `tipping-point-app` stable across deploys so Docker DNS follows
+the replacement. Do not simultaneously set `caddy=tippingpoint.l17s.dev` on
+the app in a deploy workflow: choose one owner for the hostname. If moving
+the labels to the app, first ensure the replacement app is healthy, then
+remove the helper with `docker rm -f tipping-point-route` and validate HTTPS;
+restore the helper if the replacement route fails. Publishing the site does
+not change `APP_URL` or move the Telegram webhook; configure those separately.
+
+For a standalone Caddy installation instead, use a Caddyfile:
 
 ```caddyfile
 tipping-point.example.org {
