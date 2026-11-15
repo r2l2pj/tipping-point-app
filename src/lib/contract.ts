@@ -476,6 +476,14 @@ export function liveCriticalKm2(
   summary: NowSummary | undefined,
   hazard: "slide" | "flood"
 ): number | undefined {
+  // Summary v3 (lead-analysis, conductor 2026-11-15): critical_km2.<hazard> is
+  // strict Critical (> 0.6) and alert_km2.<hazard> = High + Critical; the
+  // presence of alert_km2 marks it.
+  const s = summary as Record<string, unknown> | undefined;
+  if (s && isRecord(s.alert_km2)) {
+    const v = summary?.critical_km2?.[hazard];
+    return typeof v === "number" && Number.isFinite(v) ? v : undefined;
+  }
   const c = summary?.classes_km2;
   const perHazard = isRecord(c) && HAZARD_KEYS[hazard].some((k) => isNumMap(c[k]));
   if (perHazard) {

@@ -17,6 +17,7 @@ export interface Tile {
   note?: string; // for example "in priority zones"
   asOf?: string; // "as of <date>"
   dimmed: boolean; // the selected step is not the day of the snapshot
+  title?: string; // tooltip on the value
 }
 
 const snapshot = (bundle: CcBundle): { iso?: string; text?: string } => {
@@ -27,6 +28,8 @@ const snapshot = (bundle: CcBundle): { iso?: string; text?: string } => {
   const iso = bundle.reference_date;
   return { iso, text: iso ? fmtDate(iso) : undefined };
 };
+
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
 const finish = (
   bundle: CcBundle,
@@ -100,6 +103,11 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
   }
   if (bundle.mode === "live" && bundle.riskPaused) return pausedTile(label);
   if (bundle.mode !== "live" && day && finite(day.critical_km2)) {
+    // External review: the tile follows the hazard on the map (WA flood:
+    // 199 km², not the 2,276 km² both-hazard total); the other hazard is one
+    // click away on the hazard selector.
+    const own = hazard === "flood" ? day.critical_flood_km2 : day.critical_slide_km2;
+    if (finite(own)) return dayTile(label, fmtKm2(own), day.date, `${hazard === "flood" ? "flood" : "landslide"} hazard`);
     return dayTile(label, fmtKm2(day.critical_km2), day.date,
       splitNote(day, hazard) ?? "landslide or flood");
   }
@@ -116,8 +124,11 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
     // Critical only, per hazard (summary v1 or v2; see liveCriticalKm2).
     const own = bundle.summary?.critical_km2?.[hazard];
     const value = liveCriticalKm2(bundle.summary, hazard);
-    const note = liveSummaryV2(bundle.summary) || finite(own)
-      ? `${hazard === "flood" ? "flood" : "landslide"} hazard` : "any hazard";
+    const v3 = isRecord((bundle.summary as Record<string, unknown> | undefined)?.alert_km2);
+    const note = (liveSummaryV2(bundle.summary) || finite(own) || v3
+      ? `${hazard === "flood" ? "flood" : "landslide"} hazard` : "any hazard") +
+      // lead-analysis v3: areas count Brazilian land only (stats_domain).
+      (v3 ? " · Brazilian land only" : "");
     return finish(bundle, stepDate, label, value, fmtKm2, "summary", note);
   }
   const fromMetrics = bundle.metricsView?.critical_area_km2;
@@ -131,12 +142,23 @@ export function criticalAreaTile(bundle: CcBundle, hazard: Hazard, stepDate?: st
     bundle.zones ? "critical_area_km2" : "priority_zones", zoneNote(bundle, critical.length));
 }
 
+// Conductor: replay counts are now exact (lead-analysis: GPW v4.11 native
+// 30″ grid, exact cell fractions) — shown exactly, labelled an estimate.
+export const PEOPLE_TITLE = "GPW v4.11 population count, native 30″ grid, exact cell fractions";
+export const exactEstimate = (v: unknown): string => `${Math.round(Number(v)).toLocaleString("en-US")} (estimate)`;
+
 export function peopleTile(bundle: CcBundle, stepDate?: string, day?: DayPoint, frame?: ManifestLayer): Tile {
   const label = "People potentially exposed";
+  const replay = bundle.mode === "replay";
+  const t = peopleTileRaw(bundle, stepDate, day, frame, label, replay ? exactEstimate : fmtPeople);
+  return replay && !t.missing ? { ...t, title: PEOPLE_TITLE } : t;
+}
+
+function peopleTileRaw(bundle: CcBundle, stepDate: string | undefined, day: DayPoint | undefined, frame: ManifestLayer | undefined, label: string,
+  fmtPeople: (v: unknown) => string): Tile {
   if (frame && bundle.mode === "replay") {
     // Exact count, labelled an estimate (no silent rounding to hundreds).
-    const exact = (n: number) => `${Math.round(n).toLocaleString("en-US")} (estimate)`;
-    return frameTile(label, frame, count(frameField(frame, "people_critical")), exact);
+    return frameTile(label, frame, count(frameField(frame, "people_critical")), (n) => fmtPeople(n));
   }
   if (bundle.mode === "live" && bundle.riskPaused) return pausedTile(label);
   // count() drops raster fill values and negatives: not data.
@@ -144,7 +166,10 @@ export function peopleTile(bundle: CcBundle, stepDate?: string, day?: DayPoint, 
   if (day && ofDay !== undefined) return dayTile(label, fmtPeople(ofDay), day.date);
   if (bundle.mode === "live") {
     const s = bundle.summary;
-    return finish(bundle, stepDate, label, s?.people_critical ?? s?.people_exposed, fmtPeople, "summary");
+    // v3 (alert_km2 present): people_critical = Critical only, today or D+1.
+    const v3 = isRecord((s as Record<string, unknown> | undefined)?.alert_km2);
+    return finish(bundle, stepDate, label, s?.people_critical ?? s?.people_exposed, fmtPeople, "summary",
+      v3 && finite(s?.people_critical) ? "in Critical areas, today or tomorrow" : undefined);
   }
   const fromMetrics = bundle.metricsView?.people_critical;
   if (finite(fromMetrics)) return finish(bundle, stepDate, label, fromMetrics, fmtPeople, "people_critical");
@@ -157,10 +182,11 @@ export function peopleTile(bundle: CcBundle, stepDate?: string, day?: DayPoint, 
 }
 
 // The zone snapshot has one date. Off that day the list is dimmed.
-export function zoneSnapshot(bundle: CcBundle, stepDate?: string): { asOf?: string; dimmed: boolean } {
+export function zoneSnapshot(bundle: CcBundle, stepDate?: string): { asOf?: string; dimmed: boolean; iso?: string } {
   const snap = snapshot(bundle);
   return {
     asOf: snap.text,
+    iso: snap.iso,
     dimmed: !!stepDate && !!snap.iso && stepDate.slice(0, 10) !== snap.iso.slice(0, 10),
   };
 }

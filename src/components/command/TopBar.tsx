@@ -44,7 +44,7 @@ export default function TopBar({
       </svg>
       <span className="font-cc-display text-[22px] font-bold tracking-[0.04em]">TIPPING POINT</span>
       <span className="hidden border-l border-cc-line-strong pl-3.5 text-[15px] text-cc-muted min-[1500px]:inline">
-        Rain warns. Radar confirms.
+        Rain warns. Radar sees through.
       </span>
       <div className="grow" />
 
@@ -75,7 +75,7 @@ export default function TopBar({
             aria-label="Past event"
             value={bundle.id}
             onChange={(e) => onSelectCase(e.target.value)}
-            className="h-[38px] max-w-[200px] border-0 bg-cc-surface px-1 text-sm font-semibold text-cc-ink"
+            className="h-[38px] max-w-[290px] border-0 bg-cc-surface px-1 text-sm font-semibold text-cc-ink"
           >
             {replays.map((c) => (
               <option key={c.id} value={c.id}>{c.title}</option>

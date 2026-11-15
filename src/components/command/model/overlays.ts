@@ -11,6 +11,7 @@ export interface MapOverlays {
   catalogPoints: boolean;
   operaValidation: boolean;
   mlHazard: boolean; // t_ml raster; before the options it was always on
+  emsFlood?: boolean; // RS: Copernicus EMS EMSR720 flood outline
 }
 
 export interface MapLayerOptions {
@@ -35,6 +36,7 @@ export interface OverlayVisibility {
   opera: boolean;
   nightLights: boolean;
   tml: boolean;
+  ems: boolean;
 }
 
 export function resolveOverlays(
@@ -53,6 +55,7 @@ export function resolveOverlays(
       // not define; the new screen shows night lights as a before/after pair.
       nightLights: false,
       tml: overlays.mlHazard,
+      ems: !!overlays.emsFlood,
     };
   }
   const plan = overlayPlan(tab);
@@ -64,6 +67,7 @@ export function resolveOverlays(
     opera: noTab ? false : plan.operaValidation,
     nightLights: noTab ? false : plan.nightLights,
     tml: true,
+    ems: false,
   };
 }
 

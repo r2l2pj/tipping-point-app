@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Tipping Point",
-  description: "Rain warns. Radar confirms. Flood and landslide early warning for the south of Brazil: radar maps the flood; landslide scars stay candidates. NASA Space Apps 2026.",
+  description: "Rain warns. Radar sees through. Flood and landslide early warning for the south of Brazil: NISAR radar maps flood candidates through cloud; landslide scars stay candidates. NASA Space Apps 2026.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

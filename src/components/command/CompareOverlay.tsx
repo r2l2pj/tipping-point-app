@@ -9,7 +9,7 @@ import {
 import "maplibre-gl/dist/maplibre-gl.css";
 import { boundsToImageCoordinates } from "@/lib/tpi";
 import { cameraPatch, clipPathFor, dragStep, pctFromClientX, SWIPE_MAX_PCT, SWIPE_MIN_PCT } from "@/lib/swipe";
-import type { ComparePair } from "./model/radar";
+import { FLOODED_FILL, FLOODED_OUTLINE, type ComparePair } from "./model/radar";
 
 // Same worker fix and the same dark basemap as Map.tsx.
 setWorkerUrl("/maplibre-gl-worker.js");
@@ -25,7 +25,38 @@ export interface CompareControls {
 // Before / after comparison over the map container (radar pair or
 // night-light pair). Mounted only while it is open: the only time more than
 // one map instance exists. Takes over the old SwipeCompare.
+// L42: HH | HV switch when the radar pair carries an HV pair; switching
+// remounts the two maps on the other images.
 export default function CompareOverlay({
+  pair,
+  onClose,
+  controlsRef,
+}: {
+  pair: ComparePair;
+  onClose: () => void;
+  controlsRef: MutableRefObject<CompareControls | null>;
+}) {
+  const [pol, setPol] = useState<"HH" | "HV">("HH");
+  const shown = pol === "HV" && pair.hv ? { ...pair, before: pair.hv.before, after: pair.hv.after } : pair;
+  const seg = (on: boolean) =>
+    `rounded-full px-2.5 py-0.5 text-xs font-semibold ${on ? "bg-cc-accent text-white" : "text-cc-ink"}`;
+  return (
+    <>
+      <CompareMaps key={pol} pair={shown} onClose={onClose} controlsRef={controlsRef} />
+      {pair.hv && (
+        <div role="group" aria-label="Polarization" data-polarization
+          className="absolute left-1/2 top-3 z-30 flex -translate-x-1/2 items-center gap-1 rounded-full border border-cc-line-strong bg-white/95 p-[3px] shadow">
+          <span className="px-1.5 text-xs text-cc-muted">Polarization</span>
+          {(["HH", "HV"] as const).map((p) => (
+            <button key={p} type="button" aria-pressed={pol === p} onClick={() => setPol(p)} className={seg(pol === p)}>{p}</button>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function CompareMaps({
   pair,
   onClose,
   controlsRef,
@@ -89,6 +120,14 @@ export default function CompareOverlay({
         coordinates: boundsToImageCoordinates(side.bounds ?? pair.bounds),
       });
       map.addLayer({ id: "swipe-image", type: "raster", source: "swipe-image" });
+      // Flooded area (radar) in its own colour above both radar images.
+      if (pair.flood) {
+        map.addSource("swipe-flood", { type: "geojson", data: pair.flood.url });
+        map.addLayer({ id: "swipe-flood-fill", type: "fill", source: "swipe-flood",
+          paint: { "fill-color": FLOODED_FILL, "fill-opacity": 0.35 } });
+        map.addLayer({ id: "swipe-flood-line", type: "line", source: "swipe-flood",
+          paint: { "line-color": FLOODED_OUTLINE, "line-width": 1.2 } });
+      }
       // Only the first map to load fits; its moves sync the other one.
       if (!fitted) {
         fitted = true;
@@ -133,6 +172,13 @@ export default function CompareOverlay({
       </div>
       <div className={tag} style={{ left: "calc(var(--cc-il, 0px) + 56px)", top: 44 }}>{pair.before.label}</div>
       <div className={tag} style={{ right: "calc(var(--cc-ir, 0px) + 68px)" }}>{pair.after.label}</div>
+      {pair.flood && (
+        <div data-swipe-legend className="pointer-events-none absolute bottom-12 z-10 flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1 text-xs font-semibold text-cc-ink shadow"
+          style={{ left: "calc(var(--cc-il, 0px) + 56px)" }}>
+          <span className="inline-block h-3 w-4 rounded-sm border border-white" style={{ background: FLOODED_FILL, outline: "1px solid #5b6870" }} />
+          {pair.flood.label}
+        </div>
+      )}
       <div
         role="slider"
         tabIndex={0}

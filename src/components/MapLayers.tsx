@@ -84,6 +84,7 @@ const SRC = {
   prob: "tp-prob-img",
   muni: "tp-muni",
   catalog: "tp-catalog",
+  ems: "tp-ems",
   places: "tp-places",
   zones: "tp-zones",
   zonePins: "tp-zone-pins",
@@ -116,6 +117,8 @@ const LYR = {
   zonesLine: "tp-zones-line",
   muni: "tp-muni-line",
   catalog: "tp-catalog-circle",
+  ems: "tp-ems-line",
+  emsFill: "tp-ems-fill",
   zoneDot: "tp-zone-dot",
   zoneNum: "tp-zone-num",
   cityLabel: "tp-city-label",
@@ -225,6 +228,7 @@ export function useMapLayers(
     map.addSource(SRC.zones, { type: "geojson", data: EMPTY });
     map.addSource(SRC.muni, { type: "geojson", data: EMPTY });
     map.addSource(SRC.catalog, { type: "geojson", data: EMPTY });
+    map.addSource(SRC.ems, { type: "geojson", data: EMPTY, attribution: "© European Union, Copernicus Emergency Management Service" });
     map.addSource(SRC.places, { type: "geojson", data: bundle?.places ?? EMPTY });
     map.addSource(SRC.zonePins, { type: "geojson", data: EMPTY });
 
@@ -249,15 +253,16 @@ export function useMapLayers(
         layout: {},
         filter: ["==", ["geometry-type"], "LineString"] },
       { id: LYR.floodFill, type: "fill", source: SRC.flood,
-        paint: { "fill-color": "#2166AC", "fill-opacity": 0.75 },
+        // Observed flooded area: its own colour (cyan 50% + white outline).
+        paint: { "fill-color": "#00d5ff", "fill-opacity": 0.5 },
         layout: { visibility: "none" } },
       { id: LYR.floodLine, type: "line", source: SRC.flood,
-        paint: { "line-color": "#08306B", "line-width": 1 },
+        paint: { "line-color": "#ffffff", "line-width": 1.2 },
         layout: { visibility: "none" } },
       // Flood polygons of ~1 km² are sub-pixel at the regional zoom: a dot
       // per polygon keeps them findable until the shapes themselves show.
       { id: LYR.floodDot, type: "circle", source: SRC.floodPts, maxzoom: 10,
-        paint: { "circle-radius": 5, "circle-color": "#2166AC",
+        paint: { "circle-radius": 5, "circle-color": "#00d5ff",
           "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.5 },
         layout: { visibility: "none" } },
       { id: LYR.scarsFill, type: "fill", source: SRC.scars,
@@ -294,6 +299,11 @@ export function useMapLayers(
       { id: LYR.muni, type: "line", source: SRC.muni,
         paint: { "line-color": "#FFFFFF", "line-width": 0.5, "line-opacity": 0.4 },
         layout: {} },
+      // Copernicus EMS EMSR720 flood polygons (RS, Taquari valley): outline.
+      { id: LYR.emsFill, type: "fill", source: SRC.ems,
+        paint: { "fill-color": "#00d5ff", "fill-opacity": 0.5 }, layout: {} },
+      { id: LYR.ems, type: "line", source: SRC.ems,
+        paint: { "line-color": "#ffffff", "line-width": 1.2 }, layout: {} },
       // Landslide catalog: 6 px white dots with a black edge (validation tab).
       { id: LYR.catalog, type: "circle", source: SRC.catalog,
         paint: {
@@ -653,18 +663,26 @@ export function useMapLayers(
     const wantFlood = overlay.flood;
     const wantScars = overlay.scars;
     const wantCatalog = overlay.catalog;
+    const wantEms = overlay.ems;
     if (wantFlood) {
       // Now: the OPERA DSWx-S1 candidates (products.flood_dswx) join the
       // NISAR ones in the same layer; "lower" confidence polygons (cropland,
       // seasonal water) are left out, as in the headline numbers.
       const dswx = products && typeof products.flood_dswx === "string"
         ? url("flood_dswx", products.flood_dswx as string) : undefined;
-      const nisar = url("flood_confirmed", "geojson/flood_confirmed.geojson");
+      // Live: NISAR polygons only when the manifest declares them (lead-
+      // analysis R2 prunes the file when no usable pair) — never a 404.
+      const liveNisar = products && (typeof products.flood_nisar === "string" ? products.flood_nisar
+        : typeof products.flood_confirmed === "string" ? products.flood_confirmed : undefined);
+      const nisar = bundle.mode === "live"
+        ? (liveNisar ? url("flood_confirmed", liveNisar as string) : undefined)
+        : url("flood_confirmed", "geojson/flood_confirmed.geojson");
       if (dswx) loadMergedFlood([nisar, dswx]);
-      else loadGeo(SRC.flood, "flood extent", nisar);
+      else if (nisar) loadGeo(SRC.flood, "flood extent", nisar);
     }
     if (wantScars) loadGeo(SRC.scars, "landslide candidates", url("landslide_candidates", "geojson/landslide_candidates.geojson"));
     if (wantCatalog) loadGeo(SRC.catalog, "landslide catalog", url("landslide_catalog", "geojson/landslide_catalog.geojson"));
+    if (wantEms) loadGeo(SRC.ems, "Copernicus EMS flood map", url("flood_ems", "geojson/flood_ems.geojson"));
     set(SRC.places, bundle.places ?? EMPTY);
 
     vis(LYR.tpiRaster, usePng && frameOk);
@@ -677,6 +695,8 @@ export function useMapLayers(
     vis(LYR.scarsFill, wantScars);
     vis(LYR.scarsLine, wantScars);
     vis(LYR.catalog, wantCatalog);
+    vis(LYR.ems, wantEms);
+    vis(LYR.emsFill, wantEms);
 
     // Forecast label — pinned to the top edge of the frame on any forecast
     // day (v4: previsão sempre rotulada). The text names the

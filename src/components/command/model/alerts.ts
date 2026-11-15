@@ -126,7 +126,8 @@ const sourceLabel = (s?: string): string =>
   (s && SOURCE_LABEL.find(([re]) => re.test(s))?.[1]) ?? s ?? "satellite";
 
 // People counts are estimates: shown exactly, labelled by the caller.
-const people = (v: unknown) => (finite(v) ? Math.round(v).toLocaleString("en-US") : undefined);
+// Guard: negative / fill / impossible counts are not shown.
+const people = (v: unknown) => (finite(v) && v >= 0 && v <= 8e9 ? Math.round(v).toLocaleString("en-US") : undefined);
 
 // Top places by flooded area, then how many more.
 export function placesText(names: readonly string[], shown = PLACES_SHOWN): string {

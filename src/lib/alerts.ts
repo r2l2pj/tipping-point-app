@@ -16,6 +16,8 @@ export interface AlertCardData extends Alert {
   basis?: string;
   first_issued_at?: string;
   last_confirmed_at?: string;
+  next_nisar_pass_utc?: string; // L43
+  next_nisar_track?: string | number;
   // 'when' = d1: today's class of the same area, only when the data gives
   // it (class_today); "below" = under High. Absent = not known: not shown.
   today_level?: AlertLevel | "below";
@@ -47,6 +49,14 @@ export const ALERT_LEVEL_WORDS: Record<AlertLevel, string> = {
   emergency: "CRITICAL",
   warning: "HIGH",
   watch: "ELEVATED",
+};
+
+// External review: the card badge never says "EMERGENCY" (an experimental
+// index is not an emergency declaration) — it names the risk level.
+export const ALERT_BADGE: Record<AlertLevel, string> = {
+  emergency: "Critical risk",
+  warning: "High risk",
+  watch: "Elevated risk",
 };
 
 // Judge report #7 (conductor): every live alert says what it is.
@@ -210,6 +220,11 @@ export function candidatesToAlerts(
       ...(c.when === "d1" && typeof (c as { class_today?: unknown }).class_today === "number"
         ? { today_level: levelForClass((c as { class_today: number }).class_today) ?? "below" } : {}),
       ...(active && c.last_confirmed_at ? { last_confirmed_at: c.last_confirmed_at } : {}),
+      ...(typeof (c as { next_nisar_pass_utc?: unknown }).next_nisar_pass_utc === "string"
+        ? { next_nisar_pass_utc: (c as { next_nisar_pass_utc: string }).next_nisar_pass_utc,
+            ...((c as { next_nisar_track?: unknown }).next_nisar_track != null
+              ? { next_nisar_track: (c as { next_nisar_track: string | number }).next_nisar_track } : {}) }
+        : {}),
       valid_to: validTo.toISOString(),
       guidance:
         `${ALERT_LEVEL_WORDS[level]} ${hazard} risk in your region. ` +

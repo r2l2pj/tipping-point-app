@@ -74,6 +74,7 @@ export default function AreaCallout({
   return createPortal(
     <AreaCard
       area={area}
+      partsNote={bundle.mode === "live"}
       expanded={expanded}
       onToggle={onToggle}
       onClose={onClose}
@@ -106,12 +107,15 @@ export default function AreaCallout({
 // Pure markup of the card, so the rule tests can render it without a map.
 export function AreaCard({
   area,
+  partsNote = false,
   expanded,
   onToggle,
   onClose,
   children,
 }: {
   area: PriorityArea;
+  // Now: the zone is the whole municipality; people/area are its at-risk part.
+  partsNote?: boolean;
   expanded: boolean;
   onToggle: () => void;
   onClose: () => void;
@@ -143,7 +147,13 @@ export function AreaCard({
         {area.hazard ? ` · ${area.hazard}` : ""} · {area.areaKm2 === null ? `area ${NOT_PUBLISHED}` : fmtKm2(area.areaKm2)}
       </div>
       <div className="text-[13px] text-[#c9d3d0]">
-        People: {area.people === null ? NOT_PUBLISHED : fmtPeople(area.people)}
+        {area.peopleInvalid
+          ? <>People: —</>
+          : partsNote && area.people !== null && area.areaKm2 !== null
+            ? <>{Math.round(area.people).toLocaleString("en-US")} people in the at-risk part ({fmtKm2(area.areaKm2)}) of {area.name}</>
+            : area.people !== null && area.areaKm2 !== null
+            ? <>People: {Math.round(area.people).toLocaleString("en-US")} in {fmtKm2(area.areaKm2)} (estimate)</>
+            : <>People: {area.people === null ? NOT_PUBLISHED : fmtPeople(area.people)}</>}
       </div>
       {expanded && (
         <div className="mt-2 flex flex-col gap-[3px] border-t border-white/30 pt-2 text-[13px] text-[#e7ecea]">

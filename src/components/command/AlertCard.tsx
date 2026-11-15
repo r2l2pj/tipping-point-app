@@ -1,8 +1,9 @@
 "use client";
 
-import { ALERT_FOOTER, ALERT_LEVEL_WORDS, EXPERIMENTAL_TEXT, heldLabel, type AlertCardData } from "@/lib/alerts";
+import { ALERT_BADGE, ALERT_FOOTER, ALERT_LEVEL_WORDS, EXPERIMENTAL_TEXT, heldLabel, type AlertCardData } from "@/lib/alerts";
 import type { AlertLevel } from "@/lib/types";
 import { fmtBrt, fmtDate, fmtKm2 } from "./model/format";
+import { nextLookText, nextPassOf } from "./model/nextPass";
 
 export const LEVEL_STYLE: Record<AlertLevel, { chip: string; border: string }> = {
   emergency: { chip: "bg-[#bd0026] text-white", border: "border-[#e2a3ad] bg-cc-danger-soft" },
@@ -40,7 +41,7 @@ export default function AlertCard({
     <li className={`rounded-[10px] border px-3.5 py-3 ${style.border}`}>
       <div className="flex items-start justify-between gap-3">
         <p className="text-[15px] font-semibold">{a.title ?? `Tipping Point: ${word} ${hazardWord} risk`}</p>
-        <span className={`shrink-0 rounded-[5px] px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${style.chip}`}>{a.level}</span>
+        <span className={`shrink-0 rounded-[5px] px-2 py-0.5 text-xs font-bold tracking-wide ${style.chip}`}>{ALERT_BADGE[a.level] ?? a.level}</span>
       </div>
       {experimental && <p className="mt-1 text-xs font-semibold text-cc-warn" data-experimental-card>{EXPERIMENTAL_TEXT}</p>}
       <p className="mt-1.5 text-[13px]"><span className="text-cc-muted">Region:</span> {a.region ?? a.area}</p>
@@ -51,6 +52,9 @@ export default function AlertCard({
             <> · <span className="text-cc-muted">confirmed</span> {fmtBrt(a.last_confirmed_at)}</>
           )}
         </p>
+      )}
+      {nextLookText(nextPassOf(a)) && (
+        <p className="mt-1 text-[13px]" data-alert-next>{nextLookText(nextPassOf(a))}</p>
       )}
       {a.basis && (
         <p className="mt-1 text-[13px] font-semibold text-cc-forecast-ink">{a.basis.charAt(0).toUpperCase() + a.basis.slice(1)}</p>

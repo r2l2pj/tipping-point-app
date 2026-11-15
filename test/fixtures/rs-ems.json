@@ -1,0 +1,139 @@
+{
+ "flood_ems_iou": 0.185,
+ "flood_ems_f1": 0.3123,
+ "flood_ems_precision": 0.4645,
+ "flood_ems_recall": 0.2352,
+ "flood_ems_flooded_km2": 32.038,
+ "flood_ems_flagged_before_onset_pct": 6.56,
+ "flood_ems_flagged_before_onset_critical_pct": 0.1,
+ "flood_ems": {
+  "activation": "EMSR720",
+  "licence": "Copernicus EMS — free use with attribution: © European Union, Copernicus Emergency Management Service",
+  "coverage_limit": "EMSR720 covers only five Taquari-valley AOIs (Guapore, Encantado, Roca Sales, Das Antas Dam, Santa Tereza); Porto Alegre/Guaiba metro flood not mapped by EMS — scores are Taquari-valley-only",
+  "headline": {
+   "image_date_utc": "2024-05-06",
+   "rasterization": "center",
+   "threshold": "alto_plus",
+   "tpi_source": "observed",
+   "gfs_issue": null,
+   "gfs_frames": null,
+   "observed_band": "20240506",
+   "tp": 1066,
+   "fp": 1229,
+   "fn": 3466,
+   "iou": 0.185,
+   "f1": 0.3123,
+   "precision": 0.4645,
+   "recall": 0.2352,
+   "ems_flooded_km2": 32.038,
+   "tpi_flagged_km2": 16.229,
+   "overlap_km2": 7.537,
+   "domain_km2": 258.212,
+   "aois": [
+    "AOI01",
+    "AOI02",
+    "AOI03",
+    "AOI04",
+    "AOI05"
+   ],
+   "scope": "EMSR720 covers only five Taquari-valley AOIs (Guapore, Encantado, Roca Sales, Das Antas Dam, Santa Tereza); Porto Alegre/Guaiba metro flood not mapped by EMS — scores are Taquari-valley-only"
+  },
+  "flagged_before_onset": {
+   "anchor_utc": "2024-04-29T03:00:00+00:00",
+   "anchor_local": "2024-04-29 00:00 BRT (UTC-3)",
+   "denominator_km2": 36.451,
+   "denominator_note": "union of all EMS-mapped flood polygons (all dates/AOIs), rasterized centre-in on the ~90 m grid",
+   "observed_band_20240429": {
+    "alto_or_critico_pct": 0.21,
+    "critico_pct": 0.0
+   },
+   "gfs_issued": {
+    "2024-04-28": {
+     "alto_or_critico_pct": 6.56,
+     "critico_pct": 0.1,
+     "frames": [
+      "issued 2024-04-28 d1 -> 2024-04-29"
+     ]
+    },
+    "2024-04-27": {
+     "alto_or_critico_pct": 0.0,
+     "critico_pct": 0.0,
+     "frames": [
+      "issued 2024-04-27 d1 -> 2024-04-28",
+      "issued 2024-04-27 d2 -> 2024-04-29"
+     ]
+    },
+    "2024-04-26": {
+     "alto_or_critico_pct": 0.0,
+     "critico_pct": 0.0,
+     "frames": [
+      "issued 2024-04-26 d1 -> 2024-04-27",
+      "issued 2024-04-26 d2 -> 2024-04-28",
+      "issued 2024-04-26 d3 -> 2024-04-29"
+     ]
+    }
+   },
+   "gfs_any_issue_alto_or_critico_pct": 6.56,
+   "gfs_any_issue_critico_pct": 0.1,
+   "by_lead": {
+    "24": {
+     "gfs": {
+      "issue": "2024-04-28",
+      "hours_before_anchor": 27.0,
+      "alto_or_critico_pct": 6.56,
+      "critico_pct": 0.1,
+      "frames": [
+       "issued 2024-04-28 d1 -> 2024-04-29"
+      ]
+     },
+     "observed": {
+      "band_date": "2024-04-28",
+      "hours_before_anchor": 27.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0
+     }
+    },
+    "48": {
+     "gfs": {
+      "issue": "2024-04-27",
+      "hours_before_anchor": 51.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "frames": [
+       "issued 2024-04-27 d1 -> 2024-04-28",
+       "issued 2024-04-27 d2 -> 2024-04-29"
+      ]
+     },
+     "observed": {
+      "band_date": "2024-04-27",
+      "hours_before_anchor": 51.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0
+     }
+    },
+    "72": {
+     "gfs": {
+      "issue": "2024-04-26",
+      "hours_before_anchor": 75.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0,
+      "frames": [
+       "issued 2024-04-26 d1 -> 2024-04-27",
+       "issued 2024-04-26 d2 -> 2024-04-28",
+       "issued 2024-04-26 d3 -> 2024-04-29"
+      ]
+     },
+     "observed": {
+      "band_date": "2024-04-26",
+      "hours_before_anchor": 75.0,
+      "alto_or_critico_pct": 0.0,
+      "critico_pct": 0.0
+     }
+    }
+   },
+   "scope": "EMSR720 covers only five Taquari-valley AOIs (Guapore, Encantado, Roca Sales, Das Antas Dam, Santa Tereza); Porto Alegre/Guaiba metro flood not mapped by EMS — scores are Taquari-valley-only",
+   "definition": "% of EMS-mapped flood area whose ~90 m TPI cell was already Alto+ (>0.4) / Critico (>0.6) in: observed = series band dated 2024-04-29 (rain Apr 26-28, all information before the 04-29 03Z onset); gfs = the GFS 00Z runs issued 2024-04-26/27/28, max over d1..d3 frames depicting dates <= the onset day (tools/warned_before.py evaluate/by_lead logic)"
+  }
+ },
+ "flood_ems_method": "Copernicus EMS Rapid Mapping activation EMSR720 (event GLIDE FL-2024-000063-BRA, activated 2024-05-03) mapped the May 2024 Rio Grande do Sul floods with semi-automatic SAR delineation (DEL products: COSMO-SkyMed, RADARSAT-2, PAZ) and photo-interpreted optical grading (GRA: Pleiades Neo, GeoEye-1, WorldView-3) on five small Taquari-valley AOIs — Guapore, Encantado, Roca Sales, Das Antas Dam, Santa Tereza. All '5-Flood' polygons (observedEventA 'Flooded area' and 'Flood trace', plus DEL_MONIT 'Maximum flood extent') were unioned per AOI+image date, minus the BLP hydrographyA permanent/reference-water layer, rasterized centre-in onto the ~90 m TPI_flood grid (area-weighted variant at >=50% coverage reported alongside), and scored ONLY inside the EMS AOI extents. IMPORTANT COVERAGE LIMIT: the EMS AOIs cover ~51.6-51.9 W, 29.0-29.3 S — Porto Alegre, Guaiba, Canoas, Eldorado do Sul and Sao Leopoldo were never mapped, so every score is Taquari-valley-only evidence, not AOI-wide. For each EMS image date E, IoU/F1/precision/recall compare EMS flood cells with TPI_flood Alto+ (>0.4) and Critico (>0.6) in (a) the observed band dated E (rain days E-3..E-1) and (b) the GFS 00Z run issued 24 h before E restricted to frames depicting dates <= E. 'Flagged before onset' measures the % of the EMS flood footprint already Alto+/Critico in the observed band dated 2024-04-29 and in the GFS runs issued 2024-04-26/27/28 (onset 2024-04-29 03:00Z; tools/warned_before.py evaluate/by_lead). Caveats: EMS polygons are imagery-mapped extent at a moment — they miss flooding under cloud/vegetation, GRA 'Flood trace' marks earlier water no longer present, and the EMS image date E pairs loosely with our frame convention (observed band E = rain E-3..E-1, GFS frames depicting E = rain E-2..E; docs/conventions-dates.md)."
+}

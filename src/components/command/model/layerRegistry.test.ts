@@ -45,7 +45,7 @@ describe("layer rows", () => {
 
   test("the flood row carries the real pass dates and a label that follows the source", () => {
     expect(row("flood")).toMatchObject({
-      label: "Flood candidates from radar (NISAR)",
+      label: "Flooded area (NISAR radar, candidates)",
       sub: "NISAR passes: Dec 4, 2025, Dec 16, 2025",
     });
     const rs = layerRows(bundle({ metricsView: { flood_source: "opera" } }), [], "slide");
@@ -72,7 +72,7 @@ describe("layer rows", () => {
 
   test("replay evidence rows exist in Replay only", () => {
     expect(layerRows(liveBundle(), [], "slide").some((r) => r.group === "Replay evidence")).toBe(false);
-    expect(rows.filter((r) => r.group === "Replay evidence").map((r) => r.id)).toEqual(["catalog", "opera"]);
+    expect(rows.filter((r) => r.group === "Replay evidence").map((r) => r.id)).toEqual(["catalog", "opera", "ems"]);
   });
 
   test("no row says confirmed scar or confirmed landslide", () => {
@@ -202,7 +202,7 @@ describe("layer budget", () => {
   test("hook input: one overlay per row, one TPI raster for the chosen hazard", () => {
     expect(overlaysFor(["tpi", "flood"])).toEqual({
       floodPolygons: true, landslideCandidates: false, catalogPoints: false,
-      operaValidation: false, mlHazard: false,
+      operaValidation: false, mlHazard: false, emsFlood: false,
     });
     expect(layerStateFor(["tpi", "imerg"], "flood")).toEqual({
       tpiSlide: false, tpiFlood: true, imerg: true, smap: false, nisar: false, pTrigger: false,
@@ -218,7 +218,7 @@ describe("useMapLayers options (pure part)", () => {
       expect(resolveOverlays(tab, false, false)).toEqual({
         flood: plan.floodPolygons, scars: plan.landslideCandidates,
         catalog: plan.catalogPoints, opera: plan.operaValidation,
-        nightLights: plan.nightLights, tml: true,
+        nightLights: plan.nightLights, tml: true, ems: false,
       });
     }
   });
@@ -232,7 +232,7 @@ describe("useMapLayers options (pure part)", () => {
   test("explicit overlays replace the tab plan and showFlood", () => {
     const overlays = overlaysFor(["flood", "catalog"]);
     expect(resolveOverlays("radar", true, true, overlays)).toEqual({
-      flood: true, scars: false, catalog: true, opera: false, nightLights: false, tml: false,
+      flood: true, scars: false, catalog: true, opera: false, nightLights: false, tml: false, ems: false,
     });
   });
 
@@ -268,5 +268,16 @@ describe("OPERA validation legend (lead-analysis wa_2025/opera_validation.json)"
       ["NISAR only", "#f46d43"],
       ["OPERA DSWx-S1 only", "#4575b4"],
     ]);
+  });
+});
+
+describe("Copernicus EMS flood layer (RS)", () => {
+  test("available when the EMS scores are published; legend carries the attribution", async () => {
+    const { layerAvailable, overlaysFor } = await import("./layerRegistry");
+    const rs = bundle({ id: "rs_2024", metricsView: { flood_ems_iou: 0.185 } as never });
+    expect(layerAvailable(rs, "ems", "flood")).toBe(true);
+    expect(layerAvailable(bundle({ id: "wa_2025" }), "ems", "flood")).toBe(false);
+    expect(overlaysFor(["ems"]).emsFlood).toBe(true);
+    expect(layerLegendRows(rs, ["ems"])[0].label).toBe("Flooded area (Copernicus EMS; © European Union, Copernicus EMS)");
   });
 });

@@ -3,6 +3,7 @@
 import { zoneLabelPoint } from "@/lib/layers";
 import { OBSERVED_CLASS, observedOnlyZone, tpiOnlyZone } from "@/lib/zones";
 import { classLabel, finite } from "./format";
+import { nextLookText, nextPassOf } from "./nextPass";
 import type { CcBundle } from "./types";
 
 export interface PriorityArea {
@@ -14,10 +15,24 @@ export interface PriorityArea {
   hazard: string;
   areaKm2: number | null;
   people: number | null; // null: not published. Never read as 0.
+  // Conductor guard: a published but impossible count (negative, raster fill
+  // like -1e40, above world population) renders as "—", never as a number.
+  peopleInvalid?: boolean;
+  nextLook?: string; // L43: "Next NISAR look: …" (zone next_nisar_pass_utc)
   at: [number, number] | null; // pin position: center of the zone polygon
 }
 
 export const LIST_COLLAPSED = 5;
+
+// Jhonatan: a count is read against its area. Impossible counts (negative,
+// fill, above world population, or denser than any real place) are not shown.
+export const MAX_DENSITY_PER_KM2 = 60_000;
+function peopleOk(p: Record<string, unknown>): boolean {
+  const n = p.people;
+  if (!finite(n) || n < 0 || n > 8e9) return false;
+  const a = p.area_km2;
+  return !(finite(a) && a > 0 && n / a > MAX_DENSITY_PER_KM2);
+}
 export const MAX_PINS = 10;
 
 export function priorityAreas(bundle: CcBundle | undefined): PriorityArea[] {
@@ -45,7 +60,9 @@ export function priorityAreas(bundle: CcBundle | undefined): PriorityArea[] {
       tpi: observedOnlyZone(p) ? null : finite(p.tpi) ? p.tpi : null,
       hazard: typeof p.hazard === "string" ? p.hazard : "",
       areaKm2: finite(p.area_km2) ? p.area_km2 : null,
-      people: finite(p.people) ? p.people : null,
+      people: peopleOk(p) ? (p.people as number) : null,
+      ...(p.people != null && !peopleOk(p) ? { peopleInvalid: true } : {}),
+      ...(nextLookText(nextPassOf(p)) ? { nextLook: nextLookText(nextPassOf(p)) } : {}),
       at,
     };
   });

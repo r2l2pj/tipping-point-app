@@ -7,7 +7,7 @@ function TileCard({ tile, icon }: { tile: Tile; icon: React.ReactNode }) {
       {icon}
       <div className="min-w-0">
         <div className="text-xs text-cc-muted">{tile.label}</div>
-        <div className="text-[21px] leading-tight"><Value text={tile.value} missing={tile.missing} /></div>
+        <div className="text-[21px] leading-tight" title={tile.title}><Value text={tile.value} missing={tile.missing} /></div>
         {(tile.asOf || tile.note) && (
           <div className="text-xs text-cc-faint">
             {[tile.note, tile.asOf ? `as of ${tile.asOf}` : undefined].filter(Boolean).join(" · ")}

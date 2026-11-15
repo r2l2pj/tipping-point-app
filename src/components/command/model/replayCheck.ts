@@ -4,7 +4,7 @@ import { count } from "@/lib/contract";
 import type { DayPoint } from "@/lib/types";
 import { availability, missingText, nullReason } from "./availability";
 import { finite, fmtDate, fmtDayShort, fmtKm2, fmtPct, fmtPeople, fmtScore } from "./format";
-import { floodLabels, swathLine } from "./radar";
+import { floodLabels, scarHitDetail, swathLine } from "./radar";
 import { thresholdFor } from "./status";
 import { NOT_PUBLISHED, type CcBundle } from "./types";
 
@@ -200,6 +200,10 @@ export function replayCheckRows(bundle: CcBundle): CheckRow[] {
     finite(m.landslide_hit_pct)
       ? { id: "catalog-hits", name: "Landslide catalog hits", value: fmtPct(m.landslide_hit_pct), detail: catalogHitsDetail(m), missing: false }
       : undefined);
+  const ems = emsRow(m);
+  if (ems) rows.push(ems);
+  const emsSlides = emsLandslideRow(m);
+  if (emsSlides) rows.push(emsSlides);
   const warned = warnedRow(m);
   if (warned) rows.push(warned);
   // Model scores are shown only with their n, in the 'Did we get it right?'
@@ -226,6 +230,85 @@ export const WARNED_NAME = {
   slide: "Mapped landslides in High or Critical areas (forecast as issued)",
   flood: "Flooded area in High or Critical areas (forecast as issued)",
 };
+// Conductor (lead-analysis a363629): RS flood index vs Copernicus EMS
+// EMSR720 flood map — Taquari valley only (EMS did not map Porto Alegre /
+// Guaíba). Headline = observed rain, High or above; before-onset shares;
+// attribution required by the EMS licence.
+// "That run flagged only 4.2% of the case area as High or above — and that
+// area held 36.5% of the landslides: 8.8× what chance would give."
+export function liftLine(areaShare: unknown, lift: unknown, what: string): string | undefined {
+  if (!finite(areaShare) || !finite(lift) || lift <= 0) return undefined;
+  return `That run flagged only ${pct100(areaShare)} of the case area as High or above: ${lift.toFixed(1)}× the share of ${what} expected by chance.`;
+}
+
+export const EMS_ROW_NAME = "Flood map vs Copernicus EMS (Taquari valley only)";
+export const EMS_ATTRIBUTION = "© European Union, Copernicus Emergency Management Service";
+// Conductor (page quotes it): EMS EMSR720 landslides (Taquari) vs the
+// NOAA GFS run issued a day before the onset. The centroid share is the fair
+// headline; any-touched-cell in brackets (lead-analysis).
+export const EMS_SLIDES_NAME = "Copernicus EMS landslides (Taquari valley only)";
+export function emsLandslideRow(m: M): CheckRow | undefined {
+  const c = m.landslide_ems_warned_gfs_24h_centroid_pct;
+  const area = m.landslide_ems_warned_gfs_24h_centroid_area_share_pct;
+  const lift = m.landslide_ems_warned_gfs_24h_centroid_lift;
+  if (!finite(c) || !finite(area)) return undefined;
+  const any = m.landslide_ems_warned_gfs_24h_pct;
+  const anyLift = m.landslide_ems_warned_gfs_24h_lift;
+  const n = finite(m.landslide_ems_n) ? `${Math.round(m.landslide_ems_n).toLocaleString("en-US")} ` : "";
+  return {
+    id: "ems-slides",
+    name: EMS_SLIDES_NAME,
+    value: `${`${Math.round(c)}%`} at slide centre${finite(lift) && lift > 0 ? ` · ${lift.toFixed(1)}× chance` : ""}`,
+    detail: `${`${Math.round(c)}%`} of the ${n}EMS landslides had their centre inside the area the day-before NOAA GFS forecast flagged High or above, which covered ${`${Math.round(area)}%`} of the EMS area` +
+      (finite(lift) && lift > 0 ? ` — ${lift.toFixed(1)}× chance` : "") +
+      (finite(any) ? ` (any touched cell: ${`${Math.round(any)}%`}${finite(anyLift) && anyLift > 0 ? `, ${anyLift.toFixed(1)}×` : ""})` : "") +
+      `. ${EMS_ATTRIBUTION}.`,
+    missing: false,
+  };
+}
+
+const emsLift = (m: M): string => {
+  const l = m.flood_ems_flagged_before_onset_lift;
+  const a = m.flood_ems_flagged_before_onset_area_share_pct;
+  const hit = m.flood_ems_flagged_before_onset_pct;
+  return finite(l) && l > 0 && finite(a) && finite(hit)
+    ? `Before the onset the GFS run flagged ${pct100(a)} of the mapped Taquari area as High or above but ${pct100(hit)} of the EMS flood: ${l.toFixed(1)}× chance. `
+    : "";
+};
+export function emsRow(m: M): CheckRow | undefined {
+  if (![m.flood_ems_iou, m.flood_ems_f1].some(finite)) return undefined;
+  const e = isRecord(m.flood_ems) ? m.flood_ems : {};
+  const h = isRecord(e.headline) ? e.headline : {};
+  const b = isRecord(e.flagged_before_onset) ? e.flagged_before_onset : {};
+  const pr = [finite(m.flood_ems_precision) ? `P ${fmtScore(m.flood_ems_precision)}` : undefined,
+    finite(m.flood_ems_recall) ? `R ${fmtScore(m.flood_ems_recall)}` : undefined].filter(Boolean).join(" · ");
+  const img = typeof h.image_date_utc === "string" ? fmtDate(h.image_date_utc) : undefined;
+  const onset = typeof b.anchor_local === "string" ? fmtDate(b.anchor_local.slice(0, 10)) : undefined;
+  const obsKey = Object.keys(b).find((k) => k.startsWith("observed_band_"));
+  const obs = obsKey && isRecord(b[obsKey]) ? (b[obsKey] as M).alto_or_critico_pct : undefined;
+  const gfs = isRecord(b.gfs_issued) ? b.gfs_issued : {};
+  const lastIssue = Object.keys(gfs).sort().pop();
+  const g = lastIssue && isRecord(gfs[lastIssue]) ? gfs[lastIssue] as M : undefined;
+  const before = onset && (finite(obs) || (g && finite(g.alto_or_critico_pct)))
+    ? ` Before the onset (${onset}): ${[
+        finite(obs) ? `${pct100(obs)} of the EMS flood area was High or above with observed rain` : undefined,
+        g && finite(g.alto_or_critico_pct)
+          ? `${pct100(g.alto_or_critico_pct as number)} in the NOAA GFS forecast issued ${fmtDate(lastIssue!)}${finite(g.critico_pct) ? ` (Critical ${pct100(g.critico_pct as number)})` : ""}`
+          : undefined,
+      ].filter(Boolean).join(", ")}.`
+    : "";
+  const scope = typeof e.coverage_limit === "string"
+    ? " EMS mapped only five Taquari-valley areas; the Porto Alegre / Guaíba flood is not in it."
+    : "";
+  return {
+    id: "ems",
+    name: EMS_ROW_NAME,
+    value: `IoU ${fmtScore(m.flood_ems_iou)} · F1 ${fmtScore(m.flood_ems_f1)}${pr ? ` · ${pr}` : ""}`,
+    detail: `${emsLift(m)}Flood index High or above (observed rain)${img ? ` vs the EMS ${typeof e.activation === "string" ? `${e.activation} ` : ""}flood map of ${img}` : " vs the EMS flood map"}.${scope}${before} ${EMS_ATTRIBUTION}.`,
+    missing: false,
+  };
+}
+
 // L37 (conductor): the RS landslide anchor (May 1) is under review — the
 // event likely started Apr 29-30. A warned row (landslide or flood) shows its
 // numbers only when lead-analysis marks the anchor as the event onset.
@@ -279,6 +362,9 @@ export function warnedRow(m: M): CheckRow | undefined {
         ? `NOAA GFS forecast issued ${runText.join("; ")}${runText.length > 1 ? " — single runs vary" : ""}`
         : `TPI High or above in the NOAA GFS forecast issued 24 h before ${anchor}`) +
         (finite(obs) ? `; with observed rain instead: ${pct100(obs)}` : "") + ".",
+      // L43 lift (lead-analysis): hit rate ÷ share of the area the same run
+      // flagged; undefined (WA 0 % / 0 %) -> no line.
+      liftLine(m[`${hz}_warned_gfs_24h_area_share_pct`], m[`${hz}_warned_gfs_24h_lift`], hz === "slide" ? "landslides" : "flooded area"),
       // WA: why 27.9 km² here vs 27.99 km² flooded (lead-analysis).
       typeof m[`${hz}_warned_denominator_label`] === "string" ? `${m[`${hz}_warned_denominator_label`]}.` : undefined,
       typeof obj.explanation === "string" ? obj.explanation : undefined,
@@ -318,20 +404,43 @@ export interface LeadTimeBlock {
 // Terrain check (lead-analysis fallback 80505ff): the NASADEM HAND proxy vs
 // MERIT Hydro (reference only), IoU 0-1 of the HAND < 5 m zones + Pearson r.
 // Reads hand_validation_iou (hand_validation sits in PCT_KEYS).
-export interface HandCheck { line: string; definition?: string }
+export interface HandCheck { line: string; note?: string; definition?: string }
+// Conductor: show the SERVED radius (the one the index uses), with the best
+// radius as a note. Served radius key from lead-analysis; numbers from
+// hand_validation_by_radius[served]. Without a served key: the published
+// headline radius (hand_validation_iou / _r / _radius_m).
+const SERVED_RADIUS_KEYS = ["hand_validation_served_radius_m", "hand_served_radius_m"];
+// config.yaml: the HAND proxy radius the index uses (lead-analysis, until
+// hand_validation_served_radius_m is published — same numbers).
+export const HAND_SERVED_RADIUS_DEFAULT_M = 1500;
 export function handCheck(m: M): HandCheck | undefined {
-  const iou = m.hand_validation_iou;
+  const byRadius = isRecord(m.hand_validation_by_radius) ? m.hand_validation_by_radius : {};
+  const servedKey = SERVED_RADIUS_KEYS.find((k) => finite(m[k]));
+  const at = (r: number | undefined) => (r !== undefined && isRecord(byRadius[String(Math.round(r))]) ? byRadius[String(Math.round(r))] as M : undefined);
+  const served = servedKey ? (m[servedKey] as number)
+    : at(HAND_SERVED_RADIUS_DEFAULT_M) ? HAND_SERVED_RADIUS_DEFAULT_M : undefined;
+  // served_* keys win; else by_radius[served].
+  const sv = finite(m.hand_validation_served_iou)
+    ? { iou: m.hand_validation_served_iou, r: m.hand_validation_served_r } as M
+    : at(served);
+  const iou = sv ? sv.iou : m.hand_validation_iou;
+  const r = sv ? sv.r : m.hand_validation_r;
+  const radius = sv ? served : m.hand_validation_radius_m;
   if (!finite(iou) || iou < 0 || iou > 1) return undefined;
-  const r = m.hand_validation_r;
-  const radius = m.hand_validation_radius_m;
+  const best = finite(m.hand_best_radius_m) ? m.hand_best_radius_m : undefined;
+  const bv = at(best);
   return {
-    line: `IoU ${fmtScore(iou)}${finite(r) ? ` · r ${fmtScore(r)}` : ""}${finite(radius) ? ` · radius ${Math.round(radius)} m` : ""}`,
+    line: `IoU ${fmtScore(iou)}${finite(r) ? ` · r ${fmtScore(r)}` : ""}${finite(radius) ? ` · radius ${Math.round(radius)} m${sv ? " (the radius the index uses)" : ""}` : ""}`,
+    note: sv && best !== undefined && Math.round(best) !== Math.round(served as number)
+      ? `Best radius ${Math.round(best)} m${bv && finite(bv.iou) ? ` (IoU ${fmtScore(bv.iou)}${finite(bv.r) ? `, r ${fmtScore(bv.r)}` : ""})` : ""}.`
+      : undefined,
     definition: typeof m.hand_validation_definition === "string" ? m.hand_validation_definition : undefined,
   };
 }
 
 export interface Evidence {
   hasMetrics: boolean;
+  scarHit?: string; // WA-size inventories: the 500 m scar share (Details only)
   hand?: HandCheck;
   floodStats: Stat[];
   floodNote: string;
@@ -530,6 +639,7 @@ export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
     ],
     leadTime: leadTimeBlock(bundle, m),
     rainCheck: rainCheckLine(m),
+    scarHit: scarHitDetail(m),
     whyRadar: optical != null
       ? whyRadarText(100 - optical, String(m.cloud_pct_source ?? ""), bundle.reference_date)
       : "Cloud cover during the event is not reported for this case — SAR sees through either way.",

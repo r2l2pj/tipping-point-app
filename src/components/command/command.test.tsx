@@ -118,6 +118,17 @@ describe("status chip and contract values (S1, L9)", () => {
 });
 
 describe("replay check and evidence details (S17, S18, S19)", () => {
+  test("ML v2 card renders VAL next to TEST, the held headline and no provisional banner", () => {
+    const card = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/ml/ml_card_v2.json"), "utf8"));
+    const html = details(bundle({ id: "rs_2024", metricsView: mv({}), ml: buildMlView(card, "rs_2024", "xgb_all") }));
+    expect(html).toContain("VAL PR-AUC");
+    expect(html).toContain("Independent audit: no leakage found.");
+    expect(html).not.toContain("audit pending");
+    expect(html).toContain("Model version v2");
+    expect(html).not.toContain("Provisional — being re-scored");
+    expect(html).toContain("Retrained without any Rio Grande do Sul 2024 point.");
+  });
+
   test("HAND check card renders IoU, r, radius and the definition (0-1 IoU only)", () => {
     const html = details(bundle({ metricsView: mv({ hand_validation_iou: 0.2613, hand_validation_r: 0.8719, hand_validation_radius_m: 1000, hand_validation_definition: "IoU of HAND<5 m zones" }) }));
     expect(html).toContain("Terrain check: HAND proxy vs MERIT Hydro (reference only)");
@@ -293,7 +304,7 @@ describe("radar card (S13, L6, L7, L11)", () => {
       data_dates: { nisar_pre: null, nisar_post: null },
     }));
     expect(html).toContain("Flooded area (optical/OPERA reference)");
-    expect(html).toContain("Flood reference (optical/OPERA)");
+    expect(html).toContain("Flooded area (OPERA reference)");
     expect(html).not.toContain("Flooded area (NISAR)");
   });
 
@@ -458,7 +469,7 @@ describe("pending states carried over from main (L14)", () => {
   test("radar: a NISAR pair without a flooded area shows the label and 'not published yet'", () => {
     const html = render(bundle({ metricsView: mv({}), data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" } }));
     expect(html).toMatch(/Flooded area \(NISAR\)<\/dt><dd[^>]*>not published yet/);
-    expect(render(bundle({ metricsView: mv({}) }))).not.toContain("Flooded area");
+    expect(render(bundle({ metricsView: mv({}) }))).not.toMatch(/Flooded area[^<]*<\/dt>/);
   });
 
   test("radar: scars absent is 'not published yet', empty scars is a real zero, the token wins", () => {
@@ -481,7 +492,10 @@ describe("pending states carried over from main (L14)", () => {
   });
 
   test("the boundary credit follows the case", () => {
-    expect(render(bundle())).toContain("US Census · Population");
+    expect(render(bundle())).toContain("US Census · Landslide points: Washington Geological Survey · Population");
+    // lead-analysis date convention: replay observed band X = rain X-3..X-1
+    const r = render(bundle());
+    if (r.includes("Rain 3-day (IMERG)")) expect(r).toContain("Rain 3-day (IMERG) - observed, the 3 days before each date");
     expect(render(bundle({ id: "rs_2024" }))).toContain("IBGE");
   });
 });
@@ -532,7 +546,7 @@ describe("new assertions of the checklist", () => {
 
   test("the layer rule names the limit, and a named eviction is shown", () => {
     const html = render(bundle(), { layerNotice: "Rain turned off to show Flood" });
-    expect(html).toContain("At most 2 data layers at once");
+    expect(html).toContain("Up to 2 data layers (TPI included)");
     expect(html).toContain("Rain turned off to show Flood");
   });
 });
@@ -675,10 +689,20 @@ describe("no 'confirm' on screen except the tagline (candidates rule)", () => {
       data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" },
       products: { flood_confirmed: "wa_2025/geojson/flood_confirmed.geojson" } });
     // Allowed: the tagline (Lucas) and the rule itself ("never confirmed").
-    const html = render(wa).replace("Rain warns. Radar confirms.", "").replaceAll("never confirmed", "");
+    const html = render(wa).replace("Rain warns. Radar sees through.", "").replaceAll("never confirmed", "");
     expect(html.match(/.{60}confirm.{40}/gi) ?? []).toEqual([]);
     expect(html).toContain("Check with NISAR radar");
     expect(html).toContain("NISAR radar maps flood candidates only in this case");
+  });
+  test("L42: tagline 'Rain warns. Radar sees through.', the radar note, no 'GCOV' jargon", () => {
+    const wa = bundle({ metricsView: { flooded_km2: 28 } as never,
+      data_dates: { nisar_pre: "2025-12-04", nisar_post: "2025-12-16" } });
+    const html = render(wa);
+    expect(html).toContain("Rain warns. Radar sees through.");
+    expect(html).toContain("What the radar sees");
+    expect(html).toContain("Flooded towns and forests stay or turn BRIGHT (double bounce), so this map may miss them.");
+    expect(html).toContain('src="/explainer/what-nisar-sees.png"');
+    expect(html).not.toContain("GCOV");
   });
 });
 

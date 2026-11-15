@@ -41,6 +41,7 @@ export default function EvidenceDetails({
         <h3 className={h3}>Flood detection vs reference (NISAR vs OPERA, new flood)</h3>
         <div className="mt-1"><StatGrid stats={e.floodStats} /></div>
         <p className="mt-1 text-xs text-cc-faint">{e.floodNote}</p>
+        {e.scarHit && <p className="mt-1 text-xs text-cc-muted" data-scar-hit>{e.scarHit}</p>}
         {e.floodSecondary && (
           <div className="mt-1 rounded-lg border border-cc-line p-2.5">
             <p className="text-xs text-cc-muted">All water incl. permanent (secondary)</p>
@@ -56,6 +57,7 @@ export default function EvidenceDetails({
         <div data-hand-check>
           <h3 className={h3}>Terrain check: HAND proxy vs MERIT Hydro (reference only)</h3>
           <p className="mt-1 text-xs font-semibold tabular-nums">{e.hand.line}</p>
+          {e.hand.note && <p className="mt-0.5 text-xs text-cc-muted">{e.hand.note}</p>}
           {e.hand.definition && <p className="mt-0.5 text-xs text-cc-faint">{e.hand.definition}</p>}
         </div>
       )}

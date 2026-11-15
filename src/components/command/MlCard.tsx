@@ -14,6 +14,7 @@ function Table({ t, caption }: { t: MlTable; caption: string }) {
   if (t.reason) return <p className="text-xs italic text-cc-faint">{caption}: not evaluated ({t.reason}).</p>;
   if (!t.rows.length) return null;
   const th = "px-1 py-px text-right font-semibold";
+  const hasVal = t.rows.some((r) => r.valPrAuc !== undefined);
   return (
     <div>
       <table className="w-full border-collapse text-xs tabular-nums" aria-label={caption}>
@@ -26,6 +27,7 @@ function Table({ t, caption }: { t: MlTable; caption: string }) {
             <th scope="col" className={th}>F1</th>
             <th scope="col" className={th}>PR-AUC</th>
             <th scope="col" className={th}>ROC-AUC</th>
+            {hasVal && <th scope="col" className={`${th} border-l border-cc-rule`} title="PR-AUC on the VAL split (held-out catalog events)">VAL PR-AUC</th>}
           </tr>
         </thead>
         <tbody>
@@ -41,7 +43,7 @@ function Table({ t, caption }: { t: MlTable; caption: string }) {
                 )}
               </th>
               {r.missing ? (
-                <td colSpan={5} className="px-1 py-px text-right italic text-cc-faint">n not reported</td>
+                <td colSpan={hasVal ? 6 : 5} className="px-1 py-px text-right italic text-cc-faint">n not reported</td>
               ) : (
                 <>
                   <td className="px-1 py-px text-right">{r.cells.precision}</td>
@@ -49,6 +51,7 @@ function Table({ t, caption }: { t: MlTable; caption: string }) {
                   <td className="px-1 py-px text-right">{r.cells.f1}</td>
                   <td className="px-1 py-px text-right">{r.cells.prAuc}</td>
                   <td className="px-1 py-px text-right">{r.cells.rocAuc}</td>
+                  {hasVal && <td className="border-l border-cc-rule px-1 py-px text-right text-cc-muted">{r.valPrAuc ?? "—"}</td>}
                 </>
               )}
             </tr>
@@ -78,6 +81,11 @@ export default function MlCard({ ml }: { ml: MlView }) {
       {ml.provisional && (
         <p role="status" data-ml-provisional className="mt-1 rounded-md border border-[#e2c48a] bg-cc-warn-soft px-2 py-1 text-[13px] font-semibold text-cc-warn">
           {ML_PROVISIONAL_TEXT}
+        </p>
+      )}
+      {ml.headlineHeld && (
+        <p role="status" data-ml-held className="mt-1 rounded-md border border-[#e2c48a] bg-cc-warn-soft px-2 py-1 text-[13px] font-semibold text-cc-warn">
+          {ml.headlineHeld}
         </p>
       )}
       {ml.version && !ml.provisional && (
@@ -124,7 +132,12 @@ export default function MlCard({ ml }: { ml: MlView }) {
           {ml.event[key] && (
             <div className="mt-1.5">
               <Table t={ml.event[key]} caption={`This event only (${caseTitle(ml.eventId)})`} />
+              {ml.eventNote && <p data-ml-eventnote className="mt-0.5 text-cc-warn">{ml.eventNote}</p>}
             </div>
+          )}
+          {ml.valNote && <p data-ml-valnote className="mt-1 text-cc-warn">{ml.valNote}</p>}
+          {ml.servedLine && (
+            <p className="mt-1 text-cc-muted">{ml.servedLine}{ml.servedNote ? ` ${ml.servedNote}` : ""}</p>
           )}
           {ml.split3b && <p className="mt-1 text-cc-faint">TEST: {ml.split3b}</p>}
           {ml.testEventList.length > 0 && (

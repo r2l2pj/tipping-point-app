@@ -24,9 +24,18 @@ describe("dead toggles (judge #6)", () => {
 import { tourStops } from "./StartHere";
 import { bundle, liveBundle } from "./model/fixtures";
 describe("Start here stops", () => {
-  test("event ids or canonical ids both resolve; live last", () => {
+  test("L42: NISAR first and largest, then the live NISAR card, RS, the WA forecast; event ids resolve", () => {
     const stops = tourStops([bundle({ id: "wa-2025-12" }), bundle({ id: "rs_2024" }), liveBundle()]);
-    expect(stops.map((s) => s.key)).toEqual(["wa", "wa-radar", "rs", "now"]);
-    expect(stops[0].action).toMatchObject({ id: "wa-2025-12", day: -7, hazard: "slide", lead: 3 });
+    expect(stops.map((s) => s.key)).toEqual(["wa-radar", "now", "rs", "wa"]);
+    expect(stops[0]).toMatchObject({ primary: true, title: "1 · Washington, Dec 2025 — NISAR radar",
+      action: { id: "wa-2025-12", hazard: "flood", compare: "radar" } });
+    expect(stops[0].what).toBe("NISAR radar sees the flood through cloud: swipe before / after");
+    expect(stops[1].title).toBe("2 · Now — Southern Brazil, NISAR radar");
+    expect(stops[3].action).toMatchObject({ id: "wa-2025-12", day: -7, hazard: "slide", lead: 3 });
+  });
+  test("HH | HV and the time series are named only when published", () => {
+    const wa = bundle({ id: "wa_2025", nisarSeries: { dates: ["a", "b"], areas: {} },
+      manifest: { ...bundle().manifest!, layers: [...(bundle().manifest?.layers ?? []), { id: "nisar_hv_pre", png: "x.png" }] } } as never);
+    expect(tourStops([wa])[0].what).toBe("NISAR radar sees the flood through cloud: swipe before / after, switch HH | HV, then see the radar time series");
   });
 });

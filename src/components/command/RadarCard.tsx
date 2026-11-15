@@ -2,12 +2,18 @@
 
 import { PASSES_SHOWN, type RadarCard as RadarModel } from "./model/radar";
 import { fmtBrt } from "./model/format";
+import NisarSeriesChart from "./NisarSeriesChart";
 import { Icon, ICON } from "./ui";
 
 // Radar confirmation. "NISAR" is only said for a real pair; scars are always
 // "candidates". "Confirm with NISAR radar" opens the confirmation on the map
 // and does not move the timeline.
 // Judge report #3: the physical drivers behind the radar layer, in plain words.
+// L42 (conductor): two visible lines, the rest stays in "What NISAR sees and why".
+export const RADAR_SEES = [
+  "Dark = open water: smooth water reflects the radar away from the satellite.",
+  "Flooded towns and forests stay or turn BRIGHT (double bounce), so this map may miss them.",
+];
 export const NISAR_WHY = [
   "NISAR's L-band radar sees through cloud and at night: the flood is mapped even when optical satellites see only cloud.",
   "Open water is smooth and reflects the radar away, so it turns dark. We map water that turned dark between two passes, on low ground near rivers.",
@@ -82,8 +88,47 @@ export default function RadarCard({
       {radar.limitation && <p className="mt-1 text-xs text-cc-muted">{radar.limitation}</p>}
 
       {radar.pair && (
+        <div className="mt-1.5 rounded-md bg-cc-well px-2 py-1 text-xs" data-radar-sees>
+          <p className="m-0 font-semibold">What the radar sees</p>
+          {RADAR_SEES.map((l) => <p key={l} className="m-0 text-cc-muted">{l}</p>)}
+          {radar.hypothesisLine && <p className="m-0 mt-0.5 font-semibold" data-radar-test>{radar.hypothesisLine}</p>}
+        </div>
+      )}
+      {radar.nextLook && (
+        <div className="mt-1.5 text-xs" data-next-look>
+          <p className="m-0 font-semibold">{radar.nextLook}</p>
+          {radar.framing && <p className="m-0 text-cc-muted">{radar.framing}</p>}
+        </div>
+      )}
+      {radar.series && <NisarSeriesChart s={radar.series} />}
+      {radar.extras.length > 0 && (
+        <div className="mt-2 border-t border-cc-rule pt-1.5 text-xs" data-nisar-extras>
+          <p className="m-0 font-semibold">More NISAR products</p>
+          {radar.extras.map((x) => (
+            <figure key={x.id} className="m-0 mt-1.5">
+              <figcaption className="font-medium">{x.label}{x.date ? ` · ${x.date}` : ""}</figcaption>
+              {/* eslint-disable-next-line @next/next/no-img-element -- data PNG from the manifest */}
+              <img src={x.url} alt={x.label} loading="lazy" className="mt-0.5 h-auto w-full rounded border border-cc-line bg-black" />
+              {x.legend.length > 0 && (
+                <ul className="m-0 mt-0.5 flex list-none flex-wrap gap-x-3 p-0 text-cc-muted">
+                  {x.legend.map((g) => (
+                    <li key={g.label}><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm align-middle" style={{ background: g.color }} />{g.label}</li>
+                  ))}
+                </ul>
+              )}
+              {x.note && <p className="m-0 mt-0.5 text-cc-muted">{x.note}</p>}
+              {x.attribution && <p className="m-0 mt-0.5 text-cc-faint">{x.attribution}</p>}
+            </figure>
+          ))}
+        </div>
+      )}
+      {radar.pair && (
         <details className="mt-1.5 text-xs" data-nisar-why>
           <summary className="cursor-pointer font-semibold">What NISAR sees and why</summary>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static explainer in public/ */}
+          <img src="/explainer/what-nisar-sees.png" width={1600} height={900} loading="lazy" data-explainer
+            alt="What NISAR radar sees: calm open water reflects the pulse away and looks dark; a flooded town or forest bounces it back twice (water, then wall or trunk) and looks bright, so a dark-means-water rule can miss it; L-band sees through cloud and rain, day and night; HH sees surface and double bounce, HV sees volume scatter in vegetation."
+            className="mt-1 h-auto w-full rounded border border-cc-line" />
           <ul className="m-0 mt-1 list-disc pl-4 text-cc-muted">
             {NISAR_WHY.map((l) => <li key={l}>{l}</li>)}
           </ul>

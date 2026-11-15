@@ -27,8 +27,13 @@ export default function AreaPins({
   useEffect(() => {
     if (!map) return;
     const made = buttons.current;
+    // External review: pins of nearby zones (RS #2 and #5) overlapped —
+    // a pin within ~3 km of an earlier one shifts right by one pin width.
+    const placed: [number, number][] = [];
     const markers = areas.flatMap((a) => {
       if (!a.at) return [];
+      const near = placed.filter(([x, y]) => Math.abs(x - a.at![0]) < 0.03 && Math.abs(y - a.at![1]) < 0.03).length;
+      placed.push(a.at);
       const el = document.createElement("button");
       el.type = "button";
       el.className = "cc-pin";
@@ -50,7 +55,7 @@ export default function AreaPins({
         select.current(a.rank);
       });
       made.set(a.rank, el);
-      return [new Marker({ element: el, anchor: "center" }).setLngLat(a.at).addTo(map)];
+      return [new Marker({ element: el, anchor: "center", offset: [near * 26, 0] }).setLngLat(a.at).addTo(map)];
     });
     return () => {
       markers.forEach((m) => m.remove());

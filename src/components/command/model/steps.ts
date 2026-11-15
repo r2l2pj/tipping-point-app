@@ -1,3 +1,4 @@
+import { liveClasses } from "@/lib/contract";
 // Timeline steps: from the daily series, or from the dates of the manifest
 // TPI frames when the case has no series (the live case has none).
 import { forecastSourceLabel } from "@/lib/contract";
@@ -246,6 +247,22 @@ export const caseHasHazard = (bundle: CcBundle, hazard: Hazard): boolean =>
 
 // Caption chip of the map: what is drawn, for which step. Says so when the
 // step has no frame, so an empty map is never read as "no risk".
+// External review: a calm day draws a near-empty (transparent) frame that
+// reads as broken. Live, today's frame, no High-or-above area for the
+// hazard in the summary -> say so on the caption.
+export const CALM_TODAY = "no High or Critical areas today";
+function calmToday(bundle: CcBundle, hazard: Hazard, layerId: string | undefined): boolean {
+  if (bundle.mode !== "live" || !layerId || !/_d0$/.test(layerId)) return false;
+  const s = bundle.summary as Record<string, unknown> | undefined;
+  const key = hazard === "flood" ? "flood" : "slide";
+  const alert = s && typeof s.alert_km2 === "object" && s.alert_km2 !== null ? (s.alert_km2 as Record<string, unknown>)[key] : undefined;
+  if (typeof alert === "number") return alert === 0;
+  const classes = liveClasses(bundle.summary, key);
+  if (!classes) return false;
+  const hi = (classes["Alto"] ?? classes["High"] ?? 0) + (classes["Crítico"] ?? classes["Critical"] ?? 0);
+  return hi === 0;
+}
+
 export function mapCaption(
   bundle: CcBundle,
   steps: Step[],
@@ -271,7 +288,8 @@ export function mapCaption(
     // Dashed caption = forecast content on the map (here, part of it).
     // The caption sits over the map: the issue time stays in the layer row.
     const short = partly.replace(/\s*\(issued [^)]*\)/, "");
-    return { text: `${HAZARD_LABEL[f?.hazard ?? hazard]} TPI · ${short} (partly forecast)`, forecast: true };
+    const calm = calmToday(bundle, f?.hazard ?? hazard, f?.layer.id) ? ` · ${CALM_TODAY}` : "";
+    return { text: `${HAZARD_LABEL[f?.hazard ?? hazard]} TPI · ${short} (partly forecast)${calm}`, forecast: true };
   }
   if (!on.includes("tpi")) return { text: `TPI index off · ${when}`, forecast: false };
   const frame = frameFor(bundle, step.date, hazard);
@@ -285,7 +303,7 @@ export function mapCaption(
     : forecastTag(bundle).toLowerCase();
   return {
     text: `${HAZARD_LABEL[frame.hazard]} TPI · ${when}` +
-      (forecast ? ` · ${tag}` : ""),
+      (forecast ? ` · ${tag}` : "") + (calmToday(bundle, frame.hazard, frame.layer.id) ? ` · ${CALM_TODAY}` : ""),
     forecast,
   };
 }

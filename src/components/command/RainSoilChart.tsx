@@ -172,7 +172,11 @@ function RainSoilChart({
             </ResponsiveContainer>
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5 pt-1 text-xs">
-            <Swatch color={RAIN} label="Rain 3-day (IMERG) - observed" block />
+            {/* lead-analysis date convention: a replay observed band X sums
+                rain on X-3..X-1 (X excluded); Now frames sum X-2..X. */}
+            <Swatch color={RAIN} label={bundle.mode === "replay"
+              ? "Rain 3-day (IMERG) - observed, the 3 days before each date"
+              : "Rain 3-day (IMERG) - observed"} block />
             {hasFc && <Swatch color={RAIN_FC} label={`Rain 3-day - forecast days (${forecastLabel})`} block />}
             {hasGfs && <Swatch color={RAIN_GFS} label={gfsLabel!} block />}
             <Swatch color={SOIL} label="Soil moisture (SMAP)" />

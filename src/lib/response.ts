@@ -42,11 +42,13 @@ export function toNowResponse(raw: unknown): NowResponse | undefined {
     latest_acquired: str(raw.latest_acquired),
     latency_h: num(raw.latency_h),
     polygons: num(raw.n_polygons),
+    status: str(raw.status),
+    status_label: str(raw.status_label),
     geojson: str(raw.geojson),
     null_reasons: reasons && Object.keys(reasons).length ? reasons : undefined,
   };
   const hasContent =
-    out.flooded_km2 !== undefined || out.post_acquired !== undefined || out.null_reasons;
+    out.flooded_km2 !== undefined || out.post_acquired !== undefined || out.null_reasons || out.status;
   return hasContent ? out : undefined;
 }
 

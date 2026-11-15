@@ -2,9 +2,12 @@
 // "NISAR" label needs a real pair, scars are always "candidates".
 import { canonicalCaseId } from "@/lib/contract";
 import { assetUrl } from "@/lib/layers";
+import { hypothesisLine, nisarSeriesView, type NisarSeriesView } from "./nisarSeries";
+import { NISAR_FRAMING, nextLookText } from "./nextPass";
+import { nisarExtras, type NisarExtra } from "./nisarExtras";
 import type { NisarPass } from "@/lib/types";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
-import { declared } from "./lazy";
+import { declared, productUrl } from "./lazy";
 import { finite, fmtDate, fmtKm2 } from "./format";
 import type { CcBundle } from "./types";
 
@@ -16,6 +19,17 @@ export const CANDIDATES_LABEL = "Landslide scar candidates (OPERA DIST-ALERT-HLS
 export const CANDIDATES_NOTE =
   "Vegetation loss on steep slopes seen by HLS optical — candidates, never confirmed.";
 
+const scarFigures = (km2: (v: unknown) => string, area: unknown, ppl: string | undefined): string => {
+  const parts = [finite(area) ? km2(area) : undefined, ppl].filter(Boolean);
+  return parts.length ? `Scar candidates: ${parts.join(", ")}` : "";
+};
+
+// WA-size inventories (< 30 points): the 500 m share, for Details only.
+export function scarHitDetail(m: Record<string, unknown>): string | undefined {
+  if (!finite(m.scar_inventory_n) || m.scar_inventory_n >= 30 || !finite(m.scar_hit_500m_pct)) return undefined;
+  return `Scar candidates vs the ${m.scar_inventory_n} mapped landslides: ${Math.round(m.scar_hit_500m_pct)}% within 500 m — too few points to judge.`;
+}
+
 // Figures and context lines of the candidates block: the Now meta
 // (dist_meta.json), else the replay metrics scar_*, else the fetched count.
 function candidatesBlock(bundle: CcBundle): { value: string; lines: string[] } {
@@ -25,7 +39,7 @@ function candidatesBlock(bundle: CcBundle): { value: string; lines: string[] } {
     return {
       value: d.features.toLocaleString("en-US"),
       lines: [
-        [finite(d.km2) ? fmtKm2(d.km2) : undefined, people(d.people)].filter(Boolean).join(" · "),
+        scarFigures(fmtKm2, d.km2, people(d.people)),
         d.latest_acquired ? `Newest image ${fmtDate(d.latest_acquired)} — the product is published 1–2 weeks after the pass.` : "",
         d.caveat ? `Caveat: ${d.caveat.charAt(0).toUpperCase()}${d.caveat.slice(1)}.` : "",
       ].filter(Boolean),
@@ -40,8 +54,12 @@ function candidatesBlock(bundle: CcBundle): { value: string; lines: string[] } {
     return {
       value: m.scar_candidates_n.toLocaleString("en-US"),
       lines: [
-        [finite(m.scar_candidates_km2) ? fmtKm2(m.scar_candidates_km2) : undefined, people(m.scar_people)].filter(Boolean).join(" · "),
-        hit && inv ? `${hit} of the ${inv} mapped landslides lie within 500 m of a candidate${prec ? `; ${prec} of candidates within 500 m of one` : ""}.` : "",
+        // External review: the figures say what they are.
+        scarFigures(fmtKm2, m.scar_candidates_km2, people(m.scar_people)),
+        // Under 30 mapped landslides (WA: 15) the share is too thin for the
+        // main card: it moves to Details (scarHitDetail).
+        hit && inv && finite(m.scar_inventory_n) && m.scar_inventory_n >= 30
+          ? `${hit} of the ${inv} mapped landslides lie within 500 m of a candidate${prec ? `; ${prec} of candidates within 500 m of one` : ""}.` : "",
       ].filter(Boolean),
     };
   }
@@ -55,11 +73,17 @@ export const AWAITING_PAIR_TEXT = "Awaiting a NISAR pair over the AOI.";
 export const GUNW_LIMIT_TEXT =
   "NISAR radar maps flood candidates only in this case; scar candidates come from post-event HLS optical — the GUNW pair spanning the event is a declared limitation.";
 
+export interface CompareSide { url: string; label: string; bounds?: BBox }
 export interface ComparePair {
   kind: "radar" | "night-lights";
   bounds: BBox;
-  before: { url: string; label: string; bounds?: BBox };
-  after: { url: string; label: string; bounds?: BBox };
+  before: CompareSide;
+  after: CompareSide;
+  // L42: the HV polarization pair (lead-analysis nisar_hv_pre/post); the
+  // swipe offers an HH | HV switch only when it exists.
+  hv?: { before: CompareSide; after: CompareSide };
+  // Jhonatan: the radar flood polygons over the swipe, in their own colour.
+  flood?: { url: string; label: string };
 }
 
 export interface CompareOption {
@@ -78,7 +102,10 @@ function pairFor(
   kind: ComparePair["kind"],
   preId: string,
   postId: string,
-  word: string
+  word: string,
+  // L42a: plain labels ("NISAR radar before — Dec 4, 2025") instead of
+  // "pre-event <word> — date".
+  plain?: { before: string; after: string }
 ): CompareOption {
   const caseDir = canonicalCaseId(bundle.manifest?.event ?? bundle.id);
   const layers = bundle.manifest?.layers ?? [];
@@ -95,16 +122,25 @@ function pairFor(
     pair: {
       kind,
       bounds: unionBounds(pre.bounds, post.bounds) ?? bundle.bbox,
-      before: { url: preUrl, label: `pre-event ${word} — ${date(pre, preId)}`, bounds: pre.bounds },
-      after: { url: postUrl, label: `post-event ${word} — ${date(post, postId)}`, bounds: post.bounds },
+      before: { url: preUrl, label: `${plain?.before ?? `pre-event ${word}`} — ${date(pre, preId)}`, bounds: pre.bounds },
+      after: { url: postUrl, label: `${plain?.after ?? `post-event ${word}`} — ${date(post, postId)}`, bounds: post.bounds },
     },
   };
 }
 
-export const radarCompare = (bundle: CcBundle): CompareOption =>
-  availability(bundle, "radar").state === "not-applicable"
-    ? { kind: "radar", reason: NO_RADAR_TEXT }
-    : pairFor(bundle, "radar", "nisar_pre", "nisar_post", "GCOV");
+export function radarCompare(bundle: CcBundle): CompareOption {
+  if (availability(bundle, "radar").state === "not-applicable") return { kind: "radar", reason: NO_RADAR_TEXT };
+  const hv = pairFor(bundle, "radar", "nisar_hv_pre", "nisar_hv_post", "NISAR radar",
+    { before: "NISAR radar before (HV)", after: "NISAR radar after (HV)" }).pair;
+  const hh = pairFor(bundle, "radar", "nisar_pre", "nisar_post", "NISAR radar",
+    hv ? { before: "NISAR radar before (HH)", after: "NISAR radar after (HH)" }
+      : { before: "NISAR radar before", after: "NISAR radar after" });
+  const withHv = hh.pair && hv ? { ...hh, pair: { ...hh.pair, hv: { before: hv.before, after: hv.after } } } : hh;
+  const floodUrl = productUrl(bundle, "flood_confirmed");
+  return withHv.pair && floodUrl
+    ? { ...withHv, pair: { ...withHv.pair, flood: { url: floodUrl, label: floodLabels(bundle).layer } } }
+    : withHv;
+}
 
 export const nightLightsCompare = (bundle: CcBundle): CompareOption =>
   pairFor(bundle, "night-lights", "night_lights_pre", "night_lights_post", "night lights");
@@ -112,7 +148,12 @@ export const nightLightsCompare = (bundle: CcBundle): CompareOption =>
 // Label of the flood polygons and of the flooded area: follows the pair and
 // `flood_source`, never a fixed "NISAR".
 export const RESPONSE_AREA_LABEL = "Flooded area (NISAR radar, candidates)";
-export const RESPONSE_LAYER_LABEL = "Flood candidates from radar (NISAR)";
+export const RESPONSE_LAYER_LABEL = "Flooded area (NISAR radar, candidates)";
+// Jhonatan (team science): observed water has its own colour — saturated
+// cyan fill + white outline above the radar/TPI images; "Flood risk" stays
+// the TPI (prediction) only.
+export const FLOODED_FILL = "#00d5ff";
+export const FLOODED_OUTLINE = "#ffffff";
 export const RESPONSE_NOTE =
   "Radar flood candidates from two NISAR passes — not yet checked on the ground.";
 
@@ -124,18 +165,18 @@ export function floodLabels(bundle: CcBundle): { area: string; layer: string } {
   if (bundle.mode === "live" && (bundle.response || hasDswx(bundle))) {
     return {
       area: RESPONSE_AREA_LABEL,
-      layer: hasDswx(bundle) ? "Flood candidates from radar (NISAR, OPERA DSWx-S1)" : RESPONSE_LAYER_LABEL,
+      layer: hasDswx(bundle) ? "Flooded area (NISAR + OPERA Sentinel-1 radar, candidates)" : RESPONSE_LAYER_LABEL,
     };
   }
   const source = bundle.metricsView?.flood_source;
   if (hasNisarPair(bundle) || source === "nisar") {
     // Radar flood polygons are candidates (never "confirmed"), replay too.
-    return { area: "Flooded area (NISAR)", layer: "Flood candidates from radar (NISAR)" };
+    return { area: "Flooded area (NISAR)", layer: "Flooded area (NISAR radar, candidates)" };
   }
   if (source === "opera") {
-    return { area: "Flooded area (optical/OPERA reference)", layer: "Flood reference (optical/OPERA)" };
+    return { area: "Flooded area (optical/OPERA reference)", layer: "Flooded area (OPERA reference)" };
   }
-  return { area: "Flooded area (observed reference)", layer: "Flood reference (observed)" };
+  return { area: "Flooded area (observed reference)", layer: "Flooded area (observed reference)" };
 }
 
 export function swathLine(bundle: CcBundle): string | undefined {
@@ -194,7 +235,43 @@ export interface RadarCard {
   passCount: number; // all passes, also those not sent to the browser
   canShowOnMap: boolean;
   compare: CompareOption;
+  series?: NisarSeriesView; // L42, WA replay
+  hypothesisLine?: string; // L42: lead-analysis double-bounce test, when supported
+  nextLook?: string; // L43 live: "Next NISAR look: …"
+  framing?: string; // L43 live framing line (with nextLook)
+  extras: NisarExtra[]; // manifest layers kind 'nisar_extra'
 }
+
+// Conductor: the live NISAR pass may find nothing (lead-analysis R2 fix can
+// publish 0 candidates with a reason) — then the card says so, with the
+// dates and the pass list, and never offers an empty map zoom for NISAR.
+// lead-analysis R2: nisar_meta.json status — 'candidates' shows polygons;
+// 'no_new_flooding' / 'no_usable_pair' show status_label. Without a status:
+// 0 km² / 0 polygons = no new flooding; no area, no polygons = not computed.
+export interface NisarNoCandidates { label: string; computed: boolean; reason?: string }
+export function nisarNoCandidates(bundle: CcBundle): NisarNoCandidates | undefined {
+  const r = bundle.response;
+  if (bundle.mode !== "live" || !r) return undefined;
+  if (r.status) {
+    if (r.status === "candidates") return undefined;
+    const fresh = r.status === "no_new_flooding";
+    return {
+      label: r.status_label ?? (fresh ? "No new flooding detected this pass" : "No usable NISAR pair this pass — flood candidates not computed"),
+      computed: fresh,
+    };
+  }
+  const r3 = bundle.responseSources?.find((x) => /nisar/i.test(x.source));
+  const zero = (v: unknown) => finite(v) && v === 0;
+  if (r3 ? zero(r3.flooded_km2) || zero(r3.features) : zero(r.flooded_km2) || zero(r.polygons)) {
+    return { label: "No new flooding detected in the latest NISAR pass", computed: true };
+  }
+  if (!r3 && !finite(r.flooded_km2) && !finite(r.polygons)) {
+    const reason = r.null_reasons?.pairs ?? r.null_reasons?.flooded_km2;
+    return { label: "No NISAR flood candidates this pass", computed: false, reason };
+  }
+  return undefined;
+}
+export const nisarNoFlood = (bundle: CcBundle): boolean => !!nisarNoCandidates(bundle);
 
 // Live case with a published radar response (lead-live R2).
 function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
@@ -212,6 +289,27 @@ function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
   const age = finite(r.latency_h)
     ? ` Newest pair published ${Math.round(r.latency_h)} h after the radar pass.`
     : "";
+  const none = nisarNoCandidates(bundle);
+  if (none) {
+    const pre = r.pre_acquired;
+    const post = r.post_acquired;
+    // Dates only for a computed pair (the label of a rejected pair says why).
+    const dates = none.computed && pre && post && !/\(/.test(none.label) ? ` (${fmtDate(pre)} → ${fmtDate(post)})` : "";
+    const reason = none.reason ?? reasonOf("flooded_km2") ?? reasonOf("polygons");
+    return {
+      ...base,
+      // No usable pair (R2: mixed acquisition modes): the rejected pair's
+      // images and backscatter series are not shown as evidence.
+      ...(none.computed ? {} : { series: undefined, compare: { kind: "radar" as const, reason: "no comparable NISAR pair this pass" } }),
+      pair: false,
+      headline: `${none.label}${dates}`,
+      flooded: { label: RESPONSE_AREA_LABEL, value: none.computed ? "none detected" : "not computed" },
+      people: undefined,
+      note: reason && !none.label.includes(reason) ? `${reason}.` : undefined,
+      limitation: undefined,
+      canShowOnMap: false,
+    };
+  }
   return {
     ...base,
     flooded: { label: RESPONSE_AREA_LABEL, value: value("flooded_km2", fmtKm2) },
@@ -276,5 +374,10 @@ function baseRadarCard(bundle: CcBundle): RadarCard {
       ? bundle.flood.features.length > 0
       : declared(bundle, "flood_confirmed"),
     compare: radarCompare(bundle),
+    series: nisarSeriesView(bundle),
+    hypothesisLine: hypothesisLine(bundle),
+    nextLook: nextLookText(bundle.nisarNext),
+    framing: bundle.nisarNext ? NISAR_FRAMING : undefined,
+    extras: nisarExtras(bundle),
   };
 }

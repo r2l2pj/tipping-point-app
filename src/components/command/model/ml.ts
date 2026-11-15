@@ -39,6 +39,19 @@ export const SOURCE_LABEL: Record<string, string> = {
 // prefers v2 and the view carries `provisional` per card.
 export const ML_PROVISIONAL = true; // v1 card (no version key)
 export const isV2 = (card: unknown) => isRecord(card) && card.version === "v2";
+// L40 (conductor): independent audit result, shown on the v2 card.
+// "audited: no leakage; …" -> "Audited: no leakage; ….": shown as a sentence.
+const sentence = (t: string) => {
+  const x = t.trim();
+  return `${x.charAt(0).toUpperCase()}${x.slice(1)}${/[.!?]$/.test(x) ? "" : "."}`;
+};
+export const ML_AUDIT_TEXT =
+  "Independent audit: no leakage found. The test events are extreme storms, so these scores overstate everyday skill; a simple rain-vs-local-extreme rule performs about as well.";
+// lead-ml (model-metrics.md v2): the no-rain/soil baseline carries terrain,
+// land cover, soil texture and day of year; on RS its score is a test-design
+// artefact, not skill.
+export const RS_CLIMATOLOGY_NOTE =
+  "RS climatology score is inflated: all RS landslides fall in one season while comparison dates span the year.";
 export const ML_PROVISIONAL_TEXT = "Provisional — being re-scored on more events (v2 today)";
 
 // L32: shown under the T_ML 'where' table until lead-ml's re-export.
@@ -51,6 +64,8 @@ export interface MlRow {
   n?: number;
   nPos?: number;
   cells: { precision: string; recall: string; f1: string; prAuc: string; rocAuc: string };
+  // v2: PR-AUC on the VAL split next to TEST (conductor: always shown together).
+  valPrAuc?: string;
   missing: boolean; // no n: no numbers
 }
 
@@ -68,6 +83,15 @@ export interface MlSpreadBlock { source: string; eventsN: number; rows: MlSpread
 
 export interface MlView {
   version?: string;
+  // v2 headline_status ('held: …'): the scores are not headline numbers yet.
+  headlineHeld?: string;
+  valNote?: string;
+  // v2 served{model, note}: the trigger model the live layer runs.
+  servedLine?: string;
+  servedNote?: string;
+  // Caption under 'This event only' when its baseline score is a test-design
+  // artefact (lead-ml: RS positives all in late April, negatives span the year).
+  eventNote?: string;
   // v1 card: provisional banner, GFS tables hidden (L33).
   provisional: boolean;
   // v2: T_ML retrained without any RS 2024 point (L32).
@@ -109,9 +133,13 @@ export function mlCaveats(v: MlView): string[] {
       : ev.length
       ? `The TEST covers only ${ev.length} event${ev.length === 1 ? "" : "s"}: few events, so these scores can move a lot.`
       : "The TEST covers few events: these scores can move a lot.";
+  const years = ev.map((id) => Number(/_(\d{4})$/.exec(id)?.[1])).filter((y) => y > 1990).sort();
+  const v2Train = v.version === "v2" && years.length
+    ? `Trained on dated landslide catalogs (GLC/COOLR, worldwide); tested on ${ev.length} disaster events from ${years[0]}–${years[years.length - 1]} it never saw.`
+    : undefined;
   const out = [
     tested,
-    "Trained on the 2015–2018 landslide catalog; tested on 2024–2025 events it never saw.",
+    v2Train ?? "Trained on the 2015–2018 landslide catalog; tested on 2024–2025 events it never saw.",
     "Rain decides WHEN a landslide is triggered (the table above); the terrain model decides WHERE (T_ML, below).",
   ];
   if (v.lowSkill.length) out.push(`${v.lowSkill.join(" and ")} horizons rely on long-range forecast: low skill.`);
@@ -139,7 +167,7 @@ export function spreadLine(r: MlSpread, source: string): string {
 const score = (v: unknown) => (finite(v) ? v.toFixed(2) : "—");
 const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`;
 
-function row(model: string, label: string, t: unknown): MlRow | undefined {
+function row(model: string, label: string, t: unknown, val?: unknown): MlRow | undefined {
   if (!isRecord(t)) return undefined;
   const n = finite(t.n) && t.n > 0 ? t.n : undefined;
   const ok = n !== undefined;
@@ -155,12 +183,13 @@ function row(model: string, label: string, t: unknown): MlRow | undefined {
       prAuc: ok ? score(t.pr_auc) : "—",
       rocAuc: ok ? score(t.roc_auc) : "—",
     },
+    valPrAuc: ok && isRecord(val) && finite(val.n) && val.n > 0 && finite(val.pr_auc) ? score(val.pr_auc) : undefined,
     missing: !ok,
   };
 }
 
-function table(models: string[], labels: Record<string, string>, pick: (m: string) => unknown): MlTable {
-  const rows = models.map((m) => row(m, labels[m] ?? FALLBACK_LABEL[m] ?? m, pick(m))).filter((r): r is MlRow => !!r);
+function table(models: string[], labels: Record<string, string>, pick: (m: string) => unknown, pickVal?: (m: string) => unknown): MlTable {
+  const rows = models.map((m) => row(m, labels[m] ?? FALLBACK_LABEL[m] ?? m, pick(m), pickVal?.(m))).filter((r): r is MlRow => !!r);
   const ref = rows.find((r) => !r.missing);
   const t = ref ? pick(ref.model) : undefined;
   const base = isRecord(t) && finite(t.base_rate) ? t.base_rate : undefined;
@@ -192,6 +221,15 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
   const split = isRecord(card.split) ? card.split : {};
   const where = tml ? table(whereModels, labels, (m) => tml[m]) : undefined;
   const trig = isRecord(card.trigger) ? card.trigger : {};
+  // v2: the served trigger model first (labelled), then the comparisons and
+  // the no-rain/soil baseline (lead-ml 'climatology').
+  const servedTrig = isRecord(card.served) && typeof card.served.model === "string" ? card.served.model : undefined;
+  const v2 = isV2(card);
+  if (v2 && servedTrig) labels[servedTrig] = `${labels[servedTrig] ?? servedTrig} — the model live`;
+  if (v2 && labels.climatology) labels.climatology = `${labels.climatology} (baseline)`;
+  const trigModels = v2
+    ? [...new Set([servedTrig, ...TRIGGER_MODELS, "climatology"].filter((m): m is string => !!m))]
+    : TRIGGER_MODELS;
   // Horizons from the export itself (ML v2: 24h / 72h / 7d), by duration.
   const horizons = sortHorizons(Object.keys(trig).filter((h) => isRecord(trig[h])));
   const published = ["gfs", "perfect"].filter((s) => horizons.some((h) => isRecord((trig[h] as M)[s])));
@@ -208,9 +246,11 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
         when[`${h}|${s}`] = { rows: [], reason: block.reason };
         continue;
       }
-      when[`${h}|${s}`] = table(TRIGGER_MODELS, labels, (m) => (isRecord(block[m]) ? (block[m] as M).test : undefined));
+      when[`${h}|${s}`] = table(trigModels, labels,
+        (m) => (isRecord(block[m]) ? (block[m] as M).test : undefined),
+        (m) => (isRecord(block[m]) ? (block[m] as M).val : undefined));
       if (caseId) {
-        const ev = table(TRIGGER_MODELS, labels, (m) => {
+        const ev = table(trigModels, labels, (m) => {
           const b = block[m];
           return isRecord(b) && isRecord(b.by_event) ? (b.by_event as M)[caseId] : undefined;
         });
@@ -227,8 +267,11 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
       return {
         id: e.id as string,
         name,
-        nPos: finite(e.n_pos) ? e.n_pos : undefined,
-        source: typeof e.source === "string" ? e.source : undefined,
+        nPos: finite(e.n_pos) ? e.n_pos : finite(e.n_pos_24h) ? e.n_pos_24h : undefined,
+        source: typeof e.source === "string" ? e.source
+          : Array.isArray(e.sources)
+            ? (e.sources.includes("gfs") ? "NOAA GFS forecast + observed rain" : "observed rain only (no GFS archive)")
+            : undefined,
       };
     });
   // v2 generalise.{gfs|perfect}.{h}.{model} = {pooled, events_n,
@@ -243,7 +286,7 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
       const g = bySrc[h];
       if (!isRecord(g)) continue;
       let eventsN = 0;
-      const rows = TRIGGER_MODELS.flatMap((m): MlSpread[] => {
+      const rows = trigModels.flatMap((m): MlSpread[] => {
         const r = g[m];
         if (!isRecord(r)) return [];
         const n = finite(r.events_n) ? r.events_n : 0;
@@ -263,6 +306,18 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
   }
   const view: MlView = {
     version: typeof card.version === "string" ? card.version : undefined,
+    // L40: the audit result. lead-ml's headline_status once republished with
+    // the result; while it still says 'held / pending', the conductor's text.
+    headlineHeld: v2
+      ? (typeof card.headline_status === "string" && card.headline_status.trim() && !/^held|pending/i.test(card.headline_status)
+          ? sentence(card.headline_status)
+          : ML_AUDIT_TEXT)
+      : undefined,
+    valNote: typeof card.val_vs_test_note === "string" ? card.val_vs_test_note : undefined,
+    servedLine: servedTrig ? `The live layer runs ${labels[servedTrig]?.replace(/ — the model live$/, "") ?? servedTrig}.` : undefined,
+    servedNote: isRecord(card.served) && typeof card.served.note === "string" ? card.served.note : undefined,
+    eventNote: v2 && caseId === "rs_2024" && Object.values(event).some((t) => t.rows.some((r) => r.model === "climatology" && !r.missing))
+      ? RS_CLIMATOLOGY_NOTE : undefined,
     provisional,
     tmlExcludesRs: card.t_ml_excludes_rs === true,
     testEventList,
@@ -277,7 +332,9 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
     event,
     eventId: caseId && Object.keys(event).length ? caseId : undefined,
     calibrationNote: typeof card.t_ml_ranking_note === "string"
-      ? "Scores of the calibrated models, as served on the map. Before calibration the models rank in a different order (calibration ties lower PR-AUC)."
+      ? (v2
+          ? "Scores of the calibrated models, as served on the map."
+          : "Scores of the calibrated models, as served on the map. Before calibration the models rank in a different order (calibration ties lower PR-AUC).")
       : undefined,
     testEvents: [...new Set(horizons.flatMap((h) => sources.flatMap((s) => {
       const b = (trig[h] as M)[s];

@@ -84,6 +84,9 @@ export interface NowResponse {
   latest_acquired?: string;
   latency_h?: number; // hours from the pass to the published product
   polygons?: number;
+  // lead-analysis R2: 'candidates' | 'no_new_flooding' | 'no_usable_pair'
+  status?: string;
+  status_label?: string;
   geojson?: string; // polygon file name next to the meta file
   null_reasons?: Record<string, string>;
 }

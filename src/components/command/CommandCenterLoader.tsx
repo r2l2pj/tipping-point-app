@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { Inter, Space_Grotesk } from "next/font/google";
 import { canonicalCaseId } from "@/lib/contract";
-import { getAlerts, getCaseBundle, getEventsIndex, getMlArtifacts, getRootManifest } from "@/lib/data";
+import { getAlerts, getCaseBundle, getDataJson, getEventsIndex, getMlArtifacts, getRootManifest } from "@/lib/data";
+import { slimHypothesis, slimNisarSeries } from "./model/nisarSeries";
+import { nextPassFrom } from "./model/nextPass";
 import { resolveAsset } from "@/lib/contract";
 import type { ManifestLayer } from "@/lib/types";
 import { buildMlView, groupImportance } from "./model/ml";
@@ -106,6 +108,19 @@ function slimWarned(v: unknown): unknown {
   return out;
 }
 
+// flood_ems (~40 KB): the row reads the headline, the before-onset shares
+// and the scope/licence strings only.
+function slimEms(v: unknown): unknown {
+  if (!isRecord(v)) return v;
+  const b = isRecord(v.flagged_before_onset) ? v.flagged_before_onset : undefined;
+  return {
+    activation: v.activation, licence: v.licence, coverage_limit: v.coverage_limit,
+    headline: isRecord(v.headline) ? { image_date_utc: v.headline.image_date_utc } : undefined,
+    flagged_before_onset: b ? Object.fromEntries(Object.entries(b).filter(([k]) =>
+      k === "anchor_local" || k.startsWith("observed_band_") || k === "gfs_issued")) : undefined,
+  };
+}
+
 // imerg_vs_gauge ships a per-station table (stations[]) the screen never
 // reads — the rain-check line cites only the medians, the counts and the
 // caveat.
@@ -153,7 +168,8 @@ function toClientBundle(bundle: CcBundle, isLive: boolean): CcBundle {
   const metricsView = bundle.metricsView
     ? (Object.fromEntries(Object.entries(bundle.metricsView)
         .filter(([k]) => !METRICS_DROP.includes(k))
-        .map(([k, v]) => [k, k === "imerg_vs_gauge" ? slimGauge(v) : WARNED_OBJECTS.includes(k) ? slimWarned(v) : v])) as CcBundle["metricsView"])
+        .map(([k, v]) => [k, k === "imerg_vs_gauge" ? slimGauge(v) : WARNED_OBJECTS.includes(k) ? slimWarned(v)
+          : k === "flood_ems" ? slimEms(v) : v])) as CcBundle["metricsView"])
     : bundle.metricsView;
   // The raw metrics blob duplicates metricsView; the screen reads only its
   // `_null_reasons` (availability.nullReason).
@@ -204,15 +220,45 @@ async function Loaded({ searchParams }: { searchParams?: Search }) {
       getCaseBundle(e.id, e.title, e.bbox, e.reference_date).catch(() => null))),
     (getCaseBundle("now", "Now — Southern Brazil", NOW_BBOX) as Promise<CcBundle | null>).catch(() => null),
   ]);
+  // L42: NISAR time series product, only where the case lists it.
+  const series = await Promise.all(eventBundles.map((b) => {
+    const p = (b?.products as Record<string, unknown> | undefined)?.nisar_timeseries;
+    return typeof p === "string" && b
+      ? getDataJson(p, canonicalCaseId(b.id)).then(slimNisarSeries).catch(() => undefined)
+      : Promise.resolve(undefined);
+  }));
+  // L42: the double-bounce test next to the series (listed, or the agreed
+  // <case>/nisar_hypothesis.json) — only for cases with a NISAR series.
+  const hypotheses = await Promise.all(eventBundles.map((b, i) => {
+    if (!b || !series[i]) return Promise.resolve(undefined);
+    const p = (b.products as Record<string, unknown> | undefined)?.nisar_hypothesis;
+    const dir = canonicalCaseId(b.id);
+    return getDataJson(typeof p === "string" ? p : "nisar_hypothesis.json", dir).then(slimHypothesis).catch(() => undefined);
+  }));
   const cases: CcBundle[] = [];
   eventBundles.forEach((bundle, i) => {
-    if (bundle) cases.push({ ...bundle, nullReasons: nullReasons(root, events[i].id) });
+    if (bundle) cases.push({ ...bundle, nullReasons: nullReasons(root, events[i].id),
+      ...(series[i] ? { nisarSeries: series[i] } : {}), ...(hypotheses[i] ? { nisarHypothesis: hypotheses[i] } : {}) });
   });
   // Run time of the live case: the `updated_at` of the live node itself. The
   // loader falls back to the root manifest time, which is the time of the
   // data snapshot and would make an empty live seed read as a fresh run.
+  // L42: the live NISAR time series (worker nisar-now-ts), same contract as
+  // WA; listed in products or at the agreed path, hidden when absent.
+  const nowSeriesPath = (now?.products as Record<string, unknown> | undefined)?.nisar_timeseries;
+  const nowSeries = now?.manifest
+    ? await getDataJson(typeof nowSeriesPath === "string" ? nowSeriesPath : "response/nisar_timeseries.json", "now")
+        .then(slimNisarSeries).catch(() => undefined)
+    : undefined;
+  // L43: next NISAR pass over the live domain (listed product or the agreed path).
+  const nextPath = (now?.products as Record<string, unknown> | undefined)?.nisar_next_passes;
+  const nisarNext = now?.manifest
+    ? await getDataJson(typeof nextPath === "string" ? nextPath : "nisar_next_passes.json", "now")
+        .then((raw) => nextPassFrom(raw)).catch(() => undefined)
+    : undefined;
   const live: CcBundle | null = now?.manifest
-    ? { ...now, updated_at: liveRunTime(root), nullReasons: nullReasons(root, "now") }
+    ? { ...now, updated_at: liveRunTime(root), nullReasons: nullReasons(root, "now"),
+        ...(nowSeries ? { nisarSeries: nowSeries } : {}), ...(nisarNext ? { nisarNext } : {}) }
     : null;
   if (live) cases.push(live);
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { anchorShort, catalogHitsDetail, handCheck, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
+import { anchorShort, catalogHitsDetail, emsLandslideRow, emsRow, handCheck, liftLine, ONSET_LEAD_NAME, ONSET_LEAD_SCOPE, onsetLead, warnedRow } from "./replayCheck";
 
 // lead-analysis fallback bb125cf values (authored 0-100).
 describe("warned before the damage (lead-analysis)", () => {
@@ -136,5 +136,70 @@ describe("HAND check + WA denominator (lead-analysis fallback 80505ff)", () => {
     const r = warnedRow({ flood_warned_pct: 0, flood_warned_denominator_label: "27.9 km² of NISAR flood pixels on the ~12 m flood raster (the denominator); the canonical flooded_km2 27.99 km² is the polygon set within the swath",
       flood_warned: { anchor_basis: "onset", confirmed_flood_km2: 27.921 } })!;
     expect(r.detail).toContain("27.9 km² of NISAR flood pixels on the ~12 m flood raster (the denominator); the canonical flooded_km2 27.99 km² is the polygon set within the swath.");
+  });
+});
+
+describe("HAND card on the served radius (conductor)", () => {
+  const byRadius = {
+    "1000": { iou: 0.2613, r: 0.8720 },
+    "1500": { iou: 0.1914, r: 0.8544 },
+    "3000": { iou: 0.1079, r: 0.7886 },
+  };
+  test("served 1500 m: its numbers, best 1000 m as a note", () => {
+    const h = handCheck({ hand_served_radius_m: 1500, hand_best_radius_m: 1000, hand_validation_by_radius: byRadius,
+      hand_validation_iou: 0.2613, hand_validation_r: 0.872, hand_validation_radius_m: 1000 })!;
+    expect(h.line).toBe("IoU 0.19 · r 0.85 · radius 1500 m (the radius the index uses)");
+    expect(h.note).toBe("Best radius 1000 m (IoU 0.26, r 0.87).");
+  });
+  test("no served key yet: the configured 1500 m from by_radius (lead-analysis), best as note", () => {
+    const h = handCheck({ hand_best_radius_m: 1000, hand_validation_by_radius: byRadius, hand_validation_iou: 0.2613, hand_validation_r: 0.872, hand_validation_radius_m: 1000 })!;
+    expect(h.line).toBe("IoU 0.19 · r 0.85 · radius 1500 m (the radius the index uses)");
+    expect(h.note).toBe("Best radius 1000 m (IoU 0.26, r 0.87).");
+  });
+  test("served_* keys win; no by_radius at all -> published headline radius", () => {
+    const h = handCheck({ hand_validation_served_radius_m: 1500, hand_validation_served_iou: 0.344, hand_validation_served_r: 0.859,
+      hand_best_radius_m: 1000, hand_validation_by_radius: { "1000": { iou: 0.42, r: 0.9 } } })!;
+    expect(h.line).toBe("IoU 0.34 · r 0.86 · radius 1500 m (the radius the index uses)");
+    expect(h.note).toBe("Best radius 1000 m (IoU 0.42, r 0.90).");
+    expect(handCheck({ hand_validation_iou: 0.26, hand_validation_r: 0.87, hand_validation_radius_m: 1000 })!.line).toBe("IoU 0.26 · r 0.87 · radius 1000 m");
+  });
+});
+
+describe("RS flood vs Copernicus EMS (lead-analysis a363629)", () => {
+  test("row from the real keys: scores, Taquari scope, before-onset shares, attribution", () => {
+    const m = JSON.parse(readFileSync(join(import.meta.dir, "../../../../test/fixtures/rs-ems.json"), "utf8"));
+    const r = emsRow(m)!;
+    expect(r.name).toBe("Flood map vs Copernicus EMS (Taquari valley only)");
+    expect(r.value).toBe("IoU 0.18 · F1 0.31 · P 0.46 · R 0.24");
+    expect(r.detail).toBe("Flood index High or above (observed rain) vs the EMS EMSR720 flood map of May 6, 2024. EMS mapped only five Taquari-valley areas; the Porto Alegre / Guaíba flood is not in it. Before the onset (Apr 29, 2024): 0.21% of the EMS flood area was High or above with observed rain, 6.6% in the NOAA GFS forecast issued Apr 28, 2024 (Critical 0.10%). © European Union, Copernicus Emergency Management Service.");
+    expect(emsRow({})).toBeUndefined();
+  });
+});
+
+describe("L43 lift (lead-analysis f2b7ff3)", () => {
+  test("RS row: 4.16% of the area held 36.45% of landslides -> 8.8×; absent/undefined -> no line", () => {
+    const r = warnedRow({ slide_warned_pct: 36.45, slide_warned_gfs_24h_area_share_pct: 4.16, slide_warned_gfs_24h_lift: 8.76,
+      slide_warned: { anchor_basis: "onset", n_points: 16027 } })!;
+    expect(r.detail).toContain("That run flagged only 4.2% of the case area as High or above: 8.8× the share of landslides expected by chance.");
+    expect(liftLine(0, null, "x")).toBeUndefined();
+    const wa = warnedRow({ flood_warned_pct: 0, flood_warned_gfs_24h_area_share_pct: 0, flood_warned_gfs_24h_lift: null, flood_warned: { anchor_basis: "onset" } })!;
+    expect(wa.detail).not.toContain("chance");
+  });
+  test("EMS row leads with its lift when published", () => {
+    const m = { ...JSON.parse(readFileSync(join(import.meta.dir, "../../../../test/fixtures/rs-ems.json"), "utf8")),
+      flood_ems_flagged_before_onset_lift: 2.23, flood_ems_flagged_before_onset_area_share_pct: 2.94 };
+    expect(emsRow(m)!.detail).toStartWith("Before the onset the GFS run flagged 2.9% of the mapped Taquari area as High or above but 6.6% of the EMS flood: 2.2× chance. Flood index");
+  });
+});
+
+describe("RS EMS landslides row (lead-analysis f2b7ff3 keys)", () => {
+  test("centroid 57% in 27% area, 2.1×; any-cell 81%, 3.0×; absent -> no row", () => {
+    const r = emsLandslideRow({ landslide_ems_n: 497, landslide_ems_warned_gfs_24h_pct: 81.09, landslide_ems_warned_gfs_24h_lift: 3.03,
+      landslide_ems_warned_gfs_24h_centroid_pct: 56.94, landslide_ems_warned_gfs_24h_centroid_area_share_pct: 26.72,
+      landslide_ems_warned_gfs_24h_centroid_lift: 2.13 })!;
+    expect(r.name).toBe("Copernicus EMS landslides (Taquari valley only)");
+    expect(r.value).toBe("57% at slide centre · 2.1× chance");
+    expect(r.detail).toBe("57% of the 497 EMS landslides had their centre inside the area the day-before NOAA GFS forecast flagged High or above, which covered 27% of the EMS area — 2.1× chance (any touched cell: 81%, 3.0×). © European Union, Copernicus Emergency Management Service.");
+    expect(emsLandslideRow({})).toBeUndefined();
   });
 });
