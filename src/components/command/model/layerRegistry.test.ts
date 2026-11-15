@@ -333,3 +333,12 @@ describe("F1b + calm ML day", () => {
     expect(layerLegendRows(busy, ["ptrigger"]).some((r) => r.label.startsWith("Low everywhere"))).toBe(false);
   });
 });
+
+test("'Low everywhere today' follows the selected horizon (lead-ml 15:11Z: 24h p99 0.024, 7d 0.291)", () => {
+  const live = liveBundle({ manifest: { layers: [
+    { id: "p_trigger_24h", date: "2026-11-15", png: "a.png", stats: { p50: 0, p99: 0.024, max: 0.3, n_cells: 9 } },
+    { id: "p_trigger_7d", date: "2026-11-15", png: "b.png", stats: { p50: 0.01, p99: 0.291, max: 0.9, n_cells: 9 } },
+  ] } } as never);
+  expect(layerLegendRows(live, ["ptrigger"], "24h").map((r) => r.label)).toContain("Low everywhere today (top 1% of land ≤ 0.02)");
+  expect(layerLegendRows(live, ["ptrigger"], "7d").some((r) => r.label.startsWith("Low everywhere"))).toBe(false);
+});

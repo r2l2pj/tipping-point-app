@@ -207,7 +207,7 @@ export default function LayersColumn({
         </div>
       )}
 
-      <Legend bundle={bundle} layers={layers} hazard={hazard} stepDate={stepDate} className="mt-2 shrink-0 border-t border-cc-rule pt-2.5" />
+      <Legend bundle={bundle} layers={layers} hazard={hazard} stepDate={stepDate} probHorizon={probHorizon} className="mt-2 shrink-0 border-t border-cc-rule pt-2.5" />
     </aside>
   );
 }
@@ -218,6 +218,7 @@ export function Legend({
   layers,
   hazard,
   stepDate,
+  probHorizon = "24h",
   compact = false,
   className = "",
 }: {
@@ -225,6 +226,7 @@ export function Legend({
   layers: readonly LayerId[];
   hazard: Hazard; // named in the title: the raster is one hazard at a time
   stepDate?: string; // the frame on the map: the legend names its date (rule 3)
+  probHorizon?: string; // ML horizon on the map (its 'low today' stats)
   compact?: boolean;
   className?: string;
 }) {
@@ -248,7 +250,7 @@ export function Legend({
             Hatched: forecast
           </span>
         )}
-        {layerLegendRows(bundle, layers).map((r) => (
+        {layerLegendRows(bundle, layers, probHorizon).map((r) => (
           <span key={r.id} className="inline-flex items-center gap-2.5">
             <span aria-hidden="true" className={r.round ? "mx-[6px] inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-black" : `${swatch} border border-[#9aa7a0]`} style={{ background: r.swatch }} />
             {r.label}
