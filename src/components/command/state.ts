@@ -9,6 +9,7 @@ import {
   keepAvailable,
   layerAvailable,
   toggleLayer,
+  withRadarDefault,
   type LayerId,
 } from "./model/layerRegistry";
 import type { ComparePair } from "./model/radar";
@@ -134,7 +135,7 @@ export function initialState(
     dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first)),
     playing: false,
     hazard,
-    layers: first ? keepAvailable(first, DEFAULT_LAYERS, hazard) : [],
+    layers: first ? withRadarDefault(first, keepAvailable(first, DEFAULT_LAYERS, hazard), hazard) : [],
     layerNotice: null,
     probHorizon: probHorizonsAvailable(first?.manifest?.layers)[0] ?? "24h",
     selectedArea: null,
@@ -161,7 +162,12 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
     hazard,
     // The TPI index is the default layer: a case change never leaves the
     // map without it when the new case has the raster.
-    layers: kept.length || !layerAvailable(bundle, "tpi", hazard) ? kept : ["tpi"],
+    // Now with a NISAR pair adds the radar flood candidates (L27).
+    layers: withRadarDefault(
+      bundle,
+      kept.length || !layerAvailable(bundle, "tpi", hazard) ? kept : ["tpi"],
+      hazard
+    ),
     layerNotice: null,
     // The horizon the new case ships first (display order), else the default.
     probHorizon: probHorizonsAvailable(bundle.manifest?.layers)[0] ?? "24h",

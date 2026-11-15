@@ -5,7 +5,7 @@ import { assetUrl } from "@/lib/layers";
 import type { NisarPass } from "@/lib/types";
 import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
 import { declared } from "./lazy";
-import { finite, fmtDate, fmtKm2, fmtPeople } from "./format";
+import { finite, fmtDate, fmtKm2 } from "./format";
 import type { CcBundle } from "./types";
 
 type BBox = [number, number, number, number];
@@ -164,7 +164,12 @@ function responseCard(bundle: CcBundle, base: RadarCard): RadarCard {
   return {
     ...base,
     flooded: { label: RESPONSE_AREA_LABEL, value: value("flooded_km2", fmtKm2) },
-    people: { label: "People in the flooded area", value: value("people_flooded", fmtPeople) },
+    // The published count as is (GPW-based estimate, labelled so), never
+    // silently rounded.
+    people: {
+      label: "People in the flooded area (estimate)",
+      value: value("people_flooded", (n) => Math.round(n).toLocaleString("en-US")),
+    },
     note: `${RESPONSE_NOTE}${age}`,
     limitation: undefined,
   };

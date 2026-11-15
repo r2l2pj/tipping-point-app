@@ -39,6 +39,7 @@ import {
   type PixelValues,
   type TabKey,
   type ToggleLayerKey,
+  featureCenters,
 } from "@/lib/layers";
 import {
   resolveFrameDate,
@@ -74,6 +75,7 @@ const SRC = {
   nisar: "tp-nisar",
   water: "tp-water",
   flood: "tp-flood",
+  floodPts: "tp-flood-pts",
   scars: "tp-scars",
   opera: "tp-opera-img",
   nl: "tp-nl-img",
@@ -102,6 +104,7 @@ const LYR = {
   river: "tp-river-line",
   floodFill: "tp-flood-fill",
   floodLine: "tp-flood-line",
+  floodDot: "tp-flood-dot",
   scarsFill: "tp-scars-fill",
   scarsLine: "tp-scars-line",
   opera: "tp-opera-lyr",
@@ -216,6 +219,7 @@ export function useMapLayers(
     map.addSource(SRC.fcast, { type: "geojson", data: EMPTY });
     map.addSource(SRC.water, { type: "geojson", data: EMPTY });
     map.addSource(SRC.flood, { type: "geojson", data: EMPTY });
+    map.addSource(SRC.floodPts, { type: "geojson", data: EMPTY });
     map.addSource(SRC.scars, { type: "geojson", data: EMPTY });
     map.addSource(SRC.zones, { type: "geojson", data: EMPTY });
     map.addSource(SRC.muni, { type: "geojson", data: EMPTY });
@@ -243,6 +247,12 @@ export function useMapLayers(
         layout: { visibility: "none" } },
       { id: LYR.floodLine, type: "line", source: SRC.flood,
         paint: { "line-color": "#08306B", "line-width": 1 },
+        layout: { visibility: "none" } },
+      // Flood polygons of ~1 km² are sub-pixel at the regional zoom: a dot
+      // per polygon keeps them findable until the shapes themselves show.
+      { id: LYR.floodDot, type: "circle", source: SRC.floodPts, maxzoom: 10,
+        paint: { "circle-radius": 5, "circle-color": "#2166AC",
+          "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.5 },
         layout: { visibility: "none" } },
       { id: LYR.scarsFill, type: "fill", source: SRC.scars,
         paint: { "fill-color": "#7B3294", "fill-opacity": 0.8 },
@@ -546,30 +556,29 @@ export function useMapLayers(
       else loading.current.delete(src);
       refreshChip(map, loading.current, chip, frameNote.current);
     };
+    // Sets a source's data; the flood polygons also feed their dot layer.
+    const setGeo = (src: string, fc: GeoJSON.FeatureCollection) => {
+      type GeoSrc = { setData?: (d: GeoJSON.FeatureCollection) => void } | undefined;
+      (map.getSource(src) as GeoSrc)?.setData?.(fc);
+      if (src === SRC.flood) (map.getSource(SRC.floodPts) as GeoSrc)?.setData?.(featureCenters(fc));
+    };
     const loadGeo = (src: string, label: string, url: string | undefined) => {
-      const srcObj = map.getSource(src) as
-        | { setData?: (d: GeoJSON.FeatureCollection) => void }
-        | undefined;
-      if (!srcObj) return;
+      if (!map.getSource(src)) return;
       if (!url) {
         geoData.current[src] = { url: "", fc: null };
-        srcObj.setData?.(EMPTY);
+        setGeo(src, EMPTY);
         return;
       }
       const hit = geoData.current[src];
       if (hit?.url === url) {
-        if (hit.fc) srcObj.setData?.(hit.fc);
+        if (hit.fc) setGeo(src, hit.fc);
         return; // already loaded (or fetch in flight — it will setData)
       }
       geoData.current[src] = { url, fc: null };
       markLoading(src, label, true);
       fetchGeo(url).then((fc) => {
         geoData.current[src] = { url, fc };
-        (
-          map.getSource(src) as
-            | { setData?: (d: GeoJSON.FeatureCollection) => void }
-            | undefined
-        )?.setData?.(fc ?? EMPTY);
+        if (map.getSource(src)) setGeo(src, fc ?? EMPTY);
         markLoading(src, label, false);
       });
     };
@@ -604,6 +613,7 @@ export function useMapLayers(
     // the nisar toggle); with a tab the overlayPlan decides.
     vis(LYR.floodFill, wantFlood);
     vis(LYR.floodLine, wantFlood);
+    vis(LYR.floodDot, wantFlood);
     vis(LYR.scarsFill, wantScars);
     vis(LYR.scarsLine, wantScars);
     vis(LYR.catalog, wantCatalog);

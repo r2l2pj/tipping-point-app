@@ -11,7 +11,7 @@ import {
   PROB_LAYER_TITLE,
   type ProbHorizon,
 } from "@/lib/layers";
-import { availability, missingText, NO_RADAR_TEXT } from "./availability";
+import { availability, hasNisarPair, missingText, NO_RADAR_TEXT } from "./availability";
 import { declared } from "./lazy";
 import { fmtDataDate, fmtDate } from "./format";
 import type { MapOverlays } from "./overlays";
@@ -213,6 +213,15 @@ export const keepAvailable = (
   on: readonly LayerId[],
   hazard: Hazard
 ): LayerId[] => on.filter((id) => layerAvailable(bundle, id, hazard)).slice(-MAX_LAYERS);
+
+// Now with a published NISAR pair opens with the radar flood candidates on
+// (L27: what is on the ground first), next to the TPI index. Replay cases and
+// a Now without a pair keep the layers they were given.
+export function withRadarDefault(bundle: CcBundle, on: readonly LayerId[], hazard: Hazard): LayerId[] {
+  if (bundle.mode !== "live" || on.includes("flood") || !hasNisarPair(bundle)) return [...on];
+  if (!layerAvailable(bundle, "flood", hazard)) return [...on];
+  return toggleLayer(on, "flood").layers;
+}
 
 // Input of the map hook.
 export const overlaysFor = (on: readonly LayerId[]): MapOverlays => ({
