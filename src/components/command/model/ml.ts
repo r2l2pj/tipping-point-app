@@ -32,6 +32,13 @@ export const SOURCE_LABEL: Record<string, string> = {
   perfect: "observed rain (perfect forecast · upper bound)",
 };
 // Below this many positives a TEST score is labelled fragile.
+// L33 (conductor, 2026-11-15): the NOAA GFS tables are superseded (40% of
+// the negatives had no GFS run); until lead-ml's v2 (~12:00) the card shows a
+// provisional banner and only the perfect-forecast tables (labelled upper
+// bound). Set to false when v2 is published.
+export const ML_PROVISIONAL = true;
+export const ML_PROVISIONAL_TEXT = "Provisional — being re-scored on more events (v2 today)";
+
 // L32: shown under the T_ML 'where' table until lead-ml's re-export.
 export const TML_RETRAIN_NOTE = "Terrain model being retrained without RS 2024 points; numbers will update.";
 export const FEW_POSITIVES = 30; // WA 2025: 8 dated reports (8–24 positive samples by horizon)
@@ -150,7 +157,9 @@ export function buildMlView(card: unknown, caseId?: string, servedModel?: string
   const trig = isRecord(card.trigger) ? card.trigger : {};
   // Horizons from the export itself (ML v2: 24h / 72h / 7d), by duration.
   const horizons = sortHorizons(Object.keys(trig).filter((h) => isRecord(trig[h])));
-  const sources = ["gfs", "perfect"].filter((s) => horizons.some((h) => isRecord((trig[h] as M)[s])));
+  const published = ["gfs", "perfect"].filter((s) => horizons.some((h) => isRecord((trig[h] as M)[s])));
+  // L33: no GFS tables while the card is provisional.
+  const sources = ML_PROVISIONAL && published.includes("perfect") ? published.filter((s) => s !== "gfs") : published;
   const when: Record<string, MlTable> = {};
   const event: Record<string, MlTable> = {};
   for (const h of horizons) {

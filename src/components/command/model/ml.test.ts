@@ -2,7 +2,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildMlView, groupImportance, mlCaveats } from "./ml";
+import { buildMlView, groupImportance, ML_PROVISIONAL, mlCaveats } from "./ml";
 
 // lead-ml sample files (main 1fe4aba): the SHAPE of the export; smoke numbers.
 const read = (f: string) => JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/ml", f), "utf8"));
@@ -12,13 +12,15 @@ describe("buildMlView", () => {
   test("horizons in order, GFS first, low-skill horizons, all-events and per-event tables", () => {
     const v = buildMlView(card, "wa_2025")!;
     expect(v.horizons).toEqual(["24h", "48h", "72h", "7d", "14d"]);
-    expect(v.sources).toEqual(["gfs", "perfect"]);
+    // L33: GFS tables are superseded while the card is provisional.
+    expect(v.sources).toEqual(ML_PROVISIONAL ? ["perfect"] : ["gfs", "perfect"]);
     expect(v.lowSkill).toEqual(["7d", "14d"]);
-    const t = v.when["72h|gfs"];
+    const t = v.when["72h|perfect"];
     expect(t.rows.map((r) => r.model)).toEqual(["xgb_all", "rf_all", "rule_tpi"]);
     expect(t.rows.every((r) => r.n !== undefined && !r.missing)).toBe(true);
     expect(t.baseLine).toMatch(/^Base rate \d+\.\d% \([\d,]+ of [\d,]+ test samples\)$/);
-    expect(v.event["72h|gfs"].fewPositives).toBe(true); // WA: 8 positives
+    expect(v.event["72h|perfect"].fewPositives).toBe(true); // WA: 8 positives
+    expect(v.when["72h|gfs"]).toBeUndefined();
     expect(v.eventId).toBe("wa_2025");
   });
   test("a row without n shows no numbers", () => {
@@ -52,14 +54,11 @@ describe("groupImportance", () => {
 
 describe("real export (lead-ml, data main 1b943b6)", () => {
   const v = buildMlView(read("ml_card.json"), "rs_2024")!;
-  test("72h · NOAA GFS: XGBoost vs random forest vs TPI rule, with n and base rate", () => {
-    const t = v.when["72h|gfs"];
-    expect(t.rows.map((r) => [r.model, r.n, r.nPos, r.cells.prAuc, r.cells.rocAuc])).toEqual([
-      ["xgb_all", 78208, 18024, "0.67", "0.82"],
-      ["rf_all", 78208, 18024, "0.64", "0.79"],
-      ["rule_tpi", 78208, 18024, "0.49", "0.66"],
-    ]);
-    expect(t.baseLine).toBe("Base rate 23.0% (18,024 of 78,208 test samples)");
+  test("72h (perfect forecast, L33): XGBoost vs random forest vs TPI rule, each with n and a base rate", () => {
+    const t = v.when["72h|perfect"];
+    expect(t.rows.map((r) => r.model)).toEqual(["xgb_all", "rf_all", "rule_tpi"]);
+    expect(t.rows.every((r) => !r.missing && r.n !== undefined && r.nPos !== undefined)).toBe(true);
+    expect(t.baseLine).toMatch(/^Base rate \d+\.\d% \([\d,]+ of [\d,]+ test samples\)$/);
   });
   test("caveats in plain words: one RS event + 8 WA points, 2015-18 vs 2024-25, rain WHEN / terrain WHERE, 7d/14d low skill", () => {
     const c = mlCaveats(v).join(" ");

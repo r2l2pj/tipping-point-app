@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { FEW_POSITIVES, mlCaveats, SOURCE_LABEL, TML_RETRAIN_NOTE, type MlTable, type MlView } from "./model/ml";
+import {
+  FEW_POSITIVES, ML_PROVISIONAL, ML_PROVISIONAL_TEXT, mlCaveats, SOURCE_LABEL, TML_RETRAIN_NOTE,
+  type MlTable, type MlView,
+} from "./model/ml";
 
 const caseTitle = (id?: string) => (id === "rs_2024" ? "RS 2024" : id === "wa_2025" ? "WA 2025" : id ?? "this event");
 
@@ -70,6 +73,11 @@ export default function MlCard({ ml }: { ml: MlView }) {
   return (
     <section aria-label="Did we get it right?" data-ml-card className="rounded-lg border border-cc-line p-2.5 text-xs">
       <h3 className="m-0 text-[13px] font-semibold">Did we get it right? (TEST data the models never saw)</h3>
+      {ML_PROVISIONAL && (
+        <p role="status" data-ml-provisional className="mt-1 rounded-md border border-[#e2c48a] bg-cc-warn-soft px-2 py-1 text-[13px] font-semibold text-cc-warn">
+          {ML_PROVISIONAL_TEXT}
+        </p>
+      )}
       {/* lead-ml's caveats first, in plain words. */}
       <ul className="m-0 mt-1 list-disc pl-4 text-cc-warn" data-ml-caveats>
         {mlCaveats(ml).map((c) => <li key={c}>{c}</li>)}

@@ -130,11 +130,13 @@ describe("replay check and evidence details (S17, S18, S19)", () => {
     expect(html).not.toContain("0.91");
   });
 
-  test("the ML card renders TEST rows with n, base rate and the GFS headline (lead-ml sample shape)", () => {
+  test("the ML card renders TEST rows with n and base rate; L33: provisional banner, no GFS tables", () => {
     const card = JSON.parse(readFileSync(join(process.cwd(), "test/fixtures/ml/ml_card.json"), "utf8"));
     const html = details(bundle({ id: "wa_2025", metricsView: mv({}), ml: buildMlView(card, "wa_2025") }));
     expect(html).toContain("Terrain model being retrained without RS 2024 points; numbers will update.");
-    for (const text of ["Did we get it right?", "All TEST events · 72h · NOAA GFS forecast rain", "XGBoost (all features)",
+    expect(html).toContain("Provisional — being re-scored on more events (v2 today)");
+    expect(html).not.toContain("NOAA GFS forecast rain");
+    for (const text of ["Did we get it right?", "All TEST events · 72h · observed rain (perfect forecast · upper bound)", "XGBoost (all features)",
       "TPI &gt; 0.6 rule", "positive", "Base rate", "This event only (WA 2025)", "these scores are fragile"]) {
       expect(html).toContain(text);
     }
@@ -707,5 +709,14 @@ describe("P(trigger) row title follows the selected horizon", () => {
     const html = render(live, { probHorizon: "7d", layers: ["ptrigger"] });
     expect(html).toContain("Relative likelihood of a rain-triggered landslide within 7 days (when × where)");
     expect(html).not.toContain("within 24 h (when");
+  });
+});
+
+
+describe("HAND validation is not shown until lead-analysis G2", () => {
+  test("no 'Hand validation' stat even when the metric is published", () => {
+    const html = details(bundle({ metricsView: mv({ hand_validation: 0.98 }) }));
+    expect(html).not.toMatch(/Hand validation/i);
+    expect(html).not.toContain("98%");
   });
 });

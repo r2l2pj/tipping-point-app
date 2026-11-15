@@ -267,7 +267,9 @@ export function evidence(bundle: CcBundle, day?: DayPoint): Evidence {
       stat(bundle, "Precision", "precision", fmtScore),
       stat(bundle, "Recall", "recall", fmtScore),
       stat(bundle, "Landslide catalog hits", "landslide_hit_pct", fmtPct),
-      stat(bundle, "Hand validation", "hand_validation", fmtPct),
+      // hand_validation is hidden (conductor, 2026-11-15): the published value
+      // is already a percent (0.98 %) and lead-analysis is re-checking what it
+      // measures (G2). Brought back once G2 settles the unit and meaning.
     ],
     floodNote:
       typeof m.validation_method === "string" && m.validation_method
