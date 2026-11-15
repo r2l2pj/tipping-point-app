@@ -112,6 +112,29 @@ describe("alert playback and contract values", () => {
 });
 
 describe("validation tab on metricsView", () => {
+  test("published wa_2025 keys: like-for-like headline, *_raw secondary", () => {
+    const wa = toMetricsView({
+      iou: 0.08159565666049996, f1: 0.1508801485250636,
+      precision: 0.18729061306361094, recall: 0.1263223039392064,
+      confusion: { tp: 8777, fp: 38086, fn: 60704 },
+      validation_method: "like-for-like: NISAR new-flood mask vs OPERA DSWx-S1 new flood",
+      iou_raw: 0.007528697499424659, f1_raw: 0.014944879521764607,
+      precision_raw: 0.1981733990568252, recall_raw: 0.007765240364435442,
+      opera_fn_diagnosis: "raw FN 1.19M px = permanent/pre-existing water",
+      cloud_pct: 92.89292282546754,
+    })!;
+    // ratios are never percent-rescaled
+    expect(wa.precision).toBe(0.18729061306361094);
+    const html = render("validation", bundle({ metricsView: wa }));
+    for (const s of [">0.08<", ">0.15<", ">0.19<", ">0.13<", "Precision", "Recall",
+      "like-for-like: NISAR new-flood mask", "All water incl. permanent (secondary)",
+      "IoU 0.01 · F1 0.01 · P 0.20 · R 0.01", "permanent/pre-existing water",
+      "the optical saw only 7%"]) expect(html).toContain(s);
+    expect(html).not.toContain("clear-sky reference cells only");
+    // no raw keys -> no secondary block
+    expect(render("validation", bundle({ metricsView: { iou: 0.5 } }))).not.toContain("All water incl. permanent");
+  });
+
   test("opticalSeenPct accepts 0-1 and 0-100 cloud_pct, never negative", () => {
     expect(opticalSeenPct(0.95)).toBe(5);
     expect(opticalSeenPct(92.89292282546754)).toBe(7);

@@ -20,6 +20,10 @@ export function opticalSeenPct(cloudPct: number | null | undefined): number | nu
   return Math.round((1 - frac) * 100);
 }
 
+// Ratio scores (IoU/F1/P/R) as 2-decimal text; absent -> em dash.
+const score = (v: number | null | undefined) =>
+  v != null && Number.isFinite(v) ? v.toFixed(2) : "—";
+
 // "Acertamos?" — did the pipeline get it right: flood scores vs reference,
 // landslide model vs the manual slope rule, early-warning lead times, and why
 // radar was needed at all. All metric reads go through bundle.metricsView.
@@ -40,23 +44,51 @@ export default function ValidationTab({ bundle }: { bundle: CaseBundle }) {
   }
 
   const opticalPct = opticalSeenPct(m.cloud_pct);
+  const hasRaw = [m.iou_raw, m.f1_raw, m.precision_raw, m.recall_raw].some(
+    (v) => v != null
+  );
 
   return (
     <div className="space-y-3">
       <p className="text-xs font-medium text-zinc-300">
-        Flood detection vs reference (NISAR/OPERA)
+        Flood detection vs reference (NISAR vs OPERA, new flood)
       </p>
       <div className="grid grid-cols-2 gap-2">
+        <StatCard label="IoU" value={score(m.iou)} absent={m.iou == null} />
+        <StatCard label="F1" value={score(m.f1)} absent={m.f1 == null} />
         <StatCard
-          label="IoU"
-          value={m.iou != null ? m.iou.toFixed(2) : "—"}
-          absent={m.iou == null}
+          label="Precision"
+          value={score(m.precision)}
+          absent={m.precision == null}
         />
         <StatCard
-          label="F1"
-          value={m.f1 != null ? m.f1.toFixed(2) : "—"}
-          absent={m.f1 == null}
+          label="Recall"
+          value={score(m.recall)}
+          absent={m.recall == null}
         />
+      </div>
+      {m.validation_method && (
+        <p className="text-xs leading-snug text-zinc-500">
+          {m.validation_method}
+        </p>
+      )}
+      {hasRaw && (
+        <div className="rounded-md border border-zinc-800 p-2.5">
+          <p className="text-xs text-zinc-400">
+            All water incl. permanent (secondary)
+          </p>
+          <p className="mt-1 font-mono text-xs text-zinc-300">
+            IoU {score(m.iou_raw)} · F1 {score(m.f1_raw)} · P{" "}
+            {score(m.precision_raw)} · R {score(m.recall_raw)}
+          </p>
+          {m.opera_fn_diagnosis && (
+            <p className="mt-1 text-xs leading-snug text-zinc-500">
+              {m.opera_fn_diagnosis}
+            </p>
+          )}
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-2">
         <StatCard
           label="Landslide catalog hits"
           value={fmtPct(m.landslide_hit_pct)}
@@ -68,10 +100,12 @@ export default function ValidationTab({ bundle }: { bundle: CaseBundle }) {
           absent={m.hand_validation == null}
         />
       </div>
-      <p className="text-xs text-zinc-500">
-        Scores are computed on clear-sky reference cells only — no cloud pixels
-        are counted.
-      </p>
+      {!m.validation_method && (
+        <p className="text-xs text-zinc-500">
+          Scores are computed on clear-sky reference cells only — no cloud
+          pixels are counted.
+        </p>
+      )}
 
       <p className="text-xs font-medium text-zinc-300">
         Landslide model — learned vs manual slope rule
