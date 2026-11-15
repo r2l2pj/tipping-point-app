@@ -133,7 +133,8 @@ separate events: the TEST set holds out whole events the model never saw,
 including Rio Grande do Sul 2024 and Washington 2025. The susceptibility
 layer is being retrained without Rio Grande do Sul points to remove a
 leak found on Nov 15; scores that used the leaked layer are withdrawn. Scores are compared with a RandomForest and the TPI > 0.6 rule at
-the same base rate. `[v2 scores pending — L33]`
+the same base rate. Re-scored results (v2, Nov 15) are reported in the
+tipping-point-data repository; earlier v1 numbers are withdrawn.
 
 **Anchor dates (L37).** "Before the damage" is measured from the documented
 start of each event (the first dated reports of landslides or flooding), not
