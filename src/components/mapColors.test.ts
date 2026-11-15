@@ -11,4 +11,12 @@ describe("geographic basemap colours", () => {
     expect(geoPaint({ id: "road", type: "line", "source-layer": "transportation" })).toBeUndefined();
     expect(geoPaint({ id: "water-name", type: "symbol", "source-layer": "water" })).toBeUndefined();
   });
+
+  test("CARTO's schema: rivers are lines of `water`, vegetation is in `landuse`", () => {
+    expect(geoPaint({ id: "waterway", type: "line", "source-layer": "water" })).toEqual(["line-color", GEO_COLORS.river]);
+    expect(geoPaint({ id: "landcover", type: "fill", "source-layer": "landuse" })).toEqual(["fill-color", GEO_COLORS.vegetation]);
+    expect(geoPaint({ id: "park_national_park", type: "fill", "source-layer": "landuse" })).toEqual(["fill-color", GEO_COLORS.vegetation]);
+    expect(geoPaint({ id: "landuse_residential", type: "fill", "source-layer": "landuse" })).toBeUndefined();
+    expect(geoPaint({ id: "road_path_areas", type: "line", "source-layer": "landuse" })).toBeUndefined();
+  });
 });
