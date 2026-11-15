@@ -579,6 +579,7 @@ describe("public view (P1 to P5) and routes", () => {
     expect(html).toContain("Darrington, Sultan (places as of Dec 10, 2025)");
     expect(html).toContain("2 more later in the replay");
     expect(html).toContain("Built from the replay TPI frames with the live alert rule. Not sent to anyone.");
+    expect(html).not.toContain("today:</span>"); // replay has no today's class: never invented
     expect(html).toContain("Go to Now");
     expect(html).not.toContain("There is no public alert feed in replay.");
     expect(html).toContain("certainty: replay");

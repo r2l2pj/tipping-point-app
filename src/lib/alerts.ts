@@ -16,8 +16,9 @@ export interface AlertCardData extends Alert {
   basis?: string;
   first_issued_at?: string;
   last_confirmed_at?: string;
-  // 'when' = d1: today's class of the same area ("today: High").
-  today_level?: AlertLevel;
+  // 'when' = d1: today's class of the same area, only when the data gives
+  // it (class_today); "below" = under High. Absent = not known: not shown.
+  today_level?: AlertLevel | "below";
   area_km2?: number;
   when?: string; // "today" | "d1"
   held?: boolean; // held by the quiet-hours rule (23:00–06:00 BRT)
@@ -189,7 +190,7 @@ export function candidatesToAlerts(
         ? new Date(c.first_issued_at) : issued).toISOString(),
       ...(active && c.first_issued_at ? { first_issued_at: c.first_issued_at } : {}),
       ...(c.when === "d1" && typeof (c as { class_today?: unknown }).class_today === "number"
-        ? { today_level: levelForClass((c as { class_today: number }).class_today) } : {}),
+        ? { today_level: levelForClass((c as { class_today: number }).class_today) ?? "below" } : {}),
       ...(active && c.last_confirmed_at ? { last_confirmed_at: c.last_confirmed_at } : {}),
       valid_to: validTo.toISOString(),
       guidance:
