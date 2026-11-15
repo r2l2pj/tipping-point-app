@@ -1,0 +1,27 @@
+1
+00:00:00,000 --> 00:00:04,000
+Maio de 2024, Rio Grande do Sul. Alertas diziam onde poderia alagar, não onde alagou.
+
+2
+00:00:04,000 --> 00:00:08,000
+O Tipping Point reproduz o evento: chuva extrema, solo saturado —
+
+3
+00:00:08,000 --> 00:00:11,000
+Área sinalizada [X] horas antes dos danos.
+
+4
+00:00:11,000 --> 00:00:16,000
+O radar NISAR vê através das nuvens: 28 km² de candidatos a área alagada.
+
+5
+00:00:16,000 --> 00:00:22,000
+Nos 7% visíveis ao óptico, a sobreposição do radar é F1 0.15.
+
+6
+00:00:22,000 --> 00:00:27,000
+230.000 pessoas em áreas críticas, priorizadas para a Defesa Civil.
+
+7
+00:00:27,000 --> 00:00:29,500
+A chuva avisa. O radar confirma.
