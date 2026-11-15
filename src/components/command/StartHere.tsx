@@ -38,8 +38,9 @@ export function tourStops(cases: readonly CcBundle[]): TourStop[] {
   const uyNisar = uy ? radarSensor(uy).nisar : true;
   if (uy) stops.push({
     key: "uy-radar", primary: true,
-    what: `${uyNisar ? "NISAR radar" : "Radar"} maps the river flood through cloud: swipe before / after and step through the radar dates`,
-    action: { type: "goTo", id: uy.id, hazard: "flood", compare: "radar" },
+    // Lucas: the case lands on the map (flood index + outlines), not the swipe.
+    what: `Flood index day by day with the ${uyNisar ? "NISAR radar" : "radar"} flood outlines; radar before / after in the Radar tab`,
+    action: { type: "goTo", id: uy.id, hazard: "flood" },
   });
   if (wa) stops.push({
     key: "wa-radar", primary: !uy,

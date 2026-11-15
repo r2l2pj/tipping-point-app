@@ -132,7 +132,7 @@ export function linkParams(
   const offset = steps[dayIndex]?.offset;
   return {
     case: canonicalCaseId(bundle.id),
-    day: dayIndex !== defaultStepIndex(steps) && offset !== undefined ? String(offset) : undefined,
+    day: dayIndex !== defaultStepIndex(steps, bundle) && offset !== undefined ? String(offset) : undefined,
   };
 }
 
@@ -189,7 +189,7 @@ export function initialState(
   return {
     activeId: first?.id ?? "",
     lastReplayId: first?.mode === "replay" ? first.id : null,
-    dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first)),
+    dayIndex: linkedDay(first, initialDay) ?? defaultStepIndex(stepsFor(first), first),
     playing: false,
     hazard,
     layers: first
@@ -224,7 +224,7 @@ function selectCase(state: ScreenState, cases: readonly CcBundle[], id: string):
     ...state,
     activeId: id,
     lastReplayId: bundle.mode === "replay" ? id : state.lastReplayId,
-    dayIndex: defaultStepIndex(stepsFor(bundle)),
+    dayIndex: defaultStepIndex(stepsFor(bundle), bundle),
     playing: false,
     hazard,
     // The TPI index is the default layer: a case change never leaves the
@@ -265,7 +265,7 @@ export function reduce(
     // Each stop starts from the case's own opening layers, not the last stop's.
     const hazard = action.hazard && caseHasHazard(target, action.hazard) ? action.hazard : next.hazard;
     next = { ...next, hazard, layers: withRadarDefault(target, keepAvailable(target, defaultLayersFor(target, hazard), hazard), hazard), layerNotice: null };
-    const day = linkedDay(target, action.day) ?? defaultStepIndex(stepsFor(target));
+    const day = linkedDay(target, action.day) ?? defaultStepIndex(stepsFor(target), target);
     next = reduce(next, { type: "seek", index: day }, cases);
     next = reduce(next, { type: "setIssueLead", lead: action.lead ?? 0 }, cases);
     if (action.layer && !next.layers.includes(action.layer) && layerAvailable(target, action.layer, next.hazard)) {

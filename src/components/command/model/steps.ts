@@ -86,9 +86,19 @@ export function stepsFor(bundle: CcBundle | undefined): Step[] {
 
 // Step shown when a case opens: the event day (offset 0), else the last
 // observed step, else the first step.
-export function defaultStepIndex(steps: Step[]): number {
+export function defaultStepIndex(steps: Step[], bundle?: CcBundle): number {
   const event = steps.findIndex((s) => s.offset === 0);
   if (event >= 0) return event;
+  // A replay without an event day (Uruguaiana) lands on its first index
+  // signal (lead-analysis timeline_marks kind 'signal': Sep 30).
+  const tm = (bundle?.metricsView as Record<string, unknown> | undefined)?.timeline_marks;
+  const signal = Array.isArray(tm)
+    ? tm.find((x) => x && typeof x === "object" && (x as Record<string, unknown>).kind === "signal" && typeof (x as Record<string, unknown>).date === "string") as { date: string } | undefined
+    : undefined;
+  if (signal) {
+    const i = steps.findIndex((s) => s.date.slice(0, 10) === signal.date.slice(0, 10));
+    if (i >= 0) return i;
+  }
   for (let i = steps.length - 1; i >= 0; i--) if (!steps[i].forecast) return i;
   return 0;
 }

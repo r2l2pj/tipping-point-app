@@ -137,9 +137,9 @@ export function CommandCenterView({
   const [city, setCity] = useState<{ place: Place; dates: string[] }>();
   const [replayCity, setReplayCity] = useState<ReplayPlace>();
   // L52 U1: right-panel tabs (content moved, nothing deleted).
-  // The featured replay is the radar case: it opens on its Radar tab.
-  const [tab, setTab] = useState<PanelTab | "all">(panelTab ?? (deepLink?.compare === "radar" ||
-    (!!initialCase && /uruguai|uruguay/i.test(initialCase)) ? "radar" : "overview"));
+  // Lucas: every case lands on the map + Overview; only a radar swipe link
+  // opens the Radar tab.
+  const [tab, setTab] = useState<PanelTab | "all">(panelTab ?? (deepLink?.compare === "radar" ? "radar" : "overview"));
   const show = (t: PanelTab) => tab === t || tab === "all";
   // Headline card (Lucas, "simple and WOW"): the live places file, once.
   const [places, setPlaces] = useState<Places>();
