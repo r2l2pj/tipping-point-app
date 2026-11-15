@@ -11,6 +11,7 @@ Fill these before you click (search the files for the brackets):
 4. `[VIDEO LINK]` in FORM §3, after upload (≤30 s, test it in a private window).
 5. Voice: if the VO is text-to-speech, replace `[if the VO is TTS, say so here]` on the page (Use of AI) and in `ai-declaration.md`; if it is a human voice, delete the bracket.
 6. Local Event is filled: Florianópolis (Founder Haus, Jurerê).
+7. Project page images: upload `.crew/deck/explainer/what-nisar-sees.png` and `future-of-nisar.png` where the page says *Figure (upload as an image here)*, then delete those italic notes.
 
 Then tick both boxes (T&C + original work, all external code/text/images in References = FORM §8) and click **Submit**. Judges see only the last save.
 
