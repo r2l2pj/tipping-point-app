@@ -34,7 +34,7 @@
 
 ## Slide 5 — Did it work?
 - WA Dec 2025: "Optical satellites were 92.9% blind under the clouds. On the 7% they could see, our radar flood map overlaps at F1 0.15 (precision 0.19, recall 0.13, new flood only). Radar maps the rest." — 27.99 km² flooded within the NISAR swath; landslides remain candidates only
-- Early warning headline: **"Tipping Point would have warned X hours earlier"** (X = median; quoted only after the rebuilt forecast numbers, with n)
+- Early warning headline: **"Using the forecast available at the time, Tipping Point flagged the area X hours before the damage."** (X from the rebuilt forecast lead time, with n in the footnote; decided by Lucas 2026-11-15)
 - "With the forecast available at the time, the index marked the area as critical before the damage, adding a map of where and who to the official warnings."
   - supporting line (footnote): "In replay, using only data available at the time, the index crossed Critical a median of X h (IQR A-B h) before mapped landslides (n = N)" (in replay; median, IQR A-B h, n = N)
 - RS replay (no radar — event predates NISAR, so no flood-overlap score): median X h (IQR A-B h, n = N)
