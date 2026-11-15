@@ -16,9 +16,7 @@ Tipping Point
 
 ## 2. High-Level Project Summary
 
-Source: `summary.md` → Summary ¶ (awaiting Lucas; the headline is decided). Paste it as is:
-
-> In May 2024, Rio Grande do Sul suffered the worst floods in state history — 446 of 497 municipalities hit, hundreds of thousands displaced. Alerts covered entire municipalities, and optical satellites were blind behind storm clouds: in the critical first hours, no one knew which slopes had failed or which neighborhoods were under water. Tipping Point closes that gap. Our Tipping Point Index (TPI) is the geometric mean of three normalized scores in [0,1] — Rain (GPM IMERG vs per-pixel climatology), Soil (SMAP root-zone moisture), Terrain (NASADEM slope and drainage height) — classified Low (<0.2), Moderate, High, or Critical (>0.6). The 2024 flood predates NISAR, so radar confirmation is demonstrated on a second case: in Washington State, December 2025, NISAR GCOV passes before and after the storm confirm flooded area through clouds and darkness, while landslide sites appear only as "candidates" from post-event HLS optical imagery. Built for municipal Civil Defense in Southern Brazil (RS/SC/PR), the demo replays both events end-to-end, and a live Southern Brazil view refreshes every 3 hours. Using the forecast available at the time, Tipping Point flagged the area [X] hours before the damage. In replay with the NOAA GFS forecast issued each day (no look-ahead), Washington (Dec 2025) reached Critical a median of [X] h before the damage (IQR [IQR]; [n] of [N] forecast days flagged it); in Rio Grande do Sul (May 2024), [n] of [N] forecast days flagged it, [Y] h ahead. [ON HOLD — L35, re-score ~12:00]
+Paste from `project-page.md` → "High-Level Project Summary". That is the NISAR-led version, 155 words plus the headline. The headline is ON HOLD (L35); the RS 88% candidate is awaiting Lucas. The older 240-word version in `summary.md` is kept as an alternative (awaiting Lucas).
 
 ## 3. Link to Project Demo
 
@@ -38,31 +36,16 @@ Both repos are public.
 
 ## 5. Detailed Project Description
 
-> **What it does.** Tipping Point is a flood and landslide command center for municipal Civil Defense. It answers three questions in order: where is the ground about to fail, did it, and who is affected. A live view of Southern Brazil (Rio Grande do Sul, Santa Catarina, Paraná) refreshes every 3 hours. It shows today's risk plus three forecast days, public area alerts in plain language, and the latest radar and optical flood candidates. Two past disasters can be replayed day by day with no look-ahead: the May 2024 Rio Grande do Sul floods and the December 2025 Washington State atmospheric rivers.
->
-> **How it works.** The Tipping Point Index (TPI) is the weighted geometric mean of three scores in [0,1]:
-> - Rain: GPM IMERG 3-day accumulation against each pixel's own P90/P95/P99 climatology.
-> - Soil: SMAP L4 root-zone wetness.
-> - Terrain: NASADEM slope for landslides; a height-above-drainage proxy for floods.
->
-> A geometric mean only goes Critical (>0.6) when rain, soil and terrain agree. For the days ahead, the observed rain is extended with the NOAA GFS forecast, our only non-NASA input. In replay we use the forecast actually issued each day, so "how early" is measured honestly. Alongside the index, an XGBoost model ranks the relative likelihood of a rain-triggered landslide `[skill numbers pending re-score — v2]`.
->
-> Radar then checks the ground. NISAR L-band GCOV passes before and after the Washington storm show 27.99 km² of flood candidates within the NISAR swath, through cloud. Optical saw only 7% of that scene, and on that 7% our radar flood map overlaps the OPERA reference at F1 0.15. OPERA DSWx-S1 and DIST-ALERT-HLS add flood and landslide-scar candidates. SWOT gives river levels, VIIRS Black Marble gives night-light loss, and GPW population gives who is in the critical areas. Every map label carries its data date and source. Radar and optical outputs are always "candidates", never "confirmed".
->
-> **Benefits.** Instead of municipality-wide alerts, Civil Defense gets a ranked list of priority areas with the people exposed, and a confirmation layer that works at night and through cloud. Using the forecast available at the time, Tipping Point flagged the Washington area [X] hours before the damage [ON HOLD — L35, re-score ~12:00]. We also state the limits: thresholds are calibrated on few events`[, and official warnings came first in both cases — awaiting Lucas, MORNING item 15]`. The map adds the "where" and the "who" to those warnings.
->
-> **What we hope to achieve.** A municipal Civil Defense team in Southern Brazil should be able to open one page and see where to act first, then get a radar confirmation as soon as NISAR passes. Next steps:
-> - Trigger the NISAR check on every new pass after an alert.
-> - Calibrate thresholds on the landslide inventory.
-> - Send alerts by WhatsApp and e-mail.
-> - Extend coverage with a single config change.
->
-> **Tools.**
-> - App: TypeScript, Next.js 16, React 19, MapLibre GL, Recharts and Tailwind, deployed on Vercel.
-> - Data pipeline: Python with uv, earthaccess, asf_search, xarray/rioxarray, rasterio, h5py, geopandas, scikit-image, XGBoost and scikit-learn (with SHAP), and cfgrib/eccodes for GFS GRIB.
-> - Compute: Google Earth Engine for one-off compute; GitHub Actions for the 3-hourly live job.
-> - Storage and alerts: Neon Postgres (free tier) for the Telegram alert subscriber store.
-> - Team: `[TEAM NAME]` — `[member names]` — Local Event `[EVENT]`.
+Paste from `project-page.md` → "Detailed Project Description". Its sections are:
+- what it does
+- how it works
+- what NISAR shows and why
+- what's new vs LHASA / OPERA / GFMS
+- a validation table with n and caveats
+- limitations
+- try-it links
+- **Use of AI** (judge-visible, as the guide requires; the SI field below is not shown to judges)
+- tools and team
 
 ## 6. Use of Super Intelligence (SI)
 
@@ -91,6 +74,7 @@ Source: `nasa-data.md` (awaiting Lucas):
 > - MERIT Hydro: validation of the HAND proxy only.
 > - IBGE country and municipality outlines.
 > - UFRGS/Cemaden landslide inventory (RS 2024): validation.
+> - NASA Global Landslide Catalog / COOLR: WA validation (also listed under NASA Data).
 > - Basemap: CARTO Dark Matter (no labels) — © CARTO, © OpenStreetMap contributors.
 >
 > **Event facts** (446 of 497 municipalities, 185 dead, 581,000+ displaced, ~R$88.9 billion damage): `[SOURCE NEEDED — these figures have no citation in our docs, and public sources give different totals (e.g. 183 deaths and 478 municipalities in later Defesa Civil RS counts; R$19 bn property damage on Wikipedia). Cite one official source (Defesa Civil RS final bulletin) and align the copy to it, or cut the figures.]`

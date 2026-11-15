@@ -14,6 +14,19 @@ Voiceover total: **64 words** (limit 75; after Lucas's 2026-11-15 VO decisions �
 | 5 | 22–27 s | Details still open (beat 4): click timeline **Dec 12 / D+2** (chip "forecast · NOAA GFS (issued Dec 10, 2025)") → **Impact** block: **People in critical areas 229,782** (WA, Dec 12, 2025; the UI renders 229,800), **Night-light drop 44%**, **Exposure basis** GPW v4 (NASA SEDAC) / VIIRS Black Marble. Brief glimpse of the public feed: top-bar **Public Alerts** → **Replay: what would have been sent** — card **Replay: CRITICAL flood or landslide risk** (**EMERGENCY**, "Raised on Dec 5, 2025 from the forecast · NOAA GFS (issued Dec 5, 2025) TPI"; verified at 35a38b6, `.crew/review/beat2/replay-alerts-wa-dec9.png`). | "230,000 people in critical areas, prioritized for Civil Defense." |
 | Close | 27–29.5 s | Wordmark + tagline "TIPPING POINT \| Rain warns. Radar confirms." over dark map; credit line as text, no logos: "Data: NASA GPM IMERG · SMAP · NASADEM · NISAR · HLS · VIIRS Black Marble · GPW"; app URL. Cut ends at 29.5 s (guide limit 30 s). | "Rain warns. Radar confirms." |
 
+## Alternative VO: proposal, awaiting Lucas (win-odds #5)
+
+Next to the decided VO above, not replacing it. It has 4 beats, 54 words and 2 numbers, and opens with the team (the guide's 0:00 intro). It drops the lead time (ON HOLD, L35) and F1 0.15, which moves to the project page's validation table. The number in beat D is WA (Dec 12); show the WA Impact block.
+
+| Beat | Time | Picture | VO | Words |
+|---|---|---|---|---|
+| A | 0–6 s | Title card, then the RS replay map under cloud | "Team [TEAM NAME], Brazil. When Rio Grande do Sul flooded, clouds blinded optical satellites." | 14 |
+| B | 6–13 s | RS replay plays → **Tipping point reached**; WA **Forecast issued this day: +3 d** turns Critical (no number on screen) | "Tipping Point maps where NASA rain, soil and slope data tip toward failure." | 13 |
+| C | 13–22 s | NISAR **Before / after** swipe; dark new water | "NISAR radar sees through cloud — floodwater turns dark: 28 square kilometers of flood candidates." | 14 |
+| D | 22–28.5 s | WA Impact block (Dec 12) → public alert card (experimental) → wordmark | "230,000 people in critical areas, ranked for Civil Defense. Rain warns. Radar confirms." | 13 |
+
+Tagline choice (Lucas): keep "Radar confirms", or use "Radar sees through." (same word count). A SAR judge may read "confirms" next to "candidates" as an overclaim.
+
 ## Production notes
 
 - WA flooded figure (now in published `metrics.json` (tipping-point-data f450b72, = Neon copy of 2026-11-15)): 27.99 km2 flooded within the NISAR swath (Dec 4 -> Dec 16, 2025); clusters in the Snohomish/Skykomish valleys; Skagit had receded before the pass. The post scene covers only 74.1% of the AOI (SW cut off) — always say within the NISAR swath when quoting it. Beat 3 VO (Lucas, 2026-11-15) says "28 square kilometers of flood candidates"; the on-screen 27.99 km² stays "within the NISAR swath".
@@ -29,3 +42,5 @@ Voiceover total: **64 words** (limit 75; after Lucas's 2026-11-15 VO decisions �
 - Beat 2 VO speaks the short form ("Flagged [X] hours before the damage.") so it fits the 3 s slot; Lucas's full headline is on screen as the caption (decided by Lucas 2026-11-15).
 - There are no tabs to reset: **Replay** opens on **Washington atmospheric rivers, Dec 2025** at Dec 10 (EVENT); switch cases with the **Past event** selector.
 - Pace: ~2.2 words/second voiceover. If VO runs long, trim step 4 to "Radar overlaps at F1 0.15."
+
+- **Public alerts are experimental.** Any shot of `/alerts` or an alert card is an experimental research product, not an official warning (official alerts: Defesa Civil, SMS 40199). If the card on the recorded build carries no such label, add a lower-third: "Experimental — not an official warning" (win-odds #7; the card label is lead-app/lead-live's).
