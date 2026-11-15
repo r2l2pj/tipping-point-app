@@ -3,6 +3,7 @@
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 
 import { POST } from "@/app/api/telegram/route";
+import { depsFromEnv } from "./deps";
 
 const SECRET = "s3cret";
 const saved = {
@@ -63,5 +64,21 @@ describe("POST /api/telegram", () => {
     const res = await POST(authorized(JSON.stringify({ update_id: 1 })));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
+  });
+
+  test("503 on a failed subscriber deletion so Telegram can retry", async () => {
+    const store = depsFromEnv().store;
+    const original = store.delete;
+    const error = console.error;
+    try {
+      store.delete = async () => { throw new Error("telegram store: configured SQLite unavailable"); };
+      console.error = () => {};
+      const res = await POST(authorized(JSON.stringify({ message: { chat: { id: 42 }, text: "/parar" } })));
+      expect(res.status).toBe(503);
+      expect(await res.json()).toEqual({ telegram: "store unavailable" });
+    } finally {
+      store.delete = original;
+      console.error = error;
+    }
   });
 });

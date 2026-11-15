@@ -24,7 +24,7 @@ docker build -t tipping-point-app \
 docker run -d --name tp-app --restart unless-stopped \
   -p 127.0.0.1:3000:3000 \
   --env-file /etc/tipping-point/app.env \
-  -v tp-data:/app/.data \
+  -v tipping-point-data:/app/.data \
   tipping-point-app
 docker ps            # STATUS shows (healthy) after ~20 s
 curl -s localhost:3000/api/health | head -c 400
@@ -73,7 +73,7 @@ they are **build** arguments, not runtime env.
 | `DATA_BASE_URL` | runtime | **Leave unset.** Unset already reads the GitHub raw `fallback` branch first (`https://raw.githubusercontent.com/r2l2pj/tipping-point-data/fallback/data/`), then Neon, then the bundled copy. Setting it makes that URL the ONLY remote (no Neon fallback) — set it to the GitHub raw URL only if Neon must be skipped. |
 | `NEON_S3_ENDPOINT` | runtime | Optional, not a secret. Unset = built-in public bucket URL. |
 | `GEE_ENABLED` | runtime | **Unset** (L25: no Earth Engine at runtime). `GEE_PROJECT`, `GCP_SA_KEY` stay unset too. |
-| `DATABASE_URL` | runtime | Secret Neon `postgresql://…` string for the Telegram subscriber table (same value as on Vercel). Unset = SQLite file in `/app/.data` — keep the `tp-data` volume or subscribers are lost on rebuild. |
+| `DATABASE_URL` | runtime | `sqlite:/app/.data/tipping-point.sqlite`; the notifier worker shares the `tipping-point-data` volume. Keep that volume and back it up off-host or subscriber state is lost with the VPS. |
 | `TELEGRAM_TOKEN` | runtime | Bot token (BotFather). Secret. |
 | `TELEGRAM_SECRET` | runtime | Webhook shared secret (Telegram sends it as `X-Telegram-Bot-Api-Secret-Token`). Secret. |
 | `APP_URL` | runtime | The new public URL, e.g. `https://tipping-point.example.org` (no trailing slash). |
@@ -85,7 +85,11 @@ they are **build** arguments, not runtime env.
 ### Telegram webhook moves with the URL
 
 Telegram still posts to the old Vercel URL until the webhook is re-registered
-against the VPS (after TLS works):
+against the VPS. Before moving it, finish the reviewed Neon-to-SQLite copy,
+verify subscriber records and deploy the app with the persistent
+`tipping-point-data` volume and SQLite URL. Follow the full maintenance-window
+sequence in `tipping-point-data/docs/VPS-SQLITE.md`; do not accept new
+registrations or deletions in an empty database. After TLS works:
 
 ```bash
 curl -X POST "https://api.telegram.org/bot$TELEGRAM_TOKEN/setWebhook" \
@@ -165,7 +169,7 @@ certificate.
 | Streaming / PPR | Works with `next start`; the proxy must not buffer (section 3). |
 | Data cache (`"use cache"`) | In memory per process (section 4). |
 | Telegram webhook URL | Points at the old Vercel URL until re-registered (section 2). |
-| SQLite subscriber fallback (`node:sqlite`) | Needs Node ≥ 22.13 (image: Node 24) and the `/app/.data` volume. Production uses `DATABASE_URL` (Neon) anyway. |
+| SQLite subscriber store (`node:sqlite`) | Needs Node ≥ 22.13 (image: Node 24) and the persistent `/app/.data` volume. After the reviewed cutover, app and notifier share `tipping-point-data`. |
 | Hard-coded `*.vercel.app` URLs | Only in docs (`docs/DEPLOY.md`, `docs/PLAN.md`) and submission links — update to `APP_URL`. Nothing in `src/`. |
 | GitHub Actions of the data repo | Unchanged: they publish data, they never call the app. |
 

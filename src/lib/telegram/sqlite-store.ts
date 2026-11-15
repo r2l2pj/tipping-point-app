@@ -33,6 +33,7 @@ export class SqliteStore implements SubscriberStore {
       DatabaseSync: new (filename: string) => Database;
     };
     const db = new DatabaseSync(this.filename);
+    db.exec("PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL;");
     db.exec(await readFile(path.join(process.cwd(), "db", "schema.sql"), "utf8"));
     return db;
   }
